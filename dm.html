@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>私信 · 灯光市</title>
+<link rel="stylesheet" href="css/style.css">
+<style>
+  body { background: var(--c-bg-2, #e8e0c8); }
+  .dm-wrap {
+    max-width: 1100px; margin: 24px auto; padding: 0 16px;
+    display: grid; grid-template-columns: 280px 1fr; gap: 16px;
+    min-height: calc(100vh - 160px);
+  }
+  @media (max-width: 800px) {
+    .dm-wrap { grid-template-columns: 1fr; }
+    .dm-list { max-height: 240px; }
+  }
+  .dm-panel {
+    background: var(--c-bg-1, #f0e8d0);
+    border: 4px solid var(--c-stone-dark, #4a3a2a);
+    box-shadow: 4px 4px 0 var(--c-stone-dark, #4a3a2a);
+    overflow: hidden;
+  }
+  .dm-head {
+    padding: 12px 14px; border-bottom: 3px solid var(--c-stone-dark, #4a3a2a);
+    background: var(--c-emerald, #5fa856); color: white;
+    font-weight: 700; font-size: 14px; letter-spacing: 1px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .dm-list { overflow-y: auto; max-height: calc(100vh - 200px); }
+  .dm-conv {
+    padding: 12px 14px; border-bottom: 2px solid var(--c-bg-2, #e8e0c8);
+    cursor: pointer; display: flex; gap: 10px; align-items: flex-start;
+    transition: background .15s;
+  }
+  .dm-conv:hover { background: var(--c-bg-2, #e8e0c8); }
+  .dm-conv.active { background: var(--c-gold, #e8b840); }
+  .dm-conv .avatar { font-size: 26px; line-height: 1; flex-shrink: 0; }
+  .dm-conv .info { flex: 1; min-width: 0; }
+  .dm-conv .name { font-weight: 700; color: var(--c-stone-dark, #4a3a2a); font-size: 13px; }
+  .dm-conv .preview { color: var(--c-stone, #7a6a5a); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 2px; }
+  .dm-conv .unread {
+    background: #d04040; color: white; border-radius: 10px;
+    padding: 1px 7px; font-size: 11px; font-weight: 700;
+    flex-shrink: 0; align-self: center;
+  }
+  .dm-conv .ts { color: var(--c-stone, #7a6a5a); font-size: 11px; flex-shrink: 0; }
+  .dm-empty { padding: 32px 16px; text-align: center; color: var(--c-stone, #7a6a5a); font-size: 13px; }
+  .dm-thread { display: flex; flex-direction: column; }
+  .dm-thread-head {
+    padding: 12px 14px; border-bottom: 3px solid var(--c-stone-dark, #4a3a2a);
+    display: flex; align-items: center; gap: 10px; background: var(--c-bg-1, #f0e8d0);
+  }
+  .dm-thread-head .avatar { font-size: 28px; }
+  .dm-thread-head .name { font-weight: 700; color: var(--c-stone-dark, #4a3a2a); font-size: 15px; }
+  .dm-thread-head a { color: var(--c-emerald, #5fa856); text-decoration: none; font-size: 12px; margin-left: auto; }
+  .dm-thread-head a:hover { text-decoration: underline; }
+  .dm-messages { flex: 1; overflow-y: auto; padding: 16px; min-height: 320px; max-height: 60vh; background: var(--c-bg-2, #e8e0c8); }
+  .dm-msg { margin-bottom: 12px; max-width: 75%; clear: both; }
+  .dm-msg.mine { margin-left: auto; }
+  .dm-msg .bubble {
+    padding: 8px 12px; border: 2px solid var(--c-stone-dark, #4a3a2a);
+    box-shadow: 2px 2px 0 var(--c-stone-dark, #4a3a2a);
+    background: var(--c-bg-1, #f0e8d0);
+    color: var(--c-stone-dark, #4a3a2a); font-size: 14px; line-height: 1.5;
+    word-break: break-word; white-space: pre-wrap;
+  }
+  .dm-msg.mine .bubble { background: var(--c-gold, #e8b840); }
+  .dm-msg .ts { font-size: 11px; color: var(--c-stone, #7a6a5a); margin-top: 3px; }
+  .dm-msg.mine .ts { text-align: right; }
+  .dm-input {
+    border-top: 3px solid var(--c-stone-dark, #4a3a2a);
+    padding: 12px; background: var(--c-bg-1, #f0e8d0);
+    display: flex; gap: 8px;
+  }
+  .dm-input textarea {
+    flex: 1; min-height: 60px; max-height: 120px; resize: vertical;
+    font-family: inherit; font-size: 14px; padding: 8px;
+    border: 3px solid var(--c-stone-dark, #4a3a2a); background: white;
+    color: var(--c-stone-dark, #4a3a2a);
+  }
+  .dm-input button {
+    background: var(--c-emerald, #5fa856); color: white;
+    border: 3px solid var(--c-stone-dark, #4a3a2a);
+    box-shadow: 2px 2px 0 var(--c-stone-dark, #4a3a2a);
+    padding: 0 16px; font-weight: 700; cursor: pointer;
+    font-size: 13px; letter-spacing: 1px;
+  }
+  .dm-input button:hover { background: #4a8843; }
+  .dm-input button:disabled { background: #999; cursor: not-allowed; }
+  .dm-new-btn {
+    background: var(--c-gold, #e8b840); color: var(--c-stone-dark, #4a3a2a);
+    border: 2px solid var(--c-stone-dark, #4a3a2a);
+    padding: 4px 10px; font-size: 12px; font-weight: 700;
+    cursor: pointer;
+  }
+  .dm-new-btn:hover { background: #d8a830; }
+  .dm-login-hint {
+    text-align: center; padding: 40px 20px; color: var(--c-stone, #7a6a5a);
+    background: var(--c-bg-1, #f0e8d0); border: 4px solid var(--c-stone-dark, #4a3a2a);
+    box-shadow: 4px 4px 0 var(--c-stone-dark, #4a3a2a);
+    max-width: 500px; margin: 40px auto;
+  }
+</style>
+</head>
+<body>
+
+<header class="navbar" id="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <div class="logo-block" aria-hidden="true">
+        <div class="block-grass"></div>
+        <div class="block-dirt"></div>
+      </div>
+      <div class="logo-text">
+        <span class="logo-zh">灯光市人民政府</span>
+        <span class="logo-en">LIGHT CITY GOVERNMENT</span>
+      </div>
+    </a>
+    <span class="nav-user-slot" id="navUserSlot"></span>
+  </div>
+</header>
+
+<div style="max-width:1100px;margin:18px auto 0;padding:0 16px;">
+  <a href="index.html" style="color:var(--c-emerald);text-decoration:none;font-size:13px;">← 返回首页</a>
+</div>
+
+<div id="app" style="padding:8px 0 24px;">
+  <!-- 登录提示 / DM 主界面，由 JS 渲染 -->
+</div>
+
+<script src="js/dm.js"></script>
+</body>
+</html>

@@ -1140,7 +1140,9 @@
       const data = await res.json();
       if (res.ok && data.ok && data.role === 'player') {
         navUserSlot.innerHTML = `
-          <span class="nav-user-name">👤 ${escapeHtml(data.user.username)}</span>
+          <span class="nav-user-name">${escapeHtml(data.user.avatar_emoji || '👤')} ${escapeHtml(data.user.username)}</span>
+          <a href="profile.html" class="nav-logout-link" style="color:var(--c-emerald);">👤 主页</a>
+          <a href="dm.html" class="nav-logout-link" style="color:var(--c-emerald);">📨 私信</a>
           <a href="#" id="navLogout" class="nav-logout-link">登出</a>
         `;
         // v16: 自动填留言 form 的姓名
