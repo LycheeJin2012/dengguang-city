@@ -21,7 +21,7 @@ export async function onRequestPost(context) {
 
   // 先试玩家
   const player = await env.DB.prepare(
-    'SELECT id, username, password_hash, salt FROM players WHERE username = ?'
+    'SELECT id, username, password_hash, salt, status FROM players WHERE username = ?'
   ).bind(username).first();
 
   let role = 'player';
@@ -29,6 +29,13 @@ export async function onRequestPost(context) {
   if (player) {
     const ok = await verifyPassword(password, player.password_hash, player.salt);
     if (!ok) return err(401, '用户名或密码错误');
+    // v16: 检查账号状态
+    if (player.status === 'pending') {
+      return err(403, '注册申请审批中，请等市政厅通过');
+    }
+    if (player.status === 'rejected') {
+      return err(403, '注册申请未通过');
+    }
     userId = player.id;
   } else {
     // 试 admin
@@ -75,7 +82,7 @@ export async function onRequestGet(context) {
     return ok({ role: admin.role, user: admin });
   }
   if (sess.player_id) {
-    const player = await env.DB.prepare('SELECT id, username, email, game_id FROM players WHERE id = ?').bind(sess.player_id).first();
+    const player = await env.DB.prepare('SELECT id, username, email, game_id, status, avatar_emoji, bio FROM players WHERE id = ?').bind(sess.player_id).first();
     return ok({ role: 'player', user: player });
   }
   return err(401, 'Session invalid');
