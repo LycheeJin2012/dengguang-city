@@ -74,19 +74,17 @@
     }
   }
 
-  /* ---------- 4. 登录 ---------- */
-  $('#loginForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
+  /* ---------- 4. 登录（按钮 click 触发，避免依赖 form submit 事件） ---------- */
+  async function doLogin() {
     const u = $('#loginUser').value.trim();
     const p = $('#loginPass').value;
     const errEl = $('#loginError');
     errEl.textContent = '';
     if (!u || !p) { errEl.textContent = '请输入账号和密码'; return; }
 
-    const submitBtn = $('#loginForm button[type="submit"]');
-    const origText = submitBtn.textContent;
-    submitBtn.textContent = '验证中...';
-    submitBtn.disabled = true;
+    const submitBtn = $('#loginSubmitBtn');
+    const origText = submitBtn ? submitBtn.textContent : '▶ 登录';
+    if (submitBtn) { submitBtn.textContent = '验证中...'; submitBtn.disabled = true; }
 
     try {
       const data = await POST('/api/login', { username: u, password: p });
@@ -102,10 +100,13 @@
     } catch (err) {
       errEl.textContent = err.message;
     } finally {
-      submitBtn.textContent = origText;
-      submitBtn.disabled = false;
+      if (submitBtn) { submitBtn.textContent = origText; submitBtn.disabled = false; }
     }
-  });
+  }
+  const loginBtn = $('#loginSubmitBtn');
+  if (loginBtn) loginBtn.addEventListener('click', doLogin);
+  // 保留 form submit 兜底（按 Enter 也能登）
+  $('#loginForm').addEventListener('submit', (e) => { e.preventDefault(); doLogin(); });
 
   /* 退登 */
   $('#btnLogout').addEventListener('click', async () => {
