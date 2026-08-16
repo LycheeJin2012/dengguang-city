@@ -2203,6 +2203,50 @@ textarea { resize: vertical; min-height: 90px; }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
 .form-msg { font-size: 13px; min-height: 18px; }
 
+/* ---------- 公共留言板评论 ---------- */
+.pm-actions { margin-top: 8px; }
+.pm-actions .pm-toggle-comments { padding: 4px 10px; font-size: 12px; }
+.pm-comments {
+  margin-top: 10px;
+  padding: 10px 12px;
+  background: rgba(0,0,0,0.04);
+  border-left: 3px solid var(--c-stone, #999);
+  border-radius: 2px;
+}
+.pm-comment-list { display: flex; flex-direction: column; gap: 8px; }
+.pm-comment {
+  position: relative;
+  padding: 8px 10px;
+  background: var(--c-bg-1, #f7f0d8);
+  border: 1px solid var(--c-stone, #999);
+  border-radius: 2px;
+  font-size: 13px;
+}
+.pm-comment-author { font-weight: bold; color: var(--c-grass-dark, #2d6e1f); margin-right: 8px; }
+.pm-comment-time { font-size: 11px; color: var(--c-stone-dark, #555); }
+.pm-comment-text { margin-top: 4px; line-height: 1.5; word-break: break-word; }
+.pm-comment-del {
+  position: absolute; top: 4px; right: 6px;
+  background: transparent; border: 1px solid transparent;
+  color: var(--c-redstone, #d33);
+  font-size: 11px; padding: 1px 6px; cursor: pointer;
+}
+.pm-comment-del:hover { border-color: var(--c-redstone, #d33); }
+.pm-comment-empty { font-size: 12px; color: var(--c-stone-dark, #555); padding: 6px 0; font-style: italic; }
+.pm-comment-form {
+  margin-top: 10px;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.pm-comment-form textarea {
+  width: 100%; resize: vertical;
+  padding: 6px 8px; font-size: 13px; font-family: var(--font-cn, system-ui);
+  border: 2px solid var(--c-stone, #999);
+  background: var(--c-bg-1, #f7f0d8);
+  box-sizing: border-box;
+}
+.pm-comment-form button { align-self: flex-end; }
+.pm-login-link { color: var(--c-emerald, #5fb14f); text-decoration: underline; }
+
 /* ---------- 驾照考试 ---------- */
 .license-intro {
   font-family: var(--font-cn); font-size: 14px;

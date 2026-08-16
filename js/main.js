@@ -192,7 +192,7 @@
     board.innerHTML = msgs.map(m => {
       const hasReply = m.admin_reply && m.admin_reply.length > 0;
       return `
-      <article class="pm-item">
+      <article class="pm-item" data-mid="${m.id}">
         <div class="pm-head">
           <b>${escapeHtml(m.name)}</b>
           <span class="pm-type pm-type-${escapeHtml(m.type || '建议')}">${escapeHtml(m.type || '建议')}</span>
@@ -201,8 +201,119 @@
         <p class="pm-content">${escapeHtml(m.content)}</p>
         ${hasReply ? `<div class="pm-reply-box"><b>📣 市政厅回复：</b>${escapeHtml(m.admin_reply)}</div>` : ''}
         <div class="pm-time">${formatTime(m.created_at)}</div>
+        <div class="pm-actions">
+          <button class="pm-toggle-comments btn btn-ghost btn-sm" data-mid="${m.id}">💬 评论 <span class="pm-comment-count" data-mid="${m.id}">·</span></button>
+        </div>
+        <div class="pm-comments" data-mid="${m.id}" style="display:none"></div>
       </article>
     `;}).join('');
+
+    // 评论展开按钮
+    board.querySelectorAll('.pm-toggle-comments').forEach(btn => {
+      btn.addEventListener('click', () => toggleComments(parseInt(btn.dataset.mid, 10), btn));
+    });
+    // 并行预加载评论数
+    msgs.forEach(m => loadCommentCount(m.id));
+  }
+
+  async function loadCommentCount(mid) {
+    try {
+      const res = await fetch(`/api/comments?message_id=${mid}`, { credentials: 'include' });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        const el = document.querySelector(`.pm-comment-count[data-mid="${mid}"]`);
+        if (el) el.textContent = data.comments.length > 0 ? `(${data.comments.length})` : '';
+      }
+    } catch (e) {}
+  }
+
+  async function toggleComments(mid, btn) {
+    const box = document.querySelector(`.pm-comments[data-mid="${mid}"]`);
+    if (!box) return;
+    if (box.style.display !== 'none') {
+      box.style.display = 'none';
+      btn.firstChild && (btn.firstChild.textContent = '💬 评论 ');
+      return;
+    }
+    box.style.display = '';
+    btn.firstChild && (btn.firstChild.textContent = '▲ 收起评论 ');
+    await renderComments(mid, box);
+  }
+
+  async function renderComments(mid, box) {
+    box.innerHTML = '<div class="pm-comment-empty">加载中...</div>';
+    let comments = [];
+    try {
+      const res = await fetch(`/api/comments?message_id=${mid}`, { credentials: 'include' });
+      const data = await res.json();
+      if (res.ok && data.ok) comments = data.comments || [];
+    } catch (e) {}
+    const me = await getCurrentPlayer();
+    const myId = me ? me.id : null;
+    box.innerHTML = `
+      <div class="pm-comment-list">
+        ${comments.length === 0 ? '<div class="pm-comment-empty">还没有评论 · 来做第一个</div>' : comments.map(c => `
+          <div class="pm-comment">
+            <span class="pm-comment-author">${escapeHtml(c.avatar_emoji || '👤')} ${escapeHtml(c.username || '?')}</span>
+            <span class="pm-comment-time">${formatTime(c.created_at)}</span>
+            <div class="pm-comment-text">${escapeHtml(c.content)}</div>
+            ${(myId === c.player_id || (me && me.role && me.role !== 'player')) ? `<button class="pm-comment-del" data-cid="${c.id}">删除</button>` : ''}
+          </div>
+        `).join('')}
+      </div>
+      ${me ? `
+        <form class="pm-comment-form" data-mid="${mid}">
+          <textarea placeholder="说点什么..." rows="2" required maxlength="1000"></textarea>
+          <button type="submit" class="btn btn-primary btn-sm">💬 发表评论</button>
+        </form>
+      ` : `<div class="pm-comment-empty"><a href="#" class="pm-login-link">登录</a> 后可以评论</div>`}
+    `;
+    box.querySelectorAll('.pm-comment-form').forEach(f => {
+      f.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const ta = f.querySelector('textarea');
+        const text = ta.value.trim();
+        if (!text) return;
+        try {
+          const res = await fetch('/api/comments', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ message_id: parseInt(f.dataset.mid, 10), content: text })
+          });
+          const data = await res.json();
+          if (res.ok && data.ok) {
+            ta.value = '';
+            await renderComments(mid, box);
+            await loadCommentCount(mid);
+          } else if (res.status === 401) {
+            openLoginModal('请先登录玩家账号再评论');
+          } else {
+            alert('评论失败：' + (data.error || '网络错误'));
+          }
+        } catch (e) { alert('网络错误'); }
+      });
+    });
+    box.querySelectorAll('.pm-comment-del').forEach(b => {
+      b.addEventListener('click', async () => {
+        if (!confirm('删除这条评论？')) return;
+        try {
+          await fetch('/api/comments?id=' + b.dataset.cid, { method: 'DELETE', credentials: 'include' });
+          await renderComments(mid, box);
+          await loadCommentCount(mid);
+        } catch (e) { alert('删除失败'); }
+      });
+    });
+  }
+  let _meCache = null;
+  async function getCurrentPlayer() {
+    if (_meCache !== null) return _meCache;
+    try {
+      const res = await fetch('/api/login', { credentials: 'include' });
+      const data = await res.json();
+      _meCache = (res.ok && data.ok) ? data.user : null;
+    } catch (e) { _meCache = null; }
+    return _meCache;
   }
   function escapeHtml(s) {
     return String(s == null ? '' : s)
