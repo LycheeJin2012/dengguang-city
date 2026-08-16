@@ -53,3 +53,4 @@ export async function onRequestDelete(context) {
   await env.DB.prepare('DELETE FROM bookings WHERE id = ?').bind(id).run();
   return ok({ deleted: id });
 }
+
