@@ -194,7 +194,7 @@
       return `
       <article class="pm-item" data-mid="${m.id}">
         <div class="pm-head">
-          <a href="profile.html?u=${encodeURIComponent(m.name)}" class="pm-author-link"><b>${escapeHtml(m.name)}</b></a>
+          <a href="#" class="pm-author-link" data-username="${escapeHtml(m.name)}" onclick="return false"><b>${escapeHtml(m.name)}</b></a>
           <span class="pm-type pm-type-${escapeHtml(m.type || '建议')}">${escapeHtml(m.type || '建议')}</span>
           ${hasReply ? '<span class="msg-replied-tag">💬 已回复</span>' : ''}
         </div>
@@ -1140,8 +1140,7 @@
       const data = await res.json();
       if (res.ok && data.ok && data.role === 'player') {
         navUserSlot.innerHTML = `
-          <a href="profile.html?u=${encodeURIComponent(data.user.username)}" class="nav-user-name">👤 ${escapeHtml(data.user.username)}</a>
-          <a href="dm.html" class="nav-login-link">📬 私信</a>
+          <span class="nav-user-name">👤 ${escapeHtml(data.user.username)}</span>
           <a href="#" id="navLogout" class="nav-logout-link">登出</a>
         `;
         // v16: 自动填留言 form 的姓名
