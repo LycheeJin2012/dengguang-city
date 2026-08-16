@@ -52,36 +52,43 @@ export async function onRequestGet(context) {
   }
 
   if (action === 'dm-list') {
-    // 列出所有跟我有私信往来的会话
+    // 列出所有跟我有私信往来的会话（先取 peer_id + last_at + unread）
     const rows = await env.DB.prepare(
       `SELECT
          CASE WHEN dm.from_player_id = ? THEN dm.to_player_id ELSE dm.from_player_id END AS peer_id,
          MAX(dm.created_at) AS last_at,
-         SUM(CASE WHEN dm.to_player_id = ? AND dm.read_at IS NULL THEN 1 ELSE 0 END) AS unread,
-         (SELECT content FROM direct_messages d2
-          WHERE (d2.from_player_id = ? AND d2.to_player_id = peer_id)
-             OR (d2.from_player_id = peer_id AND d2.to_player_id = ?)
-          ORDER BY d2.created_at DESC LIMIT 1) AS last_content
+         SUM(CASE WHEN dm.to_player_id = ? AND dm.read_at IS NULL THEN 1 ELSE 0 END) AS unread
        FROM direct_messages dm
        WHERE dm.from_player_id = ? OR dm.to_player_id = ?
        GROUP BY peer_id
        ORDER BY last_at DESC LIMIT 100`
-    ).bind(sess.player_id, sess.player_id, sess.player_id, sess.player_id, sess.player_id, sess.player_id).all();
+    ).bind(sess.player_id, sess.player_id, sess.player_id, sess.player_id).all();
     if (rows.results.length === 0) return ok({ conversations: [] });
     const peerIds = rows.results.map(r => r.peer_id);
     const placeholders = peerIds.map(() => '?').join(',');
+    // 1. 拉 peer 资料
     const peers = await env.DB.prepare(
       `SELECT id, username, avatar_emoji FROM players WHERE id IN (${placeholders})`
     ).bind(...peerIds).all();
     const peerMap = {};
     for (const p of peers.results) peerMap[p.id] = p;
-    const conversations = rows.results.map(r => ({
-      peer_id: r.peer_id,
-      last_at: r.last_at,
-      unread: r.unread || 0,
-      last_content: r.last_content,
-      peer: peerMap[r.peer_id] || { id: r.peer_id, username: '(已注销)', avatar_emoji: '❓' }
-    }));
+    // 2. 拉每段会话的最后一条消息（用 OR 子查询 + 排序）
+    const conversations = [];
+    for (const r of rows.results) {
+      const last = await env.DB.prepare(
+        `SELECT content FROM direct_messages
+         WHERE (from_player_id = ? AND to_player_id = ?)
+            OR (from_player_id = ? AND to_player_id = ?)
+         ORDER BY created_at DESC LIMIT 1`
+      ).bind(sess.player_id, r.peer_id, r.peer_id, sess.player_id).first();
+      conversations.push({
+        peer_id: r.peer_id,
+        last_at: r.last_at,
+        unread: r.unread || 0,
+        last_content: last?.content || '',
+        peer: peerMap[r.peer_id] || { id: r.peer_id, username: '(已注销)', avatar_emoji: '❓' }
+      });
+    }
     return ok({ conversations });
   }
 
