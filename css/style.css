@@ -2203,6 +2203,39 @@ textarea { resize: vertical; min-height: 90px; }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
 .form-msg { font-size: 13px; min-height: 18px; }
 
+/* ---------- 驾照考试 ---------- */
+.license-intro {
+  font-family: var(--font-cn); font-size: 14px;
+  color: var(--c-stone-dark); text-align: center;
+  margin: 0 0 24px;
+}
+.license-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px; max-width: 900px; margin: 0 auto;
+}
+.license-card {
+  background: var(--c-bg-1, #f7f0d8);
+  border: 4px solid var(--c-stone-dark, #3a3a3a);
+  padding: 22px 18px 18px; text-align: center;
+  position: relative;
+  box-shadow: 0 4px 0 rgba(0,0,0,0.2);
+}
+.license-grade {
+  width: 56px; height: 56px;
+  margin: 0 auto 12px;
+  background: var(--c-grass-dark, #2d6e1f);
+  color: #fff;
+  border: 3px solid var(--c-stone-dark, #3a3a3a);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-pixel, monospace);
+  font-size: 32px; font-weight: bold;
+  border-radius: 4px;
+}
+.license-grade-s { background: var(--c-redstone, #d33); }
+.license-card h3 { margin: 0 0 8px; color: var(--c-grass-dark, #2d6e1f); font-size: 16px; }
+.license-card p { font-family: var(--font-cn); font-size: 13px; color: var(--c-stone-dark, #555); margin: 0 0 14px; }
+.license-card .btn { width: 100%; font-size: 14px; padding: 10px 12px; }
+
 /* ---------- 公共留言板 admin 回复样式 ---------- */
 .msg-replied-tag {
   display: inline-block; font-size: 11px;

@@ -125,6 +125,7 @@
     $('#btnAddAdmin').style.display = admin.role === 'super' ? '' : 'none';
     renderMessages();
     renderBookings();
+    renderLicense();
     renderKarts();
     renderCircuits();
     renderAdminList();
@@ -713,6 +714,88 @@
       msgEl.textContent = '更新失败：' + (err.message.includes('密码') ? '当前密码错误' : err.message);
     }
   });
+
+  /* ============================================
+     Tab: 驾照考试（v16.2）
+     ============================================ */
+  let _licenseCache = [];
+  const EXAM_LABELS = { written: 'B 级笔试', road: 'A 级路考', upgrade: 'S 级升级' };
+  async function renderLicense() {
+    try {
+      const data = await GET('/api/admin/license');
+      _licenseCache = data.signups || [];
+    } catch (e) { _licenseCache = []; console.error(e); }
+    const cP = _licenseCache.filter(x => x.status === 'pending').length;
+    const cPa = _licenseCache.filter(x => x.status === 'passed').length;
+    const cF = _licenseCache.filter(x => x.status === 'failed').length;
+    const cA = _licenseCache.length;
+    $('#cntLicPending').textContent  = cP;
+    $('#cntLicPassed').textContent   = cPa;
+    $('#cntLicFailed').textContent   = cF;
+    $('#cntLicAll').textContent      = cA;
+    $('#licensePending').textContent = cP > 0 ? `(${cP})` : '';
+
+    const filter = (document.querySelector('input[name="licenseFilter"]:checked') || {}).value || 'pending';
+    let list = _licenseCache;
+    if (filter !== 'all') list = list.filter(x => x.status === filter);
+
+    const box = $('#licenseList');
+    const empty = $('#licenseEmpty');
+    if (list.length === 0) { box.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+
+    const statusBadge = {
+      pending: '<span class="msg-unread-tag">待审</span>',
+      passed:  '<span class="msg-read-tag" style="background:#5fb14f;color:#fff">✓ 通过</span>',
+      failed:  '<span class="msg-read-tag" style="background:#d33;color:#fff">✗ 未通过</span>'
+    };
+    box.innerHTML = list.map(x => `
+      <article class="msg-item" data-id="${x.id}">
+        <div class="msg-head">
+          <div class="msg-head-left">
+            <b class="msg-name">${escapeHtml(x.player_username || '?')}</b>
+            <span style="color:var(--c-stone-dark);font-size:12px;margin-left:6px">${escapeHtml(x.contact || '')}</span>
+            <span class="msg-player-tag">${EXAM_LABELS[x.exam_type] || x.exam_type}</span>
+            ${statusBadge[x.status] || ''}
+          </div>
+          <div class="msg-time">${fmtTime(x.created_at)}</div>
+        </div>
+        <div class="msg-content">
+          ${x.exam_date ? `📅 期望日期: ${escapeHtml(x.exam_date)} ${x.exam_session ? '· ' + escapeHtml(x.exam_session) : ''}` : '未指定日期'}
+          ${x.note ? `<br><small style="color:var(--c-stone-dark)">📝 ${escapeHtml(x.note)}</small>` : ''}
+          ${x.result_note ? `<br><div class="msg-reply-box"><b>📋 评语：</b>${escapeHtml(x.result_note)}${x.reviewer ? ' <small>(by ' + escapeHtml(x.reviewer) + ')</small>' : ''}</div>` : ''}
+        </div>
+        <div class="msg-actions book-actions">
+          ${x.status === 'pending' ? `
+            <button class="btn btn-primary btn-sm" data-act="pass">✓ 通过</button>
+            <button class="btn btn-ghost btn-sm btn-danger" data-act="fail">✗ 不通过</button>
+          ` : '<span style="color:var(--c-stone-dark);font-size:12px">' + (x.reviewer ? 'by ' + escapeHtml(x.reviewer) : '') + '</span>'}
+          <button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>
+        </div>
+      </article>
+    `).join('');
+
+    box.querySelectorAll('button[data-act]').forEach(btn => {
+      btn.addEventListener('click', () => handleLicenseAction(parseInt(btn.closest('.msg-item').dataset.id, 10), btn.dataset.act));
+    });
+  }
+  async function handleLicenseAction(id, action) {
+    try {
+      if (action === 'pass' || action === 'fail') {
+        const note = prompt(action === 'pass' ? '可选：评语 / 通过备注' : '原因说明（玩家可见）') || '';
+        await PATCH(`/api/admin/license?id=${id}`, { result: action, result_note: note });
+      } else if (action === 'del') {
+        if (!confirm('删除这条报名？')) return;
+        await DELETE(`/api/admin/license?id=${id}`);
+      }
+      await renderLicense();
+    } catch (e) { alert('操作失败：' + e.message); }
+  }
+  document.querySelectorAll('input[name="licenseFilter"]').forEach(r => {
+    r.addEventListener('change', renderLicense);
+  });
+  const btnLRefresh = document.getElementById('btnLicenseRefresh');
+  if (btnLRefresh) btnLRefresh.addEventListener('click', renderLicense);
 
   /* ============================================
      Session 缓存（仅用于 UI 显示当前用户）

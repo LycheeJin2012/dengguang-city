@@ -553,6 +553,84 @@
     </div>
   </div>
 
+  <!-- ========== 驾照考试报名 ========== -->
+  <section class="section section-alt" id="license">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">🚗 驾照考试</h2>
+        <p class="section-sub">DRIVER'S LICENSE · B/A/S 三级</p>
+      </div>
+      <p class="license-intro">
+        驾照考试由市政厅与赛车协会共同组织。报名需玩家登录，通过后获得对应等级的驾照。
+      </p>
+      <div class="license-grid">
+        <div class="license-card">
+          <div class="license-grade">B</div>
+          <h3>B 级（初级）</h3>
+          <p>笔试 + 简单路考<br/>可驾驶：基本路面、轻轨</p>
+          <button class="btn btn-primary btn-large" data-license="written" data-grade="B">📝 报名 B 级笔试</button>
+        </div>
+        <div class="license-card">
+          <div class="license-grade">A</div>
+          <h3>A 级（中级）</h3>
+          <p>完整路考 + 场景应对<br/>可驾驶：高速、复杂路况</p>
+          <button class="btn btn-primary btn-large" data-license="road" data-grade="A">🏁 报名 A 级路考</button>
+        </div>
+        <div class="license-card">
+          <div class="license-grade license-grade-s">S</div>
+          <h3>S 级（高级 / 职业）</h3>
+          <p>升级赛 + 极限测试<br/>可驾驶：F1 级赛车</p>
+          <button class="btn btn-primary btn-large" data-license="upgrade" data-grade="S">🏆 报名 S 级升级</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 驾照考试报名 Modal ========== -->
+  <div class="modal-mask" id="licenseMask" style="display:none">
+    <div class="modal modal-book">
+      <div class="modal-head">
+        <h3 id="licenseTitle">驾照考试报名</h3>
+        <button class="modal-close" id="licenseClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="licenseForm" class="modal-form">
+          <div class="book-room-summary">
+            <div>
+              <b id="licenseGradeLabel">B 级</b><br/>
+              <span style="font-size:12px;color:var(--c-stone-dark)" id="licenseTypeLabel">笔试</span>
+            </div>
+            <div class="summary-price">免费</div>
+          </div>
+          <div class="book-row">
+            <label><span>考试日期（选填）</span>
+              <input type="date" id="licenseDate" />
+            </label>
+            <label><span>期望场次（选填）</span>
+              <select id="licenseSession">
+                <option>周六 14:00</option>
+                <option>周六 20:00</option>
+                <option>周日 10:00</option>
+                <option>工作日 19:00</option>
+              </select>
+            </label>
+          </div>
+          <label><span>联系方式</span>
+            <input type="text" id="licenseContact" required placeholder="邮箱 / 游戏内编号" />
+          </label>
+          <label><span>备注（选填）</span>
+            <textarea id="licenseNote" rows="2" placeholder="需要教学、组队等"></textarea>
+          </label>
+          <div class="modal-msg" id="licenseMsg"></div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" id="licenseCancel">取消</button>
+            <button type="submit" class="btn btn-primary">▶ 提交报名</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- ========== 酒店子页入口 ========== -->
   <section class="section section-alt" id="hotel">
     <div class="container">

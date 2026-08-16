@@ -549,6 +549,109 @@
     });
   }
 
+  /* ---------- 13.5 驾照考试报名（v16.2） ---------- */
+  const licenseMask  = document.getElementById('licenseMask');
+  const licenseClose = document.getElementById('licenseClose');
+  const licenseCancel= document.getElementById('licenseCancel');
+  const licenseForm  = document.getElementById('licenseForm');
+  const licenseMsg   = document.getElementById('licenseMsg');
+  const licenseTitle = document.getElementById('licenseTitle');
+  const licenseGradeLabel = document.getElementById('licenseGradeLabel');
+  const licenseTypeLabel  = document.getElementById('licenseTypeLabel');
+  const licenseContact    = document.getElementById('licenseContact');
+  const licenseDate       = document.getElementById('licenseDate');
+  const licenseSession    = document.getElementById('licenseSession');
+  const licenseNote       = document.getElementById('licenseNote');
+  let _licenseType = 'written';
+
+  function openLicenseModal(type, grade) {
+    _licenseType = type;
+    licenseTitle.textContent = `${grade} 级驾照报名`;
+    licenseGradeLabel.textContent = `${grade} 级`;
+    licenseTypeLabel.textContent = ({
+      written: '笔试 - 选择题 + 简答',
+      road:    '路考 - 实景驾驶',
+      upgrade: '升级赛 - 极限测试'
+    })[type] || '';
+    licenseContact.value = '';
+    licenseNote.value = '';
+    licenseMsg.textContent = '';
+    licenseMask.style.display = '';
+    document.body.style.overflow = 'hidden';
+  }
+  function closeLicenseModal() {
+    if (!licenseMask) return;
+    licenseMask.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  if (licenseClose)  licenseClose.addEventListener('click', closeLicenseModal);
+  if (licenseCancel) licenseCancel.addEventListener('click', closeLicenseModal);
+  if (licenseMask)  licenseMask.addEventListener('click', (e) => { if (e.target === licenseMask) closeLicenseModal(); });
+  document.querySelectorAll('[data-license]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type  = btn.dataset.license;
+      const grade = btn.dataset.grade || '?';
+      // 检查登录
+      fetch('/api/login', { credentials: 'include' })
+        .then(r => r.json())
+        .then(d => {
+          if (d.ok && d.role === 'player') {
+            // 自动填联系方式（如果有 email）
+            if (d.user.email) licenseContact.value = d.user.email;
+            openLicenseModal(type, grade);
+          } else {
+            openLoginModal('请先登录玩家账号再报名考试');
+          }
+        })
+        .catch(() => openLoginModal('网络错误，请稍后再试'));
+    });
+  });
+  if (licenseForm) {
+    licenseForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const submitBtn = licenseForm.querySelector('button[type="submit"]');
+      const origTxt = submitBtn.textContent;
+      licenseMsg.textContent = '';
+      submitBtn.textContent = '提交中...';
+      submitBtn.disabled = true;
+      try {
+        const res = await fetch('/api/license', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            exam_type:    _licenseType,
+            exam_date:    licenseDate.value,
+            exam_session: licenseSession.value,
+            contact:      licenseContact.value.trim(),
+            note:         licenseNote.value.trim()
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          licenseMsg.textContent = '✓ ' + (data.message || '报名成功');
+          licenseMsg.style.color = 'var(--c-emerald)';
+          setTimeout(() => {
+            closeLicenseModal();
+            licenseMsg.style.color = '';
+            licenseForm.reset();
+          }, 1500);
+        } else if (res.status === 401) {
+          closeLicenseModal();
+          openLoginModal(data.error || '请先登录玩家账号');
+        } else {
+          licenseMsg.textContent = '✗ ' + (data.error || '提交失败');
+          licenseMsg.style.color = 'var(--c-redstone)';
+        }
+      } catch (err) {
+        licenseMsg.textContent = '网络错误：' + err.message;
+      } finally {
+        submitBtn.textContent = origTxt;
+        submitBtn.disabled = false;
+      }
+    });
+  }
+
   /* ---------- 13. 树上酒店 + 预订（草拟房型，待市政厅最终定价） ---------- */
   const ROOMS = [
     {
