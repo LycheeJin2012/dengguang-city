@@ -1,6 +1,6 @@
 // GET /api/my-bookings - 玩家看自己的酒店预订
 // GET /api/admin/bookings - 管理员看所有酒店预订
-import { ok, err, readToken, getSession } from '../../_shared.js';
+import { ok, err, readToken, getSession } from '../_shared.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
