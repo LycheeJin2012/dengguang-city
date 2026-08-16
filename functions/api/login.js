@@ -42,7 +42,7 @@ export async function onRequestPost(context) {
     userId = admin.id;
   }
 
-  const { token, expires_at } = await createSession(env, role === 'player' ? userId : null, role === 'admin' ? userId : null);
+  const { token, expires_at } = await createSession(env, role === 'player' ? userId : null, role !== 'player' ? userId : null);
 
   // Set-Cookie 也写一份方便浏览器调用
   const cookie = `lc_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`;
