@@ -128,6 +128,7 @@
     renderKarts();
     renderCircuits();
     renderAdminList();
+    renderPlayers();
     showView('dash');
   }
 
@@ -668,6 +669,140 @@
   function getSession() {
     return window._currentAdmin || null;
   }
+
+  /* ============================================
+     Tab: 玩家管理（v16 注册审批 + 重置密码）
+     ============================================ */
+  let _playerCache = [];
+
+  async function renderPlayers() {
+    try {
+      const data = await GET('/api/admin/players');
+      _playerCache = data.players || [];
+    } catch (e) {
+      _playerCache = [];
+      console.error('加载玩家列表失败：', e);
+    }
+    // 计数
+    const cP = _playerCache.filter(p => p.status === 'pending').length;
+    const cA = _playerCache.filter(p => p.status === 'active').length;
+    const cR = _playerCache.filter(p => p.status === 'rejected').length;
+    const cAll = _playerCache.length;
+    $('#cntPlayerPending').textContent  = cP;
+    $('#cntPlayerActive').textContent   = cA;
+    $('#cntPlayerRejected').textContent = cR;
+    $('#cntPlayerAll').textContent      = cAll;
+    $('#playerPending').textContent     = cP > 0 ? `(${cP})` : '';
+
+    const filter = (document.querySelector('input[name="playerFilter"]:checked') || {}).value || 'pending';
+    let list = _playerCache;
+    if (filter !== 'all') list = list.filter(p => p.status === filter);
+
+    const box = $('#playerList');
+    const empty = $('#playerEmpty');
+    if (list.length === 0) { box.innerHTML = ''; empty.style.display = ''; return; }
+    empty.style.display = 'none';
+
+    const statusBadge = {
+      pending:  '<span class="msg-unread-tag">待审批</span>',
+      active:   '<span class="msg-read-tag">已激活</span>',
+      rejected: '<span class="msg-read-tag" style="background:#d33">已拒绝</span>'
+    };
+    box.innerHTML = list.map(p => `
+      <article class="msg-item" data-id="${p.id}" data-status="${p.status}">
+        <div class="msg-head">
+          <div class="msg-head-left">
+            <b class="msg-name">${escapeHtml(p.avatar_emoji || '👤')} ${escapeHtml(p.username)}</b>
+            <span style="color:var(--c-stone-dark);font-size:12px;margin-left:6px">${escapeHtml(p.email)}</span>
+            ${statusBadge[p.status] || ''}
+          </div>
+          <div class="msg-time">${fmtTime(p.created_at)}</div>
+        </div>
+        <p class="msg-content" style="font-size:13px;color:var(--c-stone-dark);margin:6px 0 8px">
+          游戏ID = <b>${escapeHtml(p.username)}</b>${p.bio ? ' · ' + escapeHtml(p.bio) : ''}
+        </p>
+        <div class="msg-actions">
+          ${p.status === 'pending' ? `
+            <button class="btn btn-primary btn-sm" data-act="approve">✓ 批准</button>
+            <button class="btn btn-ghost btn-sm btn-danger" data-act="reject">✗ 拒绝</button>
+          ` : ''}
+          ${p.status !== 'pending' ? `
+            <button class="btn btn-ghost btn-sm" data-act="reset-pw">🔑 重置密码</button>
+            ${p.status === 'rejected' ? `<button class="btn btn-ghost btn-sm" data-act="re-approve">↻ 改为批准</button>` : ''}
+            ${p.status === 'active' ? `<button class="btn btn-ghost btn-sm btn-danger" data-act="reject">✗ 改为拒绝</button>` : ''}
+          `}
+        </div>
+      </article>
+    `).join('');
+
+    box.querySelectorAll('button[data-act]').forEach(btn => {
+      btn.addEventListener('click', () => handlePlayerAction(parseInt(btn.closest('.msg-item').dataset.id, 10), btn.dataset.act));
+    });
+  }
+
+  async function handlePlayerAction(id, action) {
+    try {
+      if (action === 'approve' || action === 're-approve') {
+        if (!confirm('确认批准该玩家注册？批准后他/她可以登录。')) return;
+        await PATCH(`/api/admin/players?id=${id}&action=approve`);
+      } else if (action === 'reject') {
+        if (!confirm('确认拒绝该玩家注册？')) return;
+        await PATCH(`/api/admin/players?id=${id}&action=reject`);
+      } else if (action === 'reset-pw') {
+        openPlayerResetPwdModal(id);
+        return;
+      } else {
+        return;
+      }
+      await renderPlayers();
+    } catch (e) {
+      alert('操作失败：' + e.message);
+    }
+  }
+
+  function openPlayerResetPwdModal(id) {
+    const player = _playerCache.find(p => p.id === id);
+    if (!player) return;
+    const sess = getSession();
+    if (!sess || sess.role !== 'super') { alert('仅超级管理员可重置玩家密码'); return; }
+    openModal(`重置玩家密码 - ${player.username}`, `
+      <form id="pResetForm" class="modal-form">
+        <p style="color:var(--c-stone-dark);font-size:13px;margin:0 0 10px">把 <b>${escapeHtml(player.username)}</b>（${escapeHtml(player.email)}）的密码改为：</p>
+        <label><span>新密码（至少 8 位）</span>
+          <input type="password" id="pRstNew" required minlength="8" />
+        </label>
+        <label><span>确认新密码</span>
+          <input type="password" id="pRstNew2" required minlength="8" />
+        </label>
+        <div class="modal-msg" id="pRstMsg"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="pRstCancel">取消</button>
+          <button type="submit" class="btn btn-primary">▶ 重置</button>
+        </div>
+      </form>
+    `);
+    $('#pRstCancel').addEventListener('click', closeModal);
+    $('#pResetForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msgEl = $('#pRstMsg'); msgEl.textContent = '';
+      const np  = $('#pRstNew').value;
+      const np2 = $('#pRstNew2').value;
+      if (np.length < 8)  { msgEl.textContent = '新密码至少 8 位'; return; }
+      if (np !== np2)     { msgEl.textContent = '两次输入的新密码不一致'; return; }
+      try {
+        await PATCH(`/api/admin/players?id=${id}&action=reset`, { new_password: np });
+        closeModal();
+        await renderPlayers();
+      } catch (err) { msgEl.textContent = err.message; }
+    });
+  }
+
+  // 玩家管理：filter 切换 / 刷新
+  document.querySelectorAll('input[name="playerFilter"]').forEach(r => {
+    r.addEventListener('change', renderPlayers);
+  });
+  const btnPRefresh = document.getElementById('btnPlayerRefresh');
+  if (btnPRefresh) btnPRefresh.addEventListener('click', renderPlayers);
 
   /* ============================================
      Modal

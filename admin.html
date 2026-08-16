@@ -81,6 +81,7 @@
     <!-- Tab 切换 -->
     <nav class="admin-tabs">
       <button class="tab active" data-tab="messages">📬 市民留言 <span class="tab-count" id="msgUnread">0</span></button>
+      <button class="tab" data-tab="players">👥 玩家管理 <span class="tab-count" id="playerPending">0</span></button>
       <button class="tab" data-tab="bookings">🏨 酒店预订 <span class="tab-count" id="bookPending">0</span></button>
       <button class="tab" data-tab="kart">🏁 赛道报名 <span class="tab-count" id="kartPending">0</span></button>
       <button class="tab" data-tab="circuit">🏎️ 国际赛车场 <span class="tab-count" id="circuitPending">0</span></button>
@@ -128,6 +129,29 @@
       </div>
       <div id="adminList" class="admin-list">
         <!-- JS 渲染 -->
+      </div>
+    </section>
+
+    <!-- Tab: 玩家管理 -->
+    <section class="tab-pane" id="pane-players">
+      <div class="pane-head">
+        <h2>玩家管理（注册审批 / 重置密码）</h2>
+        <div class="pane-tools">
+          <button class="btn btn-ghost btn-sm" id="btnPlayerRefresh">🔄 刷新</button>
+        </div>
+      </div>
+      <div class="msg-filter">
+        <label><input type="radio" name="playerFilter" value="pending" checked /> 待审批 <span id="cntPlayerPending">0</span></label>
+        <label><input type="radio" name="playerFilter" value="active" /> 已激活 <span id="cntPlayerActive">0</span></label>
+        <label><input type="radio" name="playerFilter" value="rejected" /> 已拒绝 <span id="cntPlayerRejected">0</span></label>
+        <label><input type="radio" name="playerFilter" value="all" /> 全部 <span id="cntPlayerAll">0</span></label>
+      </div>
+      <div id="playerList" class="msg-list">
+        <!-- JS 渲染 -->
+      </div>
+      <div id="playerEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">👥</div>
+        <p>暂无玩家</p>
       </div>
     </section>
 

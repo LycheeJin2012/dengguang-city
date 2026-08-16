@@ -871,6 +871,18 @@
             loginSubmit.textContent = loginMode === 'login' ? '登录' : '注册并登录';
             return;
           }
+          // v16: 注册成功 = 待审批，message 字段说明
+          if (data.user && data.user.status === 'pending') {
+            loginMsg.textContent = '✓ ' + (data.message || '注册申请已提交，等审批');
+            loginMsg.style.color = 'var(--c-gold, #d6a300)';
+            setTimeout(() => {
+              closeLoginModal();
+              loginMsg.style.color = '';
+              loginForm.reset();
+            }, 1800);
+            return;
+          }
+          // 正常登录成功
           loginMsg.textContent = '✓ 成功！';
           loginMsg.style.color = 'var(--c-emerald)';
           setTimeout(async () => {
