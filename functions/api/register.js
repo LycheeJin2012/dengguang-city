@@ -19,7 +19,7 @@ export async function onRequestPost(context) {
   // v16: username 即游戏ID，不再需要独立 game_id 字段
   const gameId = username; // 同步写入 game_id 字段保持兼容
 
-  if (!isUsername(username)) return err(400, '用户名 3-32 字符（= 你的游戏ID），不能含 @ 或换行');
+  if (!isUsername(username)) return err(400, '用户名 2-32 字符（= 你的游戏ID），不能含 @ 或换行');
   if (!isEmail(email)) return err(400, '邮箱格式不正确');
   if (!isNonEmpty(password, 128) || password.length < 8) return err(400, '密码至少 8 位');
 

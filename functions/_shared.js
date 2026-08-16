@@ -123,12 +123,12 @@ export function isEmail(s) {
 }
 
 export function isUsername(s) {
-  // v16: 用户名 = 游戏ID，宽松规则：3-32 字符，允许中文/字母/数字/下划线/连字符/点/空格
-  // 禁止：换行、控制字符、纯空白、@ (会和邮箱冲突)
+  // v16: 用户名 = 游戏ID，宽松规则：2-32 字符，允许中文/字母/数字/下划线/连字符/点/空格
+  // 禁止：换行、控制字符、@ (会和邮箱冲突)
   if (typeof s !== 'string') return false;
   const trimmed = s.trim();
-  if (trimmed.length < 3 || trimmed.length > 32) return false;
-  if (/^[\s@]|[@\s]$/.test(trimmed)) return false;  // 首尾不能是 @ 或空白
+  if (trimmed.length < 2 || trimmed.length > 32) return false;
+  if (/@/.test(trimmed)) return false;  // 不能含 @ (会跟邮箱冲突)
   if (/[\n\r\t\0]/.test(trimmed)) return false;  // 不能含控制字符
   return true;
 }
