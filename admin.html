@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>管理后台 | 灯光市人民政府</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/admin.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2370ad34'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='10' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='3' y='10' width='3' height='3' fill='%23ffd23f'/%3E%3C/svg%3E" />
+  <!-- v14：localStorage 模式。数据只存本机浏览器,不同设备/不同人互不可见。 -->
+</head>
+<body class="admin-body">
+
+  <!-- 顶部 -->
+  <header class="admin-header">
+    <a href="index.html" class="admin-logo">
+      <div class="logo-block">
+        <div class="block-grass"></div>
+        <div class="block-dirt"></div>
+      </div>
+      <div>
+        <b>灯光市 · 管理后台</b>
+        <span>LIGHT CITY · ADMIN CONSOLE</span>
+      </div>
+    </a>
+    <div class="admin-header-right">
+      <a href="index.html" class="header-link">← 返回首页</a>
+    </div>
+  </header>
+
+  <!-- 内部管理提示 -->
+  <div class="admin-warn">
+    <span>🏛️</span>
+    <span><b>内部管理系统</b> · 本页仅供市政厅授权人员使用。所有数据(留言、订单、报名、管理员档案)均存于本机浏览器,跨设备不共享。首次访问请使用初始管理员凭据登录后立即修改密码。</span>
+  </div>
+
+  <!-- ============== 登录视图 ============== -->
+  <main id="view-login" class="view-login">
+    <div class="login-card">
+      <div class="login-head">
+        <div class="login-icon">🔐</div>
+        <h1>管理员登录</h1>
+        <p>ADMIN LOGIN</p>
+      </div>
+      <form id="loginForm" class="login-form">
+        <label>
+          <span>账号</span>
+          <input type="text" id="loginUser" autocomplete="username" required placeholder="管理员账号" />
+        </label>
+        <label>
+          <span>密码</span>
+          <input type="password" id="loginPass" autocomplete="current-password" required placeholder="••••••••" />
+        </label>
+        <div class="login-error" id="loginError"></div>
+        <button type="submit" class="btn btn-primary btn-block">▶ 登录</button>
+        <div class="login-hint" id="loginHint"></div>
+      </form>
+    </div>
+  </main>
+
+  <!-- ============== 后台视图 ============== -->
+  <main id="view-dash" class="view-dash" style="display:none">
+
+    <!-- 顶部用户条 -->
+    <div class="user-bar">
+      <div class="user-info">
+        <span class="user-avatar">👤</span>
+        <div>
+          <b id="userName">—</b>
+          <span id="userRole" class="role-tag">—</span>
+        </div>
+      </div>
+      <div class="user-actions">
+        <button class="btn btn-ghost btn-sm" id="btnLogout">退出登录</button>
+      </div>
+    </div>
+
+    <!-- Tab 切换 -->
+    <nav class="admin-tabs">
+      <button class="tab active" data-tab="messages">📬 市民留言 <span class="tab-count" id="msgUnread">0</span></button>
+      <button class="tab" data-tab="bookings">🏨 酒店预订 <span class="tab-count" id="bookPending">0</span></button>
+      <button class="tab" data-tab="kart">🏁 赛道报名 <span class="tab-count" id="kartPending">0</span></button>
+      <button class="tab" data-tab="circuit">🏎️ 国际赛车场 <span class="tab-count" id="circuitPending">0</span></button>
+      <button class="tab" data-tab="admins" id="tabAdmins">🛡️ 管理员账号</button>
+      <button class="tab" data-tab="password">🔑 修改我的密码</button>
+    </nav>
+
+    <!-- Tab: 留言 -->
+    <section class="tab-pane active" id="pane-messages">
+      <div class="pane-head">
+        <h2>市民留言</h2>
+        <div class="pane-tools">
+          <button class="btn btn-ghost btn-sm" id="btnMarkAll">全部标为已读</button>
+          <button class="btn btn-ghost btn-sm" id="btnClearRead">清除已读</button>
+        </div>
+      </div>
+      <div class="msg-filter">
+        <label><input type="radio" name="msgFilter" value="all" checked /> 全部 <span id="cntAll">0</span></label>
+        <label><input type="radio" name="msgFilter" value="unread" /> 未读 <span id="cntUnread">0</span></label>
+        <label><input type="radio" name="msgFilter" value="read" /> 已读 <span id="cntRead">0</span></label>
+        <select id="msgTypeFilter">
+          <option value="">全部类型</option>
+          <option>建议</option>
+          <option>投诉</option>
+          <option>咨询</option>
+          <option>合作</option>
+        </select>
+      </div>
+      <div id="msgList" class="msg-list">
+        <!-- JS 渲染 -->
+      </div>
+      <div id="msgEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">📭</div>
+        <p>暂无留言</p>
+      </div>
+    </section>
+
+    <!-- Tab: 管理员 -->
+    <section class="tab-pane" id="pane-admins">
+      <div class="pane-head">
+        <h2>管理员账号</h2>
+        <div class="pane-tools">
+          <button class="btn btn-primary btn-sm" id="btnAddAdmin">+ 添加管理员</button>
+        </div>
+      </div>
+      <div id="adminList" class="admin-list">
+        <!-- JS 渲染 -->
+      </div>
+    </section>
+
+    <!-- Tab: 酒店预订 -->
+    <section class="tab-pane" id="pane-bookings">
+      <div class="pane-head">
+        <h2>酒店预订</h2>
+        <div class="pane-tools">
+          <button class="btn btn-ghost btn-sm" id="btnBookClearDone">清除已完成</button>
+        </div>
+      </div>
+      <div class="msg-filter">
+        <label><input type="radio" name="bookFilter" value="all" checked /> 全部 <span id="bookCntAll">0</span></label>
+        <label><input type="radio" name="bookFilter" value="pending" /> 待处理 <span id="bookCntPending">0</span></label>
+        <label><input type="radio" name="bookFilter" value="confirmed" /> 已确认 <span id="bookCntConfirmed">0</span></label>
+        <label><input type="radio" name="bookFilter" value="completed" /> 已完成 <span id="bookCntCompleted">0</span></label>
+        <select id="bookRoomFilter">
+          <option value="">全部房型</option>
+          <option value="standard">树上标间</option>
+          <option value="queen">树上大床房</option>
+          <option value="luxury">树上双床豪华房</option>
+        </select>
+      </div>
+      <div id="bookList" class="msg-list">
+        <!-- JS 渲染 -->
+      </div>
+      <div id="bookEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">🏨</div>
+        <p>暂无订单</p>
+      </div>
+    </section>
+
+    <!-- Tab: 赛道报名 -->
+    <section class="tab-pane" id="pane-kart">
+      <div class="pane-head">
+        <h2>赛道试跑报名</h2>
+        <div class="pane-tools">
+          <button class="btn btn-ghost btn-sm" id="btnKartClearDone">清除已处理</button>
+        </div>
+      </div>
+      <div class="msg-filter">
+        <label><input type="radio" name="kartFilter" value="all" checked /> 全部 <span id="kartCntAll">0</span></label>
+        <label><input type="radio" name="kartFilter" value="pending" /> 待审核 <span id="kartCntPending">0</span></label>
+        <label><input type="radio" name="kartFilter" value="approved" /> 已批准 <span id="kartCntApproved">0</span></label>
+        <label><input type="radio" name="kartFilter" value="rejected" /> 已拒绝 <span id="kartCntRejected">0</span></label>
+        <select id="kartSessionFilter">
+          <option value="">全部场次</option>
+          <option>周六 14:00 计时赛</option>
+          <option>周六 20:00 接力赛</option>
+          <option>周日 10:00 教学场</option>
+          <option>其他时间</option>
+        </select>
+      </div>
+      <div id="kartList" class="msg-list">
+        <!-- JS 渲染 -->
+      </div>
+      <div id="kartEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">🏁</div>
+        <p>暂无报名</p>
+      </div>
+    </section>
+
+    <!-- Tab: 国际赛车场 -->
+    <section class="tab-pane" id="pane-circuit">
+      <div class="pane-head">
+        <h2>国际赛车场·试车报名</h2>
+        <div class="pane-tools">
+          <button class="btn btn-ghost btn-sm" id="btnCircuitClearDone">清除已处理</button>
+        </div>
+      </div>
+      <div class="msg-filter">
+        <label><input type="radio" name="circuitFilter" value="all" checked /> 全部 <span id="circuitCntAll">0</span></label>
+        <label><input type="radio" name="circuitFilter" value="pending" /> 待审核 <span id="circuitCntPending">0</span></label>
+        <label><input type="radio" name="circuitFilter" value="approved" /> 已批准 <span id="circuitCntApproved">0</span></label>
+        <label><input type="radio" name="circuitFilter" value="rejected" /> 已拒绝 <span id="circuitCntRejected">0</span></label>
+        <select id="circuitSessionFilter">
+          <option value="">全部场次</option>
+          <option>排位赛 周三 20:00</option>
+          <option>正赛 周六 15:00</option>
+          <option>国际邀请赛 月初</option>
+          <option>自由练习</option>
+        </select>
+        <select id="circuitLicenseFilter">
+          <option value="">全部驾照</option>
+          <option>B 级（初级）</option>
+          <option>A 级（中级）</option>
+          <option>S 级（高级 / 职业）</option>
+        </select>
+      </div>
+      <div id="circuitList" class="msg-list">
+        <!-- JS 渲染 -->
+      </div>
+      <div id="circuitEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">🏎️</div>
+        <p>暂无报名</p>
+      </div>
+    </section>
+
+    <!-- Tab: 我的密码 -->
+    <section class="tab-pane" id="pane-password">
+      <div class="pane-head">
+        <h2>修改我的密码</h2>
+      </div>
+      <form class="pwd-form" id="pwdForm">
+        <label>
+          <span>当前密码</span>
+          <input type="password" id="pwdOld" required autocomplete="current-password" />
+        </label>
+        <label>
+          <span>新密码（至少 8 位）</span>
+          <input type="password" id="pwdNew" required minlength="8" autocomplete="new-password" />
+        </label>
+        <label>
+          <span>确认新密码</span>
+          <input type="password" id="pwdNew2" required minlength="8" autocomplete="new-password" />
+        </label>
+        <div class="pwd-msg" id="pwdMsg"></div>
+        <button type="submit" class="btn btn-primary">▶ 更新密码</button>
+      </form>
+    </section>
+
+  </main>
+
+  <!-- ============== 模态：添加/重置密码 ============== -->
+  <div class="modal-mask" id="modalMask" style="display:none">
+    <div class="modal">
+      <div class="modal-head">
+        <h3 id="modalTitle">—</h3>
+        <button class="modal-close" id="modalClose">✕</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <!-- JS 渲染 -->
+      </div>
+    </div>
+  </div>
+
+  <script src="js/admin.js"></script>
+</body>
+</html>
