@@ -40,7 +40,7 @@
 
   async function loadProfile(u) {
     try {
-      const data = await GET(`/api/profile/${encodeURIComponent(u)}`);
+      const data = await GET(`/api/profile?u=${encodeURIComponent(u)}`);
       const p = data.player;
       const stats = data.stats;
       $('#profileHeader').innerHTML = `
