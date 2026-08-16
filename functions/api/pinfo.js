@@ -1,33 +1,16 @@
-// 路由：/api/profile + /api/profile/me + /api/profile/<username>
+// GET /api/pinfo?u=<username> - 玩家公开信息 + ta 的留言
+// PATCH /api/pinfo?me=1 - 玩家自己改 bio/avatar
 import { ok, err, stripHtml, isNonEmpty, readToken, getSession } from '../_shared.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
   const url = new URL(request.url);
-  const sessPath = url.pathname; // 可能是 /api/profile 或 /api/profile/me 或 /api/profile/<user>
-
-  // /api/profile/me 单独处理
-  if (sessPath === '/api/profile/me' || sessPath === '/api/profile/me/') {
-    const token = readToken(request);
-    const sess = await getSession(env, token);
-    if (!sess || !sess.player_id) return err(401, '请先登录玩家账号');
-    const me = await env.DB.prepare(
-      'SELECT id, username, email, game_id, status, bio, avatar_emoji, created_at FROM players WHERE id = ?'
-    ).bind(sess.player_id).first();
-    return ok({ me });
-  }
-
-  // /api/profile?u=xxx  或 /api/profile/<user>
-  let username = url.searchParams.get('u') || '';
-  if (!username) {
-    const m = sessPath.match(/^\/api\/profile\/(.+?)\/?$/);
-    if (m) username = decodeURIComponent(m[1]).trim();
-  }
-  if (!username) return err(400, '请提供 username');
+  const username = url.searchParams.get('u') || '';
+  if (!username) return err(400, '请提供 ?u=username');
 
   const p = await env.DB.prepare(
-    'SELECT id, username, email, game_id, status, bio, avatar_emoji, created_at FROM players WHERE username = ?'
+    'SELECT id, username, game_id, status, bio, avatar_emoji, created_at FROM players WHERE username = ?'
   ).bind(username).first();
   if (!p || p.status === 'rejected') return err(404, '玩家不存在');
   const msgs = await env.DB.prepare(
@@ -46,7 +29,7 @@ export async function onRequestPatch(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
   const url = new URL(request.url);
-  if (url.pathname !== '/api/profile/me') return err(404, '未知路径');
+  if (url.searchParams.get('me') !== '1') return err(404, '未知路径');
   const token = readToken(request);
   const sess = await getSession(env, token);
   if (!sess || !sess.player_id) return err(401, '请先登录玩家账号');

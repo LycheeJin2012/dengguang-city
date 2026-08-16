@@ -40,7 +40,7 @@
 
   async function loadProfile(u) {
     try {
-      const data = await GET(`/api/profile?u=${encodeURIComponent(u)}`);
+      const data = await GET(`/api/pinfo?u=${encodeURIComponent(u)}`);
       const p = data.player;
       const stats = data.stats;
       $('#profileHeader').innerHTML = `
@@ -128,7 +128,7 @@
       e.preventDefault();
       const msgEl = $('#bioMsg'); msgEl.textContent = '';
       try {
-        await PATCH('/api/profile/me', {
+        await PATCH('/api/pinfo?me=1', {
           avatar_emoji: $('#newEmoji').value.trim(),
           bio: $('#newBio').value.trim()
         });
