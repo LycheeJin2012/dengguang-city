@@ -2,6 +2,8 @@ name = "dengguang-city"
 compatibility_date = "2026-08-16"
 pages_build_output_dir = "."
 
-# D1 binding - 在 Cloudflare Dashboard → Pages → Settings → Functions → D1 database bindings
-# Variable name: DB → dengguang-city-db
-# (Git 集成后需要在 Dashboard 手动绑定一次；wrangler.toml 不会生效在 Pages)
+# 强制注入 D1 binding（Dashboard 配置似乎没 attach，用 wrangler.toml 兜底）
+[[d1_databases]]
+binding = "DB"
+database_name = "dengguang-city-db"
+database_id = "8014f3c2-e578-4e7d-8c54-c37c3b28f401"
