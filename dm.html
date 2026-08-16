@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>私信 | 灯光市人民政府</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2370ad34'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='10' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='3' y='10' width='3' height='3' fill='%23ffd23f'/%3E%3C/svg%3E" />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Noto+Sans+SC:wg2,400,500,700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <header class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">
+        <div class="logo-block"><div class="block-grass"></div><div class="block-dirt"></div></div>
+        <div class="logo-text">
+          <span class="logo-zh">灯光市人民政府</span>
+          <span class="logo-en">LIGHT CITY GOVERNMENT</span>
+        </div>
+      </a>
+      <span class="nav-user-slot" id="navUserSlot"></span>
+    </div>
+  </header>
+
+  <section class="section">
+    <div class="container">
+      <h1 class="section-title" style="margin: 30px 0 20px; font-size: 22px;">📬 站内私信</h1>
+      <div class="dm-layout">
+        <aside class="dm-sidebar">
+          <button class="btn btn-primary btn-sm" id="btnNewDM" style="width:100%; margin-bottom: 12px;">✉️ 新建私信</button>
+          <div class="dm-tabs">
+            <button class="dm-tab active" data-box="inbox">📥 收件箱</button>
+            <button class="dm-tab" data-box="sent">📤 已发送</button>
+          </div>
+          <div id="dmList" class="dm-list"></div>
+          <div id="dmListEmpty" class="empty-state" style="display:none">
+            <div class="empty-icon">📭</div>
+            <p style="font-size:13px">暂无消息</p>
+          </div>
+        </aside>
+        <main class="dm-main">
+          <div id="dmMain">
+            <div class="empty-state">
+              <div class="empty-icon">💬</div>
+              <p>从左侧选择一个会话，或点击"新建私信"开始</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+  </section>
+
+  <a href="index.html" class="back-home">← 返回首页</a>
+
+  <script src="js/crypto.js"></script>
+  <script src="js/dm.js"></script>
+</body>
+</html>
