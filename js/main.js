@@ -804,10 +804,10 @@
     }
     loginMsg.textContent = '';
   }
-  window.openLoginModal = function (reason) {
+  window.openLoginModal = function (reason, mode) {
     if (!loginMask) return;
     if (reason) loginMsg.textContent = reason;
-    setLoginMode('login');
+    setLoginMode(mode === 'register' ? 'register' : 'login');
     loginMask.style.display = '';
     document.body.style.overflow = 'hidden';
     setTimeout(() => loginUsername && loginUsername.focus(), 50);
@@ -821,6 +821,15 @@
   if (loginMask)   loginMask.addEventListener('click', (e) => { if (e.target === loginMask) closeLoginModal(); });
   if (loginModeLogin)    loginModeLogin.addEventListener('click', (e) => { e.preventDefault(); setLoginMode('login'); });
   if (loginModeRegister) loginModeRegister.addEventListener('click', (e) => { e.preventDefault(); setLoginMode('register'); });
+
+  /* ---------- 14.1 服务卡：市民身份登记 → 打开注册 modal ---------- */
+  const srvRegister = document.getElementById('srvRegister');
+  if (srvRegister) {
+    srvRegister.addEventListener('click', (e) => {
+      e.preventDefault();
+      openLoginModal('新市民注册 · 填写用户名+邮箱+密码即可', 'register');
+    });
+  }
 
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
