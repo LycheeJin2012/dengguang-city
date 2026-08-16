@@ -1,5 +1,6 @@
 // functions/_shared.js
 // 共享：响应工具 / 密码哈希 / session 校验
+// 2026-08-17: 触发 rebuild 以确保 D1 binding attach 到生产
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
