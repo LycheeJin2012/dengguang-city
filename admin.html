@@ -45,7 +45,7 @@
         <h1>管理员登录</h1>
         <p>ADMIN LOGIN</p>
       </div>
-      <form id="loginForm" class="login-form" onsubmit="return false;">
+      <form id="loginForm" class="login-form" onsubmit="if(window.adminDoLogin){window.adminDoLogin();}return false;">
         <label>
           <span>账号</span>
           <input type="text" id="loginUser" autocomplete="username" required placeholder="管理员账号" />
@@ -55,7 +55,7 @@
           <input type="password" id="loginPass" autocomplete="current-password" required placeholder="••••••••" />
         </label>
         <div class="login-error" id="loginError"></div>
-        <button type="button" id="loginSubmitBtn" class="btn btn-primary btn-block">▶ 登录</button>
+        <button type="button" id="loginSubmitBtn" class="btn btn-primary btn-block" onclick="if(window.adminDoLogin)window.adminDoLogin()">▶ 登录</button>
         <div class="login-hint" id="loginHint"></div>
       </form>
     </div>

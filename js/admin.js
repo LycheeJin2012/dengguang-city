@@ -103,10 +103,8 @@
       if (submitBtn) { submitBtn.textContent = origText; submitBtn.disabled = false; }
     }
   }
-  const loginBtn = $('#loginSubmitBtn');
-  if (loginBtn) loginBtn.addEventListener('click', doLogin);
-  // 保留 form submit 兜底（按 Enter 也能登）
-  $('#loginForm').addEventListener('submit', (e) => { e.preventDefault(); doLogin(); });
+  // 暴露全局，供 admin.html 内联 onclick/onsubmit 触发（内嵌浏览器里 addEventListener 可能不触发，内联最稳）
+  window.adminDoLogin = doLogin;
 
   /* 退登 */
   $('#btnLogout').addEventListener('click', async () => {
