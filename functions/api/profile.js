@@ -91,3 +91,4 @@ export async function onRequestPatch(context) {
   await env.DB.prepare(`UPDATE players SET ${updates.join(', ')} WHERE id = ?`).bind(...values).run();
   return ok({ id: me.player.id });
 }
+// cache-bust 1786920422
