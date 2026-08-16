@@ -169,6 +169,7 @@
       box.innerHTML = list.map(m => {
         const isRead = m.status !== 'new';
         const isDone = m.status === 'done';
+        const hasReply = m.admin_reply && m.admin_reply.length > 0;
         return `
         <article class="msg-item ${isRead ? 'is-read' : ''}" data-id="${m.id}">
           <div class="msg-head">
@@ -176,11 +177,20 @@
               <b class="msg-name">👤 ${escapeHtml(m.name)}${m.contact ? ' · ' + escapeHtml(m.contact) : ''}</b>
               ${m.player_username ? `<span class="msg-player-tag">@${escapeHtml(m.player_username)}</span>` : ''}
               ${isDone ? '<span class="msg-read-tag">已处理</span>' : isRead ? '<span class="msg-read-tag">已读</span>' : '<span class="msg-unread-tag">新</span>'}
+              ${hasReply ? '<span class="msg-replied-tag" title="已回复玩家">💬 已回复</span>' : ''}
             </div>
             <div class="msg-time">${fmtTime(m.created_at)}</div>
           </div>
           <div class="msg-content">${escapeHtml(m.content)}</div>
+          ${hasReply ? `
+            <div class="msg-reply-box">
+              <b>📣 市政厅回复：</b>
+              <div>${escapeHtml(m.admin_reply)}</div>
+              <small>回复于 ${fmtTime(m.replied_at)}</small>
+            </div>
+          ` : ''}
           <div class="msg-actions book-actions">
+            <button class="btn btn-primary btn-sm" data-act="reply">${hasReply ? '✎ 编辑回复' : '💬 回复'}</button>
             ${isDone ? '' : `<button class="btn btn-ghost btn-sm" data-act="done">标为已处理</button>`}
             <button class="btn btn-ghost btn-sm" data-act="toggle">${isRead && !isDone ? '标为未读' : '标为已读'}</button>
             <button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>
@@ -190,9 +200,11 @@
 
       box.querySelectorAll('.msg-item').forEach(el => {
         const id = +el.dataset.id;
+        const m  = list.find(x => x.id === id);
         el.querySelector('[data-act="toggle"]')?.addEventListener('click', () => toggleRead(id));
         el.querySelector('[data-act="done"]')?.addEventListener('click', () => markDone(id));
         el.querySelector('[data-act="del"]')?.addEventListener('click', () => deleteMessage(id));
+        el.querySelector('[data-act="reply"]')?.addEventListener('click', () => openReplyModal(m));
       });
     } catch (e) {
       console.error('加载留言失败:', e);
@@ -219,6 +231,46 @@
     if (!confirm('确认删除这条留言？')) return;
     try { await DELETE('/api/admin/messages?id=' + id); renderMessages(); }
     catch (e) { alert('删除失败：' + e.message); }
+  }
+  async function openReplyModal(m) {
+    openModal(`回复市民留言 - #${m.id}`, `
+      <div style="margin-bottom:12px;padding:10px 12px;background:var(--c-bg-2);border:2px solid var(--c-stone);font-size:13px">
+        <b>${escapeHtml(m.name)} 说：</b>
+        <div style="margin-top:6px;color:var(--c-stone-dark)">${escapeHtml(m.content)}</div>
+      </div>
+      <form id="replyForm" class="modal-form">
+        <label><span>市政厅回复（2000 字以内）</span>
+          <textarea id="replyText" rows="5" maxlength="2000" placeholder="正式回复这位市民...">${escapeHtml(m.admin_reply || '')}</textarea>
+        </label>
+        <div class="modal-msg" id="replyMsg"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-ghost" id="replyCancel">取消</button>
+          ${m.admin_reply ? '<button type="button" class="btn btn-ghost btn-danger" id="replyClear">清除回复</button>' : ''}
+          <button type="submit" class="btn btn-primary">💬 提交回复</button>
+        </div>
+      </form>
+    `);
+    $('#replyCancel').addEventListener('click', closeModal);
+    if ($('#replyClear')) $('#replyClear').addEventListener('click', async () => {
+      if (!confirm('确定要清除回复？')) return;
+      try {
+        await PATCH('/api/admin/messages?id=' + m.id, { admin_reply: '' });
+        closeModal();
+        renderMessages();
+      } catch (e) { $('#replyMsg').textContent = e.message; }
+    });
+    $('#replyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const msgEl = $('#replyMsg'); msgEl.textContent = '';
+      const text = $('#replyText').value.trim();
+      if (!text) { msgEl.textContent = '回复内容不能为空'; return; }
+      if (text.length > 2000) { msgEl.textContent = '回复内容不能超过 2000 字符'; return; }
+      try {
+        await PATCH('/api/admin/messages?id=' + m.id, { admin_reply: text });
+        closeModal();
+        renderMessages();
+      } catch (err) { msgEl.textContent = err.message; }
+    });
   }
   $('#btnMarkAll').addEventListener('click', async () => {
     if (!confirm('将所有新留言标记为已读？')) return;

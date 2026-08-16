@@ -11,7 +11,7 @@ export async function onRequestGet(context) {
   const offset = Math.max(parseInt(url.searchParams.get('offset') || '0', 10), 0);
 
   const rows = await env.DB.prepare(
-    'SELECT id, name, content, created_at FROM messages ORDER BY created_at DESC LIMIT ? OFFSET ?'
+    'SELECT id, player_id, name, contact, content, status, admin_reply, replied_at, created_at FROM messages ORDER BY created_at DESC LIMIT ? OFFSET ?'
   ).bind(limit, offset).all();
 
   return ok({ messages: rows.results, limit, offset });

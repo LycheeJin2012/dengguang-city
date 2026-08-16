@@ -189,16 +189,20 @@
       board.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>暂无市民留言 · 来做第一个吧</p></div>';
       return;
     }
-    board.innerHTML = msgs.map(m => `
+    board.innerHTML = msgs.map(m => {
+      const hasReply = m.admin_reply && m.admin_reply.length > 0;
+      return `
       <article class="pm-item">
         <div class="pm-head">
           <b>${escapeHtml(m.name)}</b>
-          <span class="pm-type pm-type-${escapeHtml(m.type)}">${escapeHtml(m.type || '建议')}</span>
+          <span class="pm-type pm-type-${escapeHtml(m.type || '建议')}">${escapeHtml(m.type || '建议')}</span>
+          ${hasReply ? '<span class="msg-replied-tag">💬 已回复</span>' : ''}
         </div>
         <p class="pm-content">${escapeHtml(m.content)}</p>
+        ${hasReply ? `<div class="pm-reply-box"><b>📣 市政厅回复：</b>${escapeHtml(m.admin_reply)}</div>` : ''}
         <div class="pm-time">${formatTime(m.created_at)}</div>
       </article>
-    `).join('');
+    `;}).join('');
   }
   function escapeHtml(s) {
     return String(s == null ? '' : s)
@@ -905,6 +909,16 @@
 
   /* ---------- 15. 顶栏玩家状态（谁在登录） ---------- */
   const navUserSlot = document.getElementById('navUserSlot');
+  function prefillContactForm(player) {
+    if (!player) return;
+    const nameEl = document.getElementById('contactName');
+    if (nameEl && !nameEl.value) {
+      nameEl.value = player.username;
+      nameEl.readOnly = true;
+      nameEl.style.background = 'var(--c-bg-2, #f0e8d0)';
+      nameEl.title = '已用你的游戏ID自动填写（市政厅要求：留言姓名 = 注册用户名）';
+    }
+  }
   async function refreshUserState() {
     if (!navUserSlot) return;
     try {
@@ -915,6 +929,8 @@
           <span class="nav-user-name">👤 ${escapeHtml(data.user.username)}</span>
           <a href="#" id="navLogout" class="nav-logout-link">登出</a>
         `;
+        // v16: 自动填留言 form 的姓名
+        prefillContactForm(data.user);
         const lo = document.getElementById('navLogout');
         if (lo) lo.addEventListener('click', async (e) => {
           e.preventDefault();

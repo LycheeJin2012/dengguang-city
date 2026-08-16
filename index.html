@@ -722,11 +722,11 @@
             </div>
           </div>
         </div>
-        <form class="contact-form" onsubmit="event.preventDefault(); submitMessage(this);">
-          <label>姓名 <input type="text" required placeholder="你的游戏ID" /></label>
-          <label>联系方式 <input type="text" required placeholder="邮箱或游戏内编号" /></label>
+        <form class="contact-form" id="contactForm" onsubmit="event.preventDefault(); submitMessage(this);">
+          <label>姓名 <input type="text" id="contactName" required placeholder="你的游戏ID" /></label>
+          <label>联系方式 <input type="text" id="contactContact" required placeholder="邮箱或游戏内编号" /></label>
           <label>事项类型
-            <select>
+            <select id="contactType">
               <option>建议</option>
               <option>投诉</option>
               <option>咨询</option>

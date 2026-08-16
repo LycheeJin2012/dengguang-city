@@ -2203,6 +2203,27 @@ textarea { resize: vertical; min-height: 90px; }
 .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 12px; }
 .form-msg { font-size: 13px; min-height: 18px; }
 
+/* ---------- 公共留言板 admin 回复样式 ---------- */
+.msg-replied-tag {
+  display: inline-block; font-size: 11px;
+  padding: 2px 6px; background: var(--c-emerald, #5fb14f);
+  color: #fff; border: 1px solid var(--c-grass-dark, #2d6e1f);
+  margin-left: 4px;
+}
+.msg-reply-box, .pm-reply-box {
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: #e9f5e3;
+  border-left: 4px solid var(--c-emerald, #5fb14f);
+  border-radius: 2px;
+  font-size: 13px;
+  color: #1a3d12;
+}
+.msg-reply-box b, .pm-reply-box b { color: var(--c-grass-dark, #2d6e1f); }
+.msg-reply-box small, .pm-reply-box small {
+  display: block; margin-top: 4px; color: var(--c-stone-dark, #555); font-size: 11px;
+}
+
 /* ---------- 预订 Modal ---------- */
 .modal-book { max-width: 560px; }
 .book-room-summary {
