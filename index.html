@@ -867,7 +867,7 @@
       <p style="text-align:center;color:var(--c-text-dim);font-size:13px;margin-bottom:16px">
         登录后可发留言、订酒店、报名赛车
       </p>
-      <form id="loginForm" autocomplete="on">
+      <form id="loginForm" autocomplete="on" onsubmit="return false;">
         <div class="form-row">
           <label>用户名 / 游戏ID <small style="color:var(--c-text-dim)">(2-32 字符)</small></label>
           <input type="text" id="loginUsername" name="username" autocomplete="username" required minlength="2" maxlength="32" />
