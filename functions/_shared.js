@@ -93,10 +93,17 @@ export async function destroySession(env, token) {
 }
 
 export function readToken(request) {
+  // 1) explicit header
   const h = request.headers.get('X-Session-Token') || request.headers.get('Authorization');
-  if (!h) return null;
-  if (h.startsWith('Bearer ')) return h.slice(7);
-  return h;
+  if (h) {
+    if (h.startsWith('Bearer ')) return h.slice(7);
+    return h;
+  }
+  // 2) cookie: lc_session=xxx
+  const cookie = request.headers.get('Cookie') || '';
+  const m = cookie.match(/(?:^|;\s*)lc_session=([^;]+)/);
+  if (m) return m[1];
+  return null;
 }
 
 // 限流：每 IP 每分钟 60 次（基于 CF-IPCountry 不太可靠，这里只做内存级）
