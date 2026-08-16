@@ -873,7 +873,7 @@
           }
           loginMsg.textContent = '✓ 成功！';
           loginMsg.style.color = 'var(--c-emerald)';
-          setTimeout(() => {
+          setTimeout(async () => {
             closeLoginModal();
             loginMsg.style.color = '';
             await refreshUserState();

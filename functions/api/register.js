@@ -1,5 +1,5 @@
-// POST /api/register - 玩家注册
-import { ok, err, hashPassword, isUsername, isEmail, isNonEmpty, stripHtml } from '../_shared.js';
+// POST /api/register - 玩家注册（注册成功同时创建 session 并 Set-Cookie）
+import { ok, err, hashPassword, isUsername, isEmail, isNonEmpty, stripHtml, createSession } from '../_shared.js';
 
 export async function onRequestPost(context) {
   const { env, request } = context;
@@ -34,5 +34,24 @@ export async function onRequestPost(context) {
     'INSERT INTO players (username, email, password_hash, salt, game_id) VALUES (?, ?, ?, ?, ?)'
   ).bind(username, email, hash, salt, gameId || null).run();
 
-  return ok({ user: { id: ins.meta.last_row_id, username, email, game_id: gameId || null } });
+  const userId = ins.meta.last_row_id;
+
+  // 创建 player session + Set-Cookie（注册即登录）
+  const { token, expires_at } = await createSession(env, userId, null);
+  const cookie = `lc_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`;
+
+  return new Response(JSON.stringify({
+    ok: true,
+    role: 'player',
+    user_id: userId,
+    token,
+    expires_at,
+    user: { id: userId, username, email, game_id: gameId || null }
+  }), {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Set-Cookie': cookie
+    }
+  });
 }
