@@ -120,8 +120,8 @@
     revealObs.observe(el);
   });
 
-  /* ---------- 7. 留言提交：POST 到后端 API ---------- */
-  window.submitMessage = function (form) {
+  /* ---------- 7. 留言提交：POST 到 /api/messages（需要玩家登录） ---------- */
+  window.submitMessage = async function (form) {
     const inputs = form.querySelectorAll('input, select, textarea');
     const name    = (inputs[0].value || '').trim();
     const contact = (inputs[1].value || '').trim();
@@ -140,21 +140,28 @@
     btn.textContent = '提交中...';
     btn.disabled = true;
 
-    // localStorage 写入留言
     try {
-      const list = JSON.parse(localStorage.getItem('lc_messages_v14') || '[]');
-      const item = {
-        id: Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b => b.toString(16).padStart(2,'0')).join(''),
-        name, contact, type, content,
-        read: 0,
-        created_at: new Date().toISOString()
-      };
-      list.unshift(item);
-      localStorage.setItem('lc_messages_v14', JSON.stringify(list));
-      btn.textContent = '✓ 已提交（留言只存本机浏览器）';
-      btn.style.background = 'var(--c-emerald)';
-      form.reset();
-      loadPublicMessages();
+      const res = await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',  // 关键：带上 session cookie
+        body: JSON.stringify({ name, contact, type, content })
+      });
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        btn.textContent = '✓ 已提交';
+        btn.style.background = 'var(--c-emerald)';
+        form.reset();
+        loadPublicMessages();
+      } else if (res.status === 401 || /登录/.test(data.error || '')) {
+        btn.textContent = '请先登录玩家账号';
+        btn.style.background = 'var(--c-redstone)';
+        // 2 秒后弹登录 modal
+        setTimeout(() => openLoginModal('请先登录玩家账号再发留言'), 1500);
+      } else {
+        btn.textContent = '✗ ' + (data.error || '提交失败');
+        btn.style.background = 'var(--c-redstone)';
+      }
     } catch (err) {
       btn.textContent = '提交失败 ✗';
       btn.style.background = 'var(--c-redstone)';
@@ -167,12 +174,16 @@
     }, 2200);
   };
 
-  /* ---------- 7.5 公开留言墙：从 localStorage 读取 ---------- */
-  function loadPublicMessages() {
+  /* ---------- 7.5 公开留言墙：从 /api/messages 读取（公开 GET） ---------- */
+  async function loadPublicMessages() {
     const board = document.getElementById('publicMessageBoard');
     if (!board) return;
     let msgs = [];
-    try { msgs = JSON.parse(localStorage.getItem('lc_messages_v14') || '[]'); } catch (e) {}
+    try {
+      const res = await fetch('/api/messages?public=1', { credentials: 'include' });
+      const data = await res.json();
+      if (res.ok && data.ok) msgs = data.messages || [];
+    } catch (e) { /* 网络错误忽略 */ }
     msgs = msgs.slice(0, 6);
     if (msgs.length === 0) {
       board.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>暂无市民留言 · 来做第一个吧</p></div>';
@@ -182,7 +193,7 @@
       <article class="pm-item">
         <div class="pm-head">
           <b>${escapeHtml(m.name)}</b>
-          <span class="pm-type pm-type-${escapeHtml(m.type)}">${escapeHtml(m.type)}</span>
+          <span class="pm-type pm-type-${escapeHtml(m.type)}">${escapeHtml(m.type || '建议')}</span>
         </div>
         <p class="pm-content">${escapeHtml(m.content)}</p>
         <div class="pm-time">${formatTime(m.created_at)}</div>
@@ -422,18 +433,24 @@
     kartMsg.textContent = '';
 
     try {
-      const list = JSON.parse(localStorage.getItem('lc_kart_v14') || '[]');
-      list.unshift({
-        id: Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b => b.toString(16).padStart(2,'0')).join(''),
-        name, contact, session, car, note,
-        status: 'pending',
-        created_at: new Date().toISOString()
+      const res = await fetch('/api/kart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name, contact, session, car, note })
       });
-      localStorage.setItem('lc_kart_v14', JSON.stringify(list));
-      submitBtn.textContent = '✓ 报名已提交（仅本机浏览器可见）';
-      submitBtn.style.background = 'var(--c-emerald)';
-      kartForm.reset();
-      setTimeout(() => closeKartModal(), 1500);
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        submitBtn.textContent = '✓ 报名已提交（跨设备同步）';
+        submitBtn.style.background = 'var(--c-emerald)';
+        kartForm.reset();
+        setTimeout(() => closeKartModal(), 1500);
+      } else if (res.status === 401) {
+        kartMsg.textContent = '请先登录玩家账号';
+        setTimeout(() => { closeKartModal(); openLoginModal('请先登录玩家账号再报名'); }, 1000);
+      } else {
+        kartMsg.textContent = '✗ ' + (data.error || '提交失败');
+      }
     } catch (err) {
       kartMsg.textContent = '提交失败：' + err.message;
     } finally {
@@ -492,23 +509,30 @@
       circuitMsg.textContent = '';
 
       try {
-        const list = JSON.parse(localStorage.getItem('lc_circuit_v14') || '[]');
-        list.unshift({
-          id: Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b => b.toString(16).padStart(2,'0')).join(''),
-          name, contact,
-          license: circuitLicense.value,
-          session: circuitSession.value,
-          car: circuitCar.value.trim(),
-          note: circuitNote.value.trim(),
-          status: 'pending',
-          created_at: new Date().toISOString()
+        const res = await fetch('/api/circuit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            name, contact,
+            license: circuitLicense.value,
+            session: circuitSession.value,
+            car: circuitCar.value.trim(),
+            note: circuitNote.value.trim()
+          })
         });
-        localStorage.setItem('lc_circuit_v14', JSON.stringify(list));
-        const data = { ok: true };
-        submitBtn.textContent = '✓ 报名已提交，管理员会确认';
-        submitBtn.style.background = 'var(--c-emerald)';
-        circuitForm.reset();
-        setTimeout(() => closeCircuitModal(), 1500);
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          submitBtn.textContent = '✓ 报名已提交（跨设备同步）';
+          submitBtn.style.background = 'var(--c-emerald)';
+          circuitForm.reset();
+          setTimeout(() => closeCircuitModal(), 1500);
+        } else if (res.status === 401) {
+          circuitMsg.textContent = '请先登录玩家账号';
+          setTimeout(() => { closeCircuitModal(); openLoginModal('请先登录玩家账号再报名'); }, 1000);
+        } else {
+          circuitMsg.textContent = '✗ ' + (data.error || '提交失败');
+        }
       } catch (err) {
         circuitMsg.textContent = '提交失败：' + err.message;
       } finally {
@@ -710,29 +734,33 @@
     bookMsg.textContent = '';
 
     try {
-      const list = JSON.parse(localStorage.getItem('lc_bookings_v14') || '[]');
-      list.unshift({
-        id: Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b => b.toString(16).padStart(2,'0')).join(''),
-        room_id: bookRoom.id,
-        room_name: bookRoom.name,
-        price_per_night: bookRoom.price,
-        check_in: bookIn.value,
-        check_out: bookOut.value,
-        nights,
-        total,
-        persons,
-        guests: bookGuests.value,
-        breakfast: wantBreakfast,
-        bf_cost: (wantBreakfast && BFAST_PER_NIGHT_PER_PERSON != null) ? nights * persons * BFAST_PER_NIGHT_PER_PERSON : null,
-        name, contact, note,
-        status: 'pending',
-        created_at: new Date().toISOString()
+      const res = await fetch('/api/bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          room_id: bookRoom.id,
+          room_name: bookRoom.name,
+          in_date: bookIn.value,
+          out_date: bookOut.value,
+          nights,
+          persons,
+          breakfast: wantBreakfast ? 1 : 0,
+          name, contact, note
+        })
       });
-      localStorage.setItem('lc_bookings_v14', JSON.stringify(list));
-      submitBtn.textContent = '✓ 已提交（仅本机浏览器可见）';
-      submitBtn.style.background = 'var(--c-emerald)';
-      bookForm.reset();
-      setTimeout(() => closeBookModal(), 1500);
+      const data = await res.json();
+      if (res.ok && data.ok) {
+        submitBtn.textContent = '✓ 已提交（跨设备同步，管理员会确认）';
+        submitBtn.style.background = 'var(--c-emerald)';
+        bookForm.reset();
+        setTimeout(() => closeBookModal(), 1500);
+      } else if (res.status === 401) {
+        bookMsg.textContent = '请先登录玩家账号';
+        setTimeout(() => { closeBookModal(); openLoginModal('请先登录玩家账号再预订'); }, 1000);
+      } else {
+        bookMsg.textContent = '✗ ' + (data.error || '提交失败');
+      }
     } catch (err) {
       bookMsg.textContent = '提交失败：' + err.message;
     } finally {
@@ -743,4 +771,144 @@
       }, 2200);
     }
   });
+  /* ---------- 14. 玩家登录 / 注册 modal（顶栏触发） ---------- */
+  const loginMask = document.getElementById('loginMask');
+  const loginClose = document.getElementById('loginClose');
+  const loginForm = document.getElementById('loginForm');
+  const loginMsg = document.getElementById('loginMsg');
+  const loginModeLogin = document.getElementById('loginModeLogin');
+  const loginModeRegister = document.getElementById('loginModeRegister');
+  const loginTitle = document.getElementById('loginTitle');
+  const loginUsername = document.getElementById('loginUsername');
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPassword = document.getElementById('loginPassword');
+  const loginSubmit = document.getElementById('loginSubmit');
+  const emailRow = document.getElementById('loginEmailRow');
+  const toggleMode = document.getElementById('loginToggleMode');
+
+  let loginMode = 'login'; // 'login' | 'register'
+  function setLoginMode(m) {
+    loginMode = m;
+    if (m === 'login') {
+      loginTitle.textContent = '玩家登录';
+      emailRow.style.display = 'none';
+      loginSubmit.textContent = '登录';
+      loginModeLogin.style.display = 'none';
+      loginModeRegister.style.display = '';
+    } else {
+      loginTitle.textContent = '注册玩家账号';
+      emailRow.style.display = '';
+      loginSubmit.textContent = '注册并登录';
+      loginModeLogin.style.display = '';
+      loginModeRegister.style.display = 'none';
+    }
+    loginMsg.textContent = '';
+  }
+  window.openLoginModal = function (reason) {
+    if (!loginMask) return;
+    if (reason) loginMsg.textContent = reason;
+    setLoginMode('login');
+    loginMask.style.display = '';
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => loginUsername && loginUsername.focus(), 50);
+  };
+  function closeLoginModal() {
+    if (!loginMask) return;
+    loginMask.style.display = 'none';
+    document.body.style.overflow = '';
+  }
+  if (loginClose)  loginClose.addEventListener('click', closeLoginModal);
+  if (loginMask)   loginMask.addEventListener('click', (e) => { if (e.target === loginMask) closeLoginModal(); });
+  if (loginModeLogin)    loginModeLogin.addEventListener('click', (e) => { e.preventDefault(); setLoginMode('login'); });
+  if (loginModeRegister) loginModeRegister.addEventListener('click', (e) => { e.preventDefault(); setLoginMode('register'); });
+
+  if (loginForm) {
+    loginForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = loginUsername.value.trim();
+      const password = loginPassword.value;
+      if (!username || !password) {
+        loginMsg.textContent = '请填写用户名和密码';
+        return;
+      }
+      loginSubmit.disabled = true;
+      loginSubmit.textContent = loginMode === 'login' ? '登录中...' : '注册中...';
+      loginMsg.textContent = '';
+      try {
+        let res, data;
+        if (loginMode === 'login') {
+          res = await fetch('/api/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ username, password })
+          });
+        } else {
+          const email = loginEmail.value.trim();
+          if (!email) { loginMsg.textContent = '请填写邮箱'; loginSubmit.disabled = false; loginSubmit.textContent = '注册并登录'; return; }
+          res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ username, email, password })
+          });
+        }
+        data = await res.json();
+        if (res.ok && data.ok) {
+          // 注意：admin 账号不能在这里登录（应该去 admin.html）
+          if (data.role && data.role !== 'player') {
+            loginMsg.textContent = '这是管理员账号，请去 /admin.html 登录';
+            loginSubmit.disabled = false;
+            loginSubmit.textContent = loginMode === 'login' ? '登录' : '注册并登录';
+            return;
+          }
+          loginMsg.textContent = '✓ 成功！';
+          loginMsg.style.color = 'var(--c-emerald)';
+          setTimeout(() => {
+            closeLoginModal();
+            loginMsg.style.color = '';
+            await refreshUserState();
+            loadPublicMessages();
+          }, 600);
+        } else {
+          loginMsg.textContent = '✗ ' + (data.error || '失败');
+        }
+      } catch (err) {
+        loginMsg.textContent = '网络错误：' + err.message;
+      } finally {
+        loginSubmit.disabled = false;
+        loginSubmit.textContent = loginMode === 'login' ? '登录' : '注册并登录';
+      }
+    });
+  }
+
+  /* ---------- 15. 顶栏玩家状态（谁在登录） ---------- */
+  const navUserSlot = document.getElementById('navUserSlot');
+  async function refreshUserState() {
+    if (!navUserSlot) return;
+    try {
+      const res = await fetch('/api/login', { credentials: 'include' });
+      const data = await res.json();
+      if (res.ok && data.ok && data.role === 'player') {
+        navUserSlot.innerHTML = `
+          <span class="nav-user-name">👤 ${escapeHtml(data.user.username)}</span>
+          <a href="#" id="navLogout" class="nav-logout-link">登出</a>
+        `;
+        const lo = document.getElementById('navLogout');
+        if (lo) lo.addEventListener('click', async (e) => {
+          e.preventDefault();
+          await fetch('/api/login', { method: 'DELETE', credentials: 'include' });
+          await refreshUserState();
+          loadPublicMessages();
+        });
+      } else {
+        navUserSlot.innerHTML = `<a href="#" id="navLogin" class="nav-login-link">玩家登录</a>`;
+        const ll = document.getElementById('navLogin');
+        if (ll) ll.addEventListener('click', (e) => { e.preventDefault(); openLoginModal(); });
+      }
+    } catch (e) {
+      navUserSlot.innerHTML = '';
+    }
+  }
+  if (navUserSlot) refreshUserState();
 })();

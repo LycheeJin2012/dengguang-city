@@ -232,6 +232,39 @@ textarea { resize: vertical; min-height: 90px; }
   box-shadow: 2px 2px 0 var(--c-black);
 }
 
+/* 顶栏玩家态（登录/登出/用户名） */
+.nav-user-slot {
+  display: flex; align-items: center; gap: 10px; margin-left: 8px;
+}
+.nav-user-slot:empty { display: none; }
+.nav-login-link, .nav-logout-link {
+  padding: 6px 12px; font-size: 14px;
+  background: var(--c-emerald); color: #fff !important;
+  border: 2px solid var(--c-black);
+  box-shadow: 2px 2px 0 var(--c-black);
+  text-decoration: none;
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.nav-login-link:hover, .nav-logout-link:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0 var(--c-black);
+}
+.nav-user-name {
+  font-size: 14px; font-weight: 600;
+  padding: 4px 8px;
+  background: var(--c-paper-2);
+  border: 2px solid var(--c-black);
+}
+.nav-logout-link {
+  background: var(--c-paper-2);
+  color: var(--c-text) !important;
+  font-size: 13px;
+  padding: 4px 8px;
+}
+@media (max-width: 768px) {
+  .nav-user-slot { margin-left: 0; }
+}
+
 .nav-toggle { display: none; flex-direction: column; gap: 4px; padding: 6px; }
 .nav-toggle span {
   display: block; width: 26px; height: 4px; background: var(--c-black);

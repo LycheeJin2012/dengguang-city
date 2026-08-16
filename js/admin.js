@@ -1,9 +1,8 @@
 /* ============================================
-   灯光市 v14 · 管理后台脚本（localStorage 版）
-   - 账号/留言/订单/报名 全部走 localStorage（不跨设备）
-   - 同一浏览器跨标签页可见
-   - 默认超级管理员：LycheeJin / DengGuangWhat20120619（首次访问自动创建）
-   - 密码哈希:Web Crypto SHA-256 + per-user salt（基础防护,防明文存）
+   灯光市 v15 · 管理后台脚本（API 版 · 跨设备同步）
+   - 所有数据走 /api/* 后端（D1 云数据库）
+   - 跨设备/跨浏览器可见（cookie 鉴权）
+   - 默认超级管理员：LycheeJin / DengGuangWhat20120619（首次 /api/init 时自动创建）
    ============================================ */
 (function () {
   'use strict';
@@ -28,230 +27,30 @@
   }
   const nowISO = () => new Date().toISOString();
 
-  /* ---------- 0.5 localStorage 存储层 ---------- */
-  const LS_KEYS = {
-    admins:    'lc_admins_v14',
-    sessions:  'lc_sessions_v14',
-    messages:  'lc_messages_v14',
-    bookings:  'lc_bookings_v14',
-    kart:      'lc_kart_v14',
-    circuit:   'lc_circuit_v14',
-    sessToken: 'lc_session_token_v14'
-  };
-  function load(key) { try { return JSON.parse(localStorage.getItem(key) || '[]'); } catch (e) { return []; } }
-  function save(key, data) { localStorage.setItem(key, JSON.stringify(data)); }
-
-  // 首次启动:创建默认超级管理员
-  (function bootstrapAdmin() {
-    const list = load(LS_KEYS.admins);
-    if (list.length === 0) {
-      const salt = uid();
-      // 异步触发;不 await 也不阻塞 UI（登录时会重新计算）
-      sha256('DengGuangWhat20120619').then(hash => {
-        list.push({
-          id: uid(),
-          username: 'LycheeJin',
-          password_hash: hash,
-          salt: salt,
-          role: 'super',
-          created_at: nowISO(),
-          created_by: 'system'
-        });
-        save(LS_KEYS.admins, list);
-      });
-    }
-  })();
-
-  /* ---------- 1. API 模拟层（把 fetch 换成 localStorage） ---------- */
-  function getSessionAdmin() {
-    const tok = localStorage.getItem(LS_KEYS.sessToken);
-    if (!tok) return null;
-    const sessions = load(LS_KEYS.sessions);
-    const sess = sessions.find(s => s.token === tok);
-    if (!sess) return null;
-    if (sess.expires < Date.now()) return null;
-    const admins = load(LS_KEYS.admins);
-    return admins.find(a => a.id === sess.admin_id) || null;
-  }
-  function isSuper() { const a = getSessionAdmin(); return a && a.role === 'super'; }
-
-  // 异步等一下 bootstrap（让首次访问可以登录）
-  let _bootReady = null;
-  function waitBoot() {
-    if (_bootReady) return _bootReady;
-    _bootReady = new Promise(resolve => {
-      const check = () => {
-        const list = load(LS_KEYS.admins);
-        if (list.length > 0) resolve();
-        else setTimeout(check, 50);
-      };
-      check();
-    });
-    return _bootReady;
-  }
-
+  /* ---------- 0.5 真实后端 API（cookie 鉴权 · 跨设备同步） ---------- */
+  let _me = null; // 当前登录管理员
   async function api(method, path, body) {
-    await waitBoot();
     const m = String(method || 'GET').toUpperCase();
-    const segs = String(path).split('?')[0].split('/').filter(Boolean);
-    // ['', 'api', resource, id?]
-    const resource = segs[1];
-    const id = segs[2] || null;
-
-    // --- /api/init ---
-    if (resource === 'init') {
-      return { ok: true, message: 'localStorage 模式,无需 init' };
+    const opts = { method: m, credentials: 'include' };
+    if (body !== undefined) {
+      opts.headers = { 'Content-Type': 'application/json' };
+      opts.body = JSON.stringify(body);
     }
-
-    // --- /api/auth/me ---
-    if (resource === 'auth' && segs[2] === 'me' && m === 'GET') {
-      const a = getSessionAdmin();
-      return a ? { ok: true, admin: publicAdmin(a) } : { ok: false, error: '未登录' };
+    const res = await fetch(path, opts);
+    let data;
+    try { data = await res.json(); } catch (e) { data = { ok: false, error: '非 JSON 响应' }; }
+    if (!res.ok) {
+      const msg = (data && data.error) ? data.error : `HTTP ${res.status}`;
+      throw new Error(msg);
     }
-
-    // --- /api/auth/login ---
-    if (resource === 'auth' && segs[2] === 'login' && m === 'POST') {
-      const { username, password } = body || {};
-      const admins = load(LS_KEYS.admins);
-      const a = admins.find(x => x.username === username);
-      if (!a) throw new Error('用户名或密码错误');
-      const hash = await sha256(password);
-      if (hash !== a.password_hash) throw new Error('用户名或密码错误');
-      const token = uid() + uid();
-      const sessions = load(LS_KEYS.sessions);
-      sessions.push({ token, admin_id: a.id, expires: Date.now() + 8 * 3600 * 1000 });
-      save(LS_KEYS.sessions, sessions);
-      localStorage.setItem(LS_KEYS.sessToken, token);
-      return { ok: true, admin: publicAdmin(a) };
-    }
-
-    // --- /api/auth/logout ---
-    if (resource === 'auth' && segs[2] === 'logout' && m === 'POST') {
-      const tok = localStorage.getItem(LS_KEYS.sessToken);
-      if (tok) {
-        let sessions = load(LS_KEYS.sessions);
-        sessions = sessions.filter(s => s.token !== tok);
-        save(LS_KEYS.sessions, sessions);
-        localStorage.removeItem(LS_KEYS.sessToken);
-      }
-      return { ok: true };
-    }
-
-    // 鉴权
-    const me = getSessionAdmin();
-    if (!me) throw new Error('未登录或会话已过期');
-
-    // --- messages ---
-    if (resource === 'messages') {
-      const arr = load(LS_KEYS.messages);
-      if (!id) {
-        if (m === 'GET')  return { ok: true, messages: arr };
-        if (m === 'POST') {
-          const item = { id: uid(), name: body.name || '', contact: body.contact || '',
-            type: body.type || '其他', content: body.content || '', read: 0, created_at: nowISO() };
-          arr.unshift(item); save(LS_KEYS.messages, arr);
-          return { ok: true, id: item.id };
-        }
-      } else {
-        if (m === 'PATCH')  { const i = arr.findIndex(x => x.id === id); if (i < 0) throw new Error('不存在'); arr[i] = Object.assign(arr[i], body); save(LS_KEYS.messages, arr); return { ok: true }; }
-        if (m === 'DELETE') { const i = arr.findIndex(x => x.id === id); if (i < 0) throw new Error('不存在'); arr.splice(i, 1); save(LS_KEYS.messages, arr); return { ok: true }; }
-      }
-    }
-
-    // --- bookings ---
-    if (resource === 'bookings') {
-      const arr = load(LS_KEYS.bookings);
-      if (!id) {
-        if (m === 'GET')  return { ok: true, bookings: arr };
-        if (m === 'POST') {
-          const item = Object.assign({ id: uid(), status: 'pending', created_at: nowISO() }, body || {});
-          arr.unshift(item); save(LS_KEYS.bookings, arr);
-          return { ok: true, id: item.id };
-        }
-      } else {
-        if (m === 'PATCH')  { const i = arr.findIndex(x => x.id === id); if (i < 0) throw new Error('不存在'); arr[i] = Object.assign(arr[i], body); save(LS_KEYS.bookings, arr); return { ok: true }; }
-        if (m === 'DELETE') { const i = arr.findIndex(x => x.id === id); if (i < 0) throw new Error('不存在'); arr.splice(i, 1); save(LS_KEYS.bookings, arr); return { ok: true }; }
-      }
-    }
-
-    // --- kart ---
-    if (resource === 'kart') {
-      const arr = load(LS_KEYS.kart);
-      if (!id) {
-        if (m === 'GET')  return { ok: true, signups: arr };
-        if (m === 'POST') {
-          const item = Object.assign({ id: uid(), status: 'pending', created_at: nowISO() }, body || {});
-          arr.unshift(item); save(LS_KEYS.kart, arr);
-          return { ok: true, id: item.id };
-        }
-      } else {
-        if (m === 'PATCH')  { const i = arr.findIndex(x => x.id === id); if (i < 0) throw new Error('不存在'); arr[i] = Object.assign(arr[i], body); save(LS_KEYS.kart, arr); return { ok: true }; }
-        if (m === 'DELETE') { const i = arr.findIndex(x => x.id === id); if (i < 0) throw new Error('不存在'); arr.splice(i, 1); save(LS_KEYS.kart, arr); return { ok: true }; }
-      }
-    }
-
-    // --- circuit ---
-    if (resource === 'circuit') {
-      const arr = load(LS_KEYS.circuit);
-      if (!id) {
-        if (m === 'GET')  return { ok: true, signups: arr };
-        if (m === 'POST') {
-          const item = Object.assign({ id: uid(), status: 'pending', created_at: nowISO() }, body || {});
-          arr.unshift(item); save(LS_KEYS.circuit, arr);
-          return { ok: true, id: item.id };
-        }
-      } else {
-        if (m === 'PATCH')  { const i = arr.findIndex(x => x.id === id); if (i < 0) throw new Error('不存在'); arr[i] = Object.assign(arr[i], body); save(LS_KEYS.circuit, arr); return { ok: true }; }
-        if (m === 'DELETE') { const i = arr.findIndex(x => x.id === id); if (i < 0) throw new Error('不存在'); arr.splice(i, 1); save(LS_KEYS.circuit, arr); return { ok: true }; }
-      }
-    }
-
-    // --- admins (仅 super) ---
-    if (resource === 'admins') {
-      if (!isSuper()) throw new Error('需要超级管理员权限');
-      const arr = load(LS_KEYS.admins);
-      if (!id) {
-        if (m === 'GET')  return { ok: true, admins: arr.map(publicAdmin) };
-        if (m === 'POST') {
-          if (arr.some(x => x.username === body.username)) throw new Error('用户名已存在');
-          const hash = await sha256(body.password);
-          const item = { id: uid(), username: body.username, password_hash: hash, salt: uid(), role: body.role || 'admin', created_at: nowISO(), created_by: me.username };
-          arr.push(item); save(LS_KEYS.admins, arr);
-          return { ok: true, id: item.id };
-        }
-      } else {
-        const i = arr.findIndex(x => x.id === id);
-        if (i < 0) throw new Error('管理员不存在');
-        if (m === 'PATCH') {
-          if (body.new_password) {
-            arr[i].password_hash = await sha256(body.new_password);
-            arr[i].salt = uid();
-          }
-          if (body.role && body.role !== arr[i].role) arr[i].role = body.role;
-          save(LS_KEYS.admins, arr);
-          return { ok: true };
-        }
-        if (m === 'DELETE') {
-          if (arr[i].id === me.id) throw new Error('不能删除自己');
-          if (arr[i].role === 'super') {
-            const others = arr.filter(x => x.role === 'super');
-            if (others.length <= 1) throw new Error('不能删除最后一个超级管理员');
-          }
-          arr.splice(i, 1); save(LS_KEYS.admins, arr);
-          return { ok: true };
-        }
-      }
-    }
-
-    throw new Error('API 路径未实现: ' + path);
+    return data || {};
   }
-  function publicAdmin(a) {
-    return { id: a.id, username: a.username, role: a.role, created_at: a.created_at, created_by: a.created_by };
-  }
-  const GET    = (p)      => api('GET', p);
-  const POST   = (p, b)   => api('POST', p, b);
-  const PATCH  = (p, b)   => api('PATCH', p, b);
-  const DELETE = (p)      => api('DELETE', p);
+  const GET    = (p)        => api('GET', p);
+  const POST   = (p, b)     => api('POST', p, b);
+  const PATCH  = (p, b)     => api('PATCH', p, b);
+  const DELETE = (p)        => api('DELETE', p);
+  const QS     = (params)   => '?' + Object.entries(params).filter(([_,v]) => v != null).map(([k,v]) => `${k}=${encodeURIComponent(v)}`).join('&');
+  function isSuper() { return _me && _me.role === 'super'; }
 
   /* ---------- 2. 视图切换 ---------- */
   const showView = name => {
@@ -262,9 +61,10 @@
   /* ---------- 3. 启动：检查登录状态 ---------- */
   async function boot() {
     try {
-      const data = await GET('/api/auth/me');
-      if (data.ok && data.admin) {
-        renderDash(data.admin);
+      const data = await GET('/api/login');
+      if (data.ok && data.user && data.role && data.role !== 'player') {
+        _me = data.user;
+        renderDash(data.user);
       } else {
         showView('login');
       }
@@ -289,11 +89,16 @@
     submitBtn.disabled = true;
 
     try {
-      const data = await POST('/api/auth/login', { username: u, password: p });
+      const data = await POST('/api/login', { username: u, password: p });
       if (!data.ok) throw new Error(data.error || '登录失败');
+      if (data.role === 'player') throw new Error('这是玩家账号，请到首页登录');
+      // 拿到 whoami 拿完整 admin 资料
+      const me = await GET('/api/login');
+      if (!me.ok) throw new Error('无法获取账号信息');
+      _me = me.user;
       $('#loginUser').value = '';
       $('#loginPass').value = '';
-      renderDash(data.admin);
+      renderDash(me.user);
     } catch (err) {
       errEl.textContent = err.message;
     } finally {
@@ -305,8 +110,8 @@
   /* 退登 */
   $('#btnLogout').addEventListener('click', async () => {
     if (!confirm('确认退出登录？')) return;
-    try { await POST('/api/auth/logout', {}); } catch (e) {}
-    window._currentAdmin = null;
+    try { await DELETE('/api/login'); } catch (e) {}
+    _me = null;
     showView('login');
   });
 
@@ -340,10 +145,10 @@
      ============================================ */
   async function renderMessages() {
     try {
-      const data = await GET('/api/messages');
+      const data = await GET('/api/admin/messages');
       const all = data.messages || [];
       const cAll = all.length;
-      const cUnread = all.filter(m => !m.read).length;
+      const cUnread = all.filter(m => m.status === 'new').length;
       const cRead = cAll - cUnread;
       $('#cntAll').textContent = cAll;
       $('#cntUnread').textContent = cUnread;
@@ -351,39 +156,42 @@
       $('#msgUnread').textContent = cUnread > 0 ? `(${cUnread})` : '';
 
       const filter = (document.querySelector('input[name="msgFilter"]:checked') || {}).value || 'all';
-      const type = $('#msgTypeFilter').value;
       let list = all;
-      if (filter === 'unread') list = list.filter(m => !m.read);
-      if (filter === 'read')   list = list.filter(m => m.read);
-      if (type) list = list.filter(m => m.type === type);
+      if (filter === 'unread') list = list.filter(m => m.status === 'new');
+      if (filter === 'read')   list = list.filter(m => m.status !== 'new');
 
       const box = $('#msgList');
       const empty = $('#msgEmpty');
       if (list.length === 0) { box.innerHTML = ''; empty.style.display = ''; return; }
       empty.style.display = 'none';
 
-      box.innerHTML = list.map(m => `
-        <article class="msg-item ${m.read ? 'is-read' : ''}" data-id="${escapeHtml(m.id)}">
+      box.innerHTML = list.map(m => {
+        const isRead = m.status !== 'new';
+        const isDone = m.status === 'done';
+        return `
+        <article class="msg-item ${isRead ? 'is-read' : ''}" data-id="${m.id}">
           <div class="msg-head">
             <div class="msg-head-left">
-              <span class="msg-type type-${escapeHtml(m.type)}">${escapeHtml(m.type)}</span>
               <b class="msg-name">👤 ${escapeHtml(m.name)}${m.contact ? ' · ' + escapeHtml(m.contact) : ''}</b>
-              ${m.read ? '<span class="msg-read-tag">已读</span>' : '<span class="msg-unread-tag">新</span>'}
+              ${m.player_username ? `<span class="msg-player-tag">@${escapeHtml(m.player_username)}</span>` : ''}
+              ${isDone ? '<span class="msg-read-tag">已处理</span>' : isRead ? '<span class="msg-read-tag">已读</span>' : '<span class="msg-unread-tag">新</span>'}
             </div>
             <div class="msg-time">${fmtTime(m.created_at)}</div>
           </div>
           <div class="msg-content">${escapeHtml(m.content)}</div>
           <div class="msg-actions book-actions">
-            <button class="btn btn-ghost btn-sm" data-act="toggle">${m.read ? '标为未读' : '标为已读'}</button>
+            ${isDone ? '' : `<button class="btn btn-ghost btn-sm" data-act="done">标为已处理</button>`}
+            <button class="btn btn-ghost btn-sm" data-act="toggle">${isRead && !isDone ? '标为未读' : '标为已读'}</button>
             <button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>
           </div>
         </article>
-      `).join('');
+      `;}).join('');
 
       box.querySelectorAll('.msg-item').forEach(el => {
-        const id = el.dataset.id;
-        el.querySelector('[data-act="toggle"]').addEventListener('click', () => toggleRead(id));
-        el.querySelector('[data-act="del"]').addEventListener('click', () => deleteMessage(id));
+        const id = +el.dataset.id;
+        el.querySelector('[data-act="toggle"]')?.addEventListener('click', () => toggleRead(id));
+        el.querySelector('[data-act="done"]')?.addEventListener('click', () => markDone(id));
+        el.querySelector('[data-act="del"]')?.addEventListener('click', () => deleteMessage(id));
       });
     } catch (e) {
       console.error('加载留言失败:', e);
@@ -392,23 +200,31 @@
 
   async function toggleRead(id) {
     try {
-      const m = (await GET('/api/messages')).messages.find(x => x.id === id);
+      const all = (await GET('/api/admin/messages')).messages || [];
+      const m = all.find(x => x.id === id);
       if (!m) return;
-      await PATCH('/api/messages/' + id, { read: !m.read });
+      const newStatus = m.status === 'new' ? 'read' : 'new';
+      await PATCH('/api/admin/messages?id=' + id + '&status=' + newStatus);
+      renderMessages();
+    } catch (e) { alert('操作失败：' + e.message); }
+  }
+  async function markDone(id) {
+    try {
+      await PATCH('/api/admin/messages?id=' + id + '&status=done');
       renderMessages();
     } catch (e) { alert('操作失败：' + e.message); }
   }
   async function deleteMessage(id) {
     if (!confirm('确认删除这条留言？')) return;
-    try { await DELETE('/api/messages/' + id); renderMessages(); }
+    try { await DELETE('/api/admin/messages?id=' + id); renderMessages(); }
     catch (e) { alert('删除失败：' + e.message); }
   }
   $('#btnMarkAll').addEventListener('click', async () => {
-    if (!confirm('将所有留言标记为已读？')) return;
+    if (!confirm('将所有新留言标记为已读？')) return;
     try {
-      const all = (await GET('/api/messages')).messages || [];
+      const all = (await GET('/api/admin/messages')).messages || [];
       for (const m of all) {
-        if (!m.read) await PATCH('/api/messages/' + m.id, { read: true });
+        if (m.status === 'new') await PATCH('/api/admin/messages?id=' + m.id + '&status=read');
       }
       renderMessages();
     } catch (e) { alert('失败：' + e.message); }
@@ -429,7 +245,7 @@
 
   async function renderBookings() {
     try {
-      const data = await GET('/api/bookings');
+      const data = await GET('/api/admin/bookings');
       const all = data.bookings || [];
       const cAll = all.length;
       const cPending = all.filter(b => b.status === 'pending').length;
@@ -457,19 +273,19 @@
         const statusOpts = Object.entries(BOOK_STATUS)
           .map(([k, v]) => `<option value="${k}" ${k === b.status ? 'selected' : ''}>${v.label}</option>`).join('');
         return `
-          <article class="msg-item book-item" data-id="${escapeHtml(b.id)}">
+          <article class="msg-item book-item" data-id="${b.id}">
             <div class="msg-head">
               <div class="msg-head-left">
-                <span class="msg-type type-book">${escapeHtml(b.room_name)}</span>
+                <span class="msg-type type-book">${escapeHtml(b.room_name || b.room_id)}</span>
                 <b class="msg-name">👤 ${escapeHtml(b.name)} · ${escapeHtml(b.contact)}</b>
+                ${b.player_username ? `<span class="msg-player-tag">@${escapeHtml(b.player_username)}</span>` : ''}
                 <span class="book-status ${st.cls}">${st.label}</span>
               </div>
               <div class="msg-time">${fmtTime(b.created_at)}</div>
             </div>
             <div class="book-detail">
-              <div>📅 ${escapeHtml(b.check_in)} → ${escapeHtml(b.check_out)}</div>
-              <div>🌙 ${b.nights} 晚 × 💎 ${b.price_per_night}${b.breakfast ? ` + 早餐 ${b.persons} 人 × 30` : ''} = <b style="color:var(--c-grass-dark)">💎 ${b.total} 绿宝石</b></div>
-              <div>👥 ${escapeHtml(b.guests || '—')}${b.breakfast ? ' · 🍳 含早餐' : ''}</div>
+              <div>📅 ${escapeHtml(b.in_date)} → ${escapeHtml(b.out_date)}</div>
+              <div>🌙 ${b.nights} 晚 · 👥 ${b.persons} 人${b.breakfast ? ' · 🍳 含早餐' : ''}</div>
               ${b.note ? `<div>📝 ${escapeHtml(b.note)}</div>` : ''}
             </div>
             <div class="msg-actions book-actions">
@@ -481,7 +297,7 @@
       }).join('');
 
       box.querySelectorAll('.book-item').forEach(el => {
-        const id = el.dataset.id;
+        const id = +el.dataset.id;
         el.querySelector('.book-status-sel').addEventListener('change', (e) => {
           updateBookingStatus(id, e.target.value);
         });
@@ -493,12 +309,12 @@
   }
 
   async function updateBookingStatus(id, status) {
-    try { await PATCH('/api/bookings/' + id, { status }); renderBookings(); }
+    try { await PATCH('/api/admin/bookings?id=' + id + '&status=' + status); renderBookings(); }
     catch (e) { alert('更新失败：' + e.message); }
   }
   async function deleteBooking(id) {
     if (!confirm('确认删除该订单？')) return;
-    try { await DELETE('/api/bookings/' + id); renderBookings(); }
+    try { await DELETE('/api/admin/bookings?id=' + id); renderBookings(); }
     catch (e) { alert('删除失败：' + e.message); }
   }
   $$('input[name="bookFilter"]').forEach(r => r.addEventListener('change', renderBookings));
@@ -506,10 +322,10 @@
   $('#btnBookClearDone').addEventListener('click', async () => {
     if (!confirm('清除已完成/已取消的订单？')) return;
     try {
-      const all = (await GET('/api/bookings')).bookings || [];
+      const all = (await GET('/api/admin/bookings')).bookings || [];
       for (const b of all) {
         if (b.status === 'completed' || b.status === 'cancelled') {
-          await DELETE('/api/bookings/' + b.id);
+          await DELETE('/api/admin/bookings?id=' + b.id);
         }
       }
       renderBookings();
@@ -527,7 +343,7 @@
 
   async function renderKarts() {
     try {
-      const data = await GET('/api/kart');
+      const data = await GET('/api/admin/kart');
       const all = data.signups || [];
       const cAll = all.length, cP = all.filter(x => x.status === 'pending').length;
       const cA = all.filter(x => x.status === 'approved').length, cR = all.filter(x => x.status === 'rejected').length;
@@ -584,12 +400,12 @@
   }
 
   async function updateKartStatus(id, status) {
-    try { await PATCH('/api/kart/' + id, { status }); renderKarts(); }
+    try { await PATCH('/api/admin/kart?id=' + id, { status }); renderKarts(); }
     catch (e) { alert('更新失败：' + e.message); }
   }
   async function deleteKart(id) {
     if (!confirm('确认删除该报名？')) return;
-    try { await DELETE('/api/kart/' + id); renderKarts(); }
+    try { await DELETE('/api/admin/kart?id=' + id); renderKarts(); }
     catch (e) { alert('删除失败：' + e.message); }
   }
   $$('input[name="kartFilter"]').forEach(r => r.addEventListener('change', renderKarts));
@@ -597,9 +413,9 @@
   $('#btnKartClearDone').addEventListener('click', async () => {
     if (!confirm('清除已处理报名？')) return;
     try {
-      const all = (await GET('/api/kart')).signups || [];
+      const all = (await GET('/api/admin/kart')).signups || [];
       for (const x of all) {
-        if (x.status === 'approved' || x.status === 'rejected') await DELETE('/api/kart/' + x.id);
+        if (x.status === 'approved' || x.status === 'rejected') await DELETE('/api/admin/kart?id=' + x.id);
       }
       renderKarts();
     } catch (e) { alert('失败：' + e.message); }
@@ -610,7 +426,7 @@
      ============================================ */
   async function renderCircuits() {
     try {
-      const data = await GET('/api/circuit');
+      const data = await GET('/api/admin/circuit');
       const all = data.signups || [];
       const cAll = all.length, cP = all.filter(x => x.status === 'pending').length;
       const cA = all.filter(x => x.status === 'approved').length, cR = all.filter(x => x.status === 'rejected').length;
@@ -670,12 +486,12 @@
   }
 
   async function updateCircuitStatus(id, status) {
-    try { await PATCH('/api/circuit/' + id, { status }); renderCircuits(); }
+    try { await PATCH('/api/admin/circuit?id=' + id, { status }); renderCircuits(); }
     catch (e) { alert('更新失败：' + e.message); }
   }
   async function deleteCircuit(id) {
     if (!confirm('确认删除该报名？')) return;
-    try { await DELETE('/api/circuit/' + id); renderCircuits(); }
+    try { await DELETE('/api/admin/circuit?id=' + id); renderCircuits(); }
     catch (e) { alert('删除失败：' + e.message); }
   }
   $$('input[name="circuitFilter"]').forEach(r => r.addEventListener('change', renderCircuits));
@@ -684,9 +500,9 @@
   $('#btnCircuitClearDone').addEventListener('click', async () => {
     if (!confirm('清除已处理报名？')) return;
     try {
-      const all = (await GET('/api/circuit')).signups || [];
+      const all = (await GET('/api/admin/circuit')).signups || [];
       for (const x of all) {
-        if (x.status === 'approved' || x.status === 'rejected') await DELETE('/api/circuit/' + x.id);
+        if (x.status === 'approved' || x.status === 'rejected') await DELETE('/api/admin/circuit?id=' + x.id);
       }
       renderCircuits();
     } catch (e) { alert('失败：' + e.message); }
@@ -697,7 +513,7 @@
      ============================================ */
   async function renderAdminList() {
     try {
-      const data = await GET('/api/admins');
+      const data = await GET('/api/admin/admins');
       const list = data.admins || [];
       const s = getSession();
       if (!s) return;
@@ -738,7 +554,7 @@
 
   async function deleteAdmin(id) {
     if (!confirm('确认删除该管理员？此操作不可恢复。')) return;
-    try { await DELETE('/api/admins/' + id); renderAdminList(); }
+    try { await DELETE('/api/admin/admins?id=' + id); renderAdminList(); }
     catch (e) { alert('删除失败：' + e.message); }
   }
 
@@ -774,7 +590,7 @@
       const msgEl = $('#addMsg');
       msgEl.textContent = '';
       try {
-        const data = await POST('/api/admins', { username, password, role });
+        const data = await POST('/api/admin/admins', { username, password, role });
         if (!data.ok) throw new Error(data.error || '创建失败');
         closeModal();
         renderAdminList();
@@ -813,7 +629,7 @@
       if (np.length < 8) { msgEl.textContent = '新密码至少 8 位'; return; }
       if (np !== np2) { msgEl.textContent = '两次输入的新密码不一致'; return; }
       try {
-        await PATCH('/api/admins/' + id, { new_password: np });
+        await PATCH('/api/admin/admins?id=' + id, { new_password: np });
         closeModal();
       } catch (err) { msgEl.textContent = err.message; }
     });
@@ -835,8 +651,8 @@
     if (np !== np2) { msgEl.classList.add('err'); msgEl.textContent = '两次输入的新密码不一致'; return; }
     try {
       // 用当前密码登录一次获取 token（如果还没有）
-      await POST('/api/auth/login', { username: s.username, password: cur });
-      await PATCH('/api/admins/' + s.id, { new_password: np });
+      await POST('/api/admin/change-password', { username: s.username, password: cur });
+      await PATCH('/api/admin/admins?id=' + s.id, { new_password: np });
       msgEl.classList.add('ok'); msgEl.textContent = '✓ 密码已更新（请记住新密码）';
       $('#pwdForm').reset();
     } catch (err) {

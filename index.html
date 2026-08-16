@@ -56,6 +56,7 @@
         <a href="#service">市民服务</a>
         <a href="#contact">联系我们</a>
       </nav>
+      <span class="nav-user-slot" id="navUserSlot"></span>
       <button class="nav-toggle" id="navToggle" aria-label="菜单">
         <span></span><span></span><span></span>
       </button>
@@ -779,6 +780,40 @@
   </footer>
 
   <button class="back-top" id="backTop" aria-label="回到顶部">▲</button>
+
+  <!-- ========== 玩家登录 / 注册 modal ========== -->
+  <div class="modal-mask" id="loginMask" style="display:none">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <button class="modal-close" id="loginClose" aria-label="关闭">×</button>
+      <h3 id="loginTitle" style="text-align:center;margin-bottom:8px">玩家登录</h3>
+      <p style="text-align:center;color:var(--c-text-dim);font-size:13px;margin-bottom:16px">
+        登录后可发留言、订酒店、报名赛车
+      </p>
+      <form id="loginForm" autocomplete="on">
+        <div class="form-row">
+          <label>用户名 <small style="color:var(--c-text-dim)">(3-32 字符)</small></label>
+          <input type="text" id="loginUsername" name="username" autocomplete="username" required minlength="3" maxlength="32" pattern="[a-zA-Z0-9_\-]+" />
+        </div>
+        <div class="form-row" id="loginEmailRow" style="display:none">
+          <label>邮箱</label>
+          <input type="email" id="loginEmail" name="email" autocomplete="email" />
+        </div>
+        <div class="form-row">
+          <label>密码 <small style="color:var(--c-text-dim)">(至少 8 位)</small></label>
+          <input type="password" id="loginPassword" name="password" autocomplete="current-password" required minlength="8" maxlength="128" />
+        </div>
+        <div id="loginMsg" class="form-msg" aria-live="polite"></div>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <button type="button" id="loginModeLogin" class="btn btn-ghost" style="flex:1">去登录</button>
+          <button type="button" id="loginModeRegister" class="btn btn-ghost" style="flex:1">去注册</button>
+        </div>
+        <button type="submit" id="loginSubmit" class="btn btn-primary" style="width:100%;margin-top:8px">登录</button>
+      </form>
+      <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--c-text-dim)">
+        管理员请去 <a href="admin.html" style="color:var(--c-emerald)">/admin.html</a> 登录
+      </p>
+    </div>
+  </div>
 
   <script src="js/crypto.js"></script>
   <script src="js/main.js"></script>
