@@ -1,6 +1,6 @@
 // GET  /api/admin/messages - 管理员看所有留言
 // PATCH /api/admin/messages?id=X&status=new|read|done
-import { ok, err, readToken, getSession } from '../_shared.js';
+import { ok, err, readToken, getSession } from '../../_shared.js';
 
 async function requireAdmin(context) {
   const { env, request } = context;
