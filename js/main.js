@@ -194,7 +194,7 @@
       return `
       <article class="pm-item" data-mid="${m.id}">
         <div class="pm-head">
-          <b>${escapeHtml(m.name)}</b>
+          <a href="profile.html?u=${encodeURIComponent(m.name)}" class="pm-author-link"><b>${escapeHtml(m.name)}</b></a>
           <span class="pm-type pm-type-${escapeHtml(m.type || '建议')}">${escapeHtml(m.type || '建议')}</span>
           ${hasReply ? '<span class="msg-replied-tag">💬 已回复</span>' : ''}
         </div>
