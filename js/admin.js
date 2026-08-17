@@ -168,7 +168,7 @@ function showReplyModal(m){
     status.textContent='✍️ 生成中…';
     status.style.color='#fa3';
     try{
-      const r=await fetch('/api/ai/draft',{
+      const r=await fetch('/api/admin/messages?action=ai-draft',{
         method:'POST',
         credentials:'same-origin',
         headers:{'Content-Type':'application/json'},
