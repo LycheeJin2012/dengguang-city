@@ -9,6 +9,15 @@ const STATUS_LABEL={pending:'待审批',active:'已激活',rejected:'已拒绝'}
 const EXAM_LABEL={written:'B 级笔试',road:'A 级路考',upgrade:'S 级升级'};
 const EXAM_BADGE={pending:'待审',passed:'✓ 通过',failed:'✗ 未通过'};
 
+// v17.9: 同步隐藏 view-login 和 view-dash, 避免 boot 异步时闪现登录页
+// (combined session 时, 用户应直接进 dash, 看不到登录框)
+try {
+  const _vl = document.getElementById('view-login');
+  const _vd = document.getElementById('view-dash');
+  if (_vl) _vl.style.display = 'none';
+  if (_vd) _vd.style.display = 'none';
+} catch (_) { /* DOM 还没就绪 (此 script 放 <body> 末尾应已就绪) */ }
+
 async function api(m,p,b){
   const o={method:m,credentials:'include'};
   if(b!==undefined){o.headers={'Content-Type':'application/json'};o.body=JSON.stringify(b);}
