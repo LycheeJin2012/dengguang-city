@@ -29,3 +29,4 @@
 - Session token 32 byte 随机，存 D1，TTL 8 小时
 - 公开 API 限流（生产建议加 CF Rate Limiting Rules）
 - 留言/报名/预订需玩家登录；管理员 API 需 admin_id session
+
