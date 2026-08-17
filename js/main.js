@@ -1201,6 +1201,129 @@
     });
   }
 
+  /* ---------- 14.06 首次密码登录后引导注册通行密钥 (v17.4) ---------- */
+  // 复用的 32-byte random challenge token 缓存, 避免二次 base64 转换
+  async function maybeOfferPasskey(userId) {
+    if (!userId) return;
+    // 1) 环境检测: 浏览器不支持 WebAuthn / 非 secure context → 直接跳过
+    if (!window.PublicKeyCredential) return;
+    if (!window.isSecureContext) return;
+    // 2) localStorage dismiss 标记 (同一台机同一浏览器, 7 天内不重复打扰)
+    const _dismissKey = 'lc_passkey_offer_dismissed_' + userId;
+    const _last = parseInt(localStorage.getItem(_dismissKey) || '0', 10);
+    if (_last && (Date.now() - _last) < 7 * 24 * 60 * 60 * 1000) return;
+    // 3) 查 server 端: 是否已注册过 passkey
+    let _list = [];
+    try {
+      const _r = await fetch('/api/init?action=passkey-list', { credentials: 'include' });
+      const _d = await _r.json();
+      if (_r.ok && _d.ok !== false) _list = _d.passkeys || [];
+    } catch (e) { return; }
+    if (_list.length > 0) return; // 已有 passkey, 不再提示
+    // 4) 弹一个轻量提示, 三个选择: ✅ 添加 / ⏭ 暂不 / ✕ 7 天内不再问
+    showPasskeyOffer(userId, _dismissKey);
+  }
+
+  function showPasskeyOffer(userId, dismissKey) {
+    // 关掉旧提示
+    const old = document.getElementById('passkeyOfferBackdrop');
+    if (old) old.remove();
+    const bd = document.createElement('div');
+    bd.id = 'passkeyOfferBackdrop';
+    bd.style.cssText = 'position:fixed;left:0;right:0;bottom:0;top:auto;z-index:10000;display:flex;justify-content:center;pointer-events:none;padding:14px';
+    bd.innerHTML = `
+      <div style="pointer-events:auto;background:linear-gradient(135deg,#2a4a2a,#1a3a1a);border:3px solid var(--c-emerald,#4a4);border-radius:10px;padding:14px 18px;max-width:480px;width:100%;box-shadow:0 8px 28px rgba(0,0,0,.5);color:#dfd;font-family:inherit;line-height:1.55">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:26px;line-height:1">🔑</span>
+          <div style="flex:1">
+            <b style="color:#fff;font-size:15px">欢迎！要不要顺便注册通行密钥？</b>
+            <div style="font-size:11px;color:#9c9;margin-top:2px">下次可指纹 / Face ID 一键登录，不用记密码</div>
+          </div>
+          <button type="button" id="pkoClose" aria-label="关闭" style="background:none;border:none;color:#9c9;font-size:18px;cursor:pointer;padding:0 4px;line-height:1" title="关闭">×</button>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+          <button type="button" id="pkoAdd" style="flex:1;min-width:120px;background:linear-gradient(135deg,#4a4,#2a2);color:#fff;border:2px solid var(--c-emerald,#6f6);padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700">✅ 立即添加到通行密钥</button>
+          <button type="button" id="pkoLater" style="background:transparent;color:#9c9;border:2px solid #4a6;border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px">⏭ 下次再说</button>
+        </div>
+        <div id="pkoMsg" style="margin-top:8px;font-size:12px;min-height:16px;color:#9c9"></div>
+      </div>
+    `;
+    document.body.appendChild(bd);
+    const close = () => bd.remove();
+    bd.querySelector('#pkoClose').onclick = close;
+    bd.querySelector('#pkoLater').onclick = () => {
+      try { localStorage.setItem(dismissKey, String(Date.now())); } catch (e) {}
+      close();
+    };
+    bd.querySelector('#pkoAdd').onclick = async () => {
+      const addBtn = bd.querySelector('#pkoAdd');
+      const msg = bd.querySelector('#pkoMsg');
+      addBtn.disabled = true;
+      addBtn.textContent = '⏳ 请触摸指纹/Face ID...';
+      msg.textContent = '';
+      let timeoutId = setTimeout(() => {
+        addBtn.disabled = false;
+        addBtn.textContent = '✅ 立即添加到通行密钥';
+        msg.style.color = '#f99';
+        msg.textContent = '✗ 操作超时, 请重试';
+      }, 30000);
+      try {
+        // 1) start
+        const r1 = await fetch('/api/init?action=passkey-register-start', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const d1 = await r1.json();
+        if (!r1.ok || d1.error) throw new Error(d1.error || '获取 challenge 失败');
+        const opts = d1.publicKey;
+        opts.challenge = b64urlToBuf(opts.challenge);
+        opts.user.id = b64urlToBuf(opts.user.id);
+        // 2) 浏览器创建凭据
+        const cred = await navigator.credentials.create({ publicKey: opts });
+        if (!cred) throw new Error('未创建凭据');
+        // 3) finish
+        const r2 = await fetch('/api/init?action=passkey-register-finish', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            challenge_token: d1.challenge_token,
+            name: '我的设备',
+            credential: {
+              id: cred.id,
+              rawId: bufToB64url(cred.rawId),
+              type: cred.type,
+              response: {
+                clientDataJSON: bufToB64url(cred.response.clientDataJSON),
+                attestationObject: bufToB64url(cred.response.attestationObject),
+                transports: cred.response.getTransports ? cred.response.getTransports() : [],
+              },
+            },
+          }),
+        });
+        const d2 = await r2.json();
+        if (!r2.ok || d2.error) throw new Error(d2.error || '保存失败');
+        clearTimeout(timeoutId);
+        msg.style.color = '#9f9';
+        msg.textContent = '✓ 已添加！下次直接用指纹/Face ID 登录。';
+        // 关闭提示
+        setTimeout(() => close(), 1800);
+        // 标记 dismiss (7 天内不再问)
+        try { localStorage.setItem(dismissKey, String(Date.now())); } catch (e) {}
+      } catch (e) {
+        clearTimeout(timeoutId);
+        addBtn.disabled = false;
+        addBtn.textContent = '✅ 立即添加到通行密钥';
+        msg.style.color = '#f99';
+        if (e.name === 'NotAllowedError') {
+          msg.textContent = '已取消 (没添加成功, 下次可再来)';
+        } else {
+          msg.textContent = '✗ ' + (e.message || '失败');
+        }
+      }
+    };
+  }
+
   /* ---------- 14.1 服务卡：市民身份登记 → 打开注册 modal ---------- */
   const srvRegister = document.getElementById('srvRegister');
   if (srvRegister) {
@@ -1269,6 +1392,8 @@
             loginMsg.style.color = '';
             await refreshUserState();
             loadPublicMessages();
+            // v17.4: 首次密码登录后, 引导添加通行密钥 (本地 localStorage 已 dismiss 则跳过)
+            try { await maybeOfferPasskey(data.user && data.user.id); } catch (e) { /* 静默失败 */ }
           }, 600);
         } else {
           loginMsg.textContent = '✗ ' + (data.error || '失败');
