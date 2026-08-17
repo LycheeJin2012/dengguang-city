@@ -1105,7 +1105,7 @@ async function renderDmAiStruggle() {
     list.innerHTML = '<p class="empty-state">载入中…</p>';
     empty.style.display = 'none';
     try {
-      const r = await fetch('/api/announcements', { credentials: 'same-origin' });
+      const r = await fetch('/api/init?action=announcements-list', { credentials: 'same-origin' });
       const d = await r.json();
       if (!r.ok || d.error) throw new Error(d.error || '加载失败');
       const anns = d.announcements || [];
@@ -1186,8 +1186,8 @@ async function renderDmAiStruggle() {
       const btn = bd.querySelector('#annSave');
       btn.disabled = true; btn.textContent = '⏳ 保存中...';
       try {
-        const url = isNew ? '/api/announcements' : '/api/announcements?id=' + ann.id;
-        const method = isNew ? 'POST' : 'PATCH';
+        const url = isNew ? '/api/init?action=announcement-create' : '/api/init?action=announcement-update&id=' + ann.id;
+        const method = 'POST';
         const r = await fetch(url, {
           method, credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
@@ -1208,8 +1208,8 @@ async function renderDmAiStruggle() {
   async function annDel(id) {
     if (!confirm('删除该公告？此操作不可恢复。')) return;
     try {
-      const r = await fetch('/api/announcements?id=' + id, {
-        method: 'DELETE', credentials: 'same-origin'
+      const r = await fetch('/api/init?action=announcement-delete&id=' + id, {
+        method: 'POST', credentials: 'same-origin'
       });
       const d = await r.json();
       if (!r.ok || d.error) throw new Error(d.error || '删除失败');

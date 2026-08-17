@@ -198,8 +198,22 @@ const MIGRATIONS = [
 ];
 
 export async function onRequestGet(context) {
-  const { env } = context;
+  const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
+
+  // v17.8: 公告公开读取 GET /api/init?action=announcements-list
+  const _u = new URL(request.url);
+  if (_u.searchParams.get('action') === 'announcements-list') {
+    try {
+      const rows = await env.DB.prepare(
+        'SELECT a.*, ad.username as admin_username FROM announcements a LEFT JOIN admins ad ON ad.id = a.created_by ORDER BY a.created_at DESC LIMIT 30'
+      ).all();
+      return ok({ announcements: rows.results || [] });
+    } catch (e) {
+      return err(500, '查询失败: ' + e.message);
+    }
+  }
+
   const tables = await env.DB.prepare(
     "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
   ).all();
@@ -269,6 +283,59 @@ export async function onRequestPost(context) {
     }
     const draft = respBody?.choices?.[0]?.message?.content || '';
     return ok({ ok: true, url, model, key_prefix: apiKey.slice(0, 10) + '...', elapsed_ms: elapsed, draft, full: respBody });
+  }
+
+  // ============================================================
+  // v17.8: 市政公告 CRUD (仅 super 管理员可写)
+  // POST /api/init?action=announcement-create        (super)
+  // POST /api/init?action=announcement-update&id=X   (super)
+  // POST /api/init?action=announcement-delete&id=X   (super)
+  // ============================================================
+  if (_action === 'announcement-create' || _action === 'announcement-update' || _action === 'announcement-delete') {
+    // 鉴权: 必须是 super 管理员
+    const _ck = request.headers.get('Cookie') || '';
+    const _m = _ck.match(/lc_session=([^;]+)/);
+    if (!_m) return err(401, '未登录');
+    const _sess = await env.DB.prepare('SELECT admin_id, expires_at FROM sessions WHERE token = ?').bind(_m[1]).first();
+    if (!_sess || !_sess.admin_id) return err(403, '需要管理员权限');
+    if (Date.now() / 1000 > (_sess.expires_at || 0)) return err(401, '会话已过期');
+    const _me = await env.DB.prepare('SELECT id, role FROM admins WHERE id = ?').bind(_sess.admin_id).first();
+    if (!_me || _me.role !== 'super') return err(403, '只有 super 管理员可操作公告');
+
+    if (_action === 'announcement-delete') {
+      const id = parseInt(_u.searchParams.get('id') || '0', 10);
+      if (!id) return err(400, 'id 必填');
+      try {
+        await env.DB.prepare('DELETE FROM announcements WHERE id = ?').bind(id).run();
+        return ok({ id, deleted: true });
+      } catch (e) { return err(500, '删除失败: ' + e.message); }
+    }
+
+    const _b = await request.json().catch(() => ({}));
+    const title = stripHtml((_b.title || '').toString()).trim();
+    const content = stripHtml((_b.content || '').toString()).trim();
+    if (title.length < 2 || title.length > 80) return err(400, '标题 2-80 字');
+    if (content.length < 2 || content.length > 2000) return err(400, '内容 2-2000 字');
+
+    if (_action === 'announcement-create') {
+      try {
+        const r = await env.DB.prepare(
+          "INSERT INTO announcements (title, content, created_by) VALUES (?, ?, ?)"
+        ).bind(title, content, _me.id).run();
+        return ok({ id: r.meta.last_row_id, ok: true });
+      } catch (e) { return err(500, '发布失败: ' + e.message); }
+    }
+
+    if (_action === 'announcement-update') {
+      const id = parseInt(_u.searchParams.get('id') || '0', 10);
+      if (!id) return err(400, 'id 必填');
+      try {
+        await env.DB.prepare(
+          "UPDATE announcements SET title = ?, content = ?, updated_at = datetime('now') WHERE id = ?"
+        ).bind(title, content, id).run();
+        return ok({ id, ok: true });
+      } catch (e) { return err(500, '更新失败: ' + e.message); }
+    }
   }
 
   // ============================================================
