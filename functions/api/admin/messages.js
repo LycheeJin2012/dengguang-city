@@ -172,7 +172,7 @@ export async function onRequestPost(context) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens }),
+      body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: maxTokens }),
     });
 
     if (!resp.ok) {
