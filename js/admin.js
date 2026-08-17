@@ -716,7 +716,6 @@ async function adminDel(id){
 }
 async function adminLink(id){
   // v17.9: 合并/解除合并 玩家账号 (双向 linked_player_id + linked_admin_id)
-  const _a = (window._me);
   const _isLinked = await (await GET('/api/admin/admins')).admins
     .find(x => x.id === id)?.linked_player_id;
   if (_isLinked) {
@@ -730,17 +729,91 @@ async function adminLink(id){
     } catch (e) { alert('失败: ' + e.message); }
     return;
   }
-  // 合并
-  const _lpid = prompt('要合并的玩家 ID:','');
-  if (_lpid === null) return;
-  const _val = parseInt(_lpid.trim(), 10);
-  if (isNaN(_val) || _val <= 0) { alert('玩家 ID 必须是正整数'); return; }
+  // 合并 — 弹一个玩家列表 modal 让 super 直接点选
+  showMergePlayerModal(id);
+}
+
+// 合并玩家 modal — 列出所有 active 玩家, super 点选
+async function showMergePlayerModal(adminId) {
+  const old = document.getElementById('mergePlayerBackdrop');
+  if (old) old.remove();
+  const mask = document.createElement('div');
+  mask.id = 'mergePlayerBackdrop';
+  mask.className = 'modal-mask';
+  mask.innerHTML = `
+    <div class="modal" style="max-width:520px;">
+      <div class="modal-head">
+        <h3>🔗 选择要合并的玩家</h3>
+        <button class="modal-close" id="mpClose">×</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0 0 12px;font-size:13px;color:var(--c-stone);">合并后: 用该玩家密码或通行密钥登录, 即可同时获得管理身份; 退出管理无需重新验证, 玩家身份保留。两边密码独立, 互不影响。</p>
+        <div style="margin-bottom:10px;">
+          <input type="text" id="mpSearch" placeholder="搜索玩家 username / game_id / email..." style="width:100%;padding:8px 10px;font-size:14px;border:2px solid var(--c-stone);background:var(--c-bg-2);">
+        </div>
+        <div id="mpList" style="max-height:380px;overflow-y:auto;border:2px solid var(--c-stone);background:var(--c-paper);">
+          <p style="text-align:center;padding:24px;color:var(--c-stone);">载入中…</p>
+        </div>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(mask);
+  const close = () => mask.remove();
+  document.getElementById('mpClose').addEventListener('click', close);
+  mask.addEventListener('click', e => { if (e.target === mask) close(); });
+
+  // 拉所有玩家
+  let _players = [];
   try {
-    await POST('/api/init?action=admin-merge-account',
-      { admin_id: id, player_id: _val });
-    renderAdminList();
-    alert('已合并玩家 #' + _val + '\n\n效果:\n• 用该玩家密码/通行密钥登录即可同时获得管理身份\n• 退出管理无需重新验证, 玩家身份保留\n• 两边密码独立, 互不影响');
-  } catch (e) { alert('失败: ' + e.message); }
+    // super 用 admin-player-list 端点, 含 status
+    const r = await POST('/api/init?action=admin-player-list', {});
+    _players = (r.players || []).filter(p => p.status === 'active');
+  } catch (e) {
+    document.getElementById('mpList').innerHTML = '<p style="text-align:center;padding:24px;color:#c33;">加载失败: ' + esc(e.message) + '</p>';
+    return;
+  }
+
+  function render(q) {
+    const list = document.getElementById('mpList');
+    const ql = (q || '').trim().toLowerCase();
+    const filtered = !ql ? _players : _players.filter(p =>
+      (p.username || '').toLowerCase().includes(ql) ||
+      (p.game_id || '').toLowerCase().includes(ql) ||
+      (p.email || '').toLowerCase().includes(ql)
+    );
+    if (!filtered.length) {
+      list.innerHTML = '<p style="text-align:center;padding:24px;color:var(--c-stone);">无匹配玩家</p>';
+      return;
+    }
+    list.innerHTML = filtered.map(p => `
+      <div class="mp-row" data-pid="${esc(String(p.id))}" data-pname="${esc(p.username)}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--c-bg-2);cursor:pointer;transition:background 0.1s;">
+        <span style="font-size:24px;">${esc(p.avatar_emoji || '👤')}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-weight:700;color:var(--c-stone-dark);font-size:14px;">${esc(p.username)}</div>
+          <div style="font-size:11px;color:var(--c-stone);overflow:hidden;text-overflow:ellipsis;">ID: ${p.id} · ${esc(p.game_id || '-')} · ${esc(p.email || '')}</div>
+        </div>
+        <span style="font-size:11px;color:var(--c-emerald);">→ 合并</span>
+      </div>
+    `).join('');
+    list.querySelectorAll('.mp-row').forEach(row => {
+      row.addEventListener('mouseover', () => row.style.background = 'var(--c-bg-2)');
+      row.addEventListener('mouseout', () => row.style.background = '');
+      row.addEventListener('click', async () => {
+        const pid = parseInt(row.dataset.pid, 10);
+        const pname = row.dataset.pname;
+        if (!confirm(`确认将管理员与此玩家 [${pname}] 合并?\n\n合并后:\n• 用玩家密码/通行密钥登录即可获得管理身份\n• 退出管理无需重新验证, 玩家身份保留\n• 两边密码独立`)) return;
+        try {
+          await POST('/api/init?action=admin-merge-account',
+            { admin_id: adminId, player_id: pid });
+          renderAdminList();
+          close();
+          alert('已合并玩家 ' + pname + '\n\n该玩家下次登录即可获得管理身份');
+        } catch (e) { alert('失败: ' + e.message); }
+      });
+    });
+  }
+  document.getElementById('mpSearch').addEventListener('input', e => render(e.target.value));
+  render('');
 }
 
 async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
