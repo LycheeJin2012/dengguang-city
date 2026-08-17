@@ -23,6 +23,24 @@ function getOrigin(request) {
   return u.origin;
 }
 
+// v17.5: 根据 session 自动识别玩家或管理员, 返回 subject { kind, id, username }
+async function resolveSubjectFromSession(env, sess) {
+  if (!sess) return null;
+  if (sess.player_id) {
+    const p = await env.DB.prepare(
+      "SELECT id, username, 'player' AS kind FROM players WHERE id = ? AND status = 'active'"
+    ).bind(sess.player_id).first();
+    return p || null;
+  }
+  if (sess.admin_id) {
+    const a = await env.DB.prepare(
+      "SELECT id, username, role, 'admin' AS kind FROM admins WHERE id = ?"
+    ).bind(sess.admin_id).first();
+    return a || null;
+  }
+  return null;
+}
+
 // 基础 SCHEMA（新部署用 CREATE TABLE IF NOT EXISTS）
 const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS admins (
@@ -127,7 +145,8 @@ const SCHEMA = [
   )`,
   `CREATE TABLE IF NOT EXISTS passkeys (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    player_id INTEGER NOT NULL,
+    player_id INTEGER,
+    admin_id INTEGER,
     credential_id TEXT UNIQUE NOT NULL,
     public_key_jwk TEXT NOT NULL,
     sign_count INTEGER NOT NULL DEFAULT 0,
@@ -136,7 +155,8 @@ const SCHEMA = [
     aaguid TEXT,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_used_at TEXT,
-    FOREIGN KEY (player_id) REFERENCES players(id)
+    FOREIGN KEY (player_id) REFERENCES players(id),
+    FOREIGN KEY (admin_id) REFERENCES admins(id)
   )`,
   `CREATE TABLE IF NOT EXISTS webauthn_challenges (
     token TEXT PRIMARY KEY,
@@ -158,7 +178,9 @@ const MIGRATIONS = [
   // 修复 license_signups 缺 result_by/result_at 列
   `ALTER TABLE license_signups ADD COLUMN result_by INTEGER`,
   `ALTER TABLE license_signups ADD COLUMN result_at TEXT`,
-  `ALTER TABLE license_signups ADD COLUMN reviewed_by INTEGER`
+  `ALTER TABLE license_signups ADD COLUMN reviewed_by INTEGER`,
+  // v17.5: passkeys 支持 admin (player_id 改为可空 + 加 admin_id)
+  `ALTER TABLE passkeys ADD COLUMN admin_id INTEGER`
 ];
 
 export async function onRequestGet(context) {
@@ -237,12 +259,12 @@ export async function onRequestPost(context) {
 
   // ============================================================
   // WebAuthn Passkey 端点（2026-08-17）
-  // POST /api/init?action=passkey-register-start    (需玩家登录)
-  // POST /api/init?action=passkey-register-finish   (需玩家登录)
+  // POST /api/init?action=passkey-register-start    (需玩家 OR 管理员登录) v17.5
+  // POST /api/init?action=passkey-register-finish   (需玩家 OR 管理员登录)
   // POST /api/init?action=passkey-login-start       (公开)
-  // POST /api/init?action=passkey-login-finish      (公开)
-  // POST /api/init?action=passkey-list              (需玩家登录)
-  // POST /api/init?action=passkey-delete            (需玩家登录)
+  // POST /api/init?action=passkey-login-finish      (公开, 自动识别 player/admin)
+  // POST /api/init?action=passkey-list              (需玩家 OR 管理员登录)
+  // POST /api/init?action=passkey-delete            (需玩家 OR 管理员登录)
   // ============================================================
   const _action = _url.searchParams.get('action') || '';
   if (_action.startsWith('passkey-')) {
@@ -253,18 +275,20 @@ export async function onRequestPost(context) {
       if (_action === 'passkey-register-start') {
         const _tok = readToken(request);
         const _sess = await getSession(env, _tok);
-        if (!_sess || !_sess.player_id) return err(401, '需要先登录玩家账号');
-        const _p = await env.DB.prepare('SELECT id, username FROM players WHERE id = ? AND status = "active"').bind(_sess.player_id).first();
-        if (!_p) return err(401, '玩家不存在或已禁用');
-        const _data = await passkeyRegisterStart(env, _p.id, rpId, _p.username);
+        if (!_sess) return err(401, '需要先登录');
+        const _subject = await resolveSubjectFromSession(env, _sess);
+        if (!_subject) return err(401, '账号不存在或已禁用');
+        const _data = await passkeyRegisterStart(env, _subject, rpId);
         return ok(_data);
       }
       if (_action === 'passkey-register-finish') {
         const _tok = readToken(request);
         const _sess = await getSession(env, _tok);
-        if (!_sess || !_sess.player_id) return err(401, '需要先登录玩家账号');
+        if (!_sess) return err(401, '需要先登录');
+        const _subject = await resolveSubjectFromSession(env, _sess);
+        if (!_subject) return err(401, '账号不存在或已禁用');
         const _body = await request.json().catch(() => ({}));
-        const _data = await passkeyRegisterFinish(env, _body, _sess.player_id, rpId, expectedOrigin);
+        const _data = await passkeyRegisterFinish(env, _body, _subject, rpId, expectedOrigin);
         return ok(_data);
       }
       if (_action === 'passkey-login-start') {
@@ -276,27 +300,36 @@ export async function onRequestPost(context) {
         const _body = await request.json().catch(() => ({}));
         const loginOrigin = { type: 'webauthn.get', origin };
         const _data = await passkeyLoginFinish(env, _body, rpId, loginOrigin);
-        // _data: { player, token, expires_at }
-        // 设置 cookie
+        // _data: { player | admin, token, expires_at, kind }
         const cookie = `lc_session=${_data.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800`;
-        return new Response(JSON.stringify({ ok: true, player: { id: _data.player.id, username: _data.player.username }, expires_at: _data.expires_at }),
+        let userObj = {};
+        if (_data.kind === 'admin') {
+          userObj = { id: _data.admin.id, username: _data.admin.username, role: _data.admin.role };
+        } else {
+          userObj = { id: _data.player.id, username: _data.player.username };
+        }
+        return new Response(JSON.stringify({ ok: true, ...userObj, kind: _data.kind, expires_at: _data.expires_at }),
           { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Set-Cookie': cookie } });
       }
       if (_action === 'passkey-list') {
         const _tok = readToken(request);
         const _sess = await getSession(env, _tok);
-        if (!_sess || !_sess.player_id) return err(401, '需要先登录');
-        const _rows = await listPasskeys(env, _sess.player_id);
+        if (!_sess) return err(401, '需要先登录');
+        const _subject = await resolveSubjectFromSession(env, _sess);
+        if (!_subject) return err(401, '账号不存在或已禁用');
+        const _rows = await listPasskeys(env, _subject);
         return ok({ passkeys: _rows.results || [] });
       }
       if (_action === 'passkey-delete') {
         const _tok = readToken(request);
         const _sess = await getSession(env, _tok);
-        if (!_sess || !_sess.player_id) return err(401, '需要先登录');
+        if (!_sess) return err(401, '需要先登录');
+        const _subject = await resolveSubjectFromSession(env, _sess);
+        if (!_subject) return err(401, '账号不存在或已禁用');
         const _body = await request.json().catch(() => ({}));
         const _id = parseInt(_body.id || 0, 10);
         if (!_id) return err(400, 'id 必填');
-        await deletePasskey(env, _sess.player_id, _id);
+        await deletePasskey(env, _subject, _id);
         return ok({ deleted: _id });
       }
       return err(400, '未知 passkey action: ' + _action);

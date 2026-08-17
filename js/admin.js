@@ -44,9 +44,124 @@ async function doLogin(){
     window._me=me.user;
     $('#loginUser').value='';$('#loginPass').value='';
     renderDash();
+    // v17.5: 管理员首次密码登录后, 引导添加通行密钥
+    try { await maybeOfferAdminPasskey(me.user && me.user.id); } catch (e) { /* 静默 */ }
   }catch(err){if(errEl)errEl.textContent='登录失败: '+err.message;}
 }
 window.adminDoLogin=doLogin;
+
+/* ---------- v17.5 管理员首次密码登录后引导添加通行密钥 ---------- */
+async function maybeOfferAdminPasskey(adminId){
+  if(!adminId) return;
+  if(!window.PublicKeyCredential) return;
+  if(!window.isSecureContext) return;
+  const _dismissKey='lc_admin_passkey_offer_dismissed_'+adminId;
+  const _last=parseInt(localStorage.getItem(_dismissKey)||'0',10);
+  if(_last && (Date.now()-_last)<7*24*60*60*1000) return;
+  let _list=[];
+  try{
+    const _r=await fetch('/api/init?action=passkey-list',{credentials:'include'});
+    const _d=await _r.json();
+    if(_r.ok && _d.ok!==false) _list=_d.passkeys||[];
+  }catch(e){return;}
+  if(_list.length>0) return;
+  showAdminPasskeyOffer(adminId,_dismissKey);
+}
+
+function showAdminPasskeyOffer(adminId,dismissKey){
+  const old=document.getElementById('adminPasskeyOfferBackdrop');
+  if(old) old.remove();
+  const bd=document.createElement('div');
+  bd.id='adminPasskeyOfferBackdrop';
+  bd.style.cssText='position:fixed;left:0;right:0;bottom:0;top:auto;z-index:10000;display:flex;justify-content:center;pointer-events:none;padding:14px';
+  bd.innerHTML=`
+    <div style="pointer-events:auto;background:linear-gradient(135deg,#2a2a4a,#1a1a3a);border:3px solid #88f;border-radius:10px;padding:14px 18px;max-width:480px;width:100%;box-shadow:0 8px 28px rgba(0,0,0,.5);color:#ddf;font-family:inherit;line-height:1.55">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+        <span style="font-size:26px;line-height:1">🔑</span>
+        <div style="flex:1">
+          <b style="color:#fff;font-size:15px">管理员要不要也加一个通行密钥？</b>
+          <div style="font-size:11px;color:#aac;margin-top:2px">下次可指纹 / Face ID 一键进后台，不用记密码</div>
+        </div>
+        <button type="button" id="apkoClose" aria-label="关闭" style="background:none;border:none;color:#aac;font-size:18px;cursor:pointer;padding:0 4px;line-height:1" title="关闭">×</button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+        <button type="button" id="apkoAdd" style="flex:1;min-width:120px;background:linear-gradient(135deg,#44a,#226);color:#fff;border:2px solid #88f;padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700">✅ 立即添加</button>
+        <button type="button" id="apkoLater" style="background:transparent;color:#aac;border:2px solid #46a;border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px">⏭ 下次再说</button>
+      </div>
+      <div id="apkoMsg" style="margin-top:8px;font-size:12px;min-height:16px;color:#aac"></div>
+    </div>
+  `;
+  document.body.appendChild(bd);
+  const close=()=>bd.remove();
+  bd.querySelector('#apkoClose').onclick=close;
+  bd.querySelector('#apkoLater').onclick=()=>{try{localStorage.setItem(dismissKey,String(Date.now()));}catch(e){}close();};
+
+  function b64urlToBuf(s){s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';const bin=atob(s);const out=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)out[i]=bin.charCodeAt(i);return out.buffer;}
+  function bufToB64url(buf){const b=new Uint8Array(buf);let s='';for(let i=0;i<b.length;i++)s+=String.fromCharCode(b[i]);return btoa(s).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+
+  bd.querySelector('#apkoAdd').onclick=async()=>{
+    const addBtn=bd.querySelector('#apkoAdd');
+    const msg=bd.querySelector('#apkoMsg');
+    addBtn.disabled=true;
+    addBtn.textContent='⏳ 请触摸指纹/Face ID...';
+    msg.textContent='';
+    let timeoutId=setTimeout(()=>{
+      addBtn.disabled=false;
+      addBtn.textContent='✅ 立即添加';
+      msg.style.color='#f99';
+      msg.textContent='✗ 操作超时, 请重试';
+    },30000);
+    try{
+      const r1=await fetch('/api/init?action=passkey-register-start',{
+        method:'POST',credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({}),
+      });
+      const d1=await r1.json();
+      if(!r1.ok||d1.error) throw new Error(d1.error||'获取 challenge 失败');
+      const opts=d1.publicKey;
+      opts.challenge=b64urlToBuf(opts.challenge);
+      opts.user.id=b64urlToBuf(opts.user.id);
+      const cred=await navigator.credentials.create({publicKey:opts});
+      if(!cred) throw new Error('未创建凭据');
+      const r2=await fetch('/api/init?action=passkey-register-finish',{
+        method:'POST',credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({
+          challenge_token:d1.challenge_token,
+          name:'我的设备',
+          credential:{
+            id:cred.id,
+            rawId:bufToB64url(cred.rawId),
+            type:cred.type,
+            response:{
+              clientDataJSON:bufToB64url(cred.response.clientDataJSON),
+              attestationObject:bufToB64url(cred.response.attestationObject),
+              transports:cred.response.getTransports?cred.response.getTransports():[],
+            },
+          },
+        }),
+      });
+      const d2=await r2.json();
+      if(!r2.ok||d2.error) throw new Error(d2.error||'保存失败');
+      clearTimeout(timeoutId);
+      msg.style.color='#9f9';
+      msg.textContent='✓ 已添加！下次直接用指纹/Face ID 登录后台。';
+      setTimeout(()=>close(),1800);
+      try{localStorage.setItem(dismissKey,String(Date.now()));}catch(e){}
+    }catch(e){
+      clearTimeout(timeoutId);
+      addBtn.disabled=false;
+      addBtn.textContent='✅ 立即添加';
+      msg.style.color='#f99';
+      if(e.name==='NotAllowedError'){
+        msg.textContent='已取消 (没添加成功, 下次可再来)';
+      }else{
+        msg.textContent='✗ '+(e.message||'失败');
+      }
+    }
+  };
+}
 
 async function renderMessages(){
   try{

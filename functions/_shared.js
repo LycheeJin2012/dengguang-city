@@ -424,24 +424,29 @@ async function expectedRpIdHash(rpId) {
 
 // === 高层 API ===
 
-// 注册开始
-export async function passkeyRegisterStart(env, playerId, rpId, userName) {
+// 注册开始 (v17.5: 支持 player 和 admin)
+// subject = { kind: 'player'|'admin', id: number, username: string }
+export async function passkeyRegisterStart(env, subject, rpId) {
+  const { kind, id, username } = subject;
+  if (!kind || !id || !username) throw new Error('subject 必填 (kind/id/username)');
   const challenge = crypto.getRandomValues(new Uint8Array(32));
   const challengeB64 = bytesToB64url(challenge);
   const token = randomToken(24);
   const expires = new Date(Date.now() + 300_000).toISOString();
+  // player_id 字段复用作 "kind:id" 复合 key, 方便挑战码查询
+  const subjectKey = `${kind}:${id}`;
   await env.DB.prepare(
     "INSERT OR REPLACE INTO webauthn_challenges (token, challenge, purpose, player_id, expires_at) VALUES (?, ?, 'register', ?, ?)"
-  ).bind(token, challengeB64, playerId, expires).run();
+  ).bind(token, challengeB64, subjectKey, expires).run();
   return {
     challenge_token: token,
     publicKey: {
       challenge: challengeB64,
       rp: { id: rpId, name: '灯光市' },
       user: {
-        id: bytesToB64url(new TextEncoder().encode(String(playerId))),
-        name: userName,
-        displayName: userName,
+        id: bytesToB64url(new TextEncoder().encode(`${kind}:${id}`)),
+        name: username,
+        displayName: username,
       },
       pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
       authenticatorSelection: {
@@ -456,7 +461,7 @@ export async function passkeyRegisterStart(env, playerId, rpId, userName) {
 }
 
 // 注册完成
-export async function passkeyRegisterFinish(env, body, playerId, rpId, expectedOrigin) {
+export async function passkeyRegisterFinish(env, body, subject, rpId, expectedOrigin) {
   const { challenge_token: challengeToken, credential, name } = body;
   if (!challengeToken || !credential) throw new Error('缺少 challenge_token 或 credential');
   const ch = await env.DB.prepare(
@@ -488,34 +493,60 @@ export async function passkeyRegisterFinish(env, body, playerId, rpId, expectedO
   const aaguid = parsed.attestedCredentialData.aaguid;
   const credIdB64 = bytesToB64url(credId);
 
-  await env.DB.prepare(
-    "INSERT INTO passkeys (player_id, credential_id, public_key_jwk, sign_count, transports, name, aaguid) VALUES (?, ?, ?, ?, ?, ?, ?)"
-  ).bind(
-    playerId,
-    credIdB64,
-    JSON.stringify(jwk),
-    parsed.signCount,
-    JSON.stringify(credential.response.transports || []),
-    (name || 'My Passkey').slice(0, 50),
-    bytesToB64url(aaguid),
-  ).run();
+  // v17.5: 按 subject.kind 写 player_id 或 admin_id (另一个字段为 NULL)
+  if (subject.kind === 'admin') {
+    await env.DB.prepare(
+      "INSERT INTO passkeys (admin_id, player_id, credential_id, public_key_jwk, sign_count, transports, name, aaguid) VALUES (?, NULL, ?, ?, ?, ?, ?, ?)"
+    ).bind(
+      subject.id,
+      credIdB64,
+      JSON.stringify(jwk),
+      parsed.signCount,
+      JSON.stringify(credential.response.transports || []),
+      (name || 'My Passkey').slice(0, 50),
+      bytesToB64url(aaguid),
+    ).run();
+  } else {
+    await env.DB.prepare(
+      "INSERT INTO passkeys (player_id, admin_id, credential_id, public_key_jwk, sign_count, transports, name, aaguid) VALUES (?, NULL, ?, ?, ?, ?, ?, ?)"
+    ).bind(
+      subject.id,
+      credIdB64,
+      JSON.stringify(jwk),
+      parsed.signCount,
+      JSON.stringify(credential.response.transports || []),
+      (name || 'My Passkey').slice(0, 50),
+      bytesToB64url(aaguid),
+    ).run();
+  }
 
   return { id: credIdB64, name: name || 'My Passkey' };
 }
 
-// 登录开始
+// 登录开始 (v17.5: 同时查 player 和 admin)
 export async function passkeyLoginStart(env, username, rpId) {
-  let player = null;
+  let subject = null; // { kind: 'player'|'admin', id, username, status, role? }
   if (username) {
-    player = await env.DB.prepare(
-      "SELECT id, username, status FROM players WHERE username = ? OR email = ?"
+    // 先查 player
+    const p = await env.DB.prepare(
+      "SELECT id, username, status, 'player' AS kind FROM players WHERE username = ? OR email = ?"
     ).bind(username, username).first();
+    if (p && p.status === 'active') {
+      subject = p;
+    } else {
+      // 再查 admin
+      const a = await env.DB.prepare(
+        "SELECT id, username, role, 'admin' AS kind FROM admins WHERE username = ?"
+      ).bind(username).first();
+      if (a) subject = a;
+    }
   }
   let allowCredentials = [];
-  if (player && player.status === 'active') {
+  if (subject) {
+    const where = subject.kind === 'admin' ? 'admin_id = ?' : 'player_id = ?';
     const rows = await env.DB.prepare(
-      "SELECT credential_id, transports FROM passkeys WHERE player_id = ?"
-    ).bind(player.id).all();
+      `SELECT credential_id, transports FROM passkeys WHERE ${where}`
+    ).bind(subject.id).all();
     allowCredentials = rows.results.map((r) => ({
       id: r.credential_id,
       type: 'public-key',
@@ -526,9 +557,11 @@ export async function passkeyLoginStart(env, username, rpId) {
   const challengeB64 = bytesToB64url(challenge);
   const token = randomToken(24);
   const expires = new Date(Date.now() + 300_000).toISOString();
+  // 复用 player_id 字段存 subjectKey
+  const subjectKey = subject ? `${subject.kind}:${subject.id}` : null;
   await env.DB.prepare(
     "INSERT OR REPLACE INTO webauthn_challenges (token, challenge, purpose, player_id, expires_at) VALUES (?, ?, 'login', ?, ?)"
-  ).bind(token, challengeB64, player?.id || null, expires).run();
+  ).bind(token, challengeB64, subjectKey, expires).run();
   return {
     challenge_token: token,
     publicKey: {
@@ -538,11 +571,11 @@ export async function passkeyLoginStart(env, username, rpId) {
       userVerification: 'preferred',
       timeout: 60000,
     },
-    hint_player_id: player?.id || null,
+    hint: subject ? { kind: subject.kind, id: subject.id, username: subject.username } : null,
   };
 }
 
-// 登录完成
+// 登录完成 (v17.5: 支持 player 和 admin)
 export async function passkeyLoginFinish(env, body, rpId, expectedOrigin) {
   const { challenge_token: challengeToken, credential } = body;
   if (!challengeToken || !credential) throw new Error('缺少参数');
@@ -584,24 +617,47 @@ export async function passkeyLoginFinish(env, body, rpId, expectedOrigin) {
     "UPDATE passkeys SET sign_count = ?, last_used_at = datetime('now') WHERE id = ?"
   ).bind(parsed.signCount, pk.id).run();
 
+  // v17.5: 按 player_id 或 admin_id 拿账号信息
+  if (pk.admin_id) {
+    const admin = await env.DB.prepare(
+      "SELECT id, username, role FROM admins WHERE id = ?"
+    ).bind(pk.admin_id).first();
+    if (!admin) throw new Error('管理员不存在');
+    const { token, expires_at } = await createSession(env, null, admin.id);
+    return { admin, token, expires_at, kind: 'admin' };
+  }
   const player = await env.DB.prepare(
     "SELECT id, username, status FROM players WHERE id = ?"
   ).bind(pk.player_id).first();
   if (!player) throw new Error('玩家不存在');
   if (player.status !== 'active') throw new Error('账号已被禁用');
-
   const { token, expires_at } = await createSession(env, player.id, null);
-  return { player, token, expires_at };
+  return { player, token, expires_at, kind: 'player' };
 }
 
-export async function listPasskeys(env, playerId) {
+// v17.5: listPasskeys 接受 subject (kind + id) 或旧的 playerId
+export async function listPasskeys(env, subjectOrPlayerId) {
+  let kind, id;
+  if (typeof subjectOrPlayerId === 'object' && subjectOrPlayerId !== null) {
+    kind = subjectOrPlayerId.kind; id = subjectOrPlayerId.id;
+  } else {
+    kind = 'player'; id = subjectOrPlayerId;
+  }
+  const where = kind === 'admin' ? 'admin_id = ?' : 'player_id = ?';
   return await env.DB.prepare(
-    "SELECT id, credential_id, name, created_at, last_used_at, aaguid FROM passkeys WHERE player_id = ? ORDER BY created_at DESC"
-  ).bind(playerId).all();
+    `SELECT id, credential_id, name, created_at, last_used_at, aaguid FROM passkeys WHERE ${where} ORDER BY created_at DESC`
+  ).bind(id).all();
 }
 
-export async function deletePasskey(env, playerId, passkeyId) {
+export async function deletePasskey(env, subjectOrPlayerId, passkeyId) {
+  let kind, id;
+  if (typeof subjectOrPlayerId === 'object' && subjectOrPlayerId !== null) {
+    kind = subjectOrPlayerId.kind; id = subjectOrPlayerId.id;
+  } else {
+    kind = 'player'; id = subjectOrPlayerId;
+  }
+  const where = kind === 'admin' ? 'id = ? AND admin_id = ?' : 'id = ? AND player_id = ?';
   return await env.DB.prepare(
-    "DELETE FROM passkeys WHERE id = ? AND player_id = ?"
-  ).bind(passkeyId, playerId).run();
+    `DELETE FROM passkeys WHERE ${where}`
+  ).bind(passkeyId, id).run();
 }
