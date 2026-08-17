@@ -1393,7 +1393,9 @@
             await refreshUserState();
             loadPublicMessages();
             // v17.4: 首次密码登录后, 引导添加通行密钥 (本地 localStorage 已 dismiss 则跳过)
-            try { await maybeOfferPasskey(data.user && data.user.id); } catch (e) { /* 静默失败 */ }
+            // 注意: 登录接口返回的是 data.user_id (顶层), 不是 data.user.id
+            const _offerUid = (data && (data.user_id || (data.user && data.user.id))) || null;
+            try { await maybeOfferPasskey(_offerUid); } catch (e) { /* 静默失败 */ }
           }, 600);
         } else {
           loginMsg.textContent = '✗ ' + (data.error || '失败');
