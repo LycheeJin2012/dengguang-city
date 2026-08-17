@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>灯光市人民政府 | Light City Hall of MC</title>
+  <meta name="description" content="灯光市人民政府官方网站 - 由市民共建的像素城市，提供政务公告、城市数据与市民服务。" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2370ad34'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='10' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='3' y='10' width='3' height='3' fill='%23ffd23f'/%3E%3C/svg%3E" />
+</head>
+<body>
+
+  <!-- 像素天空背景层（像素化实景图 + 渐变叠加） -->
+  <div class="sky-bg" aria-hidden="true">
+    <img src="assets/backgrounds/bg-pixel-hero.jpg" alt="" class="sky-bg-img" />
+    <div class="sky-bg-overlay"></div>
+    <div class="cloud cloud-1"></div>
+    <div class="cloud cloud-2"></div>
+    <div class="cloud cloud-3"></div>
+    <div class="sun"></div>
+  </div>
+
+  <!-- 顶部公告条 -->
+  <div class="top-strip">
+    <span class="strip-icon">📢</span>
+    <span class="strip-text">本站为灯光市人民政府官方网站（搭建中）。公告与新闻将由市政厅正式发布后呈现。</span>
+  </div>
+
+  <!-- 导航栏 -->
+  <header class="navbar" id="navbar">
+    <div class="nav-inner">
+      <a href="#home" class="nav-logo">
+        <div class="logo-block" aria-hidden="true">
+          <div class="block-grass"></div>
+          <div class="block-dirt"></div>
+        </div>
+        <div class="logo-text">
+          <span class="logo-zh">灯光市人民政府</span>
+          <span class="logo-en">LIGHT CITY GOVERNMENT</span>
+        </div>
+      </a>
+      <nav class="nav-links" id="navLinks">
+        <a href="#home">首页</a>
+        <a href="#notice">公告</a>
+        <a href="#mayor">市政厅</a>
+        <a href="#data">城市数据</a>
+        <a href="#scenery">城市风貌</a>
+        <a href="#gallery">实景图集</a>
+        <a href="#wall">市民留言墙</a>
+        <a href="#kart">国际赛车场</a>
+        <a href="#circuit">国际赛车场</a>
+        <a href="#hotel">树上酒店</a>
+        <a href="#service">市民服务</a>
+        <a href="#contact">联系我们</a>
+      </nav>
+      <span class="nav-user-slot" id="navUserSlot"></span>
+      <button class="nav-toggle" id="navToggle" aria-label="菜单">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- ========== Hero ========== -->
+  <section class="hero" id="home">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-tag">灯光市人民政府 · 官方站点</div>
+        <h1 class="hero-title">
+          <span class="title-line">欢 迎 来 到</span>
+          <span class="title-main">灯 光 市</span>
+          <span class="title-sub">DENG&nbsp;GUANG&nbsp;SHI</span>
+        </h1>
+        <!-- hero slogan 已删（C6） -->
+        <p class="hero-desc">
+          这里是灯光市人民政府的官方网站。本站用于发布公告、办理市民服务、记录城市数据。具体活动与项目由市政厅筹备中正式上线后在此呈现。
+        </p>
+        <div class="hero-actions">
+          <a href="#notice" class="btn btn-primary">▶ 查看公告</a>
+          <a href="#service" class="btn btn-ghost">市民服务</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><b>17</b><span>注册市民</span></div>
+          <div class="stat"><b>50+</b><span>已建建筑</span></div>
+          <div class="stat"><b>2023.8</b><span>建市时间</span></div>
+        </div>
+      </div>
+    </div>
+    <!-- 向下滚动提示已删（C7） -->
+  </section>
+
+  <!-- ========== 公告栏 ========== -->
+  <section class="section" id="notice">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">📜 市政公告</h2>
+        <p class="section-sub">CITY BULLETIN · 最新动态</p>
+      </div>
+      <div class="notice-grid">
+        <article class="notice-card notice-empty">
+          <div class="notice-body">
+            <span class="notice-tag tag-blue">公告位</span>
+            <h3>暂无公告</h3>
+            <p>市政厅尚未发布正式公告。本栏将随市政厅的运作逐步更新。</p>
+          </div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 城市数据 ========== -->
+  <section class="section" id="data">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">📊 城市数据看板</h2>
+        <p class="section-sub">CITY DATA · 实时统计</p>
+      </div>
+      <div class="data-grid">
+        <div class="data-card">
+          <div class="data-icon">🏘️</div>
+          <div class="data-num">17</div>
+          <div class="data-label">注册市民</div>
+        </div>
+        <div class="data-card">
+          <div class="data-icon">🏗️</div>
+          <div class="data-num">50+</div>
+          <div class="data-label">已建建筑</div>
+        </div>
+        <div class="data-card data-card-double">
+          <div class="data-icon">🛤️</div>
+          <div class="data-num data-num-double">
+            <div><b>2,800+</b><i>道路</i></div>
+            <div><b>1,500+</b><i>铁路</i></div>
+          </div>
+          <div class="data-label">路网(格)</div>
+        </div>
+        <div class="data-card">
+          <div class="data-icon">🌳</div>
+          <div class="data-num">30+</div>
+          <div class="data-label">绿化区块</div>
+        </div>
+      </div>
+      <p class="data-note">数据由市民推选代表统计后公布。统计制度正在筹建中。</p>
+    </div>
+  </section>
+
+  <!-- ========== 城市风貌 ========== -->
+  <section class="section section-alt" id="scenery">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">🏙️ 城市风貌</h2>
+        <p class="section-sub">CITY SCENERY · 地标一览</p>
+      </div>
+      <div class="scene-grid">
+        <div class="scene-card">
+          <div class="scene-art art-tower">
+            <div class="scene-tower"><div class="lantern"></div><div class="body"></div></div>
+          </div>
+          <h3>市政灯塔（草拟名）</h3>
+          <p>市政厅旁的地标建筑。具体高度、点灯时间、正式名称由市政厅规划设计后发布。</p>
+        </div>
+        <div class="scene-card">
+          <div class="scene-art art-plaza">
+            <div class="scene-plaza"></div>
+          </div>
+          <h3>中心广场（草拟名）</h3>
+          <p>市民集会、市集与公共活动所在地。具体设计、开放时间、正式名称由市政厅发布。</p>
+        </div>
+        <div class="scene-card">
+          <div class="scene-art art-station">
+            <div class="scene-station"></div>
+          </div>
+          <h3>火车站（拟建）</h3>
+          <p>城市交通枢纽选址之一,具体线路、规模、运营由市政厅论证后公告。</p>
+        </div>
+        <div class="scene-card">
+          <div class="scene-art art-farm">
+            <div class="scene-farm"></div>
+          </div>
+          <h3>农田合作区（筹建）</h3>
+          <p>农业合作区由市民合作社筹建,具体范围、管理规则与正式名称由合作社大会决定。</p>
+        </div>
+        <div class="scene-card">
+          <div class="scene-art art-library">
+            <div class="scene-library"></div>
+          </div>
+          <h3>市民图书馆（筹建）</h3>
+          <p>市民共享知识库,书籍由市民自愿捐赠,目录、开放时间、正式名称待发布。</p>
+        </div>
+        <div class="scene-card">
+          <div class="scene-art art-park">
+            <div class="scene-park"></div>
+          </div>
+          <h3>公园（待规划）</h3>
+          <p>城市公共绿地。选址、设计、命名由市民大会讨论决定。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 实景图集 ========== -->
+  <section class="section" id="gallery">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">📸 实景图集（v17.1）</h2>
+        <p class="section-sub">REAL SHOTS · 灯光市实拍</p>
+      </div>
+      <p class="gallery-intro">
+        以下照片由市民实地拍摄。点击任意图片可放大查看原图。欢迎你亲自来逛。
+      </p>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <button type="button" id="galCartoonBtn" class="btn" style="background:linear-gradient(135deg,#5a2,#2a5);color:#fff;border:3px solid var(--c-stone-dark);padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:2px 2px 0 var(--c-stone-dark)">🎨 切换为卡通风格</button>
+        <select id="galPixelSize" style="padding:5px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-size:12px">
+          <option value="4">像素块 4px（细）</option>
+          <option value="8" selected>像素块 8px（推荐）</option>
+          <option value="12">像素块 12px（粗）</option>
+          <option value="16">像素块 16px（超粗）</option>
+        </select>
+        <select id="galColors" style="padding:5px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-size:12px">
+          <option value="8">8 色（极致简）</option>
+          <option value="16" selected>16 色（MC 风）</option>
+          <option value="32">32 色（彩色）</option>
+          <option value="64">64 色（细腻）</option>
+        </select>
+        <span id="galCartoonStatus" style="font-size:11px;color:var(--c-stone)"></span>
+      </div>
+      <div class="gal-filter-bar" id="galleryFilterBar">
+        <!-- JS 渲染 filter 按钮 -->
+      </div>
+      <div class="gallery-grid" id="galleryGrid">
+        <!-- JS 渲染 -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== Lightbox ========== -->
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <button class="lb-close" id="lbClose" aria-label="关闭">✕</button>
+    <button class="lb-prev" id="lbPrev" aria-label="上一张">◀</button>
+    <button class="lb-next" id="lbNext" aria-label="下一张">▶</button>
+    <div class="lb-stage">
+      <img id="lbImg" alt="" />
+      <div class="lb-caption" id="lbCap"></div>
+    </div>
+  </div>
+
+  <!-- ========== 市民留言墙（公开） ========== -->
+  <section class="section" id="wall">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">💬 市民留言墙</h2>
+        <p class="section-sub">PUBLIC WALL · 大家的留言</p>
+      </div>
+      <p class="wall-intro">
+        这里是全城市民公开的留言板。留言数据存于本机浏览器,本机可见。
+        如需向市政厅正式提交意见,请到 <a href="#contact" class="wall-link">📬 联系我们</a> 提交。
+      </p>
+      <div class="wall-grid" id="publicMessageBoard">
+        <div class="empty-state"><div class="empty-icon">💬</div><p>加载中...</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 国际赛车场 ========== -->
+  <section class="section" id="kart">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">🏎️ 国际赛车场</h2>
+        <p class="section-sub">KART RACING · 双车道红石冰道</p>
+      </div>
+      <p class="kart-intro">
+        国际赛车场（拟建中）。具体长度、弯道、路面材料、开放时间由市政厅与红石爱好者社团讨论后公告。
+      </p>
+
+      <!-- 精选 6 张赛道实景 -->
+      <div class="kart-banner-grid" id="kartBannerGrid">
+        <!-- JS 渲染 -->
+      </div>
+
+      <!-- 赛道规格（待公告） -->
+      <div class="kart-specs">
+        <div class="ks-item"><b>📏 长度</b><span>待公告</span></div>
+        <div class="ks-item"><b>🛣️ 车道</b><span>待公告</span></div>
+        <div class="ks-item"><b>🌊 弯道</b><span>待公告</span></div>
+        <div class="ks-item"><b>🕳️ 隧道</b><span>待公告</span></div>
+        <div class="ks-item"><b>❄️ 路面</b><span>待公告</span></div>
+        <div class="ks-item"><b>⏱️ 圈速记录</b><span>暂无</span></div>
+      </div>
+
+      <!-- 比赛日程 + 试跑报名 -->
+      <div class="kart-cta">
+        <div class="cta-text">
+          <h3>赛事 & 试跑</h3>
+          <p>比赛日程由市政厅与红石社团协商后公布。试跑报名请关注本栏更新。</p>
+        </div>
+        <div class="cta-buttons">
+          <button class="btn btn-primary btn-large" id="btnKartSignup">▶ 试跑意向登记</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 试跑报名 Modal ========== -->
+  <div class="modal-mask" id="kartMask" style="display:none">
+    <div class="modal modal-book">
+      <div class="modal-head">
+        <h3>🏁 试跑报名</h3>
+        <button class="modal-close" id="kartClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="kartForm" class="modal-form">
+          <div class="book-room-summary">
+            <div>
+              <b>🏎️ 灯光市国际赛车场（拟建）</b><br/>
+              <span style="font-size:12px;color:var(--c-stone-dark)">规格与费用待公告</span>
+            </div>
+            <div class="summary-price">费用待公告</div>
+          </div>
+          <label><span>游戏 ID</span>
+            <input type="text" id="kartName" required placeholder="你的游戏 ID" />
+          </label>
+          <div class="book-row">
+            <label><span>联系方式</span>
+              <input type="text" id="kartContact" required placeholder="邮箱 / 游戏内编号" />
+            </label>
+            <label><span>期望场次</span>
+              <select id="kartSession">
+                <option>周六 14:00 计时赛</option>
+                <option>周六 20:00 接力赛</option>
+                <option>周日 10:00 教学场</option>
+                <option>其他时间</option>
+              </select>
+            </label>
+          </div>
+          <label><span>车号偏好（选填，1-99）</span>
+            <input type="number" id="kartCar" min="1" max="99" placeholder="留空随机分配" />
+          </label>
+          <label><span>备注（选填）</span>
+            <textarea id="kartNote" rows="2" placeholder="是否需要教学、组队信息等"></textarea>
+          </label>
+          <div class="modal-msg" id="kartMsg"></div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" id="kartCancel">取消</button>
+            <button type="submit" class="btn btn-primary">▶ 提交报名</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 国际赛车场 ========== -->
+  <section class="section section-alt" id="circuit">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">🏎️ 国际赛车场</h2>
+        <p class="section-sub">INTERNATIONAL CIRCUIT · F1 级专业赛道</p>
+      </div>
+      <p class="circuit-intro">
+        国际赛车场（拟建）。规模、规格、运营方与开放时间由市政厅论证后公告。
+      </p>
+
+      <!-- 赛道线路图（参考赛车场全俯视图，渲染为平面示意） -->
+      <div class="circuit-map">
+        <h3 class="circuit-map-title">—— TRACK MAP / 赛道线路图 ——</h3>
+        <p class="circuit-map-note" style="font-size:12px;color:var(--c-stone-dark);text-align:center;margin:0 0 8px;">参考赛车场全俯视图渲染（平面示意 · 尺寸与比例以市政厅最终公告为准）</p>
+        <div class="circuit-svg-wrap">
+          <svg viewBox="0 0 800 460" xmlns="http://www.w3.org/2000/svg" class="circuit-svg" role="img" aria-label="灯光市国际赛车场平面俯视图">
+            <!-- 背景：草地（俯视平面） -->
+            <rect x="0" y="0" width="800" height="460" fill="#7cb02c" />
+            <!-- 草地网格纹理（俯视感） -->
+            <g opacity="0.20">
+              <line x1="0" y1="80" x2="800" y2="80" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
+              <line x1="0" y1="160" x2="800" y2="160" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
+              <line x1="0" y1="240" x2="800" y2="240" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
+              <line x1="0" y1="320" x2="800" y2="320" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
+              <line x1="0" y1="400" x2="800" y2="400" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
+              <line x1="160" y1="0" x2="160" y2="460" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
+              <line x1="320" y1="0" x2="320" y2="460" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
+              <line x1="480" y1="0" x2="480" y2="460" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
+              <line x1="640" y1="0" x2="640" y2="460" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
+            </g>
+
+            <!-- 外圈围墙（俯视边线） -->
+            <rect x="60" y="60" width="680" height="340" fill="none" stroke="#3a4a1a" stroke-width="2" stroke-dasharray="6 4" />
+
+            <!-- 主看台（顶） -->
+            <rect x="120" y="40" width="560" height="16" fill="#2d3a1c" />
+            <text x="400" y="52" fill="#ffaa00" font-family="monospace" font-size="11" text-anchor="middle" font-weight="bold">—— MAIN GRANDSTAND ——</text>
+
+            <!-- PIT LANE（底） -->
+            <rect x="120" y="404" width="560" height="16" fill="#2d3a1c" />
+            <text x="400" y="416" fill="#ffaa00" font-family="monospace" font-size="11" text-anchor="middle" font-weight="bold">—— PIT LANE ——</text>
+
+            <!-- 赛道路面（环状 - 平面俯视） -->
+            <!-- 外圈 + 内圈构成环状路面 -->
+            <path d="
+              M 200 120
+              L 600 120
+              Q 660 120 660 180
+              L 660 240
+              Q 660 280 620 280
+              L 200 280
+              Q 140 280 140 240
+              L 140 180
+              Q 140 120 200 120
+              Z
+            " fill="#1a1a1a" stroke="#3a3a3a" stroke-width="2" />
+            <!-- 中心绿色内场 -->
+            <path d="
+              M 220 140
+              L 580 140
+              Q 640 140 640 180
+              L 640 240
+              Q 640 260 620 260
+              L 200 260
+              Q 160 260 160 240
+              L 160 180
+              Q 160 140 220 140
+              Z
+            " fill="#7cb02c" stroke="#3a4a1a" stroke-width="0.5" />
+
+            <!-- 中央分隔线（双车道分界） -->
+            <rect x="220" y="198" width="380" height="4" fill="#ff2a2a" stroke="#fff" stroke-width="1" />
+
+            <!-- 起点/终点方格旗 -->
+            <g transform="translate(560, 120)">
+              <rect x="-22" y="-5" width="44" height="10" fill="#fff" />
+              <g>
+                <rect x="-22" y="-5" width="5" height="5" fill="#000" />
+                <rect x="-12" y="-5" width="5" height="5" fill="#000" />
+                <rect x="-2" y="-5" width="5" height="5" fill="#000" />
+                <rect x="8" y="-5" width="5" height="5" fill="#000" />
+                <rect x="18" y="-5" width="5" height="5" fill="#000" />
+                <rect x="-17" y="0" width="5" height="5" fill="#000" />
+                <rect x="-7" y="0" width="5" height="5" fill="#000" />
+                <rect x="3" y="0" width="5" height="5" fill="#000" />
+                <rect x="13" y="0" width="5" height="5" fill="#000" />
+              </g>
+            </g>
+            <text x="595" y="105" fill="#fff" font-family="monospace" font-size="11" text-anchor="middle" font-weight="bold">S/F</text>
+
+            <!-- 弯道编号 1-8 (沿外圈分布) -->
+            <g font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle">
+              <circle cx="170" cy="120" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
+              <text x="170" y="124" fill="#000">1</text>
+              <circle cx="630" cy="120" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
+              <text x="630" y="124" fill="#000">2</text>
+              <circle cx="660" cy="200" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
+              <text x="660" y="204" fill="#000">3</text>
+              <circle cx="630" cy="280" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
+              <text x="630" y="284" fill="#000">4</text>
+              <circle cx="450" cy="280" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
+              <text x="450" y="284" fill="#000">5</text>
+              <circle cx="280" cy="280" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
+              <text x="280" y="284" fill="#000">6</text>
+              <circle cx="170" cy="280" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
+              <text x="170" y="284" fill="#000">7</text>
+              <circle cx="140" cy="200" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
+              <text x="140" y="204" fill="#000">8</text>
+            </g>
+
+            <!-- DRS 加速区（虚线段 - 在长直道中部） -->
+            <rect x="200" y="195" width="60" height="10" fill="#ffd23f" stroke="#000" stroke-width="1" stroke-dasharray="4 3" />
+            <text x="230" y="186" fill="#000" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">DRS</text>
+            <rect x="500" y="195" width="60" height="10" fill="#ffd23f" stroke="#000" stroke-width="1" stroke-dasharray="4 3" />
+            <text x="530" y="186" fill="#000" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">DRS</text>
+
+            <!-- 隧道（深蓝） -->
+            <rect x="350" y="100" width="80" height="20" fill="#1d4e91" stroke="#3a7ad9" stroke-width="2" />
+            <text x="390" y="88" fill="#1d4e91" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">TUNNEL</text>
+
+            <!-- 维修区入口 -->
+            <rect x="100" y="100" width="40" height="20" fill="#6e4a23" stroke="#000" stroke-width="1" />
+            <text x="120" y="88" fill="#6e4a23" font-family="monospace" font-size="8" text-anchor="middle" font-weight="bold">PIT</text>
+
+            <!-- 罗盘 -->
+            <g transform="translate(740, 50)">
+              <circle r="20" fill="#fff" stroke="#000" stroke-width="2" />
+              <text y="-6" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#000">N</text>
+              <polygon points="0,-14 -4,2 4,2" fill="#ff2a2a" />
+              <polygon points="0,14 -4,-2 4,-2" fill="#000" />
+            </g>
+
+            <!-- 比例尺 -->
+            <g transform="translate(50, 432)">
+              <rect width="100" height="6" fill="#fff" stroke="#000" stroke-width="1" />
+              <rect width="50" height="6" fill="#000" />
+              <text x="0" y="-2" font-family="monospace" font-size="9" fill="#000">0</text>
+              <text x="50" y="-2" font-family="monospace" font-size="9" fill="#000" text-anchor="middle">200m</text>
+              <text x="100" y="-2" font-family="monospace" font-size="9" fill="#000" text-anchor="end">400m</text>
+            </g>
+
+            <!-- 图例 -->
+            <g transform="translate(700, 360)" font-family="monospace" font-size="10" fill="#000">
+              <circle cx="0" cy="0" r="6" fill="#ffaa00" stroke="#000" stroke-width="1" />
+              <text x="12" y="3">弯道编号 1-8</text>
+              <rect x="-6" y="13" width="12" height="6" fill="#ffd23f" stroke="#000" stroke-width="1" />
+              <text x="12" y="20">DRS 加速区</text>
+              <rect x="-6" y="30" width="12" height="6" fill="#1d4e91" />
+              <text x="12" y="36">隧道</text>
+            </g>
+      </div>
+
+      <!-- 赛道实景 + 规格（C2/C3/C4 删 2 图 + 删规格表） -->
+      <!-- circuit-grid 整段已删 -->
+
+      <div class="circuit-cta">
+        <h3>🏆 赛事 & 试车</h3>
+        <p>比赛日程与驾照分级制度由市政厅与赛车协会协商后公布。试车意向登记请关注本栏更新。</p>
+        <button class="btn btn-primary btn-large" id="btnCircuitSignup">▶ 试车意向登记</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 试车报名 Modal ========== -->
+  <div class="modal-mask" id="circuitMask" style="display:none">
+    <div class="modal modal-book">
+      <div class="modal-head">
+        <h3>🏎️ 国际赛车场·试车报名</h3>
+        <button class="modal-close" id="circuitClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="circuitForm" class="modal-form">
+          <div class="book-room-summary">
+            <div>
+              <b>🏎️ 灯光市国际赛车场（拟建）</b><br/>
+              <span style="font-size:12px;color:var(--c-stone-dark)">规格与费用待公告</span>
+            </div>
+            <div class="summary-price">费用待公告</div>
+          </div>
+          <label><span>游戏 ID</span>
+            <input type="text" id="circuitName" required placeholder="你的游戏 ID" />
+          </label>
+          <div class="book-row">
+            <label><span>联系方式</span>
+              <input type="text" id="circuitContact" required placeholder="邮箱 / 游戏内编号" />
+            </label>
+            <label><span>驾照等级</span>
+              <select id="circuitLicense">
+                <option>B 级（初级）</option>
+                <option>A 级（中级）</option>
+                <option>S 级（高级 / 职业）</option>
+              </select>
+            </label>
+          </div>
+          <label><span>期望场次</span>
+            <select id="circuitSession">
+              <option>排位赛 周三 20:00</option>
+              <option>正赛 周六 15:00</option>
+              <option>国际邀请赛 月初</option>
+              <option>自由练习</option>
+            </select>
+          </label>
+          <label><span>车号偏好（1-99）</span>
+            <input type="number" id="circuitCar" min="1" max="99" placeholder="留空随机分配" />
+          </label>
+          <label><span>备注（选填）</span>
+            <textarea id="circuitNote" rows="2" placeholder="车队信息、装备需求等"></textarea>
+          </label>
+          <div class="modal-msg" id="circuitMsg"></div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" id="circuitCancel">取消</button>
+            <button type="submit" class="btn btn-primary">▶ 提交报名</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 驾照考试报名 ========== -->
+  <section class="section section-alt" id="license">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">🚗 驾照考试</h2>
+        <p class="section-sub">DRIVER'S LICENSE · B/A/S 三级</p>
+      </div>
+      <p class="license-intro">
+        驾照考试由市政厅与赛车协会共同组织。报名需玩家登录，通过后获得对应等级的驾照。
+      </p>
+      <div class="license-grid">
+        <div class="license-card">
+          <div class="license-grade">B</div>
+          <h3>B 级（初级）</h3>
+          <p>笔试 + 简单路考<br/>可驾驶：基本路面、轻轨</p>
+          <button class="btn btn-primary btn-large" data-license="written" data-grade="B">📝 报名 B 级笔试</button>
+        </div>
+        <div class="license-card">
+          <div class="license-grade">A</div>
+          <h3>A 级（中级）</h3>
+          <p>完整路考 + 场景应对<br/>可驾驶：高速、复杂路况</p>
+          <button class="btn btn-primary btn-large" data-license="road" data-grade="A">🏁 报名 A 级路考</button>
+        </div>
+        <div class="license-card">
+          <div class="license-grade license-grade-s">S</div>
+          <h3>S 级（高级 / 职业）</h3>
+          <p>升级赛 + 极限测试<br/>可驾驶：F1 级赛车</p>
+          <button class="btn btn-primary btn-large" data-license="upgrade" data-grade="S">🏆 报名 S 级升级</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 驾照考试报名 Modal ========== -->
+  <div class="modal-mask" id="licenseMask" style="display:none">
+    <div class="modal modal-book">
+      <div class="modal-head">
+        <h3 id="licenseTitle">驾照考试报名</h3>
+        <button class="modal-close" id="licenseClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="licenseForm" class="modal-form">
+          <div class="book-room-summary">
+            <div>
+              <b id="licenseGradeLabel">B 级</b><br/>
+              <span style="font-size:12px;color:var(--c-stone-dark)" id="licenseTypeLabel">笔试</span>
+            </div>
+            <div class="summary-price">免费</div>
+          </div>
+          <div class="book-row">
+            <label><span>考试日期（选填）</span>
+              <input type="date" id="licenseDate" />
+            </label>
+            <label><span>期望场次（选填）</span>
+              <select id="licenseSession">
+                <option>周六 14:00</option>
+                <option>周六 20:00</option>
+                <option>周日 10:00</option>
+                <option>工作日 19:00</option>
+              </select>
+            </label>
+          </div>
+          <label><span>联系方式</span>
+            <input type="text" id="licenseContact" required placeholder="邮箱 / 游戏内编号" />
+          </label>
+          <label><span>备注（选填）</span>
+            <textarea id="licenseNote" rows="2" placeholder="需要教学、组队等"></textarea>
+          </label>
+          <div class="modal-msg" id="licenseMsg"></div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" id="licenseCancel">取消</button>
+            <button type="submit" class="btn btn-primary">▶ 提交报名</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 酒店子页入口 ========== -->
+  <section class="section section-alt" id="hotel">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">🏨 树上酒店</h2>
+        <p class="section-sub">TREEHOUSE HOTEL · 住进像素森林</p>
+      </div>
+      <p class="hotel-intro">
+        树上酒店（筹建）。选址、规模、定价、运营方由市民大会与合作社讨论后公布。
+      </p>
+      <div class="hotel-cta" style="text-align:center;margin:28px 0 12px;">
+        <a href="hotel.html" class="btn btn-primary btn-large">🏨 进入酒店预订页</a>
+        <p class="hotel-hint" style="margin-top:14px;font-size:14px;color:var(--c-stone-dark);">
+          房型、状态、筛选器、预订都在子页
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 预订 Modal ========== -->
+  <div class="modal-mask" id="bookMask" style="display:none">
+    <div class="modal modal-book">
+      <div class="modal-head">
+        <h3 id="bookTitle">预订房间</h3>
+        <button class="modal-close" id="bookClose" aria-label="关闭">✕</button>
+      </div>
+      <div class="modal-body">
+        <form id="bookForm" class="modal-form">
+          <div class="book-room-summary" id="bookSummary">
+            <!-- 房型摘要 -->
+          </div>
+          <div class="book-dates">
+            <label><span>入住日期</span>
+              <input type="date" id="bookIn" required />
+            </label>
+            <label><span>退房日期</span>
+              <input type="date" id="bookOut" required />
+            </label>
+          </div>
+          <div class="book-nights" id="bookNights">—</div>
+          <label><span>入住人姓名（游戏 ID）</span>
+            <input type="text" id="bookName" required placeholder="你的游戏 ID" />
+          </label>
+          <div class="book-row">
+            <label><span>联系方式</span>
+              <input type="text" id="bookContact" required placeholder="邮箱 / 游戏内编号" />
+            </label>
+            <label><span>人数</span>
+              <select id="bookGuests">
+                <option>1 人</option>
+                <option>2 人</option>
+                <option>3 人</option>
+                <option>4 人</option>
+              </select>
+            </label>
+          </div>
+          <label class="book-breakfast">
+            <input type="checkbox" id="bookBreakfast" />
+            <span class="bb-icon">🍳</span>
+            <span class="bb-text">
+              <b>加购早餐（意向）</b>
+              <small>早餐菜单与价格由市政厅与合作社讨论后公布</small>
+            </span>
+          </label>
+          <label><span>备注（选填）</span>
+            <textarea id="bookNote" rows="2" placeholder="特殊要求、纪念日等"></textarea>
+          </label>
+          <div class="book-total" id="bookTotal">—</div>
+          <div class="modal-msg" id="bookMsg"></div>
+          <div class="modal-actions">
+            <button type="button" class="btn btn-ghost" id="bookCancel">取消</button>
+            <button type="submit" class="btn btn-primary">▶ 确认预订</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== 市民服务 ========== -->
+  <section class="section" id="service">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">🛎️ 市民服务中心</h2>
+        <p class="section-sub">CIVIC SERVICES · 办事大厅</p>
+      </div>
+      <div class="service-grid">
+        <a class="service-card" href="javascript:void(0)" id="srvRegister">
+          <div class="service-icon">🪪</div>
+          <h3>市民身份登记</h3>
+          <p>新市民注册、身份卡补办、户籍迁移</p>
+        </a>
+        <a class="service-card" href="#">
+          <div class="service-icon">🏠</div>
+          <h3>地块认领申请</h3>
+          <p>空置地块查询、认领抽签、产权变更</p>
+        </a>
+        <a class="service-card" href="#">
+          <div class="service-icon">🔨</div>
+          <h3>建筑报建</h3>
+          <p>建筑高度、外立面材料、红石结构审核</p>
+        </a>
+        <a class="service-card" href="#">
+          <div class="service-icon">💡</div>
+          <h3>红石用电报装</h3>
+          <p>报装容量申请、线路走向、故障报修</p>
+        </a>
+        <a class="service-card" href="#">
+          <div class="service-icon">🛒</div>
+          <h3>市集摊位申请</h3>
+          <p>每周末市集摊位预约、收费与卫生管理</p>
+        </a>
+        <a class="service-card" href="#">
+          <div class="service-icon">📮</div>
+          <h3>建议与投诉</h3>
+          <p>城市治理建议、违规行为投诉、表扬信</p>
+        </a>
+      </div>
+
+      <div class="flow">
+        <h3 class="flow-title">⚙️ 办事流程（草案）</h3>
+        <ol class="flow-steps">
+          <li><b>① 在线申请</b><span>登录市民账号,填写表单并提交</span></li>
+          <li><b>② 市政厅审核</b><span>审核期限与流程由市政厅公告</span></li>
+          <li><b>③ 现场/线上办理</b><span>根据事项类型完成最后一步</span></li>
+          <li><b>④ 结果送达</b><span>结果以公告、信件或消息方式送达</span></li>
+        </ol>
+        <p class="flow-note">具体办事流程由市政厅随服务上线后正式公告。本栏仅作草案展示。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 联系 ========== -->
+  <section class="section" id="contact">
+    <div class="container">
+      <div class="section-head">
+        <h2 class="section-title">📬 联系我们</h2>
+        <p class="section-sub">CONTACT US · 与市政厅对话</p>
+      </div>
+      <div class="contact-grid">
+        <div class="contact-info">
+          <div class="contact-row">
+            <div class="contact-icon">🏛️</div>
+            <div>
+              <b>市政厅地址</b>
+              <p>待公告。规划选址中,正式地址由市政厅发布。</p>
+            </div>
+          </div>
+          <div class="contact-row">
+            <div class="contact-icon">☎️</div>
+            <div>
+              <b>市民热线</b>
+              <p>待开通。联系渠道由市政厅公告。</p>
+            </div>
+          </div>
+          <div class="contact-row">
+            <div class="contact-icon">✉️</div>
+            <div>
+              <b>市民邮箱</b>
+              <p>待公告</p>
+            </div>
+          </div>
+          <div class="contact-row">
+            <div class="contact-icon">🕘</div>
+            <div>
+              <b>办公时间</b>
+              <p>待公告</p>
+            </div>
+          </div>
+        </div>
+        <form class="contact-form" id="contactForm" onsubmit="event.preventDefault(); submitMessage(this);">
+          <label>姓名 <input type="text" id="contactName" required placeholder="你的游戏ID" /></label>
+          <label>联系方式 <input type="text" id="contactContact" required placeholder="邮箱或游戏内编号" /></label>
+          <label>事项类型
+            <select id="contactType">
+              <option>建议</option>
+              <option>投诉</option>
+              <option>咨询</option>
+              <option>合作</option>
+            </select>
+          </label>
+          <label>留言 <textarea rows="4" required placeholder="请输入你的留言..."></textarea></label>
+          <button class="btn btn-primary" type="submit">▶ 提交留言</button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== 底部 ========== -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div class="footer-brand">
+        <div class="logo-block" aria-hidden="true">
+          <div class="block-grass"></div>
+          <div class="block-dirt"></div>
+        </div>
+        <div>
+          <b>灯光市人民政府</b>
+          <p>由市民共建</p>
+        </div>
+      </div>
+      <div class="footer-cols">
+        <div>
+          <h4>政务</h4>
+          <a href="#notice">公告</a>
+          <a href="#mayor">市政厅</a>
+          <a href="#data">城市数据</a>
+        </div>
+        <div>
+          <h4>服务</h4>
+          <a href="#service">市民服务</a>
+          <a href="#contact">联系我们</a>
+        </div>
+        <!-- 友城整段已删（C8） -->
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div class="container">
+        <span>© 灯光市人民政府 · 由市民共建</span>
+        <span class="sep">|</span>
+        <span>本站为作品展示 · 与 Mojang/Microsoft 无关</span>
+        <span class="sep">|</span>
+        <a href="admin.html" class="admin-link">🔐 管理入口</a>
+      </div>
+    </div>
+  </footer>
+
+  <button class="back-top" id="backTop" aria-label="回到顶部">▲</button>
+
+  <!-- ========== 玩家登录 / 注册 modal ========== -->
+  <div class="modal-mask" id="loginMask" style="display:none">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+      <button class="modal-close" id="loginClose" aria-label="关闭">×</button>
+      <h3 id="loginTitle" style="text-align:center;margin-bottom:8px">玩家登录</h3>
+      <p style="text-align:center;color:var(--c-text-dim);font-size:13px;margin-bottom:16px">
+        登录后可发留言、订酒店、报名赛车
+      </p>
+      <form id="loginForm" autocomplete="on" onsubmit="return false;">
+        <div class="form-row">
+          <label>用户名 / 游戏ID <small style="color:var(--c-text-dim)">(2-32 字符)</small></label>
+          <input type="text" id="loginUsername" name="username" autocomplete="username" required minlength="2" maxlength="32" />
+        </div>
+        <div class="form-row" id="loginEmailRow" style="display:none">
+          <label>邮箱</label>
+          <input type="email" id="loginEmail" name="email" autocomplete="email" />
+        </div>
+        <div class="form-row">
+          <label>密码 <small style="color:var(--c-text-dim)">(至少 8 位)</small></label>
+          <input type="password" id="loginPassword" name="password" autocomplete="current-password" required minlength="8" maxlength="128" />
+        </div>
+        <div id="loginMsg" class="form-msg" aria-live="polite"></div>
+        <div style="display:flex;gap:10px;margin-top:14px">
+          <button type="button" id="loginModeLogin" class="btn btn-ghost" style="flex:1">去登录</button>
+          <button type="button" id="loginModeRegister" class="btn btn-ghost" style="flex:1">去注册</button>
+        </div>
+        <button type="submit" id="loginSubmit" class="btn btn-primary" style="width:100%;margin-top:8px">登录</button>
+      </form>
+      <div style="margin-top:14px;border-top:1px solid var(--c-border);padding-top:14px">
+        <button type="button" id="passkeyLoginBtn" class="btn btn-secondary" style="width:100%;background:linear-gradient(135deg,#5a2,#2a5);color:#fff">🔑 用通行密钥登录</button>
+        <p style="margin-top:6px;font-size:11px;color:var(--c-text-dim);text-align:center">
+          通行密钥 = Touch ID / Face ID / Windows Hello，无需密码
+        </p>
+      </div>
+      <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--c-text-dim)">
+        管理员请去 <a href="admin.html" style="color:var(--c-emerald)">/admin.html</a> 登录
+      </p>
+    </div>
+  </div>
+
+  <script src="js/crypto.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
+// Mon Aug 17 17:53:42 CST 2026
