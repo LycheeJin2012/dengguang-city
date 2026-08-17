@@ -3,7 +3,7 @@
 // POST /api/init?action=ai-test        - admin 测 AI 连通性
 // POST /api/init?action=passkey-*     - WebAuthn 通行密钥 (4 个子 action)
 import {
-  ok, err, hashPassword, readToken, getSession,
+  ok, err, hashPassword, readToken, getSession, createSession,
   passkeyRegisterStart, passkeyRegisterFinish,
   passkeyLoginStart, passkeyLoginFinish,
   listPasskeys, deletePasskey,
