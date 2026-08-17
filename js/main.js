@@ -1041,6 +1041,90 @@
   if (loginModeLogin)    loginModeLogin.addEventListener('click', (e) => { e.preventDefault(); setLoginMode('login'); });
   if (loginModeRegister) loginModeRegister.addEventListener('click', (e) => { e.preventDefault(); setLoginMode('register'); });
 
+  /* ---------- 14.05 通行密钥 (Passkey) 登录 ---------- */
+  // 把服务器返回的 ArrayBuffer 字段 base64url 编码（WebAuthn API 需要）
+  function bufToB64url(buf) {
+    const b = new Uint8Array(buf);
+    let s = '';
+    for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+    return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+  // 客户端把服务器给的 base64url challenge 转回 ArrayBuffer
+  function b64urlToBuf(s) {
+    s = s.replace(/-/g, '+').replace(/_/g, '/');
+    while (s.length % 4) s += '=';
+    const bin = atob(s);
+    const out = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out.buffer;
+  }
+
+  const passkeyLoginBtn = document.getElementById('passkeyLoginBtn');
+  if (passkeyLoginBtn) {
+    passkeyLoginBtn.addEventListener('click', async () => {
+      if (!window.PublicKeyCredential) { alert('您的浏览器不支持通行密钥 (WebAuthn)。请用 Chrome/Safari/Edge 最新版。'); return; }
+      const username = (loginUsername.value || '').trim();
+      passkeyLoginBtn.disabled = true;
+      const origText = passkeyLoginBtn.textContent;
+      passkeyLoginBtn.textContent = '⏳ 请触摸指纹/Face ID...';
+      try {
+        // 1. start
+        const r1 = await fetch('/api/init?action=passkey-login-start', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username }),
+        });
+        const d1 = await r1.json();
+        if (!r1.ok || d1.error) throw new Error(d1.error || 'challenge 失败');
+        // 2. 转换 challenge 格式
+        const opts = d1.publicKey;
+        opts.challenge = b64urlToBuf(opts.challenge);
+        if (opts.allowCredentials) {
+          opts.allowCredentials = opts.allowCredentials.map((c) => ({ ...c, id: b64urlToBuf(c.id) }));
+        }
+        // 3. 调浏览器 API
+        const cred = await navigator.credentials.get({ publicKey: opts });
+        if (!cred) throw new Error('未获得凭据');
+        // 4. finish
+        const r2 = await fetch('/api/init?action=passkey-login-finish', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            challenge_token: d1.challenge_token,
+            credential: {
+              id: cred.id,
+              rawId: bufToB64url(cred.rawId),
+              type: cred.type,
+              response: {
+                clientDataJSON: bufToB64url(cred.response.clientDataJSON),
+                authenticatorData: bufToB64url(cred.response.authenticatorData),
+                signature: bufToB64url(cred.response.signature),
+                userHandle: cred.response.userHandle ? bufToB64url(cred.response.userHandle) : null,
+              },
+            },
+          }),
+        });
+        const d2 = await r2.json();
+        if (!r2.ok || d2.error) throw new Error(d2.error || '验证失败');
+        loginMsg.textContent = '✓ 通行密钥登录成功！';
+        loginMsg.style.color = 'var(--c-emerald)';
+        setTimeout(async () => {
+          closeLoginModal();
+          loginMsg.style.color = '';
+          await refreshUserState();
+          loadPublicMessages();
+        }, 600);
+      } catch (e) {
+        loginMsg.textContent = '✗ 通行密钥登录失败: ' + (e.message || e);
+        loginMsg.style.color = 'var(--c-red, #c33)';
+        setTimeout(() => { loginMsg.style.color = ''; }, 4000);
+      } finally {
+        passkeyLoginBtn.disabled = false;
+        passkeyLoginBtn.textContent = origText;
+      }
+    });
+  }
+
   /* ---------- 14.1 服务卡：市民身份登记 → 打开注册 modal ---------- */
   const srvRegister = document.getElementById('srvRegister');
   if (srvRegister) {

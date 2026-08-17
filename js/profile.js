@@ -174,4 +174,132 @@
       }
     });
   }
+
+  // ========== 通行密钥 (Passkey) 管理（仅自己可见） ==========
+  if (me) {
+    const passkeyCard = document.getElementById('passkeyCard');
+    const passkeyList = document.getElementById('passkeyList');
+    const addBtn = document.getElementById('addPasskeyBtn');
+    const passkeyMsg = document.getElementById('passkeyMsg');
+    passkeyCard.style.display = '';
+
+    function bufToB64url(buf) {
+      const b = new Uint8Array(buf);
+      let s = '';
+      for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+      return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+    function b64urlToBuf(s) {
+      s = s.replace(/-/g, '+').replace(/_/g, '/');
+      while (s.length % 4) s += '=';
+      const bin = atob(s);
+      const out = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+      return out.buffer;
+    }
+
+    async function loadPasskeys() {
+      try {
+        const r = await fetch('/api/init?action=passkey-list', { credentials: 'include' });
+        const d = await r.json();
+        if (!r.ok || d.error) throw new Error(d.error || '获取失败');
+        const ks = d.passkeys || [];
+        if (ks.length === 0) {
+          passkeyList.innerHTML = '<p style="color:var(--c-stone);font-size:13px;font-style:italic">还没有通行密钥。点击下方按钮添加。</p>';
+          return;
+        }
+        passkeyList.innerHTML = ks.map(k => {
+          const aaguid = (k.aaguid || '').slice(0, 16) + '…';
+          const lastUsed = k.last_used_at ? '上次使用: ' + k.last_used_at : '尚未使用';
+          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--c-bg-2,#e8e0c8);border:2px solid var(--c-stone,#7a6a5a);margin-bottom:6px">
+            <div>
+              <div style="font-size:14px;font-weight:700;color:var(--c-stone-dark,#4a3a2a)">🔑 ${escapeHtml(k.name)}</div>
+              <div style="font-size:11px;color:var(--c-stone)">注册于 ${k.created_at} · ${lastUsed}</div>
+              <div style="font-size:10px;color:var(--c-stone);font-family:monospace">id: ${aaguid}</div>
+            </div>
+            <button type="button" data-pkid="${k.id}" class="pk-del-btn" style="background:#a33;color:#fff;border:2px solid var(--c-stone-dark);padding:6px 10px;font-size:12px;cursor:pointer">🗑 删除</button>
+          </div>`;
+        }).join('');
+        passkeyList.querySelectorAll('.pk-del-btn').forEach(btn => {
+          btn.onclick = async () => {
+            if (!confirm('确认删除此通行密钥？删除后无法再用它登录。')) return;
+            try {
+              const r2 = await fetch('/api/init?action=passkey-delete', {
+                method: 'POST', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: parseInt(btn.dataset.pkid, 10) }),
+              });
+              const d2 = await r2.json();
+              if (!r2.ok || d2.error) throw new Error(d2.error || '删除失败');
+              passkeyMsg.textContent = '✓ 已删除';
+              passkeyMsg.style.color = 'var(--c-emerald)';
+              setTimeout(() => passkeyMsg.textContent = '', 2000);
+              loadPasskeys();
+            } catch (e) {
+              passkeyMsg.textContent = '✗ ' + e.message;
+              passkeyMsg.style.color = 'var(--c-red, #c33)';
+            }
+          };
+        });
+      } catch (e) {
+        passkeyList.innerHTML = '<p style="color:#c33">✗ 加载失败: ' + escapeHtml(e.message) + '</p>';
+      }
+    }
+    loadPasskeys();
+
+    addBtn.onclick = async () => {
+      if (!window.PublicKeyCredential) { alert('您的浏览器不支持通行密钥'); return; }
+      const name = prompt('给这个通行密钥起个名字（例：iPhone 15、MacBook）：', '我的设备');
+      if (!name) return;
+      addBtn.disabled = true;
+      const orig = addBtn.textContent;
+      addBtn.textContent = '⏳ 请触摸指纹/Face ID...';
+      passkeyMsg.textContent = '';
+      try {
+        const r1 = await fetch('/api/init?action=passkey-register-start', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const d1 = await r1.json();
+        if (!r1.ok || d1.error) throw new Error(d1.error || '获取 challenge 失败');
+        const opts = d1.publicKey;
+        opts.challenge = b64urlToBuf(opts.challenge);
+        opts.user.id = b64urlToBuf(opts.user.id);
+        const cred = await navigator.credentials.create({ publicKey: opts });
+        if (!cred) throw new Error('未创建凭据');
+        const r2 = await fetch('/api/init?action=passkey-register-finish', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            challenge_token: d1.challenge_token,
+            name,
+            credential: {
+              id: cred.id,
+              rawId: bufToB64url(cred.rawId),
+              type: cred.type,
+              response: {
+                clientDataJSON: bufToB64url(cred.response.clientDataJSON),
+                attestationObject: bufToB64url(cred.response.attestationObject),
+                transports: cred.response.getTransports ? cred.response.getTransports() : [],
+              },
+            },
+          }),
+        });
+        const d2 = await r2.json();
+        if (!r2.ok || d2.error) throw new Error(d2.error || '保存失败');
+        passkeyMsg.textContent = '✓ 通行密钥已添加！';
+        passkeyMsg.style.color = 'var(--c-emerald)';
+        setTimeout(() => passkeyMsg.textContent = '', 3000);
+        loadPasskeys();
+      } catch (e) {
+        passkeyMsg.textContent = '✗ ' + e.message;
+        passkeyMsg.style.color = 'var(--c-red, #c33)';
+        setTimeout(() => passkeyMsg.textContent = '', 5000);
+      } finally {
+        addBtn.disabled = false;
+        addBtn.textContent = orig;
+      }
+    };
+  }
 })();

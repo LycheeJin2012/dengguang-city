@@ -504,6 +504,22 @@ function renderDash(){
   safeRender(renderKarts);
   safeRender(renderCircuits);
   safeRender(renderAdminList);
+  // 仅 super 可见 DM 监管 tab
+  try {
+    if (window._me && window._me.role === 'super') {
+      const td = document.getElementById('tabDms');
+      if (td) td.style.display = '';
+      // 初次拉 AI 转人工数
+      fetch('/api/init?action=admin-dm-ai-struggle', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+        .then(r => r.json()).then(d => {
+          if (d.ok) {
+            const c = (d.struggles || []).length;
+            const e = document.getElementById('dmsAiStruggle');
+            if (e) e.textContent = String(c);
+          }
+        }).catch(() => {});
+    }
+  } catch (e) {}
 }
 
 // tab 切换
@@ -574,6 +590,217 @@ if(btnLogout){
     window._me=null;showView('login');
   });
 }
+
+// ============================================================
+// Super 管理员 - DM 私信监管 + 代回复 (v17.0)
+// ============================================================
+async function renderDms(query) {
+  if (!window._me || window._me.role !== 'super') return;
+  const list = document.getElementById('dmList');
+  if (!list) return;
+  list.innerHTML = '<p class="empty-state">载入中…</p>';
+  try {
+    const r = await fetch('/api/init?action=admin-dm-list', {
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ q: query || '' }),
+    });
+    const d = await r.json();
+    if (!r.ok || d.error) throw new Error(d.error || '加载失败');
+    const dms = d.dms || [];
+    if (dms.length === 0) {
+      list.innerHTML = '<p class="empty-state">暂无 DM 记录</p>';
+      return;
+    }
+    // 按 (from,to) pair 聚类，列出最新 50 对
+    const pairMap = new Map();
+    for (const dm of dms) {
+      const key = [dm.from_player_id, dm.to_player_id].sort().join('-');
+      if (!pairMap.has(key) || pairMap.get(key).created_at < dm.created_at) {
+        pairMap.set(key, dm);
+      }
+    }
+    const pairs = Array.from(pairMap.values()).slice(0, 50);
+    list.innerHTML = pairs.map(p => {
+      const fromAvatar = p.from_avatar || '👤';
+      const toAvatar = p.to_avatar || '👤';
+      const isAiReply = p.from_username === '灯灯客服';
+      return `<div class="msg-item dm-pair" data-pid1="${p.from_player_id}" data-pid2="${p.to_player_id}" style="cursor:pointer">
+        <div class="msg-avatar">${isAiReply ? '🤖' : fromAvatar}</div>
+        <div class="msg-body">
+          <div class="msg-meta">
+            <b>${esc(p.from_username || '?')}</b> → <b>${esc(p.to_username || '?')}</b>
+            ${isAiReply ? '<span style="background:#1a2a1a;color:#9f9;padding:1px 6px;border-radius:3px;font-size:11px;margin-left:6px">🤖 AI 已回复</span>' : ''}
+            <span style="float:right;font-size:11px;color:#888">${p.created_at}</span>
+          </div>
+          <div class="msg-content" style="color:var(--c-stone-dark);font-size:13px;max-height:60px;overflow:hidden">${esc((p.content||'').slice(0,200))}</div>
+        </div>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.dm-pair').forEach(el => {
+      el.onclick = () => openDmThread(parseInt(el.dataset.pid1, 10), parseInt(el.dataset.pid2, 10));
+    });
+  } catch (e) {
+    list.innerHTML = '<p class="empty-state" style="color:#c33">✗ ' + esc(e.message) + '</p>';
+  }
+}
+
+async function openDmThread(pid1, pid2) {
+  const md = document.getElementById('modalMask');
+  const mt = document.getElementById('modalTitle');
+  const mb = document.getElementById('modalBody');
+  if (!md) return;
+  mt.textContent = '私信对话 # ' + pid1 + ' ↔ ' + pid2;
+  mb.innerHTML = '<p style="padding:20px;text-align:center;color:#888">载入中…</p>';
+  md.style.display = '';
+  try {
+    // 拿双方 username
+    const r1 = await fetch('/api/admin/players?id=' + pid1, { credentials: 'same-origin' }).catch(() => null);
+    // 用 admin 玩家列表查 username
+    let fromName = '?', toName = '?';
+    try {
+      const rP = await fetch('/api/admin/players?id=' + pid1, { credentials: 'same-origin' });
+      const dP = await rP.json();
+      if (dP.ok && dP.players) fromName = dP.players.find(x => x.id === pid1)?.username || '?';
+    } catch (e) {}
+    try {
+      const rP2 = await fetch('/api/admin/players?id=' + pid2, { credentials: 'same-origin' });
+      const dP2 = await rP2.json();
+      if (dP2.ok && dP2.players) toName = dP2.players.find(x => x.id === pid2)?.username || '?';
+    } catch (e) {}
+
+    const r = await fetch('/api/init?action=admin-dm-thread&player_id=' + pid1 + '&peer_id=' + pid2, { credentials: 'same-origin' });
+    const d = await r.json();
+    if (!r.ok || d.error) throw new Error(d.error || '加载失败');
+    const msgs = d.messages || [];
+
+    // 找"哪个是玩家、哪个是 bot"
+    const playerId = fromName === '灯灯客服' ? pid2 : (toName === '灯灯客服' ? pid1 : pid1);
+    const botId = fromName === '灯灯客服' ? pid1 : (toName === '灯灯客服' ? pid2 : null);
+
+    mb.innerHTML = `
+      <div style="max-height:400px;overflow-y:auto;background:var(--c-bg-2);padding:8px;margin-bottom:12px">
+        ${msgs.map(m => {
+          const isBot = m.from_username === '灯灯客服';
+          const isAdmin = m.from_username === '灯灯客服' && m.content && m.content.length > 0;
+          return `<div style="display:flex;gap:6px;margin-bottom:6px;${isBot?'justify-content:flex-end':''}">
+            <div style="max-width:75%;padding:6px 10px;border-radius:6px;${isBot?'background:#1a2a1a;color:#9f9':'background:#fff;color:#333'}">
+              <div style="font-size:10px;color:#888;margin-bottom:2px">${esc(m.from_username||'?')} · ${m.created_at}</div>
+              <div style="font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word">${esc(m.content||'')}</div>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>
+      ${botId ? `
+      <div style="border-top:2px solid var(--c-stone);padding-top:10px">
+        <div style="font-size:12px;color:#666;margin-bottom:6px">✍️ 借 <b>灯灯客服</b> 身份回复给 <b>${esc(fromName === '灯灯客服' ? toName : fromName)}</b>：</div>
+        <textarea id="dmReplyText" style="width:100%;min-height:80px;padding:8px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-family:inherit;font-size:13px;box-sizing:border-box" placeholder="输入回复内容（最多 1000 字）..." maxlength="1000"></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
+          <button type="button" id="dmReplyCancel" class="btn btn-ghost btn-sm">取消</button>
+          <button type="button" id="dmReplySend" class="btn btn-primary btn-sm">📤 以灯灯客服身份发送</button>
+        </div>
+        <div id="dmReplyMsg" style="font-size:12px;margin-top:6px;color:#666"></div>
+      </div>
+      ` : '<p style="color:#888;font-size:12px;text-align:center;padding:10px">此对话双方都是普通玩家，无法借 AI 身份回复。请直接联系玩家。</p>'}
+    `;
+    const sendBtn = document.getElementById('dmReplySend');
+    const cancelBtn = document.getElementById('dmReplyCancel');
+    if (cancelBtn) cancelBtn.onclick = () => md.style.display = 'none';
+    if (sendBtn) {
+      sendBtn.onclick = async () => {
+        const ta = document.getElementById('dmReplyText');
+        const content = (ta?.value || '').trim();
+        if (!content) { alert('请输入回复内容'); return; }
+        if (content.length > 1000) { alert('最多 1000 字'); return; }
+        const toPlayerId = fromName === '灯灯客服' ? pid2 : pid1;
+        sendBtn.disabled = true;
+        const orig = sendBtn.textContent;
+        sendBtn.textContent = '⏳ 发送中...';
+        try {
+          const r = await fetch('/api/init?action=admin-dm-reply', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to_player_id: toPlayerId, content }),
+          });
+          const d = await r.json();
+          if (!r.ok || d.error) throw new Error(d.error || '发送失败');
+          const msgEl = document.getElementById('dmReplyMsg');
+          msgEl.textContent = '✓ 已发送！';
+          msgEl.style.color = 'var(--c-emerald)';
+          setTimeout(() => openDmThread(pid1, pid2), 500);
+        } catch (e) {
+          alert('发送失败: ' + e.message);
+        } finally {
+          sendBtn.disabled = false;
+          sendBtn.textContent = orig;
+        }
+      };
+    }
+  } catch (e) {
+    mb.innerHTML = '<p style="color:#c33;padding:20px;text-align:center">✗ ' + esc(e.message) + '</p>';
+  }
+}
+
+async function renderDmAiStruggle() {
+  if (!window._me || window._me.role !== 'super') return;
+  const list = document.getElementById('dmList');
+  if (!list) return;
+  list.innerHTML = '<p class="empty-state">载入 AI 转人工列表…</p>';
+  try {
+    const r = await fetch('/api/init?action=admin-dm-ai-struggle', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+    const d = await r.json();
+    if (!r.ok || d.error) throw new Error(d.error || '加载失败');
+    const ss = d.struggles || [];
+    if (ss.length === 0) {
+      list.innerHTML = '<p class="empty-state">🎉 AI 没有转人工的对话</p>';
+      return;
+    }
+    list.innerHTML = '<p style="background:#fff3cd;border:2px solid #e8b840;padding:8px;margin-bottom:12px;font-size:12px">⚠️ 以下是 AI 客服给出"转人工"建议的对话，玩家可能需要人工协助。点击查看完整对话：</p>' + ss.map(s => {
+      return `<div class="msg-item dm-pair" data-pid1="${s.from_player_id}" data-pid2="${s.to_player_id}" style="cursor:pointer;border-left:4px solid #e8b840">
+        <div class="msg-avatar">🤖</div>
+        <div class="msg-body">
+          <div class="msg-meta">
+            <b>${esc(s.to_username || '?')}</b> → <b>灯灯客服 (AI 转人工)</b>
+            <span style="float:right;font-size:11px;color:#888">${s.created_at}</span>
+          </div>
+          <div class="msg-content" style="color:#444;font-size:13px;background:#fff8e0;padding:6px 8px;border-radius:4px;margin-top:4px">${esc((s.content||'').slice(0,200))}</div>
+        </div>
+      </div>`;
+    }).join('');
+    list.querySelectorAll('.dm-pair').forEach(el => {
+      el.onclick = () => openDmThread(parseInt(el.dataset.pid1, 10), parseInt(el.dataset.pid2, 10));
+    });
+  } catch (e) {
+    list.innerHTML = '<p class="empty-state" style="color:#c33">✗ ' + esc(e.message) + '</p>';
+  }
+}
+
+// DM 监管 tab 事件
+(function setupDmTab() {
+  const dmSearch = document.getElementById('dmSearch');
+  if (dmSearch) {
+    let timer = null;
+    dmSearch.addEventListener('input', () => {
+      clearTimeout(timer);
+      timer = setTimeout(() => renderDms(dmSearch.value), 300);
+    });
+  }
+  const btnRefresh = document.getElementById('btnDmRefresh');
+  if (btnRefresh) btnRefresh.onclick = () => { const q = dmSearch?.value || ''; renderDms(q); };
+  const btnAiStruggle = document.getElementById('btnDmAiStruggle');
+  if (btnAiStruggle) btnAiStruggle.onclick = () => renderDmAiStruggle();
+  // tab 切换钩子：进入 dms tab 时拉数据
+  document.querySelectorAll('.admin-tabs .tab').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.tab === 'dms') renderDms();
+    });
+  });
+  // modal 关闭按钮（兜底，其他 modal 也能用）
+  const mc = document.getElementById('modalClose');
+  if (mc) mc.onclick = () => { const mm = document.getElementById('modalMask'); if (mm) mm.style.display = 'none'; };
+  const mm = document.getElementById('modalMask');
+  if (mm) mm.addEventListener('click', (e) => { if (e.target === mm) mm.style.display = 'none'; });
+})();
 
 boot();
 })();

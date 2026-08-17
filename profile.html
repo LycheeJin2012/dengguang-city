@@ -160,6 +160,23 @@
       <div style="padding:20px;text-align:center;color:var(--c-stone);">载入中…</div>
     </div>
   </div>
+
+  <!-- 账号安全 / 通行密钥管理（仅本人可见） -->
+  <div class="profile-card" id="passkeyCard" style="margin-top:16px;display:none">
+    <div style="padding:16px 24px;background:var(--c-emerald,#5fa856);color:#fff;font-weight:700;font-size:14px;letter-spacing:1px">
+      🔑 账号安全 · 通行密钥 (Passkey)
+    </div>
+    <div style="padding:18px 24px">
+      <p style="font-size:13px;color:var(--c-stone-dark,#4a3a2a);line-height:1.6;margin-bottom:12px">
+        通行密钥用 Touch ID / Face ID / Windows Hello 登录，<b>无需输密码</b>，抗钓鱼。
+      </p>
+      <div id="passkeyList" style="margin-bottom:12px"></div>
+      <button id="addPasskeyBtn" type="button" style="background:linear-gradient(135deg,#5a2,#2a5);color:#fff;border:3px solid var(--c-stone-dark,#4a3a2a);padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:3px 3px 0 var(--c-stone-dark,#4a3a2a)">
+        ➕ 添加通行密钥
+      </button>
+      <p id="passkeyMsg" style="margin-top:8px;font-size:12px;color:var(--c-stone)"></p>
+    </div>
+  </div>
 </div>
 
 <script src="js/profile.js"></script>
