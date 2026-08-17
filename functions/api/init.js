@@ -245,6 +245,19 @@ export async function onRequestPost(context) {
   // 子路由：POST /api/init?action=ai-test（admin 鉴权，测 AI 真实连通性）
   const _url = new URL(request.url);
   const _action = _url.searchParams.get('action') || '';
+
+  // 解析 session, 取 admin 身份 (给所有 admin 鉴权的 action 用)
+  let _me = null;
+  let _sess = null;
+  const _cookie = request.headers.get('Cookie') || '';
+  const _m = _cookie.match(/lc_session=([^;]+)/);
+  if (_m) {
+    _sess = await env.DB.prepare('SELECT admin_id, player_id, expires_at FROM sessions WHERE token = ?').bind(_m[1]).first();
+    if (_sess && _sess.admin_id && Date.now() / 1000 <= (_sess.expires_at || 0)) {
+      _me = await env.DB.prepare('SELECT id, role FROM admins WHERE id = ?').bind(_sess.admin_id).first();
+    }
+  }
+
   if (_url.searchParams.get('action') === 'ai-test') {
     const cookie = request.headers.get('Cookie') || '';
     const _m = cookie.match(/lc_session=([^;]+)/);
@@ -673,7 +686,7 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   //   body: { admin_id: int, player_id: int }
   // ============================================================
   if (_action === 'admin-merge-account' || _action === 'admin-unmerge-account') {
-    if (_me.role !== 'super') return err(403, '只有 super 管理员可操作合并');
+    if (!_me || _me.role !== 'super') return err(403, '只有 super 管理员可操作合并');
     const _b = await request.json().catch(() => ({}));
     const _adminId = parseInt(_b.admin_id || 0, 10);
     const _playerId = parseInt(_b.player_id || 0, 10);
@@ -700,7 +713,7 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   //   body: { player_id: int, new_password: string }
   // ============================================================
   if (_action === 'admin-reset-player-password') {
-    if (_me.role !== 'super') return err(403, '只有 super 管理员可重置玩家密码');
+    if (!_me || _me.role !== 'super') return err(403, '只有 super 管理员可重置玩家密码');
     const _b = await request.json().catch(() => ({}));
     const _pid = parseInt(_b.player_id || 0, 10);
     const _newPw = (_b.new_password || '').toString();
@@ -722,6 +735,7 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   // ============================================================
   if (_action === 'player-change-password') {
     if (!_sess || !_sess.player_id) return err(401, '需要玩家登录');
+    if (Date.now() / 1000 > (_sess.expires_at || 0)) return err(401, '会话已过期');
     const _b = await request.json().catch(() => ({}));
     const _old = (_b.old_password || '').toString();
     const _new = (_b.new_password || '').toString();
@@ -741,6 +755,7 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   // ============================================================
   if (_action === 'admin-logout') {
     if (!_sess || !_sess.admin_id) return err(401, '没有管理员身份');
+    if (Date.now() / 1000 > (_sess.expires_at || 0)) return err(401, '会话已过期');
     // 创建一个只保留 player_id 的新 session
     let _newToken = null;
     if (_sess.player_id) {
