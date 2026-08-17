@@ -319,7 +319,7 @@ export async function onRequestPost(context) {
     if (!_me || _me.role !== 'super') return err(403, '只有 super 管理员可操作公告');
 
     if (_action === 'announcement-delete') {
-      const id = parseInt(_u.searchParams.get('id') || '0', 10);
+      const id = parseInt(_url.searchParams.get('id') || '0', 10);
       if (!id) return err(400, 'id 必填');
       try {
         await env.DB.prepare('DELETE FROM announcements WHERE id = ?').bind(id).run();
@@ -343,7 +343,7 @@ export async function onRequestPost(context) {
     }
 
     if (_action === 'announcement-update') {
-      const id = parseInt(_u.searchParams.get('id') || '0', 10);
+      const id = parseInt(_url.searchParams.get('id') || '0', 10);
       if (!id) return err(400, 'id 必填');
       try {
         await env.DB.prepare(
