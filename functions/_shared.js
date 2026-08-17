@@ -138,3 +138,101 @@ export function stripHtml(s) {
   if (typeof s !== 'string') return '';
   return s.replace(/<[^>]*>/g, '').replace(/[<>"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])).slice(0, 2000);
 }
+
+// AI 自动回复助手（OpenAI 兼容 chat completions）
+// 调用失败一律返回 null（不抛、不阻塞主流程）
+// 系统 prompt 区分 context: 'message' | 'dm'
+export async function aiAutoReply(env, userMessage, context = 'message') {
+  if (!env || !env.OPENAI_API_KEY) return null;
+  const text = String(userMessage || '').trim().slice(0, 100);
+  if (!text) return null;
+  const baseUrl = (env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
+  const model = env.OPENAI_MODEL || 'gpt-4o-mini';
+
+  const sys = context === 'dm'
+    ? `你是「灯光市 AI 客服」灯灯。灯光市是一座 Minecraft 服务器上的像素城市。
+
+服务市民，解答问题、指引流程、收建议。
+要求：
+1. 亲切、简洁、像邻家小助手
+2. **总字数必须控制在 100 字以内**（含标点）
+3. 严禁编造任何具体信息：数字、电话、邮箱、人名、活动名、日期等
+4. 不确定的事请说"请联系市政厅人工客服"
+5. 不要前缀（"灯灯："等），直接正文
+6. 纯文本，不要 markdown 格式`
+    : `你是「灯光市」市政厅 AI 助手。灯光市是一座 Minecraft 服务器上的像素城市。
+
+任务是给市民留言写一封**市政厅回复**。
+要求：
+1. 亲切、正式、礼貌
+2. 先承认回应，再给下一步
+3. **总字数必须控制在 100 字以内**（含标点）
+4. 严禁编造任何具体信息：数字、电话、邮箱、人名、活动名、日期等
+5. 不确定的事引导走 DM 私信或加备注
+6. 不要前缀（"市政厅："等），直接正文
+7. 纯文本，不要 markdown 格式`;
+
+  try {
+    const resp = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: sys },
+          { role: 'user', content: text },
+        ],
+        temperature: 0.7,
+        max_tokens: 200,
+      }),
+    });
+    if (!resp.ok) return null;
+    const data = await resp.json().catch(() => ({}));
+    let draft = (data?.choices?.[0]?.message?.content || '').trim();
+    if (!draft) return null;
+    if (draft.length > 100) draft = draft.slice(0, 100);
+    return draft;
+  } catch (e) {
+    return null;
+  }
+}
+
+// 获取/创建 AI 客服 system 玩家（username = '灯灯客服'）
+// 用 status='active' + 固定 username 确保唯一
+export async function getOrCreateAiBot(env) {
+  const fixedUsername = '灯灯客服';
+  let row = await env.DB.prepare(
+    "SELECT id, username, avatar_emoji FROM players WHERE username = ?"
+  ).bind(fixedUsername).first();
+  if (row) return row;
+
+  // 创建：随机密码（无人能登录）
+  const randomPwd = crypto.getRandomValues(new Uint8Array(24)).toString() + Date.now();
+  const { hash, salt } = await hashPassword(randomPwd, null);
+  try {
+    await env.DB.prepare(
+      "INSERT INTO players (username, email, password_hash, salt, game_id, status, bio, avatar_emoji) VALUES (?, ?, ?, ?, ?, 'active', ?, ?)"
+    ).bind(
+      fixedUsername,
+      'ai-bot@system.local',
+      hash,
+      salt,
+      'AI_BOT',
+      '我是 AI 客服灯灯，由市政厅训练。',
+      '🤖'
+    ).run();
+  } catch (e) {
+    // 并发/已存在：再 SELECT 一次
+    row = await env.DB.prepare(
+      "SELECT id, username, avatar_emoji FROM players WHERE username = ?"
+    ).bind(fixedUsername).first();
+    if (row) return row;
+    throw e;
+  }
+  return await env.DB.prepare(
+    "SELECT id, username, avatar_emoji FROM players WHERE username = ?"
+  ).bind(fixedUsername).first();
+}

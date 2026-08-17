@@ -1,6 +1,6 @@
 // GET  /api/messages  - 公开留言列表
-// POST /api/messages  - 提交留言（需登录玩家）
-import { ok, err, stripHtml, isNonEmpty, readToken, getSession } from '../_shared.js';
+// POST /api/messages  - 提交留言（需登录玩家）→ 自动 AI 回复
+import { ok, err, stripHtml, isNonEmpty, readToken, getSession, aiAutoReply } from '../_shared.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -36,6 +36,19 @@ export async function onRequestPost(context) {
   const ins = await env.DB.prepare(
     'INSERT INTO messages (player_id, name, contact, content) VALUES (?, ?, ?, ?)'
   ).bind(sess.player_id, name, contact || null, content).run();
+  const msgId = ins.meta.last_row_id;
 
-  return ok({ id: ins.meta.last_row_id, name, content });
+  // AI 自动回复（失败不阻塞主流程）
+  let aiReplied = false;
+  try {
+    const draft = await aiAutoReply(env, content, 'message');
+    if (draft) {
+      await env.DB.prepare(
+        "UPDATE messages SET admin_reply = ?, replied_at = datetime('now') WHERE id = ?"
+      ).bind('🤖 ' + draft, msgId).run();
+      aiReplied = true;
+    }
+  } catch (e) { /* 忽略 AI 失败 */ }
+
+  return ok({ id: msgId, name, content, ai_replied: aiReplied });
 }

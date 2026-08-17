@@ -191,12 +191,13 @@
     }
     board.innerHTML = msgs.map(m => {
       const hasReply = m.admin_reply && m.admin_reply.length > 0;
+      const isAi = hasReply && m.admin_reply.startsWith('🤖');
       return `
       <article class="pm-item" data-mid="${m.id}">
         <div class="pm-head">
           <a href="#" class="pm-author-link" data-username="${escapeHtml(m.name)}" onclick="return false"><b>${escapeHtml(m.name)}</b></a>
           <span class="pm-type pm-type-${escapeHtml(m.type || '建议')}">${escapeHtml(m.type || '建议')}</span>
-          ${hasReply ? '<span class="msg-replied-tag">💬 已回复</span>' : ''}
+          ${hasReply ? `<span class="msg-replied-tag" style="${isAi?'background:#1a3a1a;color:#9f9;border-color:#6f6':''}">${isAi?'🤖 AI 已回复':'💬 已回复'}</span>` : ''}
         </div>
         <p class="pm-content">${escapeHtml(m.content)}</p>
         ${hasReply ? `<div class="pm-reply-box"><b>📣 市政厅回复：</b>${escapeHtml(m.admin_reply)}</div>` : ''}

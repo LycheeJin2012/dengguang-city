@@ -7,7 +7,7 @@
 // GET    ?action=dm-thread&peer=X         - 与某人的私信记录
 // POST   ?action=dm-send    {to_username, content} - 发私信
 // PATCH  ?action=dm-read&peer=X           - 标记某人来信为已读
-import { ok, err, stripHtml, isNonEmpty, readToken, getSession } from '../_shared.js';
+import { ok, err, stripHtml, isNonEmpty, readToken, getSession, aiAutoReply, getOrCreateAiBot } from '../_shared.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -138,7 +138,24 @@ export async function onRequestPost(context) {
     const ins = await env.DB.prepare(
       'INSERT INTO direct_messages (from_player_id, to_player_id, content) VALUES (?, ?, ?)'
     ).bind(sess.player_id, peer.id, content).run();
-    return ok({ id: ins.meta.last_row_id, to: peer.username });
+    const dmId = ins.meta.last_row_id;
+
+    // 如果发给 AI 客服 → 自动回复
+    let aiReplied = false;
+    try {
+      const bot = await getOrCreateAiBot(env);
+      if (bot && bot.id === peer.id) {
+        const draft = await aiAutoReply(env, content, 'dm');
+        if (draft) {
+          await env.DB.prepare(
+            'INSERT INTO direct_messages (from_player_id, to_player_id, content) VALUES (?, ?, ?)'
+          ).bind(bot.id, sess.player_id, '🤖 ' + draft).run();
+          aiReplied = true;
+        }
+      }
+    } catch (e) { /* 忽略 */ }
+
+    return ok({ id: dmId, to: peer.username, ai_replied: aiReplied });
   }
 
   return err(400, '未知 action: ' + action);

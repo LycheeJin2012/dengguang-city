@@ -68,6 +68,10 @@
         <div class="dm-list" id="dmList">
           <div class="dm-empty">载入中…</div>
         </div>
+        <div style="padding:8px 12px;border-top:2px solid #555;background:#1a1a1a;">
+          <button id="dmAiBotBtn" style="width:100%;background:linear-gradient(90deg,#2a4a6a,#1a3a5a);color:#fff;border:2px solid #6cf;padding:10px;border-radius:6px;cursor:pointer;font-size:14px;font-weight:bold;">🤖 找 AI 客服灯灯聊聊</button>
+          <div style="color:#888;font-size:11px;margin-top:4px;text-align:center;">24h 自动回复 · 100 字内</div>
+        </div>
       </div>
       <div class="dm-panel dm-thread">
         <div id="dmThreadArea">
@@ -242,6 +246,35 @@
     }).catch(e => alert('发送失败：' + e.message));
   }
   document.getElementById('dmNewBtn').addEventListener('click', openNewDM);
+
+  // AI 客服快捷入口
+  document.getElementById('dmAiBotBtn').addEventListener('click', async () => {
+    const content = prompt('给 AI 客服灯灯留言（100 字以内）：');
+    if (!content || !content.trim()) return;
+    const text = content.trim().slice(0, 100);
+    try {
+      const r = await fetch('/api/social?action=dm-send', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to_username: '灯灯客服', content: text })
+      });
+      const d = await r.json().catch(() => ({}));
+      if (!d.ok) {
+        alert('发送失败：' + (d.error || ''));
+        return;
+      }
+      openThread('灯灯客服');
+      await loadList();
+      // 等 1.5s 看 AI 回复（轮询）
+      setTimeout(async () => {
+        await loadList();
+        renderThread();
+      }, 1800);
+    } catch (e) {
+      alert('发送失败：' + e.message);
+    }
+  });
 
   // 启动
   await loadList();
