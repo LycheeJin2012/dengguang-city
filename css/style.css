@@ -759,21 +759,36 @@ textarea { resize: vertical; min-height: 90px; }
   color: var(--c-stone-dark);
 }
 
-/* ---------- 11. 城市风貌 ---------- */
+/* ---------- 11. 城市风貌 (实景图缩略图) ---------- */
 .scene-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 16px;
 }
 .scene-card {
   background: var(--c-paper);
   border: 3px solid var(--c-black);
   box-shadow: 5px 5px 0 var(--c-stone);
-  padding: 0 0 18px;
+  padding: 0 0 12px;
   transition: transform 0.2s;
   overflow: hidden;
+  cursor: pointer;
 }
 .scene-card:hover { transform: translate(-3px, -3px); box-shadow: 8px 8px 0 var(--c-stone); }
+.scene-card .scene-thumb {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+  image-rendering: pixelated;
+  background: var(--c-sky);
+}
+.scene-card .scene-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px 0;
+}
 .scene-art {
   width: 100%;
   height: 160px;

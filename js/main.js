@@ -430,94 +430,32 @@
   }
   renderGallery();
 
-  /* ---------- 10.1 实景图集 - 转卡通风格 (canvas 像素化 + 降色) ---------- */
-  let cartoonMode = false;
-  const galCartoonBtn = document.getElementById('galCartoonBtn');
-  const galPixelSel = document.getElementById('galPixelSize');
-  const galColorSel = document.getElementById('galColors');
-  const galStatus = document.getElementById('galCartoonStatus');
-
-  // 像素化 + 降色 → 卡通风格
-  function pixelate(imgEl, pixelSize, colorCount) {
-    return new Promise((resolve) => {
-      if (!imgEl.complete || !imgEl.naturalWidth) { resolve(null); return; }
-      const w0 = imgEl.naturalWidth, h0 = imgEl.naturalHeight;
-      const w = Math.max(1, Math.floor(w0 / pixelSize));
-      const h = Math.max(1, Math.floor(h0 / pixelSize));
-      const small = document.createElement('canvas');
-      small.width = w; small.height = h;
-      const sctx = small.getContext('2d');
-      sctx.imageSmoothingEnabled = true;
-      sctx.drawImage(imgEl, 0, 0, w, h);
-      const data = sctx.getImageData(0, 0, w, h);
-      const step = 256 / colorCount;
-      for (let i = 0; i < data.data.length; i += 4) {
-        // 增强对比：每通道量化
-        data.data[i]   = Math.floor(data.data[i]   / step) * step + Math.floor(step / 2);
-        data.data[i+1] = Math.floor(data.data[i+1] / step) * step + Math.floor(step / 2);
-        data.data[i+2] = Math.floor(data.data[i+2] / step) * step + Math.floor(step / 2);
-        // alpha 保持
-      }
-      sctx.putImageData(data, 0, 0);
-      // 放大回原尺寸，禁用抗锯齿 = 像素风
-      const out = document.createElement('canvas');
-      out.width = w0; out.height = h0;
-      const octx = out.getContext('2d');
-      octx.imageSmoothingEnabled = false;
-      octx.drawImage(small, 0, 0, w0, h0);
-      try {
-        resolve(out.toDataURL('image/jpeg', 0.85));
-      } catch (e) {
-        resolve(null);
-      }
-    });
-  }
-
-  async function applyCartoonToAll() {
-    const imgs = grid.querySelectorAll('img.gallery-thumb');
-    if (imgs.length === 0) return;
-    const pixelSize = parseInt(galPixelSel.value, 10);
-    const colorCount = parseInt(galColorSel.value, 10);
-    galCartoonBtn.disabled = true;
-    const origText = galCartoonBtn.textContent;
-    galCartoonBtn.textContent = '⏳ 转换中...';
-    galStatus.textContent = `处理 0/${imgs.length} 张...`;
-    let done = 0;
-    for (const img of imgs) {
-      // 等图加载
-      if (!img.complete || !img.naturalWidth) {
-        await new Promise(r => { img.onload = r; img.onerror = r; setTimeout(r, 2000); });
-      }
-      const dataUrl = await pixelate(img, pixelSize, colorCount);
-      if (dataUrl) img.src = dataUrl;
-      done++;
-      galStatus.textContent = `处理 ${done}/${imgs.length} 张...`;
-    }
-    cartoonMode = true;
-    galCartoonBtn.textContent = '↩️ 恢复实景图';
-    galStatus.textContent = `✓ 已转卡通风格（${done} 张）`;
-    galCartoonBtn.disabled = false;
-  }
-
-  function restoreAll() {
-    const imgs = grid.querySelectorAll('img.gallery-thumb');
-    imgs.forEach((img, i) => {
-      const origSrc = img.getAttribute('data-orig-src') || img.src;
-      if (img.src.startsWith('data:')) {
-        // 找到对应 GALLERY 的原始 src
-        const item = GALLERY.find(g => img.alt === g.label);
-        if (item) img.src = item.file;
-      }
-    });
-    cartoonMode = false;
-    galCartoonBtn.textContent = '🎨 切换为卡通风格';
-    galStatus.textContent = '✓ 已恢复实景图';
-  }
-
-  if (galCartoonBtn) {
-    galCartoonBtn.addEventListener('click', () => {
-      if (cartoonMode) restoreAll();
-      else applyCartoonToAll();
+  /* ---------- 10.1 城市风貌: 从 gallery 渲染精选 6 张 ---------- */
+  const sceneGallery = document.getElementById('sceneGallery');
+  if (sceneGallery) {
+    sceneGallery.className = 'scene-grid';
+    const picks = [
+      { num: '02', cat: 'city', label: '树屋酒店', file: 'assets/gallery/02-overview-day.jpg' },
+      { num: '10', cat: 'city', label: '中心广场', file: 'assets/gallery/10-central-plaza.jpg' },
+      { num: '05', cat: 'city', label: '人民英雄纪念碑', file: 'assets/gallery/05-monument.jpg' },
+      { num: '01', cat: 'city', label: '市中心发言台', file: 'assets/gallery/01-pyramid.jpg' },
+      { num: '07', cat: 'road', label: '公路&铁路跨溪立交', file: 'assets/gallery/07-railway.jpg' },
+      { num: '11', cat: 'kart', label: '国际赛车场', file: 'assets/gallery/11-kart-start.jpg' },
+    ];
+    sceneGallery.innerHTML = picks.map(g => `
+      <article class="scene-card" data-num="${g.num}" data-file="${g.file}" data-label="${g.label}" tabindex="0">
+        <img class="scene-thumb" src="${g.file}" alt="${g.label}" loading="lazy" />
+        <div class="scene-meta">
+          <span class="scene-label">${g.label}</span>
+          <span class="scene-num">#${g.num}</span>
+        </div>
+      </article>
+    `).join('');
+    sceneGallery.querySelectorAll('.scene-card').forEach(el => {
+      el.addEventListener('click', () => {
+        const galleryIdx = GALLERY.findIndex(g => g.file === el.dataset.file);
+        if (galleryIdx >= 0 && typeof openLb === 'function') openLb(galleryIdx);
+      });
     });
   }
 
@@ -1152,14 +1090,42 @@
 
   const passkeyLoginBtn = document.getElementById('passkeyLoginBtn');
   if (passkeyLoginBtn) {
+    // 预检测: 如果浏览器/环境不支持 WebAuthn, 按钮直接禁用 + 说明原因
+    if (!window.PublicKeyCredential) {
+      passkeyLoginBtn.disabled = true;
+      passkeyLoginBtn.textContent = '⚠ 当前浏览器不支持通行密钥';
+      passkeyLoginBtn.title = '请用最新版 Chrome / Safari / Edge 桌面端主浏览器';
+    } else if (!window.isSecureContext) {
+      passkeyLoginBtn.disabled = true;
+      passkeyLoginBtn.textContent = '⚠ 需要 HTTPS 安全连接';
+      passkeyLoginBtn.title = '请直接在 https://dengguang-city.pages.dev 打开 (非内嵌)';
+    }
+
     passkeyLoginBtn.addEventListener('click', async () => {
-      if (!window.PublicKeyCredential) { alert('您的浏览器不支持通行密钥 (WebAuthn)。请用 Chrome/Safari/Edge 最新版。'); return; }
+      // 1) 环境检测
+      if (!window.PublicKeyCredential) {
+        alert('您的浏览器不支持通行密钥 (WebAuthn)。\n\n请用最新版 Chrome / Safari / Edge 桌面端。\n本机 FilePanel 内嵌浏览器可能不支持。');
+        return;
+      }
+      // 2) HTTPS 检测 (WebAuthn 强制要求 secure context)
+      if (!window.isSecureContext) {
+        alert('通行密钥需要 HTTPS 安全连接。\n\n本站部署在 https://dengguang-city.pages.dev (已经是 HTTPS)。\n如果你在 http:// 内嵌浏览器测试, 请直接打开主站。');
+        return;
+      }
       const username = (loginUsername.value || '').trim();
       passkeyLoginBtn.disabled = true;
       const origText = passkeyLoginBtn.textContent;
-      passkeyLoginBtn.textContent = '⏳ 请触摸指纹/Face ID...';
+      passkeyLoginBtn.textContent = '⏳ 准备中...';
+      // 30 秒超时保险, 避免永远卡在"请触摸"
+      let timeoutId = setTimeout(() => {
+        passkeyLoginBtn.disabled = false;
+        passkeyLoginBtn.textContent = origText;
+        loginMsg.textContent = '✗ 操作超时, 请重试';
+        loginMsg.style.color = 'var(--c-red, #c33)';
+        setTimeout(() => { loginMsg.style.color = ''; }, 4000);
+      }, 30000);
       try {
-        // 1. start
+        // 1) start
         const r1 = await fetch('/api/init?action=passkey-login-start', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -1167,16 +1133,28 @@
         });
         const d1 = await r1.json();
         if (!r1.ok || d1.error) throw new Error(d1.error || 'challenge 失败');
-        // 2. 转换 challenge 格式
+        if (!d1.publicKey) throw new Error('服务器未返回 challenge');
+        // 2) 转换 challenge 格式
         const opts = d1.publicKey;
         opts.challenge = b64urlToBuf(opts.challenge);
         if (opts.allowCredentials) {
           opts.allowCredentials = opts.allowCredentials.map((c) => ({ ...c, id: b64urlToBuf(c.id) }));
         }
-        // 3. 调浏览器 API
-        const cred = await navigator.credentials.get({ publicKey: opts });
-        if (!cred) throw new Error('未获得凭据');
-        // 4. finish
+        // 3) 显示 "请触摸" 文案, 调浏览器 API
+        passkeyLoginBtn.textContent = '⏳ 请触摸指纹/Face ID...';
+        let cred;
+        try {
+          cred = await navigator.credentials.get({ publicKey: opts, mediation: 'optional' });
+        } catch (webauthnErr) {
+          // 用户取消 = NotAllowedError, 不算错
+          if (webauthnErr.name === 'NotAllowedError') {
+            throw new Error('已取消, 请重试');
+          }
+          throw webauthnErr;
+        }
+        if (!cred) throw new Error('未获得凭据 (设备无注册密钥?)');
+        // 4) finish
+        passkeyLoginBtn.textContent = '⏳ 验证中...';
         const r2 = await fetch('/api/init?action=passkey-login-finish', {
           method: 'POST', credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
@@ -1197,6 +1175,7 @@
         });
         const d2 = await r2.json();
         if (!r2.ok || d2.error) throw new Error(d2.error || '验证失败');
+        clearTimeout(timeoutId);
         loginMsg.textContent = '✓ 通行密钥登录成功！';
         loginMsg.style.color = 'var(--c-emerald)';
         setTimeout(async () => {
@@ -1206,10 +1185,16 @@
           loadPublicMessages();
         }, 600);
       } catch (e) {
-        loginMsg.textContent = '✗ 通行密钥登录失败: ' + (e.message || e);
+        clearTimeout(timeoutId);
+        const msg = e.name === 'NotAllowedError' ? '已取消' :
+                    e.name === 'SecurityError' ? '环境不安全 (需要 HTTPS)' :
+                    e.name === 'NetworkError' ? '网络错误' :
+                    (e.message || String(e));
+        loginMsg.textContent = '✗ 通行密钥失败: ' + msg;
         loginMsg.style.color = 'var(--c-red, #c33)';
-        setTimeout(() => { loginMsg.style.color = ''; }, 4000);
+        setTimeout(() => { loginMsg.style.color = ''; }, 5000);
       } finally {
+        clearTimeout(timeoutId);
         passkeyLoginBtn.disabled = false;
         passkeyLoginBtn.textContent = origText;
       }

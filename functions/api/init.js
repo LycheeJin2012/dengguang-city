@@ -7,6 +7,7 @@ import {
   passkeyRegisterStart, passkeyRegisterFinish,
   passkeyLoginStart, passkeyLoginFinish,
   listPasskeys, deletePasskey,
+  isUsername, isEmail, aiAutoReply,
 } from '../_shared.js';
 
 // 从 request URL 解析 rpId（passkey 的域）
@@ -305,22 +306,136 @@ export async function onRequestPost(context) {
   }
 
   // ============================================================
-  // Super Admin DM 监管 + 代回复 (2026-08-17)
+  // Super Admin DM 监管 + 代回复 + AI 辅助 (2026-08-17 v17.2)
   // POST /api/init?action=admin-dm-list        (super)
   // POST /api/init?action=admin-dm-thread&player_id=X (super)
   // POST /api/init?action=admin-dm-reply       (super)
   // POST /api/init?action=admin-dm-ai-struggle (super) - AI 兜底/转人工的对话
+  // POST /api/init?action=admin-dm-ai-suggest  (super) - 灯灯客服 AI 辅助生成回复
+  // POST /api/init?action=admin-dm-conversations (super) - 所有 DM 会话+每会话未读
+  // POST /api/init?action=admin-player-list    (super) - 玩家列表+最后活跃时间
+  // POST /api/init?action=admin-player-create  (super) - 超管代注册新玩家
   // ============================================================
   const _adm = _url.searchParams.get('action') || '';
-  if (_adm.startsWith('admin-dm-')) {
+  if (_adm.startsWith('admin-dm-') || _adm.startsWith('admin-player-')) {
     const _tok = readToken(request);
     const _sess = await getSession(env, _tok);
     if (!_sess || !_sess.admin_id) return err(401, '需要管理员登录');
     const _admin = await env.DB.prepare('SELECT id, role, username FROM admins WHERE id = ?').bind(_sess.admin_id).first();
     if (!_admin) return err(401, '管理员不存在');
-    if (_admin.role !== 'super') return err(403, '仅 super 管理员可监管 DM');
+    if (_admin.role !== 'super') return err(403, '仅 super 管理员可使用此功能');
 
     try {
+      if (_adm === 'admin-dm-conversations') {
+        // 列所有 DM 会话: 每对 (from,to) 一条, 含双方 username/avatar, 最后一条 content/at, 未读数
+        const _body = await request.json().catch(() => ({}));
+        const _q = (_body.q || '').trim();
+        let _sql = `
+          SELECT
+            dm.from_player_id, dm.to_player_id, dm.content AS last_content, dm.created_at AS last_at, dm.read_at,
+            pf.username AS from_username, pt.username AS to_username,
+            pf.avatar_emoji AS from_avatar, pt.avatar_emoji AS to_avatar,
+            (SELECT COUNT(*) FROM direct_messages WHERE from_player_id = dm.to_player_id AND to_player_id = dm.from_player_id AND read_at IS NULL) AS unread_count
+          FROM direct_messages dm
+          LEFT JOIN players pf ON pf.id = dm.from_player_id
+          LEFT JOIN players pt ON pt.id = dm.to_player_id
+          WHERE dm.id IN (
+            SELECT MAX(id) FROM direct_messages GROUP BY LEAST(from_player_id, to_player_id), GREATEST(from_player_id, to_player_id)
+          )
+        `;
+        const _params = [];
+        if (_q) {
+          _sql += ` AND (pf.username LIKE ? OR pt.username LIKE ? OR dm.content LIKE ?)`;
+          const _like = `%${_q}%`;
+          _params.push(_like, _like, _like);
+        }
+        _sql += ` ORDER BY last_at DESC LIMIT 100`;
+        const _rows = await env.DB.prepare(_sql).bind(..._params).all();
+        return ok({ conversations: _rows.results || [] });
+      }
+
+      if (_adm === 'admin-dm-ai-suggest') {
+        // AI 辅助生成"灯灯客服"风格的回复草稿
+        const _body = await request.json().catch(() => ({}));
+        const _toPlayerId = parseInt(_body.to_player_id || 0, 10);
+        const _lastMsg = (_body.last_message || '').toString().slice(0, 200);
+        const _hint = (_body.hint || '').toString().slice(0, 100);
+        if (!_toPlayerId) return err(400, 'to_player_id 必填');
+        if (!_lastMsg) return err(400, 'last_message 必填');
+        // 拉最近 5 条对话作为上下文
+        const _ctx = await env.DB.prepare(`
+          SELECT dm.from_player_id, dm.content, dm.created_at
+          FROM direct_messages dm
+          WHERE (dm.from_player_id = ? AND dm.to_player_id = 17)
+             OR (dm.from_player_id = 17 AND dm.to_player_id = ?)
+          ORDER BY dm.id DESC LIMIT 5
+        `).bind(_toPlayerId, _toPlayerId).all();
+        const _ctxStr = (_ctx.results || []).reverse().map(m =>
+          `${m.from_player_id === 17 ? '灯灯' : '玩家'}: ${m.content}`
+        ).join('\n');
+        // 调 AI 生成草稿
+        const _sys = `你是「灯光市」市政厅 AI 客服灯灯，正在协助 super 管理员为市民写回复。
+灯光市是一座 Minecraft 服务器上的像素城市，由玩家共同管理。
+要求：
+1. 亲切、简洁、专业，**总字数严格控制在 100 字以内**（含标点）
+2. 直接给正文，不要前缀"灯灯："等
+3. 严禁编造任何具体信息：数字、电话、邮箱、人名、活动名、日期
+4. 不确定的事建议"请 DM 私信补充具体信息"或"请联系市政厅人工"
+5. 体现已理解对方的诉求，并给出可执行的下一步`;
+        const _user = `最近对话上下文（玩家最新发言在最后）：
+${_ctxStr || '（无历史）'}
+
+玩家最新发言：${_lastMsg}
+${_hint ? '\n管理员提示：' + _hint : ''}
+
+请写一段 100 字以内的回复草稿：`;
+        const _draft = await aiAutoReply(env, _user, 'dm');
+        // aiAutoReply 会用 100 字硬截断, 但如果 OFFLINE 用 模板更短
+        if (!_draft) return err(500, 'AI 生成失败');
+        return ok({ draft: _draft, model: 'abab6.5s-chat' });
+      }
+
+      if (_adm === 'admin-player-list') {
+        // 玩家列表 + 最后活跃时间 (从 sessions 表查最近登录) + 注册时间
+        const _q = (_url.searchParams.get('q') || '').trim();
+        let _sql = `
+          SELECT
+            p.id, p.username, p.email, p.game_id, p.status, p.bio, p.avatar_emoji, p.created_at,
+            (SELECT MAX(s.expires_at) FROM sessions s WHERE s.player_id = p.id) AS last_session
+          FROM players p
+          WHERE 1=1
+        `;
+        const _params = [];
+        if (_q) _sql += ` AND (p.username LIKE ? OR p.email LIKE ? OR p.game_id LIKE ?)`,
+          _params.push(`%${_q}%`, `%${_q}%`, `%${_q}%`);
+        _sql += ` ORDER BY p.created_at DESC LIMIT 200`;
+        const _rows = await env.DB.prepare(_sql).bind(..._params).all();
+        return ok({ players: _rows.results || [] });
+      }
+
+      if (_adm === 'admin-player-create') {
+        // 超管代注册玩家 (不需玩家本人注册/审批, 直接 active)
+        const _body = await request.json().catch(() => ({}));
+        const _username = (_body.username || '').trim();
+        const _email = (_body.email || '').trim();
+        const _gameId = (_body.game_id || '').trim();
+        const _password = (_body.password || '').toString();
+        if (!isUsername(_username)) return err(400, '用户名 2-32 字符, 不含 @/控制字符');
+        if (!isEmail(_email)) return err(400, '邮箱格式错误');
+        if (_password.length < 8) return err(400, '密码至少 8 位');
+        // 检查冲突
+        const _exists = await env.DB.prepare(
+          'SELECT id FROM players WHERE username = ? OR email = ?'
+        ).bind(_username, _email).first();
+        if (_exists) return err(400, '用户名或邮箱已被注册');
+        // 创建 (status=active, 跳过 pending 审批)
+        const _hash = await hashPassword(_password);
+        await env.DB.prepare(
+          "INSERT INTO players (username, email, password_hash, salt, game_id, status, bio, avatar_emoji) VALUES (?, ?, ?, ?, ?, 'active', ?, ?)"
+        ).bind(_username, _email, _hash.hash, _hash.salt, _gameId, '由 super 管理员代注册', '👤').run();
+        return ok({ username: _username, status: 'active', action: 'created' });
+      }
+
       if (_adm === 'admin-dm-list') {
         // 列所有 DM 会话（按 (from, to) pair），含最近一条内容 + 双方 username
         const _body = await request.json().catch(() => ({}));
@@ -343,7 +458,6 @@ export async function onRequestPost(context) {
         }
         _sql += ` ORDER BY dm.created_at DESC LIMIT 200`;
         const _rows = await env.DB.prepare(_sql).bind(..._params).all();
-        // 还要统计每个 player 的"未读 / 总数" - 略
         return ok({ dms: _rows.results || [] });
       }
 

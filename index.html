@@ -151,51 +151,10 @@
     <div class="container">
       <div class="section-head">
         <h2 class="section-title">🏙️ 城市风貌</h2>
-        <p class="section-sub">CITY SCENERY · 地标一览</p>
+        <p class="section-sub">CITY SCENERY · 精选实景图</p>
       </div>
-      <div class="scene-grid">
-        <div class="scene-card">
-          <div class="scene-art art-tower">
-            <div class="scene-tower"><div class="lantern"></div><div class="body"></div></div>
-          </div>
-          <h3>市政灯塔（草拟名）</h3>
-          <p>市政厅旁的地标建筑。具体高度、点灯时间、正式名称由市政厅规划设计后发布。</p>
-        </div>
-        <div class="scene-card">
-          <div class="scene-art art-plaza">
-            <div class="scene-plaza"></div>
-          </div>
-          <h3>中心广场（草拟名）</h3>
-          <p>市民集会、市集与公共活动所在地。具体设计、开放时间、正式名称由市政厅发布。</p>
-        </div>
-        <div class="scene-card">
-          <div class="scene-art art-station">
-            <div class="scene-station"></div>
-          </div>
-          <h3>火车站（拟建）</h3>
-          <p>城市交通枢纽选址之一,具体线路、规模、运营由市政厅论证后公告。</p>
-        </div>
-        <div class="scene-card">
-          <div class="scene-art art-farm">
-            <div class="scene-farm"></div>
-          </div>
-          <h3>农田合作区（筹建）</h3>
-          <p>农业合作区由市民合作社筹建,具体范围、管理规则与正式名称由合作社大会决定。</p>
-        </div>
-        <div class="scene-card">
-          <div class="scene-art art-library">
-            <div class="scene-library"></div>
-          </div>
-          <h3>市民图书馆（筹建）</h3>
-          <p>市民共享知识库,书籍由市民自愿捐赠,目录、开放时间、正式名称待发布。</p>
-        </div>
-        <div class="scene-card">
-          <div class="scene-art art-park">
-            <div class="scene-park"></div>
-          </div>
-          <h3>公园（待规划）</h3>
-          <p>城市公共绿地。选址、设计、命名由市民大会讨论决定。</p>
-        </div>
+      <div class="scene-gallery" id="sceneGallery">
+        <!-- JS 从实景图集挑 6 张地标图渲染 -->
       </div>
     </div>
   </section>
@@ -210,22 +169,6 @@
       <p class="gallery-intro">
         以下照片由市民实地拍摄。点击任意图片可放大查看原图。欢迎你亲自来逛。
       </p>
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
-        <button type="button" id="galCartoonBtn" class="btn" style="background:linear-gradient(135deg,#5a2,#2a5);color:#fff;border:3px solid var(--c-stone-dark);padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:2px 2px 0 var(--c-stone-dark)">🎨 切换为卡通风格</button>
-        <select id="galPixelSize" style="padding:5px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-size:12px">
-          <option value="4">像素块 4px（细）</option>
-          <option value="8" selected>像素块 8px（推荐）</option>
-          <option value="12">像素块 12px（粗）</option>
-          <option value="16">像素块 16px（超粗）</option>
-        </select>
-        <select id="galColors" style="padding:5px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-size:12px">
-          <option value="8">8 色（极致简）</option>
-          <option value="16" selected>16 色（MC 风）</option>
-          <option value="32">32 色（彩色）</option>
-          <option value="64">64 色（细腻）</option>
-        </select>
-        <span id="galCartoonStatus" style="font-size:11px;color:var(--c-stone)"></span>
-      </div>
       <div class="gal-filter-bar" id="galleryFilterBar">
         <!-- JS 渲染 filter 按钮 -->
       </div>

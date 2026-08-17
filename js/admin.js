@@ -200,7 +200,11 @@ function showReplyModal(m){
 
 async function renderPlayers(){
   try{
-    const d=await GET('/api/admin/players');
+    // 用 super 专用端点: 含 last_session 字段
+    const isSuper=window._me&&window._me.role==='super';
+    const url=isSuper?'/api/init?action=admin-player-list':'/api/admin/players';
+    const method=isSuper?'POST':'GET';
+    const d=isSuper?await POST(url,{}):await GET(url);
     const list=d.players||[];
     const cP=list.filter(p=>p.status==='pending').length;
     const cA=list.filter(p=>p.status==='active').length;
@@ -215,21 +219,29 @@ async function renderPlayers(){
     const box=$('#playerList'),empty=$('#playerEmpty');
     if(!shown.length){box.innerHTML='';empty.style.display='';return;}
     empty.style.display='none';
-    const isSuper=window._me&&window._me.role==='super';
+    // 按 status 排序: pending 在前 (待处理优先), 然后 active, 然后 rejected
+    const _ord={pending:0,active:1,rejected:2};
+    shown=[...shown].sort((a,b)=>(_ord[a.status]??9)-(_ord[b.status]??9)||(b.id-a.id));
     box.innerHTML=shown.map(p=>{
       const isPending=p.status==='pending';
       const isActive=p.status==='active';
       const isRejected=p.status==='rejected';
+      const lastSession=p.last_session?fmt(p.last_session):'<i style="color:#aaa">从未登录</i>';
       return `<article class="msg-item" data-id="${p.id}">
         <div class="msg-head"><div class="msg-head-left">
           <b class="msg-name">${esc(p.avatar_emoji||'👤')} ${esc(p.username)}</b>
           <span style="color:var(--c-stone-dark);font-size:12px;margin-left:6px">${esc(p.email)}</span>
           <span class="msg-player-tag">${STATUS_LABEL[p.status]||p.status}</span>
-        </div><div class="msg-time">${fmt(p.created_at)}</div></div>
-        <p class="msg-content" style="font-size:13px;color:var(--c-stone-dark)">${p.bio?esc(p.bio):'<i>暂无简介</i>'}</p>
+          ${p.game_id?`<span class="gallery-num" title="游戏ID" style="margin-left:4px">🎮 ${esc(p.game_id)}</span>`:''}
+        </div><div class="msg-time">注册：${fmt(p.created_at)}</div></div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--c-stone-dark);padding:4px 0 2px">
+          <span title="注册时间">📅 已注册：${fmt(p.created_at)}</span>
+          <span title="最后活跃">🕒 最后活跃：${lastSession}</span>
+        </div>
+        <p class="msg-content" style="font-size:13px;color:var(--c-stone-dark);margin:6px 0">${p.bio?esc(p.bio):'<i>暂无简介</i>'}</p>
         <div class="msg-actions book-actions">
           ${isPending?`<button class="btn btn-primary btn-sm" data-act="approve">✓ 批准</button><button class="btn btn-ghost btn-sm btn-danger" data-act="reject">✗ 拒绝</button>`:''}
-          ${!isPending?`<button class="btn btn-ghost btn-sm" data-act="reset-pw">🔑 ${isActive?'重置':'重置'}密码</button>`:''}
+          ${!isPending?`<button class="btn btn-ghost btn-sm" data-act="reset-pw">🔑 重置密码</button>`:''}
           ${isActive?`<button class="btn btn-ghost btn-sm btn-danger" data-act="reject">✗ 改为拒绝</button>`:''}
           ${isRejected?`<button class="btn btn-ghost btn-sm" data-act="approve">↻ 改为批准</button>`:''}
         </div>
@@ -241,7 +253,85 @@ async function renderPlayers(){
       el.querySelector('[data-act="reject"]')?.addEventListener('click',()=>playerAction(id,'reject'));
       el.querySelector('[data-act="reset-pw"]')?.addEventListener('click',()=>playerResetPw(id));
     });
+    // 显示/隐藏 "代注册玩家" 按钮
+    const btnCreate=document.getElementById('btnPlayerCreate');
+    if(btnCreate)btnCreate.style.display=isSuper?'':'none';
   }catch(e){console.error(e);}
+}
+
+// 超管代注册玩家
+function showCreatePlayerModal(){
+  if(!window._me||window._me.role!=='super')return;
+  // 关掉旧模态
+  const old=document.getElementById('createPlayerBackdrop');
+  if(old)old.remove();
+  const bd=document.createElement('div');
+  bd.id='createPlayerBackdrop';
+  bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  bd.innerHTML=`
+    <div style="background:#1a1a2e;border:2px solid #6cf;border-radius:8px;padding:22px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);">
+      <h3 style="margin:0 0 6px;color:#6cf;font-size:17px;">🆕 代注册玩家账号</h3>
+      <p style="color:#aaa;font-size:12px;margin:0 0 14px;line-height:1.5">
+        由 super 管理员直接创建账号，无需玩家本人注册和审批。账号立即激活可用。
+      </p>
+      <div style="display:grid;gap:10px;grid-template-columns:1fr">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#9ab">
+          <span>玩家用户名 <b style="color:#fff">*</b> <small>（2-32 字符，中文/字母/数字/下划线/连字符/点/空格，不含 @）</small></span>
+          <input id="cpUser" type="text" placeholder="如：SIM_漫画家" style="padding:8px 10px;border:1px solid #444;background:#0f0f1a;color:#eee;border-radius:4px;font-family:inherit;font-size:14px">
+        </label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#9ab">
+          <span>邮箱 <b style="color:#fff">*</b></span>
+          <input id="cpEmail" type="email" placeholder="player@example.com" style="padding:8px 10px;border:1px solid #444;background:#0f0f1a;color:#eee;border-radius:4px;font-family:inherit;font-size:14px">
+        </label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#9ab">
+          <span>游戏 ID <small>（可选）</small></span>
+          <input id="cpGame" type="text" placeholder="Minecraft 游戏内 ID" style="padding:8px 10px;border:1px solid #444;background:#0f0f1a;color:#eee;border-radius:4px;font-family:inherit;font-size:14px">
+        </label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#9ab">
+          <span>初始密码 <b style="color:#fff">*</b> <small>（至少 8 位）</small></span>
+          <input id="cpPass" type="text" placeholder="可填临时密码，玩家可自行修改" style="padding:8px 10px;border:1px solid #444;background:#0f0f1a;color:#eee;border-radius:4px;font-family:inherit;font-size:14px">
+        </label>
+      </div>
+      <div id="cpMsg" style="font-size:12px;margin-top:8px;min-height:18px"></div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:8px">
+        <button id="cpCancel" type="button" style="background:#555;color:#fff;border:none;padding:9px 16px;border-radius:4px;cursor:pointer;font-size:13px">取消</button>
+        <button id="cpSave" type="button" style="background:#6cf;color:#000;border:none;padding:9px 16px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:13px">✓ 创建账号</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(bd);
+  const close=()=>bd.remove();
+  bd.addEventListener('click',e=>{if(e.target===bd)close();});
+  document.getElementById('cpCancel').onclick=close;
+  setTimeout(()=>{document.getElementById('cpUser').focus();},50);
+  document.getElementById('cpSave').onclick=async()=>{
+    const username=document.getElementById('cpUser').value.trim();
+    const email=document.getElementById('cpEmail').value.trim();
+    const game_id=document.getElementById('cpGame').value.trim();
+    const password=document.getElementById('cpPass').value;
+    const msgEl=document.getElementById('cpMsg');
+    const saveBtn=document.getElementById('cpSave');
+    msgEl.style.color='#e8b840';
+    msgEl.textContent='提交中…';
+    saveBtn.disabled=true;
+    try{
+      const r=await fetch('/api/init?action=admin-player-create',{
+        method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username,email,game_id,password}),
+      });
+      const data=await r.json().catch(()=>({}));
+      if(!r.ok||data.error)throw new Error(data.error||'创建失败');
+      msgEl.style.color='#9f9';
+      msgEl.textContent='✓ 账号创建成功: '+username;
+      setTimeout(()=>{close();renderPlayers();},800);
+    }catch(e){
+      msgEl.style.color='#f99';
+      msgEl.textContent='✗ '+(e.message||'失败');
+    }finally{
+      saveBtn.disabled=false;
+    }
+  };
 }
 async function playerAction(id,act){
   const msg=act==='approve'?'批准该玩家注册？':'拒绝该玩家注册？';
@@ -545,6 +635,12 @@ $$('.admin-tabs .tab').forEach(btn=>{
   });
 });
 
+// 超管代注册玩家按钮 (仅 super 可见)
+const btnPlayerCreate=$('#btnPlayerCreate');
+if(btnPlayerCreate){
+  btnPlayerCreate.addEventListener('click',showCreatePlayerModal);
+}
+
 // 添加管理员
 const btnAddAdmin=$('#btnAddAdmin');
 if(btnAddAdmin){
@@ -600,40 +696,32 @@ async function renderDms(query) {
   if (!list) return;
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   try {
-    const r = await fetch('/api/init?action=admin-dm-list', {
+    // 用 admin-dm-conversations 端点: 服务端已按 (from,to) pair 聚合, 每对只 1 条最新 + 未读数
+    const r = await fetch('/api/init?action=admin-dm-conversations', {
       method: 'POST', credentials: 'same-origin',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ q: query || '' }),
     });
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || '加载失败');
-    const dms = d.dms || [];
-    if (dms.length === 0) {
+    const convs = d.conversations || [];
+    if (convs.length === 0) {
       list.innerHTML = '<p class="empty-state">暂无 DM 记录</p>';
       return;
     }
-    // 按 (from,to) pair 聚类，列出最新 50 对
-    const pairMap = new Map();
-    for (const dm of dms) {
-      const key = [dm.from_player_id, dm.to_player_id].sort().join('-');
-      if (!pairMap.has(key) || pairMap.get(key).created_at < dm.created_at) {
-        pairMap.set(key, dm);
-      }
-    }
-    const pairs = Array.from(pairMap.values()).slice(0, 50);
-    list.innerHTML = pairs.map(p => {
-      const fromAvatar = p.from_avatar || '👤';
-      const toAvatar = p.to_avatar || '👤';
+    list.innerHTML = convs.map(p => {
       const isAiReply = p.from_username === '灯灯客服';
-      return `<div class="msg-item dm-pair" data-pid1="${p.from_player_id}" data-pid2="${p.to_player_id}" style="cursor:pointer">
-        <div class="msg-avatar">${isAiReply ? '🤖' : fromAvatar}</div>
+      const unread = p.unread_count || 0;
+      return `<div class="msg-item dm-pair" data-pid1="${p.from_player_id}" data-pid2="${p.to_player_id}" style="cursor:pointer${unread>0?';border-left:4px solid var(--c-emerald)':''}">
+        <div class="msg-avatar">${isAiReply ? '🤖' : (p.from_avatar || '👤')}</div>
         <div class="msg-body">
           <div class="msg-meta">
             <b>${esc(p.from_username || '?')}</b> → <b>${esc(p.to_username || '?')}</b>
             ${isAiReply ? '<span style="background:#1a2a1a;color:#9f9;padding:1px 6px;border-radius:3px;font-size:11px;margin-left:6px">🤖 AI 已回复</span>' : ''}
-            <span style="float:right;font-size:11px;color:#888">${p.created_at}</span>
+            ${unread>0?`<span style="background:#a33;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px;margin-left:6px">💬 ${unread} 未读</span>`:''}
+            <span style="float:right;font-size:11px;color:#888">${p.last_at}</span>
           </div>
-          <div class="msg-content" style="color:var(--c-stone-dark);font-size:13px;max-height:60px;overflow:hidden">${esc((p.content||'').slice(0,200))}</div>
+          <div class="msg-content" style="color:var(--c-stone-dark);font-size:13px;max-height:60px;overflow:hidden">${esc((p.last_content||'').slice(0,200))}</div>
         </div>
       </div>`;
     }).join('');
@@ -677,9 +765,13 @@ async function openDmThread(pid1, pid2) {
     // 找"哪个是玩家、哪个是 bot"
     const playerId = fromName === '灯灯客服' ? pid2 : (toName === '灯灯客服' ? pid1 : pid1);
     const botId = fromName === '灯灯客服' ? pid1 : (toName === '灯灯客服' ? pid2 : null);
+    const humanName = fromName === '灯灯客服' ? toName : fromName;
+    // 最后一条非 AI 的发言作为 AI 辅助生成的上下文
+    const lastPlayerMsg = [...msgs].reverse().find(m => m.from_username !== '灯灯客服');
 
     mb.innerHTML = `
       <div style="max-height:400px;overflow-y:auto;background:var(--c-bg-2);padding:8px;margin-bottom:12px">
+        ${msgs.length===0?'<p style="color:#888;text-align:center;padding:20px">（暂无消息）</p>':''}
         ${msgs.map(m => {
           const isBot = m.from_username === '灯灯客服';
           const isAdmin = m.from_username === '灯灯客服' && m.content && m.content.length > 0;
@@ -693,25 +785,65 @@ async function openDmThread(pid1, pid2) {
       </div>
       ${botId ? `
       <div style="border-top:2px solid var(--c-stone);padding-top:10px">
-        <div style="font-size:12px;color:#666;margin-bottom:6px">✍️ 借 <b>灯灯客服</b> 身份回复给 <b>${esc(fromName === '灯灯客服' ? toName : fromName)}</b>：</div>
-        <textarea id="dmReplyText" style="width:100%;min-height:80px;padding:8px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-family:inherit;font-size:13px;box-sizing:border-box" placeholder="输入回复内容（最多 1000 字）..." maxlength="1000"></textarea>
-        <div style="display:flex;gap:8px;margin-top:8px;justify-content:flex-end">
-          <button type="button" id="dmReplyCancel" class="btn btn-ghost btn-sm">取消</button>
+        <div style="font-size:12px;color:#666;margin-bottom:6px">✍️ 借 <b>灯灯客服</b> 身份回复给 <b>${esc(humanName)}</b>：</div>
+        <textarea id="dmReplyText" style="width:100%;min-height:80px;padding:8px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-family:inherit;font-size:13px;box-sizing:border-box" placeholder="输入回复内容（最多 100 字）..." maxlength="100"></textarea>
+        <div style="font-size:11px;color:#888;margin-top:4px"><span id="dmReplyCount">0</span> / 100 字</div>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;justify-content:flex-end">
+          <button type="button" id="dmAiBtn" class="btn btn-secondary btn-sm" title="AI 辅助生成 100 字内回复草稿" style="background:linear-gradient(135deg,#5a2,#2a5);color:#fff">🤖 AI 辅助生成</button>
+          <button type="button" id="dmReplyCancel" class="btn btn-ghost btn-sm">关闭</button>
           <button type="button" id="dmReplySend" class="btn btn-primary btn-sm">📤 以灯灯客服身份发送</button>
         </div>
         <div id="dmReplyMsg" style="font-size:12px;margin-top:6px;color:#666"></div>
       </div>
       ` : '<p style="color:#888;font-size:12px;text-align:center;padding:10px">此对话双方都是普通玩家，无法借 AI 身份回复。请直接联系玩家。</p>'}
     `;
+    // 字数计数
+    const ta=document.getElementById('dmReplyText');
+    const cnt=document.getElementById('dmReplyCount');
+    if(ta&&cnt){ta.addEventListener('input',()=>{cnt.textContent=ta.value.length;});}
     const sendBtn = document.getElementById('dmReplySend');
     const cancelBtn = document.getElementById('dmReplyCancel');
+    const aiBtn = document.getElementById('dmAiBtn');
     if (cancelBtn) cancelBtn.onclick = () => md.style.display = 'none';
+    if (aiBtn && lastPlayerMsg) {
+      aiBtn.onclick = async () => {
+        const toPlayerId = fromName === '灯灯客服' ? pid2 : pid1;
+        const orig = aiBtn.textContent;
+        aiBtn.disabled = true;
+        aiBtn.textContent = '⏳ AI 生成中…';
+        try {
+          const r = await fetch('/api/init?action=admin-dm-ai-suggest', {
+            method: 'POST', credentials: 'same-origin',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ to_player_id: toPlayerId, last_message: lastPlayerMsg.content || '' }),
+          });
+          const dd = await r.json();
+          if (!r.ok || dd.error) throw new Error(dd.error || 'AI 失败');
+          const taEl = document.getElementById('dmReplyText');
+          if (taEl) {
+            taEl.value = dd.draft || '';
+            taEl.focus();
+            if(cnt)cnt.textContent = taEl.value.length;
+          }
+          aiBtn.textContent = '✅ 已生成 (' + (dd.draft||'').length + '字)';
+          setTimeout(() => { aiBtn.textContent = orig; }, 2500);
+        } catch (e) {
+          aiBtn.textContent = '✗ ' + (e.message || '失败');
+          setTimeout(() => { aiBtn.textContent = orig; }, 2500);
+        } finally {
+          aiBtn.disabled = false;
+        }
+      };
+    } else if (aiBtn) {
+      aiBtn.disabled = true;
+      aiBtn.title = '没有玩家发言可参考';
+    }
     if (sendBtn) {
       sendBtn.onclick = async () => {
         const ta = document.getElementById('dmReplyText');
         const content = (ta?.value || '').trim();
         if (!content) { alert('请输入回复内容'); return; }
-        if (content.length > 1000) { alert('最多 1000 字'); return; }
+        if (content.length > 100) { alert('最多 100 字'); return; }
         const toPlayerId = fromName === '灯灯客服' ? pid2 : pid1;
         sendBtn.disabled = true;
         const orig = sendBtn.textContent;
