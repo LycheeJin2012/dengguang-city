@@ -811,9 +811,10 @@
       fetch('/api/login', { credentials: 'include' })
         .then(r => r.json())
         .then(d => {
-          if (d.ok && d.role === 'player') {
+          // v17.9: combined session 时 role 是 super/admin, 但 data.player 始终存在 — 玩家身份
+          if (d.ok && d.player) {
             // 自动填联系方式（如果有 email）
-            if (d.user.email) licenseContact.value = d.user.email;
+            if (d.player.email) licenseContact.value = d.player.email;
             openLicenseModal(type, grade);
           } else {
             openLoginModal('请先登录玩家账号再报名考试');
@@ -974,6 +975,16 @@
       </div>
       <div class="summary-price">💎 ${r.price} / 晚</div>
     `;
+    // v17.9: 自动填玩家名字 (从 /api/login 取 player.username, 不强制覆盖已有的)
+    fetch('/api/login', { credentials: 'include' })
+      .then(r => r.json())
+      .then(d => {
+        if (d.ok && d.player) {
+          if (bookName && !bookName.value) bookName.value = d.player.username;
+          if (bookContact && !bookContact.value && d.player.email) bookContact.value = d.player.email;
+        }
+      })
+      .catch(() => {});
     // 默认日期：今天 + 明天
     const today = new Date();
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);

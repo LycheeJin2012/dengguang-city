@@ -415,16 +415,23 @@ export async function onRequestPost(context) {
         const _body = await request.json().catch(() => ({}));
         const loginOrigin = { type: 'webauthn.get', origin };
         const _data = await passkeyLoginFinish(env, _body, rpId, loginOrigin);
-        // _data: { player | admin, token, expires_at, kind }
+        // v17.10: combined session — 可能同时有 admin 和 player
         const cookie = `lc_session=${_data.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800`;
         let userObj = {};
-        if (_data.kind === 'admin') {
+        if (_data.kind === 'admin' || _data.admin) {
           userObj = { id: _data.admin.id, username: _data.admin.username, role: _data.admin.role };
         } else {
           userObj = { id: _data.player.id, username: _data.player.username };
         }
-        return new Response(JSON.stringify({ ok: true, ...userObj, kind: _data.kind, expires_at: _data.expires_at }),
-          { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Set-Cookie': cookie } });
+        return new Response(JSON.stringify({
+          ok: true, ...userObj, kind: _data.kind,
+          expires_at: _data.expires_at,
+          combined: !!_data.combined,
+          admin: _data.admin || null,
+          player: _data.player || null,
+        }), {
+          status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Set-Cookie': cookie }
+        });
       }
       if (_action === 'passkey-list') {
         const _tok = readToken(request);

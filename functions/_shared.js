@@ -566,32 +566,29 @@ export async function passkeyRegisterFinish(env, body, subject, rpId, expectedOr
   const aaguid = parsed.attestedCredentialData.aaguid;
   const credIdB64 = bytesToB64url(credId);
 
-  // v17.5: 按 subject.kind 写 player_id 或 admin_id (另一个字段为 NULL)
+  // v17.5/17.10: 写 passkey — 如果 subject 有关联的对端账号, 一并写入, 让 passkey 在两边都能用
+  // - 玩家有 linked_admin_id, 则 passkey 也绑给 admin
+  // - 管理员有 linked_player_id, 则 passkey 也绑给 player
+  // (不破坏原 schema: 同一行 passkey 同时填两个 ID, 仍能用 credential_id 唯一索引)
+  let _linkId = null;
   if (subject.kind === 'admin') {
-    await env.DB.prepare(
-      "INSERT INTO passkeys (admin_id, player_id, credential_id, public_key_jwk, sign_count, transports, name, aaguid) VALUES (?, NULL, ?, ?, ?, ?, ?, ?)"
-    ).bind(
-      subject.id,
-      credIdB64,
-      JSON.stringify(jwk),
-      parsed.signCount,
-      JSON.stringify(credential.response.transports || []),
-      (name || 'My Passkey').slice(0, 50),
-      bytesToB64url(aaguid),
-    ).run();
+    _linkId = await env.DB.prepare('SELECT linked_player_id FROM admins WHERE id = ?').bind(subject.id).first();
   } else {
-    await env.DB.prepare(
-      "INSERT INTO passkeys (player_id, admin_id, credential_id, public_key_jwk, sign_count, transports, name, aaguid) VALUES (?, NULL, ?, ?, ?, ?, ?, ?)"
-    ).bind(
-      subject.id,
-      credIdB64,
-      JSON.stringify(jwk),
-      parsed.signCount,
-      JSON.stringify(credential.response.transports || []),
-      (name || 'My Passkey').slice(0, 50),
-      bytesToB64url(aaguid),
-    ).run();
+    _linkId = await env.DB.prepare('SELECT linked_admin_id FROM players WHERE id = ?').bind(subject.id).first();
   }
+  const _otherId = _linkId ? (subject.kind === 'admin' ? _linkId.linked_player_id : _linkId.linked_admin_id) : null;
+  await env.DB.prepare(
+    "INSERT INTO passkeys (player_id, admin_id, credential_id, public_key_jwk, sign_count, transports, name, aaguid) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+  ).bind(
+    subject.kind === 'player' ? subject.id : (_otherId || null),
+    subject.kind === 'admin' ? subject.id : (_otherId || null),
+    credIdB64,
+    JSON.stringify(jwk),
+    parsed.signCount,
+    JSON.stringify(credential.response.transports || []),
+    (name || 'My Passkey').slice(0, 50),
+    bytesToB64url(aaguid),
+  ).run();
 
   return { id: credIdB64, name: name || 'My Passkey' };
 }
@@ -602,24 +599,29 @@ export async function passkeyLoginStart(env, username, rpId) {
   if (username) {
     // 先查 player
     const p = await env.DB.prepare(
-      "SELECT id, username, status, 'player' AS kind FROM players WHERE username = ? OR email = ?"
+      "SELECT id, username, status, linked_admin_id, 'player' AS kind FROM players WHERE username = ? OR email = ?"
     ).bind(username, username).first();
     if (p && p.status === 'active') {
       subject = p;
     } else {
       // 再查 admin
       const a = await env.DB.prepare(
-        "SELECT id, username, role, 'admin' AS kind FROM admins WHERE username = ?"
+        "SELECT id, username, role, linked_player_id, 'admin' AS kind FROM admins WHERE username = ?"
       ).bind(username).first();
       if (a) subject = a;
     }
   }
   let allowCredentials = [];
   if (subject) {
-    const where = subject.kind === 'admin' ? 'admin_id = ?' : 'player_id = ?';
+    // v17.10: 合并账号场景 — 玩家/管理员 任何一边注册的 passkey 都能用于登录
+    // 找该 subject 自己和它的 linked 对端的所有 passkey
+    const _selfId = subject.id;
+    const _peerId = subject.kind === 'player' ? subject.linked_admin_id : subject.linked_player_id;
+    const _ids = _peerId ? [_selfId, _peerId] : [_selfId];
+    const placeholders = _ids.map(() => '?').join(',');
     const rows = await env.DB.prepare(
-      `SELECT credential_id, transports FROM passkeys WHERE ${where}`
-    ).bind(subject.id).all();
+      `SELECT credential_id, transports FROM passkeys WHERE player_id IN (${placeholders}) OR admin_id IN (${placeholders})`
+    ).bind(..._ids, ..._ids).all();
     allowCredentials = rows.results.map((r) => ({
       id: r.credential_id,
       type: 'public-key',
@@ -690,22 +692,42 @@ export async function passkeyLoginFinish(env, body, rpId, expectedOrigin) {
     "UPDATE passkeys SET sign_count = ?, last_used_at = datetime('now') WHERE id = ?"
   ).bind(parsed.signCount, pk.id).run();
 
-  // v17.5: 按 player_id 或 admin_id 拿账号信息
+  // v17.5/17.10: 按 player_id 和 admin_id 拿账号信息 — 一条 passkey 可能同时绑两边
+  // 优先 admin 优先 (combined session 跟 login.js 一致)
+  let _admin = null, _player = null;
   if (pk.admin_id) {
-    const admin = await env.DB.prepare(
-      "SELECT id, username, role FROM admins WHERE id = ?"
-    ).bind(pk.admin_id).first();
-    if (!admin) throw new Error('管理员不存在');
-    const { token, expires_at } = await createSession(env, null, admin.id);
-    return { admin, token, expires_at, kind: 'admin' };
+    _admin = await env.DB.prepare("SELECT id, username, role FROM admins WHERE id = ?").bind(pk.admin_id).first();
+    if (!_admin) throw new Error('管理员不存在');
   }
-  const player = await env.DB.prepare(
-    "SELECT id, username, status FROM players WHERE id = ?"
-  ).bind(pk.player_id).first();
-  if (!player) throw new Error('玩家不存在');
-  if (player.status !== 'active') throw new Error('账号已被禁用');
-  const { token, expires_at } = await createSession(env, player.id, null);
-  return { player, token, expires_at, kind: 'player' };
+  if (pk.player_id) {
+    _player = await env.DB.prepare("SELECT id, username, status FROM players WHERE id = ?").bind(pk.player_id).first();
+    if (!_player) throw new Error('玩家不存在');
+    if (_player.status !== 'active') throw new Error('账号已被禁用');
+  }
+  // 兼容旧 passkey (只填了 player_id 没 admin_id): 看 players.linked_admin_id 补上
+  if (_player && !_admin) {
+    const _link = await env.DB.prepare("SELECT a.id, a.username, a.role FROM players p LEFT JOIN admins a ON a.id = p.linked_admin_id WHERE p.id = ?").bind(_player.id).first();
+    if (_link && _link.id) _admin = _link;
+  }
+  if (_admin && !_player) {
+    const _link = await env.DB.prepare("SELECT p.id, p.username, p.status FROM admins a LEFT JOIN players p ON p.id = a.linked_player_id WHERE a.id = ?").bind(_admin.id).first();
+    if (_link && _link.id && _link.status === 'active') _player = _link;
+  }
+  if (_admin) {
+    const { token, expires_at } = await createSession(env, _player ? _player.id : null, _admin.id);
+    return {
+      admin: _admin,
+      player: _player,
+      token, expires_at,
+      kind: 'admin',  // 兼容字段
+      combined: !!_player
+    };
+  }
+  if (_player) {
+    const { token, expires_at } = await createSession(env, _player.id, null);
+    return { player: _player, token, expires_at, kind: 'player' };
+  }
+  throw new Error('该通行密钥未关联任何账号');
 }
 
 // v17.5: listPasskeys 接受 subject (kind + id) 或旧的 playerId
