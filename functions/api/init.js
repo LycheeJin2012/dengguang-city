@@ -757,25 +757,29 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   // POST /api/init?action=admin-logout
   // ============================================================
   if (_action === 'admin-logout') {
-    if (!_sess || !_sess.admin_id) return err(401, '没有管理员身份');
-    if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
-    // 创建一个只保留 player_id 的新 session
-    let _newToken = null;
-    if (_sess.player_id) {
-      const _r = await createSession(env, _sess.player_id, null);
-      _newToken = _r.token;
+    try {
+      if (!_sess || !_sess.admin_id) return err(401, '没有管理员身份');
+      if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
+      // 创建一个只保留 player_id 的新 session
+      let _newToken = null;
+      if (_sess.player_id) {
+        const _r = await createSession(env, _sess.player_id, null);
+        _newToken = _r.token;
+      }
+      // 销毁旧的 combined session
+      if (_m) {
+        await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(_m[1]).run();
+      }
+      const _cookie = _newToken
+        ? `lc_session=${_newToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`
+        : `lc_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+      return new Response(JSON.stringify({ ok: true, kept_player: !!_sess.player_id }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json; charset=utf-8', 'Set-Cookie': _cookie }
+      });
+    } catch (e) {
+      return err(500, 'admin-logout err: ' + (e?.message || String(e)) + ' | sess=' + JSON.stringify(_sess));
     }
-    // 销毁旧的 combined session
-    if (_m) {
-      await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(_m[1]).run();
-    }
-    const _cookie = _newToken
-      ? `lc_session=${_newToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`
-      : `lc_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
-    return new Response(JSON.stringify({ ok: true, kept_player: !!_sess.player_id }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Set-Cookie': _cookie }
-    });
   }
 
   // 1. 建表
