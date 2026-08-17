@@ -27,9 +27,14 @@ const showView=n=>{$('#view-login').style.display=n==='dash'?'none':'';$('#view-
 async function boot(){
   try{
     const d=await GET('/api/login');
+    // 移除 boot loading 覆盖层
+    const _ld = document.getElementById('bootLoading'); if (_ld) _ld.remove();
     if(d.ok&&d.user&&d.role&&d.role!=='player'){window._me=d.user;renderDash();}
     else showView('login');
-  }catch(e){const el=$('#loginError');if(el)el.textContent='启动失败: '+e.message;showView('login');}
+  }catch(e){
+    const _ld = document.getElementById('bootLoading'); if (_ld) _ld.remove();
+    const el=$('#loginError');if(el)el.textContent='启动失败: '+e.message;showView('login');
+  }
 }
 
 async function doLogin(){
