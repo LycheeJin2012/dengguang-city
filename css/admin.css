@@ -197,19 +197,23 @@ body.admin-body {
    ============================================ */
 .admin-tabs {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 0;
   border-bottom: 4px solid var(--c-black);
   background: var(--c-bg-2);
   padding: 0 4px;
+  scrollbar-width: thin;
 }
+.admin-tabs::-webkit-scrollbar { height: 6px; }
+.admin-tabs::-webkit-scrollbar-thumb { background: var(--c-stone); }
 .admin-tabs .tab {
   font-family: var(--font-pixel);
   font-size: 11px;
   background: var(--c-stone);
   color: white;
   height: 44px;
-  padding: 0 18px;
+  padding: 0 16px;
   border: 3px solid var(--c-black);
   border-bottom: none;
   margin-right: 4px;
@@ -664,7 +668,7 @@ body.admin-body {
   .msg-item .msg-head-left { grid-row: 1; }
   .admin-item { flex-wrap: wrap; }
   .admin-actions { width: 100%; }
-  .admin-tabs { flex-wrap: wrap; }
+  .admin-tabs { flex-wrap: nowrap; }
   .admin-tabs .tab { font-size: 10px; height: 38px; padding: 0 12px; }
   .login-card { padding: 28px 20px; }
   .modal { max-width: 100%; }
