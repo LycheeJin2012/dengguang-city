@@ -172,7 +172,7 @@ function showReplyModal(m){
         method:'POST',
         credentials:'same-origin',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({message:m.content,history:[]}),
+        body:JSON.stringify({message:m.content.slice(0,100),history:[]}),
       });
       const data=await r.json().catch(()=>({}));
       if(!r.ok||data.error){
