@@ -212,7 +212,9 @@ const MIGRATIONS = [
   // v17.8: admins 加 linked_player_id (管理员/玩家账号绑定)
   `ALTER TABLE admins ADD COLUMN linked_player_id INTEGER`,
   // v17.9: players 加 linked_admin_id (玩家反向绑定管理员,合并登录)
-  `ALTER TABLE players ADD COLUMN linked_admin_id INTEGER`
+  `ALTER TABLE players ADD COLUMN linked_admin_id INTEGER`,
+  // v17.9: backfill players.linked_admin_id 从 admins.linked_player_id 反向回填
+  `UPDATE players SET linked_admin_id = (SELECT id FROM admins WHERE admins.linked_player_id = players.id) WHERE linked_admin_id IS NULL`,
 ];
 
 export async function onRequestGet(context) {
