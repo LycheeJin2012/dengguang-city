@@ -1,6 +1,7 @@
 // functions/_shared.js
-// 共享：响应工具 / 密码哈希 / session 校验
+// 共享：响应工具 / 密码哈希 / session 校验 / WebAuthn (passkey) 工具
 // 2026-08-17: 触发 rebuild 以确保 D1 binding attach 到生产
+// 2026-08-17: 新增 passkey (WebAuthn ES256) 完整支持
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -263,4 +264,339 @@ export async function getOrCreateAiBot(env) {
   return await env.DB.prepare(
     "SELECT id, username, avatar_emoji FROM players WHERE username = ?"
   ).bind(fixedUsername).first();
+}
+
+// ============================================================
+// WebAuthn (Passkey) 工具 - 2026-08-17
+// 仅支持 ES256 (alg=-7), attestation=none
+// ============================================================
+
+// Base64URL <-> ArrayBuffer
+export function b64urlToBytes(s) {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+}
+export function bytesToB64url(buf) {
+  const bytes = buf instanceof ArrayBuffer ? new Uint8Array(buf) : new Uint8Array(buf.buffer || buf);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+
+// 最小 CBOR 解码器（支持 WebAuthn 需要的子集：uint / text / bytes / array / map）
+function cborDecode(data) {
+  const v = new DataView(data.buffer, data.byteOffset, data.byteLength);
+  let offset = 0;
+  function readUint(v, info) {
+    if (info < 24) return info;
+    if (info === 24) { offset++; return v.getUint8(offset - 1); }
+    if (info === 25) { const n = v.getUint16(offset); offset += 2; return n; }
+    if (info === 26) { const n = v.getUint32(offset); offset += 4; return n; }
+    if (info === 27) { const n = Number(v.getBigUint64(offset)); offset += 8; return n; }
+    throw new Error('CBOR: 不支持的 uint 长度 ' + info);
+  }
+  function readItem() {
+    const b = v.getUint8(offset++);
+    const major = b >> 5;
+    const info = b & 0x1f;
+    if (major === 0) return readUint(v, info);
+    if (major === 2) {
+      const len = readUint(v, info);
+      const out = new Uint8Array(data.buffer, data.byteOffset + offset, len);
+      offset += len;
+      return out;
+    }
+    if (major === 3) {
+      const len = readUint(v, info);
+      const out = new TextDecoder().decode(new Uint8Array(data.buffer, data.byteOffset + offset, len));
+      offset += len;
+      return out;
+    }
+    if (major === 4) {
+      const len = readUint(v, info);
+      const arr = [];
+      for (let i = 0; i < len; i++) arr.push(readItem());
+      return arr;
+    }
+    if (major === 5) {
+      const len = readUint(v, info);
+      const obj = {};
+      for (let i = 0; i < len; i++) {
+        const k = readItem();
+        const val = readItem();
+        obj[k] = val;
+      }
+      return obj;
+    }
+    throw new Error('CBOR: 不支持的 major 类型 ' + major);
+  }
+  return readItem();
+}
+
+// COSE EC2 公钥 -> JWK
+function coseToJwk(cose) {
+  if (!cose || cose[1] !== 2) throw new Error('COSE: 非 EC2 密钥');
+  const alg = cose[3];
+  if (alg !== -7) throw new Error('COSE: 仅支持 ES256 (alg=-7)，实际 ' + alg);
+  const crv = cose[-1];
+  if (crv !== 1) throw new Error('COSE: 仅支持 P-256 (crv=1)，实际 ' + crv);
+  const x = cose[-2];
+  const y = cose[-3];
+  if (!x || !y) throw new Error('COSE: 缺少 x 或 y');
+  return { kty: 'EC', crv: 'P-256', alg: 'ES256', ext: false,
+           x: bytesToB64url(x), y: bytesToB64url(y) };
+}
+
+// 解析 authenticatorData
+function parseAuthData(authData) {
+  if (authData.length < 37) throw new Error('authData 太短');
+  const rpIdHash = authData.slice(0, 32);
+  const flags = authData[32];
+  const signCount = (authData[33] << 24) | (authData[34] << 16) | (authData[35] << 8) | authData[36];
+  let offset = 37;
+  let attestedCredentialData = null;
+  if (flags & 0x40) {  // AT
+    const aaguid = authData.slice(offset, offset + 16);
+    offset += 16;
+    const credIdLen = (authData[offset] << 8) | authData[offset + 1];
+    offset += 2;
+    const credentialId = authData.slice(offset, offset + credIdLen);
+    offset += credIdLen;
+    const coseBytes = authData.slice(offset);
+    const cosePubKey = cborDecode(coseBytes);
+    attestedCredentialData = { aaguid, credentialId, cosePubKey };
+  }
+  return { rpIdHash, flags, signCount, attestedCredentialData };
+}
+
+// DER -> raw r||s (P-256 = 64 bytes)
+function derToRawSig(der) {
+  if (der[0] !== 0x30) throw new Error('DER: 缺少 SEQUENCE 头');
+  let p = 2;
+  if (der[p++] !== 0x02) throw new Error('DER: 缺少 INTEGER (r)');
+  let rLen = der[p++];
+  let r = der.slice(p, p + rLen); p += rLen;
+  if (der[p++] !== 0x02) throw new Error('DER: 缺少 INTEGER (s)');
+  let sLen = der[p++];
+  let s = der.slice(p, p + sLen);
+  if (r.length === 33 && r[0] === 0) r = r.slice(1);
+  if (s.length === 33 && s[0] === 0) s = s.slice(1);
+  if (r.length < 32) r = new Uint8Array([...new Array(32 - r.length).fill(0), ...r]);
+  if (s.length < 32) s = new Uint8Array([...new Array(32 - s.length).fill(0), ...s]);
+  const out = new Uint8Array(64);
+  out.set(r.slice(-32), 0);
+  out.set(s.slice(-32), 32);
+  return out;
+}
+
+// 验签 ES256
+async function verifyEs256(jwk, signature, authData, clientDataJSON) {
+  const pubKey = await crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+  const clientDataHash = await crypto.subtle.digest('SHA-256', clientDataJSON);
+  const signed = new Uint8Array(authData.length + 32);
+  signed.set(authData, 0);
+  signed.set(new Uint8Array(clientDataHash), authData.length);
+  const rawSig = derToRawSig(signature);
+  return await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, pubKey, rawSig, signed);
+}
+
+function verifyClientData(clientDataBytes, expectedChallenge, expectedOrigin) {
+  const clientData = JSON.parse(new TextDecoder().decode(clientDataBytes));
+  if (clientData.type !== expectedOrigin.type) throw new Error('clientData.type 不匹配');
+  if (clientData.origin !== expectedOrigin.origin) throw new Error('clientData.origin 不匹配: ' + clientData.origin);
+  if (clientData.challenge !== expectedChallenge) throw new Error('clientData.challenge 不匹配');
+  return clientData;
+}
+
+async function expectedRpIdHash(rpId) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rpId));
+  return new Uint8Array(buf);
+}
+
+// === 高层 API ===
+
+// 注册开始
+export async function passkeyRegisterStart(env, playerId, rpId, userName) {
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  const challengeB64 = bytesToB64url(challenge);
+  const token = randomToken(24);
+  const expires = new Date(Date.now() + 300_000).toISOString();
+  await env.DB.prepare(
+    "INSERT OR REPLACE INTO webauthn_challenges (token, challenge, purpose, player_id, expires_at) VALUES (?, ?, 'register', ?, ?)"
+  ).bind(token, challengeB64, playerId, expires).run();
+  return {
+    challenge_token: token,
+    publicKey: {
+      challenge: challengeB64,
+      rp: { id: rpId, name: '灯光市' },
+      user: {
+        id: bytesToB64url(new TextEncoder().encode(String(playerId))),
+        name: userName,
+        displayName: userName,
+      },
+      pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
+      authenticatorSelection: {
+        residentKey: 'preferred',
+        userVerification: 'preferred',
+        authenticatorAttachment: 'platform',
+      },
+      attestation: 'none',
+      timeout: 60000,
+    },
+  };
+}
+
+// 注册完成
+export async function passkeyRegisterFinish(env, body, playerId, rpId, expectedOrigin) {
+  const { challenge_token: challengeToken, credential, name } = body;
+  if (!challengeToken || !credential) throw new Error('缺少 challenge_token 或 credential');
+  const ch = await env.DB.prepare(
+    "SELECT challenge, expires_at FROM webauthn_challenges WHERE token = ? AND purpose = 'register'"
+  ).bind(challengeToken).first();
+  if (!ch) throw new Error('challenge 无效');
+  if (new Date(ch.expires_at) < new Date()) {
+    await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(challengeToken).run();
+    throw new Error('challenge 已过期');
+  }
+  await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(challengeToken).run();
+
+  const clientDataJSON = b64urlToBytes(credential.response.clientDataJSON);
+  const attestationObject = b64urlToBytes(credential.response.attestationObject);
+  verifyClientData(clientDataJSON, ch.challenge, expectedOrigin);
+
+  const att = cborDecode(attestationObject);
+  if (att.fmt !== 'none') throw new Error('仅支持 attestation=none，实际 ' + att.fmt);
+  const parsed = parseAuthData(att.authData);
+  if (!parsed.attestedCredentialData) throw new Error('attestedCredentialData 缺失');
+
+  const expected = await expectedRpIdHash(rpId);
+  if (bytesToB64url(parsed.rpIdHash) !== bytesToB64url(expected)) throw new Error('rpIdHash 不匹配');
+  if (!(parsed.flags & 0x01)) throw new Error('用户在场标志缺失');
+  if (!(parsed.flags & 0x40)) throw new Error('AT 标志缺失');
+
+  const jwk = coseToJwk(parsed.attestedCredentialData.cosePubKey);
+  const credId = parsed.attestedCredentialData.credentialId;
+  const aaguid = parsed.attestedCredentialData.aaguid;
+  const credIdB64 = bytesToB64url(credId);
+
+  await env.DB.prepare(
+    "INSERT INTO passkeys (player_id, credential_id, public_key_jwk, sign_count, transports, name, aaguid) VALUES (?, ?, ?, ?, ?, ?, ?)"
+  ).bind(
+    playerId,
+    credIdB64,
+    JSON.stringify(jwk),
+    parsed.signCount,
+    JSON.stringify(credential.response.transports || []),
+    (name || 'My Passkey').slice(0, 50),
+    bytesToB64url(aaguid),
+  ).run();
+
+  return { id: credIdB64, name: name || 'My Passkey' };
+}
+
+// 登录开始
+export async function passkeyLoginStart(env, username, rpId) {
+  let player = null;
+  if (username) {
+    player = await env.DB.prepare(
+      "SELECT id, username, status FROM players WHERE username = ? OR email = ?"
+    ).bind(username, username).first();
+  }
+  let allowCredentials = [];
+  if (player && player.status === 'active') {
+    const rows = await env.DB.prepare(
+      "SELECT credential_id, transports FROM passkeys WHERE player_id = ?"
+    ).bind(player.id).all();
+    allowCredentials = rows.results.map((r) => ({
+      id: r.credential_id,
+      type: 'public-key',
+      transports: JSON.parse(r.transports || '[]'),
+    }));
+  }
+  const challenge = crypto.getRandomValues(new Uint8Array(32));
+  const challengeB64 = bytesToB64url(challenge);
+  const token = randomToken(24);
+  const expires = new Date(Date.now() + 300_000).toISOString();
+  await env.DB.prepare(
+    "INSERT OR REPLACE INTO webauthn_challenges (token, challenge, purpose, player_id, expires_at) VALUES (?, ?, 'login', ?, ?)"
+  ).bind(token, challengeB64, player?.id || null, expires).run();
+  return {
+    challenge_token: token,
+    publicKey: {
+      challenge: challengeB64,
+      rpId,
+      allowCredentials,
+      userVerification: 'preferred',
+      timeout: 60000,
+    },
+    hint_player_id: player?.id || null,
+  };
+}
+
+// 登录完成
+export async function passkeyLoginFinish(env, body, rpId, expectedOrigin) {
+  const { challenge_token: challengeToken, credential } = body;
+  if (!challengeToken || !credential) throw new Error('缺少参数');
+  const ch = await env.DB.prepare(
+    "SELECT challenge, player_id, expires_at FROM webauthn_challenges WHERE token = ? AND purpose = 'login'"
+  ).bind(challengeToken).first();
+  if (!ch) throw new Error('challenge 无效');
+  if (new Date(ch.expires_at) < new Date()) {
+    await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(challengeToken).run();
+    throw new Error('challenge 已过期');
+  }
+  await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(challengeToken).run();
+
+  const credId = credential.id;
+  const pk = await env.DB.prepare(
+    "SELECT * FROM passkeys WHERE credential_id = ?"
+  ).bind(credId).first();
+  if (!pk) throw new Error('该通行密钥未注册');
+
+  const clientDataJSON = b64urlToBytes(credential.response.clientDataJSON);
+  const authData = b64urlToBytes(credential.response.authenticatorData);
+  const signature = b64urlToBytes(credential.response.signature);
+  verifyClientData(clientDataJSON, ch.challenge, expectedOrigin);
+
+  const parsed = parseAuthData(authData);
+  const expected = await expectedRpIdHash(rpId);
+  if (bytesToB64url(parsed.rpIdHash) !== bytesToB64url(expected)) throw new Error('rpIdHash 不匹配');
+  if (!(parsed.flags & 0x01)) throw new Error('用户在场标志缺失');
+
+  const jwk = JSON.parse(pk.public_key_jwk);
+  const ok = await verifyEs256(jwk, signature, authData, clientDataJSON);
+  if (!ok) throw new Error('签名验证失败');
+
+  if (parsed.signCount > 0 && pk.sign_count > 0 && parsed.signCount <= pk.sign_count) {
+    console.warn('passkey: signCount 未递增，疑似克隆', credId);
+  }
+
+  await env.DB.prepare(
+    "UPDATE passkeys SET sign_count = ?, last_used_at = datetime('now') WHERE id = ?"
+  ).bind(parsed.signCount, pk.id).run();
+
+  const player = await env.DB.prepare(
+    "SELECT id, username, status FROM players WHERE id = ?"
+  ).bind(pk.player_id).first();
+  if (!player) throw new Error('玩家不存在');
+  if (player.status !== 'active') throw new Error('账号已被禁用');
+
+  const { token, expires_at } = await createSession(env, player.id, null);
+  return { player, token, expires_at };
+}
+
+export async function listPasskeys(env, playerId) {
+  return await env.DB.prepare(
+    "SELECT id, credential_id, name, created_at, last_used_at, aaguid FROM passkeys WHERE player_id = ? ORDER BY created_at DESC"
+  ).bind(playerId).all();
+}
+
+export async function deletePasskey(env, playerId, passkeyId) {
+  return await env.DB.prepare(
+    "DELETE FROM passkeys WHERE id = ? AND player_id = ?"
+  ).bind(passkeyId, playerId).run();
 }
