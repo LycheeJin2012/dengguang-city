@@ -164,6 +164,16 @@ const SCHEMA = [
     purpose TEXT NOT NULL,
     player_id INTEGER,
     expires_at TEXT NOT NULL
+  )`,
+  // v17.8: 市政公告（仅 super 管理员可发布）
+  `CREATE TABLE IF NOT EXISTS announcements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_by INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT,
+    FOREIGN KEY (created_by) REFERENCES admins(id)
   )`
 ];
 
@@ -182,7 +192,9 @@ const MIGRATIONS = [
   // v17.5: passkeys 支持 admin (player_id 改为可空 + 加 admin_id)
   `ALTER TABLE passkeys ADD COLUMN admin_id INTEGER`,
   // v17.7: messages 支持"AI 自动回复后被人工覆盖"的历史追溯
-  `ALTER TABLE messages ADD COLUMN previous_reply TEXT`
+  `ALTER TABLE messages ADD COLUMN previous_reply TEXT`,
+  // v17.8: announcements 兼容迁移
+  `ALTER TABLE announcements ADD COLUMN updated_at TEXT`
 ];
 
 export async function onRequestGet(context) {

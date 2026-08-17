@@ -334,18 +334,93 @@
     setInterval(loadPublicMessages, 30000);
   }
 
-  /* ---------- 8. 公告卡点击“阅读全文” 模拟 ---------- */
-  document.querySelectorAll('.read-more').forEach(a => {
-    a.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const card = a.closest('.notice-card');
-      const h3 = card?.querySelector('h3')?.textContent || '公告详情';
-      alert('【' + h3 + '】\n\n（演示页）完整公告将在接入后台后展示。');
-    });
-  });
-  document.querySelectorAll('.notice-card').forEach(c => {
-    c.addEventListener('click', () => c.querySelector('.read-more')?.click());
-  });
+  /* ---------- 8. 公告卡加载 + 展开 (v17.8 接入后台) ---------- */
+  function escHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  function fmtDate(s) {
+    if (!s) return '';
+    try {
+      const d = new Date(s.includes('T') ? s : s.replace(' ', 'T') + 'Z');
+      if (isNaN(d.getTime())) return s;
+      return d.toLocaleString('zh-CN', { hour12: false });
+    } catch (_) { return s; }
+  }
+  function relativeTime(s) {
+    if (!s) return '';
+    const d = new Date(s.includes('T') ? s : s.replace(' ', 'T') + 'Z');
+    if (isNaN(d.getTime())) return s;
+    const diff = (Date.now() - d.getTime()) / 1000;
+    if (diff < 60) return '刚刚';
+    if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
+    if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
+    if (diff < 604800) return Math.floor(diff / 86400) + ' 天前';
+    return d.toLocaleDateString('zh-CN');
+  }
+  async function loadAnnouncements() {
+    const grid = document.querySelector('#notice .notice-grid');
+    if (!grid) return;
+    try {
+      const r = await fetch('/api/announcements', { credentials: 'omit' });
+      if (!r.ok) return; // 后端未就绪时保留占位卡片
+      const d = await r.json();
+      const anns = (d && d.announcements) || [];
+      if (anns.length === 0) return; // 保留占位 "暂无公告"
+      // 渲染公告卡片
+      grid.innerHTML = anns.map((a, i) => {
+        const isLatest = i === 0;
+        const tag = isLatest ? '<span class="notice-tag" style="background:#a6a;color:#fff;">最新</span>' : '<span class="notice-tag tag-blue">公告</span>';
+        return `<article class="notice-card">
+          <div class="notice-body">
+            ${tag}
+            <h3>${escHtml(a.title)}</h3>
+            <p style="font-size:11px;color:#888;margin:0 0 6px;">📅 ${relativeTime(a.created_at)}${a.updated_at ? ' · <span style="color:#a6a">已编辑</span>' : ''} · ✍️ ${escHtml(a.admin_username || '市政厅')}</p>
+            <p style="white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;">${escHtml(a.content)}</p>
+            <a href="#ann-${a.id}" class="read-more" data-id="${a.id}">阅读全文 →</a>
+          </div>
+        </article>`;
+      }).join('');
+      // 绑定"阅读全文"点击 → 弹模态显示完整内容
+      grid.querySelectorAll('.read-more').forEach(a => {
+        a.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          const id = +a.dataset.id;
+          const ann = anns.find(x => x.id === id);
+          if (ann) showAnnModal(ann);
+        });
+      });
+      // 卡片整体点击也能展开
+      grid.querySelectorAll('.notice-card').forEach((c, i) => {
+        c.addEventListener('click', () => grid.querySelectorAll('.read-more')[i]?.click());
+      });
+    } catch (e) { /* 静默失败,保留占位 */ }
+  }
+  function showAnnModal(ann) {
+    const old = document.getElementById('annViewModal');
+    if (old) old.remove();
+    const bd = document.createElement('div');
+    bd.id = 'annViewModal';
+    bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    bd.innerHTML = `<div style="background:#fffbe8;border:4px solid #2d2d2d;border-radius:4px;padding:24px;max-width:640px;width:100%;max-height:85vh;overflow:auto;box-shadow:8px 8px 0 rgba(0,0,0,.25);">
+      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;">
+        <span style="font-size:24px;">📢</span>
+        <div style="flex:1;">
+          <h2 style="margin:0;font-family:'Press Start 2P','VT323',monospace;font-size:14px;line-height:1.6;color:#1a3d12;">${escHtml(ann.title)}</h2>
+          <p style="margin:6px 0 0;font-size:11px;color:#888;">📅 ${fmtDate(ann.created_at)}${ann.updated_at ? ' · 🕓 更新：' + fmtDate(ann.updated_at) : ''} · ✍️ ${escHtml(ann.admin_username || '市政厅')}</p>
+        </div>
+        <button id="annViewClose" style="background:#2d2d2d;color:#fffbe8;border:none;padding:4px 10px;cursor:pointer;font-family:monospace;font-size:14px;">✕</button>
+      </div>
+      <div style="font-size:14px;line-height:1.8;color:#1a3d12;white-space:pre-wrap;word-break:break-word;border-top:2px dashed #88a;padding-top:12px;">${escHtml(ann.content)}</div>
+    </div>`;
+    document.body.appendChild(bd);
+    const close = () => bd.remove();
+    bd.addEventListener('click', e => { if (e.target === bd) close(); });
+    bd.querySelector('#annViewClose').onclick = close;
+  }
+  loadAnnouncements();
 
   /* ---------- 9. 视差云朵加速（仅装饰） ---------- */
   const clouds = document.querySelectorAll('.cloud');
