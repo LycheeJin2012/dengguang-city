@@ -7,7 +7,7 @@ import {
   passkeyRegisterStart, passkeyRegisterFinish,
   passkeyLoginStart, passkeyLoginFinish,
   listPasskeys, deletePasskey,
-  isUsername, isEmail, aiAutoReply,
+  isUsername, isEmail, aiAutoReply, stripHtml,
 } from '../_shared.js';
 
 // 从 request URL 解析 rpId（passkey 的域）
