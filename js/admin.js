@@ -140,6 +140,9 @@ function showReplyModal(m){
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
         <span style="flex:1;"></span>
+        <button id="aiStandardBtn" type="button" style="background:#3a2;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:13px;" title="亲切礼貌">🤖 AI 草稿</button>
+        <button id="aiProBtn" type="button" style="background:#1a4a8a;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:13px;" title="政府公文体，专业正式">💼 专业回复</button>
+        <button id="aiShortBtn" type="button" style="background:#5a5a2;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:13px;" title="30 字内极简">⚡ 极简</button>
         <button id="replyCancel" type="button" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">取消</button>
         <button id="replyClear" type="button" style="background:#a33;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">清空</button>
         <button id="replySave" type="button" style="background:#6cf;color:#000;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:13px;">保存</button>
@@ -159,6 +162,35 @@ function showReplyModal(m){
     if(!trimmed){if(!confirm('清空回复？（点确定 = 清空，点取消 = 继续编辑）'))return;}
     PATCH('/api/admin/messages?id='+m.id,{admin_reply:trimmed}).then(()=>{close();renderMessages();}).catch(e=>alert('保存失败: '+e.message));
   };
+
+  // AI 3 种 tone 按钮
+  async function aiDraft(tone, btn){
+    if(!m.content){alert('留言内容为空，无法生成');return;}
+    const orig = btn.textContent;
+    btn.disabled=true;
+    btn.textContent='⏳ 生成中…';
+    try{
+      const r=await fetch('/api/admin/messages?action=ai-draft',{
+        method:'POST',credentials:'same-origin',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message:m.content.slice(0,100),history:[],tone}),
+      });
+      const data=await r.json().catch(()=>({}));
+      if(!r.ok||data.error){alert('AI 失败: '+(data.error||r.status));return;}
+      ta.value=data.draft||'';
+      ta.focus();
+      btn.textContent='✅ '+(tone==='professional'?'专业':tone==='concise'?'极简':'标准')+' 已生成 ('+data.model+')';
+      setTimeout(()=>{btn.textContent=orig;},3000);
+    }catch(e){
+      alert('网络错误: '+e.message);
+      btn.textContent=orig;
+    }finally{
+      btn.disabled=false;
+    }
+  }
+  bd.querySelector('#aiStandardBtn').onclick=(e)=>aiDraft('standard', e.currentTarget);
+  bd.querySelector('#aiProBtn').onclick=(e)=>aiDraft('professional', e.currentTarget);
+  bd.querySelector('#aiShortBtn').onclick=(e)=>aiDraft('concise', e.currentTarget);
 
   setTimeout(()=>ta.focus(),50);
 }
