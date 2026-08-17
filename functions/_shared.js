@@ -139,13 +139,40 @@ export function stripHtml(s) {
   return s.replace(/<[^>]*>/g, '').replace(/[<>"']/g, (c) => ({ '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])).slice(0, 2000);
 }
 
+// 离线兜底回复（key 未设时用，关键词匹配，绝不返回 null）
+// 模板里不出现具体数字/人名/电话/活动，全部诚实留白
+function offlineReply(userMessage, context) {
+  const text = String(userMessage || '').toLowerCase();
+  if (context === 'dm') {
+    if (/你好|hi|hello|嗨|您好/.test(text)) return '你好呀！我是灯灯，AI 客服灯灯～有什么事尽管说。';
+    if (/怎么|如何|怎样|哪里|在哪|几个|什么时候/.test(text)) return '这个问题建议你 DM 找市政厅管理员人工答复，我作为 AI 给不出具体流程。';
+    if (/谢谢|感谢|thanks/.test(text)) return '不客气～有事随时来找我！';
+    if (/投诉|不满|生气|垃圾/.test(text)) return '抱歉让你不满意了。我会把你的反馈转给市政厅管理员，请稍等。';
+    if (/建议|想要|希望|能不能/.test(text)) return '已收到你的建议！我会转告市政厅管理员。';
+    return '收到！我会尽快转告市政厅管理员跟进。';
+  }
+  // 留言板 context
+  if (/投诉|不满|生气|垃圾|差评/.test(text)) return '抱歉让你不满意了。您的投诉已记录，市政厅会在近期内处理。';
+  if (/故障|坏|报错|不行|不能|失效/.test(text)) return '已收到您的故障反馈，市政厅会尽快安排核实修复，请保持联系。';
+  if (/申请|报名|想|希望|想要|能不能/.test(text)) return '已收到您的申请/请求，市政厅会在近期内审阅，请关注本留言或 DM 跟进。';
+  if (/建议|想法|意见|提议/.test(text)) return '感谢您的宝贵建议！市政厅已记录，会在下次市政会议上讨论。';
+  if (/你好|您好|hi|hello/.test(text)) return '欢迎来到灯光市！请详细描述您的诉求，市政厅会尽快处理。';
+  if (/谢谢|感谢|thanks/.test(text)) return '不客气！服务市民是市政厅的本职工作。';
+  return '感谢您的留言！市政厅已收到，会尽快处理。如需详细沟通，请用 DM 私信联系。';
+}
+
 // AI 自动回复助手（OpenAI 兼容 chat completions）
-// 调用失败一律返回 null（不抛、不阻塞主流程）
-// 系统 prompt 区分 context: 'message' | 'dm'
+// 未配置 OPENAI_API_KEY 时走离线兜底（保证体验不中断）
+// context: 'message' | 'dm'
 export async function aiAutoReply(env, userMessage, context = 'message') {
-  if (!env || !env.OPENAI_API_KEY) return null;
   const text = String(userMessage || '').trim().slice(0, 100);
   if (!text) return null;
+
+  // 没配 key → 走离线兜底
+  if (!env || !env.OPENAI_API_KEY) {
+    return offlineReply(text, context);
+  }
+
   // 默认 MiniMax（MiniMax）的 OpenAI 兼容端点
   const baseUrl = (env.OPENAI_BASE_URL || 'https://api.minimax.chat/v1').replace(/\/+$/, '');
   const model = env.OPENAI_MODEL || 'abab6.5s-chat';
@@ -190,14 +217,14 @@ export async function aiAutoReply(env, userMessage, context = 'message') {
         max_tokens: 200,
       }),
     });
-    if (!resp.ok) return null;
+    if (!resp.ok) return offlineReply(text, context);
     const data = await resp.json().catch(() => ({}));
     let draft = (data?.choices?.[0]?.message?.content || '').trim();
-    if (!draft) return null;
+    if (!draft) return offlineReply(text, context);
     if (draft.length > 100) draft = draft.slice(0, 100);
     return draft;
   } catch (e) {
-    return null;
+    return offlineReply(text, context);
   }
 }
 
