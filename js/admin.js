@@ -83,11 +83,13 @@
 
   /* ---------- 4. 登录（按钮 click 触发，避免依赖 form submit 事件） ---------- */
   async function doLogin() {
-    const u = $('#loginUser').value.trim();
-    const p = $('#loginPass').value;
     const errEl = $('#loginError');
-    errEl.textContent = '';
-    if (!u || !p) { errEl.textContent = '请输入账号和密码'; return; }
+    if (errEl) errEl.textContent = '';
+    const uEl = $('#loginUser'), pEl = $('#loginPass');
+    if (!uEl || !pEl) { if (errEl) errEl.textContent = '表单未加载完'; return; }
+    const u = uEl.value.trim();
+    const p = pEl.value;
+    if (!u || !p) { if (errEl) errEl.textContent = '请输入账号和密码'; return; }
 
     const submitBtn = $('#loginSubmitBtn');
     const origText = submitBtn ? submitBtn.textContent : '▶ 登录';
@@ -101,11 +103,11 @@
       const me = await GET('/api/login');
       if (!me.ok) throw new Error('无法获取账号信息');
       _me = me.user;
-      $('#loginUser').value = '';
-      $('#loginPass').value = '';
+      uEl.value = '';
+      pEl.value = '';
       renderDash(me.user);
     } catch (err) {
-      errEl.textContent = err.message;
+      if (errEl) errEl.textContent = '登录失败: ' + (err.message || err);
     } finally {
       if (submitBtn) { submitBtn.textContent = origText; submitBtn.disabled = false; }
     }
@@ -123,20 +125,46 @@
 
   /* ---------- 5. 后台渲染 ---------- */
   function renderDash(admin) {
-    window._currentAdmin = admin; // 缓存给 getSession() 用
-    $('#userName').textContent = admin.username;
-    const roleEl = $('#userRole');
-    roleEl.textContent = admin.role === 'super' ? 'SUPER' : 'ADMIN';
-    roleEl.className = 'role-tag role-' + admin.role;
-    $('#btnAddAdmin').style.display = admin.role === 'super' ? '' : 'none';
-    renderMessages();
-    renderBookings();
-    renderLicense();
-    renderKarts();
-    renderCircuits();
-    renderAdminList();
-    renderPlayers();
+    // 任何抛错都吞掉，确保视图能切到 dash
+    try {
+      window._currentAdmin = admin; // 缓存给 getSession() 用
+      const userNameEl = $('#userName');
+      if (userNameEl) userNameEl.textContent = admin.username;
+      const roleEl = $('#userRole');
+      if (roleEl) {
+        roleEl.textContent = admin.role === 'super' ? 'SUPER' : 'ADMIN';
+        roleEl.className = 'role-tag role-' + admin.role;
+      }
+      const btnAdd = $('#btnAddAdmin');
+      if (btnAdd) btnAdd.style.display = admin.role === 'super' ? '' : 'none';
+    } catch (e) {
+      console.error('renderDash header failed:', e);
+    }
+    // 切到后台视图（即使后续 render 失败，dash 也显示出来）
     showView('dash');
+    // 各个 tab 渲染，任何失败都不影响其他
+    safeRender('messages',   renderMessages);
+    safeRender('bookings',   renderBookings);
+    safeRender('license',    renderLicense);
+    safeRender('karts',      renderKarts);
+    safeRender('circuits',    renderCircuits);
+    safeRender('adminList',  renderAdminList);
+    safeRender('players',    renderPlayers);
+  }
+  async function safeRender(name, fn) {
+    try { await fn(); }
+    catch (e) {
+      console.error('render ' + name + ' failed:', e);
+      // 显示一个空状态，避免卡在 "加载中"
+      const ids = { messages: 'msgList', bookings: 'bookList', license: 'licenseList',
+                    karts: 'kartList', circuits: 'circuitList', adminList: 'adminList', players: 'playerList' };
+      const emptyIds = { messages: 'msgEmpty', bookings: 'bookEmpty', license: 'licenseEmpty',
+                         karts: 'kartEmpty', circuits: 'circuitEmpty', players: 'playerEmpty' };
+      const box = document.getElementById(ids[name]);
+      const empty = document.getElementById(emptyIds[name]);
+      if (box) box.innerHTML = '';
+      if (empty) empty.style.display = '';
+    }
   }
 
   /* ---------- 6. Tab 切换 ---------- */
