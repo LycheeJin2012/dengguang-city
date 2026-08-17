@@ -710,6 +710,135 @@ async function adminDel(id){
 }
 
 async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
+  // ============================================================
+  // Super 管理员 - 公告管理 (v17.8)
+  // ============================================================
+  async function renderAnnouncements() {
+    if (!window._me || window._me.role !== 'super') return;
+    const list = document.getElementById('annList');
+    const empty = document.getElementById('annEmpty');
+    if (!list || !empty) return;
+    list.innerHTML = '<p class="empty-state">载入中…</p>';
+    empty.style.display = 'none';
+    try {
+      const r = await fetch('/api/init?action=announcements-list', { credentials: 'same-origin' });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || '加载失败');
+      const anns = d.announcements || [];
+      if (anns.length === 0) {
+        list.innerHTML = '';
+        empty.style.display = '';
+        return;
+      }
+      list.innerHTML = anns.map(a => `
+        <article class="msg-item ann-item" data-id="${a.id}">
+          <div class="msg-head"><div class="msg-head-left">
+            <b class="msg-name">📢 ${esc(a.title)}</b>
+            <span class="msg-read-tag" style="background:#a6a;color:#fff;border-color:#86a;">仅 SUPER</span>
+          </div><div class="msg-time">${fmt(a.created_at)}${a.updated_at ? ' <span style="color:#a6a">· 已编辑</span>' : ''}</div></div>
+          <div class="msg-content" style="white-space:pre-wrap">${esc(a.content)}</div>
+          <div class="msg-content" style="background:#f5f0fa;border-color:#cac;font-size:11px;color:#86a;">
+            ✍️ 发布者：${esc(a.admin_username || '未知')} · 📅 ${fmt(a.created_at)}${a.updated_at ? ' · 🕓 更新：' + fmt(a.updated_at) : ''}
+          </div>
+          <div class="msg-actions book-actions">
+            <button class="btn btn-primary btn-sm" data-act="edit">✎ 编辑</button>
+            <button class="btn btn-ghost btn-sm btn-danger" data-act="del">🗑 删除</button>
+          </div>
+        </article>`).join('');
+      list.querySelectorAll('.ann-item').forEach(el => {
+        const id = +el.dataset.id;
+        el.querySelector('[data-act="edit"]').onclick = () => {
+          const a = anns.find(x => x.id === id);
+          if (a) showAnnModal(a);
+        };
+        el.querySelector('[data-act="del"]').onclick = () => annDel(id);
+      });
+    } catch (e) {
+      list.innerHTML = '<p style="color:#c33;padding:20px;text-align:center">✗ ' + esc(e.message) + '</p>';
+    }
+  }
+
+  function showAnnModal(ann) {
+    const isNew = !ann;
+    const old = document.getElementById('annModalBackdrop');
+    if (old) old.remove();
+    const bd = document.createElement('div');
+    bd.id = 'annModalBackdrop';
+    bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    bd.innerHTML = `
+      <div style="background:#1a1a2e;border:2px solid #a6a;border-radius:8px;padding:18px;max-width:620px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;">
+        <h3 style="margin:0 0 12px;color:#c8c;font-size:16px;">${isNew ? '📢 发布新公告' : '✎ 编辑公告 #' + ann.id}</h3>
+        <label style="display:block;margin-bottom:10px;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">标题（2-80 字）</span>
+          <input id="annTitle" maxlength="80" value="${esc(ann ? ann.title : '')}" placeholder="如：灯光市开通新交通线" style="width:100%;padding:8px 10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+        </label>
+        <label style="display:block;margin-bottom:10px;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">内容（2-2000 字）</span>
+          <textarea id="annContent" maxlength="2000" placeholder="公告正文..." style="width:100%;min-height:160px;padding:10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;line-height:1.5;resize:vertical;box-sizing:border-box;">${esc(ann ? ann.content : '')}</textarea>
+          <span id="annCount" style="display:block;color:#888;font-size:11px;margin-top:2px;text-align:right;">0 / 2000</span>
+        </label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
+          <span style="flex:1;"></span>
+          <button id="annCancel" type="button" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">取消</button>
+          <button id="annSave" type="button" style="background:#a6a;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:13px;">${isNew ? '📢 发布' : '💾 保存'}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(bd);
+    const ti = bd.querySelector('#annTitle');
+    const ta = bd.querySelector('#annContent');
+    const cnt = bd.querySelector('#annCount');
+    const upd = () => { cnt.textContent = ta.value.length + ' / 2000'; };
+    ta.addEventListener('input', upd);
+    upd();
+    const close = () => bd.remove();
+    bd.addEventListener('click', e => { if (e.target === bd) close(); });
+    bd.querySelector('#annCancel').onclick = close;
+    bd.querySelector('#annSave').onclick = async () => {
+      const title = ti.value.trim();
+      const content = ta.value.trim();
+      if (title.length < 2) { alert('标题至少 2 字'); ti.focus(); return; }
+      if (content.length < 2) { alert('内容至少 2 字'); ta.focus(); return; }
+      const btn = bd.querySelector('#annSave');
+      btn.disabled = true; btn.textContent = '⏳ 保存中...';
+      try {
+        const url = isNew ? '/api/init?action=announcement-create' : '/api/init?action=announcement-update&id=' + ann.id;
+        const method = 'POST';
+        const r = await fetch(url, {
+          method, credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, content })
+        });
+        const d = await r.json();
+        if (!r.ok || d.error) throw new Error(d.error || '保存失败');
+        close();
+        renderAnnouncements();
+      } catch (e) {
+        alert('保存失败: ' + e.message);
+        btn.disabled = false; btn.textContent = isNew ? '📢 发布' : '💾 保存';
+      }
+    };
+    setTimeout(() => ti.focus(), 50);
+  }
+
+  async function annDel(id) {
+    if (!confirm('删除该公告？此操作不可恢复。')) return;
+    try {
+      const r = await fetch('/api/init?action=announcement-delete&id=' + id, {
+        method: 'POST', credentials: 'same-origin'
+      });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || '删除失败');
+      renderAnnouncements();
+    } catch (e) {
+      alert('删除失败: ' + e.message);
+    }
+  }
+
+  // 创建按钮
+  const btnAnnCreate = document.getElementById('btnAnnCreate');
+  if (btnAnnCreate) btnAnnCreate.addEventListener('click', () => showAnnModal(null));
+
 function renderDash(){
   try{
     const a=window._me;
@@ -1094,135 +1223,6 @@ async function renderDmAiStruggle() {
       }
     };
   }
-  // ============================================================
-  // Super 管理员 - 公告管理 (v17.8)
-  // ============================================================
-  async function renderAnnouncements() {
-    if (!window._me || window._me.role !== 'super') return;
-    const list = document.getElementById('annList');
-    const empty = document.getElementById('annEmpty');
-    if (!list || !empty) return;
-    list.innerHTML = '<p class="empty-state">载入中…</p>';
-    empty.style.display = 'none';
-    try {
-      const r = await fetch('/api/init?action=announcements-list', { credentials: 'same-origin' });
-      const d = await r.json();
-      if (!r.ok || d.error) throw new Error(d.error || '加载失败');
-      const anns = d.announcements || [];
-      if (anns.length === 0) {
-        list.innerHTML = '';
-        empty.style.display = '';
-        return;
-      }
-      list.innerHTML = anns.map(a => `
-        <article class="msg-item ann-item" data-id="${a.id}">
-          <div class="msg-head"><div class="msg-head-left">
-            <b class="msg-name">📢 ${esc(a.title)}</b>
-            <span class="msg-read-tag" style="background:#a6a;color:#fff;border-color:#86a;">仅 SUPER</span>
-          </div><div class="msg-time">${fmt(a.created_at)}${a.updated_at ? ' <span style="color:#a6a">· 已编辑</span>' : ''}</div></div>
-          <div class="msg-content" style="white-space:pre-wrap">${esc(a.content)}</div>
-          <div class="msg-content" style="background:#f5f0fa;border-color:#cac;font-size:11px;color:#86a;">
-            ✍️ 发布者：${esc(a.admin_username || '未知')} · 📅 ${fmt(a.created_at)}${a.updated_at ? ' · 🕓 更新：' + fmt(a.updated_at) : ''}
-          </div>
-          <div class="msg-actions book-actions">
-            <button class="btn btn-primary btn-sm" data-act="edit">✎ 编辑</button>
-            <button class="btn btn-ghost btn-sm btn-danger" data-act="del">🗑 删除</button>
-          </div>
-        </article>`).join('');
-      list.querySelectorAll('.ann-item').forEach(el => {
-        const id = +el.dataset.id;
-        el.querySelector('[data-act="edit"]').onclick = () => {
-          const a = anns.find(x => x.id === id);
-          if (a) showAnnModal(a);
-        };
-        el.querySelector('[data-act="del"]').onclick = () => annDel(id);
-      });
-    } catch (e) {
-      list.innerHTML = '<p style="color:#c33;padding:20px;text-align:center">✗ ' + esc(e.message) + '</p>';
-    }
-  }
-
-  function showAnnModal(ann) {
-    const isNew = !ann;
-    const old = document.getElementById('annModalBackdrop');
-    if (old) old.remove();
-    const bd = document.createElement('div');
-    bd.id = 'annModalBackdrop';
-    bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
-    bd.innerHTML = `
-      <div style="background:#1a1a2e;border:2px solid #a6a;border-radius:8px;padding:18px;max-width:620px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;">
-        <h3 style="margin:0 0 12px;color:#c8c;font-size:16px;">${isNew ? '📢 发布新公告' : '✎ 编辑公告 #' + ann.id}</h3>
-        <label style="display:block;margin-bottom:10px;">
-          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">标题（2-80 字）</span>
-          <input id="annTitle" maxlength="80" value="${esc(ann ? ann.title : '')}" placeholder="如：灯光市开通新交通线" style="width:100%;padding:8px 10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;box-sizing:border-box;" />
-        </label>
-        <label style="display:block;margin-bottom:10px;">
-          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">内容（2-2000 字）</span>
-          <textarea id="annContent" maxlength="2000" placeholder="公告正文..." style="width:100%;min-height:160px;padding:10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;line-height:1.5;resize:vertical;box-sizing:border-box;">${esc(ann ? ann.content : '')}</textarea>
-          <span id="annCount" style="display:block;color:#888;font-size:11px;margin-top:2px;text-align:right;">0 / 2000</span>
-        </label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
-          <span style="flex:1;"></span>
-          <button id="annCancel" type="button" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">取消</button>
-          <button id="annSave" type="button" style="background:#a6a;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:13px;">${isNew ? '📢 发布' : '💾 保存'}</button>
-        </div>
-      </div>
-    `;
-    document.body.appendChild(bd);
-    const ti = bd.querySelector('#annTitle');
-    const ta = bd.querySelector('#annContent');
-    const cnt = bd.querySelector('#annCount');
-    const upd = () => { cnt.textContent = ta.value.length + ' / 2000'; };
-    ta.addEventListener('input', upd);
-    upd();
-    const close = () => bd.remove();
-    bd.addEventListener('click', e => { if (e.target === bd) close(); });
-    bd.querySelector('#annCancel').onclick = close;
-    bd.querySelector('#annSave').onclick = async () => {
-      const title = ti.value.trim();
-      const content = ta.value.trim();
-      if (title.length < 2) { alert('标题至少 2 字'); ti.focus(); return; }
-      if (content.length < 2) { alert('内容至少 2 字'); ta.focus(); return; }
-      const btn = bd.querySelector('#annSave');
-      btn.disabled = true; btn.textContent = '⏳ 保存中...';
-      try {
-        const url = isNew ? '/api/init?action=announcement-create' : '/api/init?action=announcement-update&id=' + ann.id;
-        const method = 'POST';
-        const r = await fetch(url, {
-          method, credentials: 'same-origin',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, content })
-        });
-        const d = await r.json();
-        if (!r.ok || d.error) throw new Error(d.error || '保存失败');
-        close();
-        renderAnnouncements();
-      } catch (e) {
-        alert('保存失败: ' + e.message);
-        btn.disabled = false; btn.textContent = isNew ? '📢 发布' : '💾 保存';
-      }
-    };
-    setTimeout(() => ti.focus(), 50);
-  }
-
-  async function annDel(id) {
-    if (!confirm('删除该公告？此操作不可恢复。')) return;
-    try {
-      const r = await fetch('/api/init?action=announcement-delete&id=' + id, {
-        method: 'POST', credentials: 'same-origin'
-      });
-      const d = await r.json();
-      if (!r.ok || d.error) throw new Error(d.error || '删除失败');
-      renderAnnouncements();
-    } catch (e) {
-      alert('删除失败: ' + e.message);
-    }
-  }
-
-  // 创建按钮
-  const btnAnnCreate = document.getElementById('btnAnnCreate');
-  if (btnAnnCreate) btnAnnCreate.addEventListener('click', () => showAnnModal(null));
-
   attach('btnMsgRefresh',     renderMessages);
   attach('btnPlayerRefresh',  renderPlayers);
   attach('btnBookRefresh',    renderBookings);
