@@ -53,6 +53,20 @@ export async function onRequestPost(context) {
 
   // Set-Cookie 也写一份方便浏览器调用
   const cookie = `lc_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`;
+
+  // 如果是浏览器原生 form 提交（无 fetch），用 302 重定向回原页面，避免 in-app browser 不触发 JS
+  const accept = request.headers.get('Accept') || '';
+  const isFormPost = accept.includes('text/html');
+  if (isFormPost) {
+    const referer = request.headers.get('Referer') || '/admin';
+    const u = new URL(referer);
+    const back = u.pathname.startsWith('/admin') ? '/admin' : '/';
+    return new Response(null, {
+      status: 302,
+      headers: { 'Set-Cookie': cookie, 'Location': back }
+    });
+  }
+
   return new Response(JSON.stringify({ ok: true, token, expires_at, role, user_id: userId }), {
     status: 200,
     headers: {
