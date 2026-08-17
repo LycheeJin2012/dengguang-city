@@ -59,14 +59,63 @@ export async function onRequestPatch(context) {
     const cleaned = stripHtml(reply);
     if (cleaned.length > 0) {
       if (cleaned.length > 2000) return err(400, '回复内容不能超过 2000 字符');
-      await env.DB.prepare(
-        "UPDATE messages SET admin_reply = ?, replied_at = datetime('now'), replied_by = ? WHERE id = ?"
-      ).bind(cleaned, admin.id, id).run();
+
+      // v17.7: 历史追溯 — 读旧回复,如果被覆盖且类型不同(AI↔人工)就存到 previous_reply
+      // 防御: previous_reply 列可能还没迁移完,旧版本下读不到列
+      let oldReply = null;
+      let oldPrevious = null;
+      try {
+        const oldRow = await env.DB.prepare(
+          'SELECT admin_reply, previous_reply FROM messages WHERE id = ?'
+        ).bind(id).first();
+        oldReply = oldRow?.admin_reply || null;
+        oldPrevious = oldRow?.previous_reply || null;
+      } catch (e) {
+        // 列未迁移 → 当作没有 previous_reply
+        try {
+          const oldRow = await env.DB.prepare(
+            'SELECT admin_reply FROM messages WHERE id = ?'
+          ).bind(id).first();
+          oldReply = oldRow?.admin_reply || null;
+        } catch (_) { /* ignore */ }
+      }
+      const isNewAi = cleaned.startsWith('🤖');
+      const isOldAi = oldReply && oldReply.startsWith('🤖');
+
+      // 类型变化(AI→人工 或 人工→AI) → 把旧回复存到 previous_reply
+      // 同类型更新 → 不动 previous_reply(保留链上最早的)
+      let nextPrevious = oldPrevious;
+      if (oldReply && ((isOldAi && !isNewAi) || (!isOldAi && isNewAi))) {
+        nextPrevious = oldReply;
+      }
+
+      if (nextPrevious) {
+        try {
+          await env.DB.prepare(
+            "UPDATE messages SET admin_reply = ?, previous_reply = ?, replied_at = datetime('now'), replied_by = ? WHERE id = ?"
+          ).bind(cleaned, nextPrevious, admin.id, id).run();
+        } catch (e) {
+          // 列未迁移 → 回退到不带 previous_reply 的版本
+          await env.DB.prepare(
+            "UPDATE messages SET admin_reply = ?, replied_at = datetime('now'), replied_by = ? WHERE id = ?"
+          ).bind(cleaned, admin.id, id).run();
+        }
+      } else {
+        await env.DB.prepare(
+          "UPDATE messages SET admin_reply = ?, replied_at = datetime('now'), replied_by = ? WHERE id = ?"
+        ).bind(cleaned, admin.id, id).run();
+      }
     } else {
-      // 空字符串 = 清除回复
-      await env.DB.prepare(
-        'UPDATE messages SET admin_reply = NULL, replied_at = NULL, replied_by = NULL WHERE id = ?'
-      ).bind(id).run();
+      // 空字符串 = 清除回复(连同 previous_reply 一起清)
+      try {
+        await env.DB.prepare(
+          'UPDATE messages SET admin_reply = NULL, previous_reply = NULL, replied_at = NULL, replied_by = NULL WHERE id = ?'
+        ).bind(id).run();
+      } catch (e) {
+        await env.DB.prepare(
+          'UPDATE messages SET admin_reply = NULL, replied_at = NULL, replied_by = NULL WHERE id = ?'
+        ).bind(id).run();
+      }
     }
   }
   if (!status && typeof reply !== 'string') return err(400, '无更新字段');

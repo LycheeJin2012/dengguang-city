@@ -2463,16 +2463,68 @@ textarea { resize: vertical; min-height: 90px; }
 }
 .msg-reply-box, .pm-reply-box {
   margin-top: 8px;
-  padding: 10px 14px;
+  padding: 10px 14px 10px 16px;
   background: #e9f5e3;
-  border-left: 4px solid var(--c-emerald, #5fb14f);
+  /* v17.7: 缩短"进度条"竖杠 — 不再用 border-left 全长,改用 ::before 做短顶部装饰 */
+  border-top: 3px solid var(--c-emerald, #5fb14f);
   border-radius: 2px;
   font-size: 13px;
   color: #1a3d12;
+  position: relative;
+}
+.msg-reply-box::before, .pm-reply-box::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3px;
+  height: 12px;  /* 缩短竖杠: 只顶部 12px */
+  background: var(--c-emerald, #5fb14f);
 }
 .msg-reply-box b, .pm-reply-box b { color: var(--c-grass-dark, #2d6e1f); }
 .msg-reply-box small, .pm-reply-box small {
   display: block; margin-top: 4px; color: var(--c-stone-dark, #555); font-size: 11px;
+}
+
+/* v17.7: AI 原回复折叠区 */
+.msg-prev-ai {
+  margin-top: 6px;
+  font-family: var(--font-cn, inherit);
+  font-size: 12px;
+}
+.msg-prev-ai details {
+  background: #f0e8f5;
+  border: 1px dashed #a6a;
+  border-radius: 3px;
+  padding: 4px 8px;
+}
+.msg-prev-ai summary {
+  cursor: pointer;
+  color: #86a;
+  font-size: 12px;
+  user-select: none;
+  outline: none;
+}
+.msg-prev-ai summary:hover { color: #64a; }
+.msg-prev-ai-body {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: rgba(255,255,255,.5);
+  border-left: 2px solid #a6a;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: #555;
+}
+/* v17.7: 回复链时间线 */
+.msg-chain-line {
+  font-family: var(--font-cn, inherit);
+  font-size: 11px;
+  color: #86a;
+  background: #f5f0fa;
+  padding: 4px 8px;
+  border: 1px dashed #cac;
+  border-radius: 3px;
+  margin-top: 4px;
 }
 
 /* ---------- 预订 Modal ---------- */

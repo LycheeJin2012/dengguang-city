@@ -180,7 +180,9 @@ const MIGRATIONS = [
   `ALTER TABLE license_signups ADD COLUMN result_at TEXT`,
   `ALTER TABLE license_signups ADD COLUMN reviewed_by INTEGER`,
   // v17.5: passkeys 支持 admin (player_id 改为可空 + 加 admin_id)
-  `ALTER TABLE passkeys ADD COLUMN admin_id INTEGER`
+  `ALTER TABLE passkeys ADD COLUMN admin_id INTEGER`,
+  // v17.7: messages 支持"AI 自动回复后被人工覆盖"的历史追溯
+  `ALTER TABLE messages ADD COLUMN previous_reply TEXT`
 ];
 
 export async function onRequestGet(context) {

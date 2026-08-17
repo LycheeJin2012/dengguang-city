@@ -181,15 +181,34 @@ async function renderMessages(){
     box.innerHTML=list.map(m=>{
       const hasReply=m.admin_reply&&m.admin_reply.length>0;
       const isAiReply=hasReply&&m.admin_reply.startsWith('🤖');
+      const previousReply=m.previous_reply||'';
+      const hasPreviousAi=previousReply.length>0;
+      // v17.7: 全程回复链标签 — 即使没回复也要标
+      let chainTag;
+      if(!hasReply){
+        chainTag='<span class="msg-replied-tag" style="background:#3a2a1a;color:#fc6;border-color:#c84;">⏳ 待回复</span>';
+      }else if(hasPreviousAi){
+        chainTag='<span class="msg-replied-tag" style="background:#1a1a3a;color:#9cf;border-color:#66f;" title="AI 先自动回复，后被管理员覆盖">🤖→💬 已被人工覆盖</span>';
+      }else if(isAiReply){
+        chainTag='<span class="msg-replied-tag" style="background:#1a3a1a;color:#9f9;border-color:#6f6;">🤖 AI 已回复</span>';
+      }else{
+        chainTag='<span class="msg-replied-tag" style="background:#1a2a3a;color:#9cf;border-color:#6cf;">💬 人工已回复</span>';
+      }
+      // v17.7: AI 原回复折叠区(被人工覆盖时显示)
+      const previousAiBox=hasPreviousAi?`<div class="msg-prev-ai"><details><summary>📋 查看 AI 原回复（已被人工覆盖）</summary><div class="msg-prev-ai-body">${esc(previousReply)}</div></details></div>`:'';
+      // v17.7: 回复链时间线
+      const chainLine=hasPreviousAi?`<div class="msg-chain-line">📋 回复历程：${esc(previousReply).slice(0,30)}${previousReply.length>30?'…':''} → 人工覆盖 → 现回复</div>`:'';
       return `<article class="msg-item ${m.status!=='new'?'is-read':''}" data-id="${m.id}">
         <div class="msg-head"><div class="msg-head-left">
           <b class="msg-name">👤 ${esc(m.name)}${m.contact?' · '+esc(m.contact):''}</b>
           ${m.player_username?`<span class="msg-player-tag">@${esc(m.player_username)}</span>`:''}
           ${m.status==='done'?'<span class="msg-read-tag">已处理</span>':m.status!=='new'?'<span class="msg-read-tag">已读</span>':'<span class="msg-unread-tag">新</span>'}
-          ${hasReply?`<span class="msg-replied-tag" style="${isAiReply?'background:#1a3a1a;color:#9f9;border-color:#6f6':''}">${isAiReply?'🤖 AI 已回复':'💬 已回复'}</span>`:''}
+          ${chainTag}
         </div><div class="msg-time">${fmt(m.created_at)}</div></div>
         <div class="msg-content">${esc(m.content)}</div>
         ${hasReply?`<div class="msg-reply-box"><b>📣 市政厅回复：</b><div>${esc(m.admin_reply)}</div><small>${fmt(m.replied_at)}</small></div>`:''}
+        ${chainLine}
+        ${previousAiBox}
         <div class="msg-actions book-actions">
           <button class="btn btn-primary btn-sm" data-act="reply">${hasReply?'✎ 编辑回复':'💬 回复'}</button>
           ${m.status==='done'?'':`<button class="btn btn-ghost btn-sm" data-act="done">标为已处理</button>`}

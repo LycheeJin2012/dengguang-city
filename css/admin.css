@@ -203,10 +203,11 @@ body.admin-body {
   border-bottom: 4px solid var(--c-black);
   background: var(--c-bg-2);
   padding: 0 4px;
-  scrollbar-width: thin;
+  /* v17.7: 隐藏横向滚动条 — 滚动功能保留但视觉上不显示 */
+  scrollbar-width: none;  /* Firefox */
+  -ms-overflow-style: none;  /* IE/Edge legacy */
 }
-.admin-tabs::-webkit-scrollbar { height: 6px; }
-.admin-tabs::-webkit-scrollbar-thumb { background: var(--c-stone); }
+.admin-tabs::-webkit-scrollbar { height: 0; display: none; }
 .admin-tabs .tab {
   font-family: var(--font-pixel);
   font-size: 11px;
