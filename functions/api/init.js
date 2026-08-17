@@ -113,7 +113,11 @@ const MIGRATIONS = [
   `ALTER TABLE players ADD COLUMN avatar_emoji TEXT DEFAULT '👤'`,
   `ALTER TABLE messages ADD COLUMN admin_reply TEXT`,
   `ALTER TABLE messages ADD COLUMN replied_at TEXT`,
-  `ALTER TABLE messages ADD COLUMN replied_by INTEGER`
+  `ALTER TABLE messages ADD COLUMN replied_by INTEGER`,
+  // 修复 license_signups 缺 result_by/result_at 列
+  `ALTER TABLE license_signups ADD COLUMN result_by INTEGER`,
+  `ALTER TABLE license_signups ADD COLUMN result_at TEXT`,
+  `ALTER TABLE license_signups ADD COLUMN reviewed_by INTEGER`
 ];
 
 export async function onRequestGet(context) {

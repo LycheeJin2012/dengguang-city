@@ -6,11 +6,25 @@ export async function onRequestPost(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
 
-  let body;
+  // 支持 JSON (fetch) 和 form-urlencoded (浏览器原生 form POST)
+  const ct = (request.headers.get('Content-Type') || '').toLowerCase();
+  let body = {};
   try {
-    body = await request.json();
+    if (ct.includes('application/x-www-form-urlencoded') || ct.includes('multipart/form-data')) {
+      const form = await request.formData();
+      body = Object.fromEntries(form.entries());
+    } else if (ct.includes('application/json')) {
+      body = await request.json();
+    } else {
+      // 兜底：尝试 text 再 URL-decode
+      const txt = await request.text();
+      if (txt) {
+        try { body = JSON.parse(txt); }
+        catch { body = Object.fromEntries(new URLSearchParams(txt).entries()); }
+      }
+    }
   } catch (e) {
-    return err(400, 'Invalid JSON body');
+    return err(400, 'Invalid body: ' + (e.message || e));
   }
 
   const username = (body.username || '').trim();
@@ -58,14 +72,21 @@ export async function onRequestPost(context) {
   const accept = request.headers.get('Accept') || '';
   const isFormPost = accept.includes('text/html');
   if (isFormPost) {
-    const referer = request.headers.get('Referer') || '/admin';
-    const u = new URL(referer);
-    const back = u.pathname.startsWith('/admin') ? '/admin' : '/';
+    let back = '/admin';
+    try {
+      const referer = request.headers.get('Referer') || '';
+      if (referer) {
+        const u = new URL(referer);
+        if (!u.pathname.startsWith('/admin')) back = '/';
+      }
+    } catch (e) { /* ignore */ }
     return new Response(null, {
       status: 302,
       headers: { 'Set-Cookie': cookie, 'Location': back }
     });
   }
+  // JSON 调用走到这里就正常返回
+
 
   return new Response(JSON.stringify({ ok: true, token, expires_at, role, user_id: userId }), {
     status: 200,

@@ -48,11 +48,11 @@
       <form id="loginForm" class="login-form" method="POST" action="/api/login" accept-charset="UTF-8">
         <label>
           <span>账号</span>
-          <input type="text" id="loginUser" autocomplete="username" required placeholder="管理员账号" />
+          <input type="text" id="loginUser" name="username" autocomplete="username" required placeholder="管理员账号" />
         </label>
         <label>
           <span>密码</span>
-          <input type="password" id="loginPass" autocomplete="current-password" required placeholder="••••••••" />
+          <input type="password" id="loginPass" name="password" autocomplete="current-password" required placeholder="••••••••" />
         </label>
         <div class="login-error" id="loginError"></div>
         <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">▶ 登录</button>
