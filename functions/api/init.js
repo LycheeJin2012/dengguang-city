@@ -253,7 +253,8 @@ export async function onRequestPost(context) {
   const _m = _cookie.match(/lc_session=([^;]+)/);
   if (_m) {
     _sess = await env.DB.prepare('SELECT admin_id, player_id, expires_at FROM sessions WHERE token = ?').bind(_m[1]).first();
-    if (_sess && _sess.admin_id && Date.now() / 1000 <= (_sess.expires_at || 0)) {
+    // expires_at 是 ISO 字符串, 跟 Date.now() 比要 new Date() 转
+    if (_sess && _sess.admin_id && new Date(_sess.expires_at) > new Date()) {
       _me = await env.DB.prepare('SELECT id, role FROM admins WHERE id = ?').bind(_sess.admin_id).first();
     }
   }
@@ -735,7 +736,7 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   // ============================================================
   if (_action === 'player-change-password') {
     if (!_sess || !_sess.player_id) return err(401, '需要玩家登录');
-    if (Date.now() / 1000 > (_sess.expires_at || 0)) return err(401, '会话已过期');
+    if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
     const _b = await request.json().catch(() => ({}));
     const _old = (_b.old_password || '').toString();
     const _new = (_b.new_password || '').toString();
@@ -755,7 +756,7 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   // ============================================================
   if (_action === 'admin-logout') {
     if (!_sess || !_sess.admin_id) return err(401, '没有管理员身份');
-    if (Date.now() / 1000 > (_sess.expires_at || 0)) return err(401, '会话已过期');
+    if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
     // 创建一个只保留 player_id 的新 session
     let _newToken = null;
     if (_sess.player_id) {
