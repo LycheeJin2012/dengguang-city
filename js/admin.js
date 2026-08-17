@@ -392,6 +392,7 @@ async function renderPlayers(){
           ${!isPending?`<button class="btn btn-ghost btn-sm" data-act="reset-pw">🔑 重置密码</button>`:''}
           ${isActive?`<button class="btn btn-ghost btn-sm btn-danger" data-act="reject">✗ 改为拒绝</button>`:''}
           ${isRejected?`<button class="btn btn-ghost btn-sm" data-act="approve">↻ 改为批准</button>`:''}
+          ${isSuper?`<button class="btn btn-ghost btn-sm" data-act="rename" title="修改玩家账号名 (game_id 同步)">✏️ 改名</button>`:''}
         </div>
       </article>`;
     }).join('');
@@ -400,6 +401,7 @@ async function renderPlayers(){
       el.querySelector('[data-act="approve"]')?.addEventListener('click',()=>playerAction(id,'approve'));
       el.querySelector('[data-act="reject"]')?.addEventListener('click',()=>playerAction(id,'reject'));
       el.querySelector('[data-act="reset-pw"]')?.addEventListener('click',()=>playerResetPw(id));
+      el.querySelector('[data-act="rename"]')?.addEventListener('click',()=>playerRename(id, p.username));
     });
     // 显示/隐藏 "代注册玩家" 按钮
     const btnCreate=document.getElementById('btnPlayerCreate');
@@ -493,6 +495,22 @@ async function playerResetPw(id){
   if(np.length<8){alert('密码至少 8 位');return;}
   try{await PATCH('/api/admin/players?id='+id+'&action=reset',{new_password:np});alert('密码已重置');}
   catch(e){alert('失败: '+e.message);}
+}
+async function playerRename(id, currentName){
+  // v17.10: super 改玩家账号名
+  if(!window._me || window._me.role!=='super'){alert('只有 super 管理员可改名');return;}
+  const newName = prompt(`将玩家账号名从\n"${currentName}"\n改为:`, currentName);
+  if(newName===null)return; // 取消
+  const trimmed = (newName||'').trim();
+  if(!trimmed){alert('名字不能为空');return;}
+  if(trimmed.length<2 || trimmed.length>32){alert('名字 2-32 字符');return;}
+  if(trimmed===currentName){alert('未变化');return;}
+  if(!confirm(`确认把玩家账号名改为 "${trimmed}"?\n\n注意: 这会同时改玩家的登录名, 玩家下次登录需用新名. game_id 若等于旧名也会同步更新.`))return;
+  try{
+    const r = await PATCH('/api/admin/players?id='+id+'&action=rename', { new_username: trimmed });
+    alert('✓ 玩家名已改为: ' + (r.username||trimmed) + (r.game_id_synced?'\n(game_id 已同步)':'\n(game_id 未同步, 因为玩家已自定义)'));
+    renderPlayers();
+  } catch(e){ alert('失败: '+e.message); }
 }
 
 async function renderBookings(){

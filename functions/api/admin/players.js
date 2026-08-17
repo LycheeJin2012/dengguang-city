@@ -1,8 +1,8 @@
 // GET    /api/admin/players            - 管理员看玩家列表（含状态）
 // GET    /api/admin/players?status=... - 按状态过滤
-// PATCH  /api/admin/players?id=X&action=approve|reject|reset
-//        body: { new_password?: string }
-import { ok, err, hashPassword, isNonEmpty, readToken, getSession } from '../../_shared.js';
+// PATCH  /api/admin/players?id=X&action=approve|reject|reset|rename
+//        body: { new_password?: string, new_username?: string }
+import { ok, err, hashPassword, isNonEmpty, isUsername, readToken, getSession } from '../../_shared.js';
 
 async function requireAdmin(context) {
   const { env, request } = context;
@@ -70,5 +70,26 @@ export async function onRequestPatch(context) {
       .bind(hash, salt, id).run();
     return ok({ id, message: '密码已重置' });
   }
-  return err(400, '未知 action，应为 approve | reject | reset');
+  if (action === 'rename') {
+    // v17.10: super 改玩家 username (玩家真实账号名)
+    if (me.role !== 'super') return err(403, '只有 super 管理员可改玩家名字');
+    const newName = (body.new_username || '').trim();
+    if (!isUsername(newName)) return err(400, '新用户名格式不对 (2-32 字符, 不含 @ 和控制字符)');
+    if (newName === target.username) return ok({ id, username: target.username, message: '未变化' });
+    // 检查是否已被其他玩家占用
+    const exist = await env.DB.prepare('SELECT id FROM players WHERE username = ? AND id != ?')
+      .bind(newName, id).first();
+    if (exist) return err(409, '用户名已被占用: ' + newName);
+    // 只在 game_id 等于旧 username 时同步 (玩家未自定义 game_id)
+    const cur = await env.DB.prepare('SELECT username, game_id FROM players WHERE id = ?').bind(id).first();
+    if (cur.game_id === cur.username) {
+      await env.DB.prepare('UPDATE players SET username = ?, game_id = ? WHERE id = ?')
+        .bind(newName, newName, id).run();
+    } else {
+      await env.DB.prepare('UPDATE players SET username = ? WHERE id = ?')
+        .bind(newName, id).run();
+    }
+    return ok({ id, username: newName, game_id_synced: cur.game_id === cur.username, message: '已修改' });
+  }
+  return err(400, '未知 action，应为 approve | reject | reset | rename');
 }
