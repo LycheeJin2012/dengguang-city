@@ -133,6 +133,7 @@ function showReplyModal(m){
       ${nameTag}
       ${contact}
       ${context}
+      <div id="aiDraftError" style="display:none;background:#4a1a1a;border:1px solid #f55;color:#fcc;padding:8px 10px;border-radius:4px;margin-bottom:8px;font-size:13px;line-height:1.5;white-space:pre-wrap;"></div>
       <div style="position:relative;margin-bottom:8px;">
         <textarea id="replyText" placeholder="输入回复内容…" style="width:100%;min-height:140px;padding:10px;border-radius:4px;border:1px solid #444;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;line-height:1.5;resize:vertical;box-sizing:border-box;">${esc(m.admin_reply||'')}</textarea>
         <div id="aiDraftStatus" style="position:absolute;top:6px;right:8px;font-size:12px;color:#888;"></div>
@@ -150,6 +151,7 @@ function showReplyModal(m){
 
   const ta=bd.querySelector('#replyText');
   const status=bd.querySelector('#aiDraftStatus');
+  const errBox=bd.querySelector('#aiDraftError');
   const aiBtn=bd.querySelector('#aiDraftBtn');
   const close=()=>bd.remove();
   bd.addEventListener('click',e=>{if(e.target===bd)close();});
@@ -165,6 +167,7 @@ function showReplyModal(m){
   aiBtn.onclick=async()=>{
     if(!m.content){alert('留言内容为空，无法生成草稿');return;}
     aiBtn.disabled=true;
+    errBox.style.display='none';
     status.textContent='✍️ 生成中…';
     status.style.color='#fa3';
     try{
@@ -176,7 +179,10 @@ function showReplyModal(m){
       });
       const data=await r.json().catch(()=>({}));
       if(!r.ok||data.error){
-        status.textContent='❌ '+ (data.error||('HTTP '+r.status));
+        const msg=data.error||('HTTP '+r.status);
+        errBox.textContent='❌ AI 草稿失败：'+msg+'\n\n💡 排查：\n• Cloudflare Pages → Settings → Environment variables 是否设置了 OPENAI_API_KEY\n• OPENAI_BASE_URL 是否指向了正确的 chat completions 端点\n• OPENAI_MODEL 名称是否拼写正确';
+        errBox.style.display='block';
+        status.textContent='❌ 失败';
         status.style.color='#f66';
         return;
       }
@@ -186,7 +192,9 @@ function showReplyModal(m){
       status.style.color='#6f6';
       setTimeout(()=>{status.textContent='';},3000);
     }catch(e){
-      status.textContent='❌ '+e.message;
+      errBox.textContent='❌ 网络错误：'+e.message;
+      errBox.style.display='block';
+      status.textContent='❌ 失败';
       status.style.color='#f66';
     }finally{
       aiBtn.disabled=false;
