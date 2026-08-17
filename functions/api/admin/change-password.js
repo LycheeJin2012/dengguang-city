@@ -27,5 +27,8 @@ export async function onRequestPost(context) {
   await env.DB.prepare('UPDATE admins SET password_hash = ?, salt = ? WHERE id = ?')
     .bind(hash, salt, admin.id).run();
 
+  // v17.9 修订: 合并账号但两边密码不共享 — admin 改密码不影响绑定的玩家
+  // (玩家侧用玩家密码登录, 通行密钥任意一边注册都生效)
+
   return ok({ id: admin.id, message: '密码已更新' });
 }

@@ -1501,18 +1501,26 @@
     try {
       const res = await fetch('/api/login', { credentials: 'include' });
       const data = await res.json();
-      if (res.ok && data.ok && data.role === 'player') {
+      // v17.9: combined session 也走玩家 nav (admin 优先返回, 但 data.player 始终存在)
+      if (res.ok && data.ok && data.player) {
+        const p = data.player;
+        const adminLink = data.combined
+          ? `<a href="admin.html" class="nav-logout-link" style="color:#a6a;font-weight:700;">🛡️ 管理后台</a>`
+          : '';
         navUserSlot.innerHTML = `
-          <span class="nav-user-name">${escapeHtml(data.user.avatar_emoji || '👤')} ${escapeHtml(data.user.username)}</span>
+          <span class="nav-user-name">${escapeHtml(p.avatar_emoji || '👤')} ${escapeHtml(p.username)}</span>
+          ${adminLink}
           <a href="profile.html" class="nav-logout-link" style="color:var(--c-emerald);">👤 主页</a>
           <a href="dm.html" class="nav-logout-link" style="color:var(--c-emerald);">📨 私信</a>
           <a href="#" id="navLogout" class="nav-logout-link">登出</a>
         `;
         // v16: 自动填留言 form 的姓名
-        prefillContactForm(data.user);
+        prefillContactForm(p);
         const lo = document.getElementById('navLogout');
         if (lo) lo.addEventListener('click', async (e) => {
           e.preventDefault();
+          // v17.9: combined 时只清 player (admin-logout 反向: 但本端点只能整 session 清)
+          // 普通 nav 登出 = 整体登出; admin 那边"退出管理"才保留 player
           await fetch('/api/login', { method: 'DELETE', credentials: 'include' });
           await refreshUserState();
           loadPublicMessages();

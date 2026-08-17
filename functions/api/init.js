@@ -8,6 +8,7 @@ import {
   passkeyLoginStart, passkeyLoginFinish,
   listPasskeys, deletePasskey,
   isUsername, isEmail, aiAutoReply, stripHtml,
+  isNonEmpty, verifyPassword,
 } from '../_shared.js';
 
 // 从 request URL 解析 rpId（passkey 的域）
@@ -209,7 +210,9 @@ const MIGRATIONS = [
   // v17.8: direct_messages 加 replied_by_admin_id (DM 回复人审计)
   `ALTER TABLE direct_messages ADD COLUMN replied_by_admin_id INTEGER`,
   // v17.8: admins 加 linked_player_id (管理员/玩家账号绑定)
-  `ALTER TABLE admins ADD COLUMN linked_player_id INTEGER`
+  `ALTER TABLE admins ADD COLUMN linked_player_id INTEGER`,
+  // v17.9: players 加 linked_admin_id (玩家反向绑定管理员,合并登录)
+  `ALTER TABLE players ADD COLUMN linked_admin_id INTEGER`
 ];
 
 export async function onRequestGet(context) {
@@ -660,6 +663,99 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
     } catch (e) {
       return err(500, 'admin-dm 错误: ' + (e?.message || String(e)));
     }
+  }
+
+  // ============================================================
+  // v17.9: 超管合并/解绑 管理员+玩家账号
+  // POST /api/init?action=admin-merge-account      (super)
+  //   body: { admin_id: int, player_id: int }
+  // POST /api/init?action=admin-unmerge-account    (super)
+  //   body: { admin_id: int, player_id: int }
+  // ============================================================
+  if (_action === 'admin-merge-account' || _action === 'admin-unmerge-account') {
+    if (_me.role !== 'super') return err(403, '只有 super 管理员可操作合并');
+    const _b = await request.json().catch(() => ({}));
+    const _adminId = parseInt(_b.admin_id || 0, 10);
+    const _playerId = parseInt(_b.player_id || 0, 10);
+    if (!_adminId || !_playerId) return err(400, 'admin_id 和 player_id 必填');
+    try {
+      if (_action === 'admin-merge-account') {
+        // 引入 mergeAccount (在 _shared.js)
+        const { mergeAccount } = await import('../_shared.js');
+        const _r = await mergeAccount(env, _adminId, _playerId);
+        return ok({ merged: true, ..._r });
+      } else {
+        const { unmergeAccount } = await import('../_shared.js');
+        await unmergeAccount(env, _adminId, _playerId);
+        return ok({ unmerged: true, admin_id: _adminId, player_id: _playerId });
+      }
+    } catch (e) {
+      return err(500, e?.message || String(e));
+    }
+  }
+
+  // ============================================================
+  // v17.9: super 管理员重置玩家密码 (合并账号时不改 admin 密码)
+  // POST /api/init?action=admin-reset-player-password   (super)
+  //   body: { player_id: int, new_password: string }
+  // ============================================================
+  if (_action === 'admin-reset-player-password') {
+    if (_me.role !== 'super') return err(403, '只有 super 管理员可重置玩家密码');
+    const _b = await request.json().catch(() => ({}));
+    const _pid = parseInt(_b.player_id || 0, 10);
+    const _newPw = (_b.new_password || '').toString();
+    if (!_pid || !isNonEmpty(_newPw, 128)) return err(400, 'player_id 和 new_password 必填');
+    if (_newPw.length < 8) return err(400, '新密码至少 8 位');
+    const _p = await env.DB.prepare('SELECT id, username FROM players WHERE id = ?').bind(_pid).first();
+    if (!_p) return err(404, '玩家不存在');
+    const { hash, salt } = await hashPassword(_newPw);
+    await env.DB.prepare('UPDATE players SET password_hash = ?, salt = ? WHERE id = ?')
+      .bind(hash, salt, _pid).run();
+    return ok({ player_id: _pid, username: _p.username, message: '玩家密码已重置 (不影响任何已绑定的管理员账号)' });
+  }
+
+  // ============================================================
+  // v17.9: 玩家改自己密码
+  // 注: 合并账号但两边密码不共享 — 改 player 密码不影响绑定的 admin
+  // POST /api/init?action=player-change-password   (player 登录)
+  //   body: { old_password, new_password }
+  // ============================================================
+  if (_action === 'player-change-password') {
+    if (!_sess || !_sess.player_id) return err(401, '需要玩家登录');
+    const _b = await request.json().catch(() => ({}));
+    const _old = (_b.old_password || '').toString();
+    const _new = (_b.new_password || '').toString();
+    if (_old.length < 8 || _new.length < 8) return err(400, '新旧密码至少 8 位');
+    const _p = await env.DB.prepare('SELECT id, password_hash, salt FROM players WHERE id = ?').bind(_sess.player_id).first();
+    if (!_p) return err(404, '玩家不存在');
+    const _ok = await verifyPassword(_old, _p.password_hash, _p.salt);
+    if (!_ok) return err(401, '旧密码错误');
+    const { hash, salt } = await hashPassword(_new);
+    await env.DB.prepare('UPDATE players SET password_hash = ?, salt = ? WHERE id = ?').bind(hash, salt, _p.id).run();
+    return ok({ id: _p.id, message: '密码已更新' });
+  }
+
+  // ============================================================
+  // v17.9: admin-only logout - 只清 admin 身份,保留 player 身份
+  // POST /api/init?action=admin-logout
+  // ============================================================
+  if (_action === 'admin-logout') {
+    if (!_sess || !_sess.admin_id) return err(401, '没有管理员身份');
+    // 创建一个只保留 player_id 的新 session
+    let _newToken = null;
+    if (_sess.player_id) {
+      const _r = await createSession(env, _sess.player_id, null);
+      _newToken = _r.token;
+    }
+    // 销毁旧的 combined session
+    await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(_token).run();
+    const _cookie = _newToken
+      ? `lc_session=${_newToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`
+      : `lc_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+    return new Response(JSON.stringify({ ok: true, kept_player: !!_sess.player_id }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json; charset=utf-8', 'Set-Cookie': _cookie }
+    });
   }
 
   // 1. 建表

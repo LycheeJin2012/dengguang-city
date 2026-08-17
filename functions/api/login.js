@@ -63,7 +63,33 @@ export async function onRequestPost(context) {
     userId = admin.id;
   }
 
-  const { token, expires_at } = await createSession(env, role === 'player' ? userId : null, role !== 'player' ? userId : null);
+  // v17.9: 合并账号 - 如果 linked,创建一个 combined session (player_id + admin_id 都设)
+  // 玩家登录时: 检查 players.linked_admin_id → 在 session 里加 admin_id
+  // 管理员登录时: 检查 admins.linked_player_id → 在 session 里加 player_id
+  let _adminIdForSession = null;
+  let _playerIdForSession = null;
+  let _linkedPeer = null;
+  if (role === 'player') {
+    _playerIdForSession = userId;
+    const _link = await env.DB.prepare(
+      'SELECT a.id, a.username, a.role FROM players p LEFT JOIN admins a ON a.id = p.linked_admin_id WHERE p.id = ?'
+    ).bind(userId).first();
+    if (_link && _link.id) {
+      _adminIdForSession = _link.id;
+      _linkedPeer = { kind: 'admin', id: _link.id, username: _link.username, role: _link.role };
+    }
+  } else {
+    _adminIdForSession = userId;
+    const _link = await env.DB.prepare(
+      'SELECT p.id, p.username FROM admins a LEFT JOIN players p ON p.id = a.linked_player_id WHERE a.id = ?'
+    ).bind(userId).first();
+    if (_link && _link.id) {
+      _playerIdForSession = _link.id;
+      _linkedPeer = { kind: 'player', id: _link.id, username: _link.username };
+    }
+  }
+
+  const { token, expires_at } = await createSession(env, _playerIdForSession, _adminIdForSession);
 
   // Set-Cookie 也写一份方便浏览器调用
   const cookie = `lc_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`;
@@ -72,12 +98,13 @@ export async function onRequestPost(context) {
   const accept = request.headers.get('Accept') || '';
   const isFormPost = accept.includes('text/html');
   if (isFormPost) {
-    let back = '/admin';
+    let back = role === 'player' ? '/' : '/admin';
     try {
       const referer = request.headers.get('Referer') || '';
       if (referer) {
         const u = new URL(referer);
-        if (!u.pathname.startsWith('/admin')) back = '/';
+        if (role === 'player' && !u.pathname.startsWith('/admin')) back = '/';
+        else if (role !== 'player' && !u.pathname.startsWith('/admin')) back = '/admin';
       }
     } catch (e) { /* ignore */ }
     return new Response(null, {
@@ -88,7 +115,11 @@ export async function onRequestPost(context) {
   // JSON 调用走到这里就正常返回
 
 
-  return new Response(JSON.stringify({ ok: true, token, expires_at, role, user_id: userId }), {
+  return new Response(JSON.stringify({
+    ok: true, token, expires_at, role, user_id: userId,
+    combined: !!_linkedPeer,    // 是否合并 session
+    linked: _linkedPeer || null,  // 绑定的另一身份
+  }), {
     status: 200,
     headers: {
       'Content-Type': 'application/json; charset=utf-8',
@@ -107,18 +138,27 @@ export async function onRequestDelete(context) {
 
 export async function onRequestGet(context) {
   // GET /api/login - 返回当前登录信息
+  // v17.9: 合并 session 时同时返回 admin 和 player 身份
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
   const token = readToken(request);
   const sess = await getSession(env, token);
   if (!sess) return err(401, 'Not logged in');
+
+  let admin = null, player = null;
   if (sess.admin_id) {
-    const admin = await env.DB.prepare('SELECT id, username, role FROM admins WHERE id = ?').bind(sess.admin_id).first();
-    return ok({ role: admin.role, user: admin });
+    admin = await env.DB.prepare('SELECT id, username, role, linked_player_id FROM admins WHERE id = ?').bind(sess.admin_id).first();
   }
   if (sess.player_id) {
-    const player = await env.DB.prepare('SELECT id, username, email, game_id, status, avatar_emoji, bio FROM players WHERE id = ?').bind(sess.player_id).first();
-    return ok({ role: 'player', user: player });
+    player = await env.DB.prepare('SELECT id, username, email, game_id, status, avatar_emoji, bio, linked_admin_id FROM players WHERE id = ?').bind(sess.player_id).first();
+  }
+  // combined session (有两边): 选当前 URL 想看的角色
+  // 简化: 有 admin 优先 admin, 否则 player
+  if (admin) {
+    return ok({ role: admin.role, user: admin, admin, player, combined: !!player });
+  }
+  if (player) {
+    return ok({ role: 'player', user: player, admin, player, combined: !!admin });
   }
   return err(401, 'Session invalid');
 }

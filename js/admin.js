@@ -679,7 +679,7 @@ async function renderAdminList(){
       const isMe=a.username===me.username;
       const canDel=me.role==='super'&&!isMe;
       const linkedBadge = a.linked_player_id
-        ? `<span class="role-tag" style="background:#a6a;color:#fff;font-size:10px;" title="此管理员的通行密钥/密码实际作用于该玩家账号">🔗 ${esc(a.linked_player_username||'#'+a.linked_player_id)}</span>`
+        ? `<span class="role-tag" style="background:#a6a;color:#fff;font-size:10px;" title="此管理员已与该玩家账号合并: 用玩家密码或通行密钥即可登入管理; 退出管理无需重新验证">🔗 合并: ${esc(a.linked_player_username||'#'+a.linked_player_id)}</span>`
         : '';
       return `<article class="admin-item" data-id="${esc(String(a.id))}">
         <div class="admin-avatar">${a.role==='super'?'🛡️':'👤'}</div>
@@ -689,7 +689,7 @@ async function renderAdminList(){
           ${linkedBadge}
         </div>
         <div class="admin-actions">
-          ${me.role==='super'?`<button class="btn btn-ghost btn-sm" data-act="link">${a.linked_player_id?'解绑玩家':'🔗 绑定玩家'}</button>`:''}
+          ${me.role==='super'?`<button class="btn btn-ghost btn-sm" data-act="link">${a.linked_player_id?'⛓️‍💥 解除合并':'🔗 合并玩家'}</button>`:''}
           ${me.role==='super'?`<button class="btn btn-ghost btn-sm" data-act="reset">${isMe?'修改密码':'重置密码'}</button>`:''}
           ${canDel?`<button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>`:''}
         </div>
@@ -715,17 +715,32 @@ async function adminDel(id){
   catch(e){alert('失败: '+e.message);}
 }
 async function adminLink(id){
-  // v17.8: 绑定/解绑 玩家账号
-  const _lpid = prompt('要绑定的玩家 ID（留空 = 解绑）:','');
-  if(_lpid === null) return; // 取消
-  const _val = _lpid.trim() === '' ? null : parseInt(_lpid, 10);
-  if(_val !== null && (isNaN(_val) || _val <= 0)) { alert('玩家 ID 必须是正整数'); return; }
-  try{
-    await PATCH('/api/admin/admins?id='+id, { linked_player_id: _val });
+  // v17.9: 合并/解除合并 玩家账号 (双向 linked_player_id + linked_admin_id)
+  const _a = (window._me);
+  const _isLinked = await (await GET('/api/admin/admins')).admins
+    .find(x => x.id === id)?.linked_player_id;
+  if (_isLinked) {
+    // 解除合并
+    if (!confirm('确认解除合并? 解除后两边需重新登录。')) return;
+    try {
+      await POST('/api/init?action=admin-unmerge-account',
+        { admin_id: id, player_id: _isLinked });
+      renderAdminList();
+      alert('已解除合并');
+    } catch (e) { alert('失败: ' + e.message); }
+    return;
+  }
+  // 合并
+  const _lpid = prompt('要合并的玩家 ID:','');
+  if (_lpid === null) return;
+  const _val = parseInt(_lpid.trim(), 10);
+  if (isNaN(_val) || _val <= 0) { alert('玩家 ID 必须是正整数'); return; }
+  try {
+    await POST('/api/init?action=admin-merge-account',
+      { admin_id: id, player_id: _val });
     renderAdminList();
-    if(_val === null) alert('已解绑');
-    else alert('已绑定玩家 #' + _val + '\n\n该管理员的通行密钥/密码将实际作用于该玩家账号。');
-  }catch(e){alert('失败: '+e.message);}
+    alert('已合并玩家 #' + _val + '\n\n效果:\n• 用该玩家密码/通行密钥登录即可同时获得管理身份\n• 退出管理无需重新验证, 玩家身份保留\n• 两边密码独立, 互不影响');
+  } catch (e) { alert('失败: ' + e.message); }
 }
 
 async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
@@ -963,12 +978,28 @@ if(pwdForm){
 }
 
 // 退出登录
+// v17.9: combined session 时, 用 admin-logout 只清 admin 身份, 保留 player 身份 (跳玩家首页)
 const btnLogout=$('#btnLogout');
 if(btnLogout){
   btnLogout.addEventListener('click',async()=>{
-    if(!confirm('确认退出登录？'))return;
-    try{await DEL('/api/login');}catch(e){}
-    window._me=null;showView('login');
+    let _isCombined = false;
+    try {
+      const _me = await GET('/api/login');
+      _isCombined = !!(_me && _me.combined && _me.player);
+    } catch(e){}
+    if (_isCombined) {
+      if(!confirm('退出管理后台?\n\n玩家身份会保留, 你将被带回玩家首页。')) return;
+      try {
+        const _r = await POST('/api/init?action=admin-logout', {});
+        // 后端会写新 cookie (只含 player_id), 跳玩家首页
+        window._me = null;
+        location.href = 'index.html';
+      } catch(e){ alert('退出失败: ' + e.message); }
+    } else {
+      if(!confirm('确认退出登录？'))return;
+      try{await DEL('/api/login');}catch(e){}
+      window._me=null;showView('login');
+    }
   });
 }
 
