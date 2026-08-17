@@ -31,14 +31,19 @@
   let _me = null; // 当前登录管理员
   async function api(method, path, body) {
     const m = String(method || 'GET').toUpperCase();
-    const opts = { method: m, credentials: 'include' };
+    const opts = { method: m, credentials: 'include', mode: 'same-origin' };
     if (body !== undefined) {
       opts.headers = { 'Content-Type': 'application/json' };
       opts.body = JSON.stringify(body);
     }
-    const res = await fetch(path, opts);
-    let data;
-    try { data = await res.json(); } catch (e) { data = { ok: false, error: '非 JSON 响应' }; }
+    let res, data;
+    try {
+      res = await fetch(path, opts);
+      try { data = await res.json(); } catch (e) { data = { ok: false, error: '非 JSON 响应 (HTTP ' + res.status + ')' }; }
+    } catch (netErr) {
+      // 网络层 / CORS 错误：把错误抛上去给 boot 抓
+      throw new Error('网络错误: ' + (netErr.message || netErr));
+    }
     if (!res.ok) {
       const msg = (data && data.error) ? data.error : `HTTP ${res.status}`;
       throw new Error(msg);
@@ -60,6 +65,7 @@
 
   /* ---------- 3. 启动：检查登录状态 ---------- */
   async function boot() {
+    const errEl = $('#loginError');
     try {
       const data = await GET('/api/login');
       if (data.ok && data.user && data.role && data.role !== 'player') {
@@ -69,7 +75,8 @@
         showView('login');
       }
     } catch (e) {
-      console.error('启动失败：', e);
+      // 把错误显示到登录框下方，方便排查（不用打开 DevTools）
+      if (errEl) errEl.textContent = '启动失败: ' + e.message;
       showView('login');
     }
   }
