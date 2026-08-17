@@ -145,20 +145,28 @@ export async function onRequestGet(context) {
   const sess = await getSession(env, token);
   if (!sess) return err(401, 'Not logged in');
 
-  let admin = null, player = null;
-  if (sess.admin_id) {
-    admin = await env.DB.prepare('SELECT id, username, role, linked_player_id FROM admins WHERE id = ?').bind(sess.admin_id).first();
+  try {
+    let admin = null, player = null;
+    if (sess.admin_id) {
+      try {
+        admin = await env.DB.prepare('SELECT id, username, role, linked_player_id FROM admins WHERE id = ?').bind(sess.admin_id).first();
+      } catch (e) { return err(500, 'admin select err: ' + e.message); }
+    }
+    if (sess.player_id) {
+      try {
+        player = await env.DB.prepare('SELECT id, username, email, game_id, status, avatar_emoji, bio, linked_admin_id FROM players WHERE id = ?').bind(sess.player_id).first();
+      } catch (e) { return err(500, 'player select err: ' + e.message); }
+    }
+    // combined session (有两边): 选当前 URL 想看的角色
+    // 简化: 有 admin 优先 admin, 否则 player
+    if (admin) {
+      return ok({ role: admin.role, user: admin, admin, player, combined: !!player });
+    }
+    if (player) {
+      return ok({ role: 'player', user: player, admin, player, combined: !!admin });
+    }
+    return err(401, 'Session invalid');
+  } catch (e) {
+    return err(500, 'GET /api/login err: ' + (e?.message || String(e)));
   }
-  if (sess.player_id) {
-    player = await env.DB.prepare('SELECT id, username, email, game_id, status, avatar_emoji, bio, linked_admin_id FROM players WHERE id = ?').bind(sess.player_id).first();
-  }
-  // combined session (有两边): 选当前 URL 想看的角色
-  // 简化: 有 admin 优先 admin, 否则 player
-  if (admin) {
-    return ok({ role: admin.role, user: admin, admin, player, combined: !!player });
-  }
-  if (player) {
-    return ok({ role: 'player', user: player, admin, player, combined: !!admin });
-  }
-  return err(401, 'Session invalid');
 }
