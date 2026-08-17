@@ -1341,3 +1341,4 @@
   }
   if (navUserSlot) refreshUserState();
 })();
+console.log("v17.2 ready");
