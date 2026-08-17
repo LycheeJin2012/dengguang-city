@@ -340,7 +340,7 @@ export async function onRequestPost(context) {
           LEFT JOIN players pf ON pf.id = dm.from_player_id
           LEFT JOIN players pt ON pt.id = dm.to_player_id
           WHERE dm.id IN (
-            SELECT MAX(id) FROM direct_messages GROUP BY LEAST(from_player_id, to_player_id), GREATEST(from_player_id, to_player_id)
+            SELECT MAX(id) FROM direct_messages GROUP BY (CASE WHEN from_player_id < to_player_id THEN from_player_id ELSE to_player_id END), (CASE WHEN from_player_id > to_player_id THEN from_player_id ELSE to_player_id END)
           )
         `;
         const _params = [];
