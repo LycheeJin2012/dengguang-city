@@ -766,7 +766,9 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
       _newToken = _r.token;
     }
     // 销毁旧的 combined session
-    await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(_token).run();
+    if (_m) {
+      await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(_m[1]).run();
+    }
     const _cookie = _newToken
       ? `lc_session=${_newToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`
       : `lc_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
