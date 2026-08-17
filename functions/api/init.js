@@ -226,6 +226,7 @@ export async function onRequestPost(context) {
 
   // 子路由：POST /api/init?action=ai-test（admin 鉴权，测 AI 真实连通性）
   const _url = new URL(request.url);
+  const _action = _url.searchParams.get('action') || '';
   if (_url.searchParams.get('action') === 'ai-test') {
     const cookie = request.headers.get('Cookie') || '';
     const _m = cookie.match(/lc_session=([^;]+)/);
@@ -347,7 +348,6 @@ export async function onRequestPost(context) {
   // POST /api/init?action=passkey-list              (需玩家 OR 管理员登录)
   // POST /api/init?action=passkey-delete            (需玩家 OR 管理员登录)
   // ============================================================
-  const _action = _url.searchParams.get('action') || '';
   if (_action.startsWith('passkey-')) {
     try {
       const rpId = getRpId(request);
