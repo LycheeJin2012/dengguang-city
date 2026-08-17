@@ -140,8 +140,9 @@ function showReplyModal(m){
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
         <span style="flex:1;"></span>
-        <button id="aiStandardBtn" type="button" style="background:#3a2;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:13px;" title="亲切礼貌">🤖 AI 草稿</button>
-        <button id="aiProBtn" type="button" style="background:#1a4a8a;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:13px;" title="政府公文体，专业正式">💼 专业回复</button>
+        <button id="aiStandardBtn" type="button" style="background:#3a2;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:13px;" title="亲切礼貌 100 字内">🤖 AI 草稿</button>
+        <button id="aiProBtn" type="button" style="background:#1a4a8a;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:13px;" title="政府公文体 100 字内">💼 专业回复</button>
+        <button id="aiDetailBtn" type="button" style="background:#5a2a5a;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:13px;" title="5 段结构 300-500 字详尽回复">📋 详细回复</button>
         <button id="aiShortBtn" type="button" style="background:#5a5a2;color:#fff;border:none;padding:8px 12px;border-radius:4px;cursor:pointer;font-size:13px;" title="30 字内极简">⚡ 极简</button>
         <button id="replyCancel" type="button" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">取消</button>
         <button id="replyClear" type="button" style="background:#a33;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">清空</button>
@@ -179,7 +180,8 @@ function showReplyModal(m){
       if(!r.ok||data.error){alert('AI 失败: '+(data.error||r.status));return;}
       ta.value=data.draft||'';
       ta.focus();
-      btn.textContent='✅ '+(tone==='professional'?'专业':tone==='concise'?'极简':'标准')+' 已生成 ('+data.model+')';
+      const toneLabel = tone==='professional'?'专业':tone==='concise'?'极简':tone==='detailed'?'详细':'标准';
+      btn.textContent='✅ '+toneLabel+' 已生成 ('+data.draft.length+'字 / '+data.model+')';
       setTimeout(()=>{btn.textContent=orig;},3000);
     }catch(e){
       alert('网络错误: '+e.message);
@@ -190,6 +192,7 @@ function showReplyModal(m){
   }
   bd.querySelector('#aiStandardBtn').onclick=(e)=>aiDraft('standard', e.currentTarget);
   bd.querySelector('#aiProBtn').onclick=(e)=>aiDraft('professional', e.currentTarget);
+  bd.querySelector('#aiDetailBtn').onclick=(e)=>aiDraft('detailed', e.currentTarget);
   bd.querySelector('#aiShortBtn').onclick=(e)=>aiDraft('concise', e.currentTarget);
 
   setTimeout(()=>ta.focus(),50);

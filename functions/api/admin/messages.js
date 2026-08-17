@@ -101,8 +101,10 @@ export async function onRequestPost(context) {
   const history = Array.isArray(body.history) ? body.history.slice(-6) : [];
   const tone = (body.tone || 'standard').toString().toLowerCase();
 
-  // 三种 tone: standard | professional | concise
+  // 四种 tone: standard | professional | concise | detailed
   let systemPrompt;
+  let maxTokens = 200;
+  let hardCap = 100;
   if (tone === 'professional') {
     systemPrompt = `你是「灯光市」市政厅的资深公文秘书。灯光市是一座 Minecraft 服务器上的像素城市。
 
@@ -119,6 +121,27 @@ export async function onRequestPost(context) {
 8. 不要前缀"回复："或"草稿："，纯文本，不要 markdown`;
   } else if (tone === 'concise') {
     systemPrompt = `你是灯光市 AI 客服灯灯。任务：用最短的话回应市民留言。**30 字以内**（含标点）。先回应再给下一步。无具体数字人名。直接正文。`;
+  } else if (tone === 'detailed') {
+    maxTokens = 900;
+    hardCap = 600;
+    systemPrompt = `你是「灯光市」市政厅（Light City Hall）的资深公文秘书，专门处理需要**详细说明**的市民留言回复。灯光市是一座 Minecraft 服务器上的像素城市。
+
+任务：起草一份**结构清晰、内容详实、逻辑完整**的市政厅回函草稿，供管理员参考与修改。
+
+【结构要求 - 严格 5 段】
+1. 【致谢】开头用 "您好，感谢您的留言。" 表达对市民反馈的感谢
+2. 【说明】精准复述市民的核心诉求（1-2 句话），让对方感觉被倾听
+3. 【措施】明确说明市政厅已经或将采取的具体措施（1-3 句话），用 "已 / 将 / 正在 / 计划" 等时态清楚的动词
+4. 【承诺】给出可期待的时间或反馈方式（"近期 / 后续 / 在 X 时段内 / 通过 DM 私信"等），让对方知道下一步
+5. 【结尾】礼貌收束，如 "感谢您对灯光市建设的关注与支持。灯光市市政厅。" 或 "如有疑问请随时通过 DM 联系我们。"
+
+【写作要求】
+- 正式、严谨、客观，**不夸大不敷衍**
+- **总字数 300-500 字**（含标点），结构化分段，每段用换行分隔
+- 严禁编造任何具体信息：具体数字、人名、电话、邮箱、活动名、具体日期、文件名都不准出现
+- 不确定的事用 "市政厅将组织研处"、"将由相关负责同志与您联系"、"建议您通过 DM 私信补充具体信息" 等
+- 不要前缀 "回复："、"草稿：" 等；直接正文；用换行分段
+- 纯文本，不要 markdown 格式（不要加粗、不要列表符号）`;
   } else {
     systemPrompt = `你是「灯光市」市政厅（Light City Hall）的官方助手。灯光市是一座 Minecraft 服务器上的像素城市，由玩家共同管理。
 
@@ -149,7 +172,7 @@ export async function onRequestPost(context) {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens: 200 }),
+      body: JSON.stringify({ model, messages, temperature: 0.7, max_tokens }),
     });
 
     if (!resp.ok) {
@@ -160,8 +183,8 @@ export async function onRequestPost(context) {
     const data = await resp.json().catch(() => ({}));
     let draft = (data?.choices?.[0]?.message?.content || '').trim();
     if (!draft) return err(502, 'AI 返回为空');
-    // 硬截断 100 字（兜底）
-    if (draft.length > 100) draft = draft.slice(0, 100);
+    // 硬截断（兜底）- 详细 tone 上限更高
+    if (draft.length > hardCap) draft = draft.slice(0, hardCap);
 
     return ok({ draft, model });
   } catch (e) {
