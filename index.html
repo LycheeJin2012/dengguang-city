@@ -210,6 +210,22 @@
       <p class="gallery-intro">
         以下照片由市民实地拍摄。点击任意图片可放大查看原图。欢迎你亲自来逛。
       </p>
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+        <button type="button" id="galCartoonBtn" class="btn" style="background:linear-gradient(135deg,#5a2,#2a5);color:#fff;border:3px solid var(--c-stone-dark);padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:2px 2px 0 var(--c-stone-dark)">🎨 切换为卡通风格</button>
+        <select id="galPixelSize" style="padding:5px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-size:12px">
+          <option value="4">像素块 4px（细）</option>
+          <option value="8" selected>像素块 8px（推荐）</option>
+          <option value="12">像素块 12px（粗）</option>
+          <option value="16">像素块 16px（超粗）</option>
+        </select>
+        <select id="galColors" style="padding:5px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-size:12px">
+          <option value="8">8 色（极致简）</option>
+          <option value="16" selected>16 色（MC 风）</option>
+          <option value="32">32 色（彩色）</option>
+          <option value="64">64 色（细腻）</option>
+        </select>
+        <span id="galCartoonStatus" style="font-size:11px;color:var(--c-stone)"></span>
+      </div>
       <div class="gal-filter-bar" id="galleryFilterBar">
         <!-- JS 渲染 filter 按钮 -->
       </div>

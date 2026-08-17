@@ -430,6 +430,97 @@
   }
   renderGallery();
 
+  /* ---------- 10.1 实景图集 - 转卡通风格 (canvas 像素化 + 降色) ---------- */
+  let cartoonMode = false;
+  const galCartoonBtn = document.getElementById('galCartoonBtn');
+  const galPixelSel = document.getElementById('galPixelSize');
+  const galColorSel = document.getElementById('galColors');
+  const galStatus = document.getElementById('galCartoonStatus');
+
+  // 像素化 + 降色 → 卡通风格
+  function pixelate(imgEl, pixelSize, colorCount) {
+    return new Promise((resolve) => {
+      if (!imgEl.complete || !imgEl.naturalWidth) { resolve(null); return; }
+      const w0 = imgEl.naturalWidth, h0 = imgEl.naturalHeight;
+      const w = Math.max(1, Math.floor(w0 / pixelSize));
+      const h = Math.max(1, Math.floor(h0 / pixelSize));
+      const small = document.createElement('canvas');
+      small.width = w; small.height = h;
+      const sctx = small.getContext('2d');
+      sctx.imageSmoothingEnabled = true;
+      sctx.drawImage(imgEl, 0, 0, w, h);
+      const data = sctx.getImageData(0, 0, w, h);
+      const step = 256 / colorCount;
+      for (let i = 0; i < data.data.length; i += 4) {
+        // 增强对比：每通道量化
+        data.data[i]   = Math.floor(data.data[i]   / step) * step + Math.floor(step / 2);
+        data.data[i+1] = Math.floor(data.data[i+1] / step) * step + Math.floor(step / 2);
+        data.data[i+2] = Math.floor(data.data[i+2] / step) * step + Math.floor(step / 2);
+        // alpha 保持
+      }
+      sctx.putImageData(data, 0, 0);
+      // 放大回原尺寸，禁用抗锯齿 = 像素风
+      const out = document.createElement('canvas');
+      out.width = w0; out.height = h0;
+      const octx = out.getContext('2d');
+      octx.imageSmoothingEnabled = false;
+      octx.drawImage(small, 0, 0, w0, h0);
+      try {
+        resolve(out.toDataURL('image/jpeg', 0.85));
+      } catch (e) {
+        resolve(null);
+      }
+    });
+  }
+
+  async function applyCartoonToAll() {
+    const imgs = grid.querySelectorAll('img.gallery-thumb');
+    if (imgs.length === 0) return;
+    const pixelSize = parseInt(galPixelSel.value, 10);
+    const colorCount = parseInt(galColorSel.value, 10);
+    galCartoonBtn.disabled = true;
+    const origText = galCartoonBtn.textContent;
+    galCartoonBtn.textContent = '⏳ 转换中...';
+    galStatus.textContent = `处理 0/${imgs.length} 张...`;
+    let done = 0;
+    for (const img of imgs) {
+      // 等图加载
+      if (!img.complete || !img.naturalWidth) {
+        await new Promise(r => { img.onload = r; img.onerror = r; setTimeout(r, 2000); });
+      }
+      const dataUrl = await pixelate(img, pixelSize, colorCount);
+      if (dataUrl) img.src = dataUrl;
+      done++;
+      galStatus.textContent = `处理 ${done}/${imgs.length} 张...`;
+    }
+    cartoonMode = true;
+    galCartoonBtn.textContent = '↩️ 恢复实景图';
+    galStatus.textContent = `✓ 已转卡通风格（${done} 张）`;
+    galCartoonBtn.disabled = false;
+  }
+
+  function restoreAll() {
+    const imgs = grid.querySelectorAll('img.gallery-thumb');
+    imgs.forEach((img, i) => {
+      const origSrc = img.getAttribute('data-orig-src') || img.src;
+      if (img.src.startsWith('data:')) {
+        // 找到对应 GALLERY 的原始 src
+        const item = GALLERY.find(g => img.alt === g.label);
+        if (item) img.src = item.file;
+      }
+    });
+    cartoonMode = false;
+    galCartoonBtn.textContent = '🎨 切换为卡通风格';
+    galStatus.textContent = '✓ 已恢复实景图';
+  }
+
+  if (galCartoonBtn) {
+    galCartoonBtn.addEventListener('click', () => {
+      if (cartoonMode) restoreAll();
+      else applyCartoonToAll();
+    });
+  }
+
   // Lightbox
   const lb = document.getElementById('lightbox');
   const lbImg = document.getElementById('lbImg');

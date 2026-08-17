@@ -802,5 +802,38 @@ async function renderDmAiStruggle() {
   if (mm) mm.addEventListener('click', (e) => { if (e.target === mm) mm.style.display = 'none'; });
 })();
 
+// ============================================================
+// 统一刷新按钮（v17.1） - 每个 tab 一个 🔄 按钮
+// ============================================================
+(function setupRefreshButtons() {
+  function attach(id, renderFn) {
+    const btn = document.getElementById(id);
+    if (!btn) return;
+    btn.onclick = async () => {
+      const orig = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '⏳ 刷新中...';
+      try {
+        await safeRender(renderFn);
+        btn.textContent = '✓ 已刷新';
+        setTimeout(() => { btn.textContent = orig; }, 1200);
+      } catch (e) {
+        btn.textContent = '✗ 失败';
+        setTimeout(() => { btn.textContent = orig; }, 2000);
+      } finally {
+        btn.disabled = false;
+      }
+    };
+  }
+  attach('btnMsgRefresh',     renderMessages);
+  attach('btnPlayerRefresh',  renderPlayers);
+  attach('btnBookRefresh',    renderBookings);
+  attach('btnLicenseRefresh', renderLicense);
+  attach('btnKartRefresh',    renderKarts);
+  attach('btnCircuitRefresh', renderCircuits);
+  attach('btnAdminRefresh',   renderAdminList);
+  // btnDmRefresh already handled above
+})();
+
 boot();
 })();
