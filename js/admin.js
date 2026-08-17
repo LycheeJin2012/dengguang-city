@@ -678,13 +678,18 @@ async function renderAdminList(){
     box.innerHTML=list.map(a=>{
       const isMe=a.username===me.username;
       const canDel=me.role==='super'&&!isMe;
+      const linkedBadge = a.linked_player_id
+        ? `<span class="role-tag" style="background:#a6a;color:#fff;font-size:10px;" title="此管理员的通行密钥/密码实际作用于该玩家账号">🔗 ${esc(a.linked_player_username||'#'+a.linked_player_id)}</span>`
+        : '';
       return `<article class="admin-item" data-id="${esc(String(a.id))}">
         <div class="admin-avatar">${a.role==='super'?'🛡️':'👤'}</div>
         <div class="admin-meta">
           <b>${esc(a.username)} ${isMe?'<span class="me-tag">我</span>':''}</b>
           <span class="role-tag role-${a.role}">${a.role==='super'?'SUPER':'ADMIN'}</span>
+          ${linkedBadge}
         </div>
         <div class="admin-actions">
+          ${me.role==='super'?`<button class="btn btn-ghost btn-sm" data-act="link">${a.linked_player_id?'解绑玩家':'🔗 绑定玩家'}</button>`:''}
           ${me.role==='super'?`<button class="btn btn-ghost btn-sm" data-act="reset">${isMe?'修改密码':'重置密码'}</button>`:''}
           ${canDel?`<button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>`:''}
         </div>
@@ -694,6 +699,7 @@ async function renderAdminList(){
       const id=el.dataset.id;
       el.querySelector('[data-act="reset"]')?.addEventListener('click',()=>adminReset(id));
       el.querySelector('[data-act="del"]')?.addEventListener('click',()=>adminDel(id));
+      el.querySelector('[data-act="link"]')?.addEventListener('click',()=>adminLink(id));
     });
   }catch(e){if(String(e).indexOf('403')>0){$('#adminList').innerHTML='<p class="empty-state">仅 super 可查看</p>';}}
 }
@@ -707,6 +713,19 @@ async function adminDel(id){
   if(!confirm('删除该管理员？'))return;
   try{await DEL('/api/admin/admins?id='+id);renderAdminList();}
   catch(e){alert('失败: '+e.message);}
+}
+async function adminLink(id){
+  // v17.8: 绑定/解绑 玩家账号
+  const _lpid = prompt('要绑定的玩家 ID（留空 = 解绑）:','');
+  if(_lpid === null) return; // 取消
+  const _val = _lpid.trim() === '' ? null : parseInt(_lpid, 10);
+  if(_val !== null && (isNaN(_val) || _val <= 0)) { alert('玩家 ID 必须是正整数'); return; }
+  try{
+    await PATCH('/api/admin/admins?id='+id, { linked_player_id: _val });
+    renderAdminList();
+    if(_val === null) alert('已解绑');
+    else alert('已绑定玩家 #' + _val + '\n\n该管理员的通行密钥/密码将实际作用于该玩家账号。');
+  }catch(e){alert('失败: '+e.message);}
 }
 
 async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
@@ -978,12 +997,23 @@ async function renderDms(query) {
     list.innerHTML = convs.map(p => {
       const isAiReply = p.from_username === '灯灯客服';
       const unread = p.unread_count || 0;
+      // v17.8: 回复人审计 — AI 还是某位管理员
+      let replyTag = '';
+      if (isAiReply) {
+        if (p.replied_by_admin_id && p.replied_by_admin_username) {
+          // 管理员借 AI 身份代发
+          replyTag = `<span style="background:#1a1a3a;color:#9cf;padding:1px 6px;border-radius:3px;font-size:11px;margin-left:6px" title="管理员 ${esc(p.replied_by_admin_username)} 借灯灯客服身份代发">👤 管理员 ${esc(p.replied_by_admin_username)} 已回复</span>`;
+        } else {
+          // AI 客服自动回复
+          replyTag = '<span style="background:#1a2a1a;color:#9f9;padding:1px 6px;border-radius:3px;font-size:11px;margin-left:6px">🤖 AI 已回复</span>';
+        }
+      }
       return `<div class="msg-item dm-pair" data-pid1="${p.from_player_id}" data-pid2="${p.to_player_id}" style="cursor:pointer${unread>0?';border-left:4px solid var(--c-emerald)':''}">
         <div class="msg-avatar">${isAiReply ? '🤖' : (p.from_avatar || '👤')}</div>
         <div class="msg-body">
           <div class="msg-meta">
             <b>${esc(p.from_username || '?')}</b> → <b>${esc(p.to_username || '?')}</b>
-            ${isAiReply ? '<span style="background:#1a2a1a;color:#9f9;padding:1px 6px;border-radius:3px;font-size:11px;margin-left:6px">🤖 AI 已回复</span>' : ''}
+            ${replyTag}
             ${unread>0?`<span style="background:#a33;color:#fff;padding:1px 6px;border-radius:3px;font-size:11px;margin-left:6px">💬 ${unread} 未读</span>`:''}
             <span style="float:right;font-size:11px;color:#888">${p.last_at}</span>
           </div>

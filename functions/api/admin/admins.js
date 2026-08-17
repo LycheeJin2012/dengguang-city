@@ -19,9 +19,13 @@ export async function onRequestGet(context) {
   const admin = await requireAdmin(context);
   if (!admin) return err(401, '需要管理员登录');
 
-  const rows = await env.DB.prepare(
-    'SELECT id, username, role, created_at FROM admins ORDER BY id ASC'
-  ).all();
+  const rows = await env.DB.prepare(`
+    SELECT a.id, a.username, a.role, a.created_at, a.linked_player_id,
+      lp.username AS linked_player_username, lp.game_id AS linked_player_game_id
+    FROM admins a
+    LEFT JOIN players lp ON lp.id = a.linked_player_id
+    ORDER BY a.id ASC
+  `).all();
   return ok({ admins: rows.results });
 }
 
@@ -80,6 +84,18 @@ export async function onRequestPatch(context) {
     if (!['admin', 'super'].includes(body.role)) return err(400, '角色非法');
     if (target.id === me.id && body.role !== 'super') return err(400, '不能把自己降级');
     await env.DB.prepare('UPDATE admins SET role = ? WHERE id = ?').bind(body.role, id).run();
+  }
+  // v17.8: 绑定/解绑 玩家账号 (linked_player_id) - 仅 super
+  if (body.hasOwnProperty('linked_player_id')) {
+    if (me.role !== 'super') return err(403, '只有 super 可绑定玩家');
+    const _lpid = body.linked_player_id === null || body.linked_player_id === '' || body.linked_player_id === 0
+      ? null
+      : parseInt(body.linked_player_id, 10);
+    if (_lpid !== null) {
+      const _p = await env.DB.prepare("SELECT id, username FROM players WHERE id = ? AND status = 'active'").bind(_lpid).first();
+      if (!_p) return err(400, '玩家不存在或未激活');
+    }
+    await env.DB.prepare('UPDATE admins SET linked_player_id = ? WHERE id = ?').bind(_lpid, id).run();
   }
   return ok({ id });
 }

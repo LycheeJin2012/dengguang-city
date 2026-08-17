@@ -33,10 +33,21 @@ async function resolveSubjectFromSession(env, sess) {
     return p || null;
   }
   if (sess.admin_id) {
+    // v17.8: 管理员绑定了玩家 → 通行密钥/密码 操作实际作用在玩家账号上
     const a = await env.DB.prepare(
-      "SELECT id, username, role, 'admin' AS kind FROM admins WHERE id = ?"
+      "SELECT a.id, a.username, a.role, a.linked_player_id, 'admin' AS kind FROM admins a WHERE a.id = ?"
     ).bind(sess.admin_id).first();
-    return a || null;
+    if (!a) return null;
+    if (a.linked_player_id) {
+      const p = await env.DB.prepare(
+        "SELECT id, username, 'player' AS kind FROM players WHERE id = ? AND status = 'active'"
+      ).bind(a.linked_player_id).first();
+      if (p) {
+        // 标记一下让调用方知道这是从 admin 透传到 player 的
+        return { ...p, _via_admin: a.id, _admin_username: a.username };
+      }
+    }
+    return a;
   }
   return null;
 }
@@ -194,7 +205,11 @@ const MIGRATIONS = [
   // v17.7: messages 支持"AI 自动回复后被人工覆盖"的历史追溯
   `ALTER TABLE messages ADD COLUMN previous_reply TEXT`,
   // v17.8: announcements 兼容迁移
-  `ALTER TABLE announcements ADD COLUMN updated_at TEXT`
+  `ALTER TABLE announcements ADD COLUMN updated_at TEXT`,
+  // v17.8: direct_messages 加 replied_by_admin_id (DM 回复人审计)
+  `ALTER TABLE direct_messages ADD COLUMN replied_by_admin_id INTEGER`,
+  // v17.8: admins 加 linked_player_id (管理员/玩家账号绑定)
+  `ALTER TABLE admins ADD COLUMN linked_player_id INTEGER`
 ];
 
 export async function onRequestGet(context) {
@@ -447,12 +462,15 @@ export async function onRequestPost(context) {
         let _sql = `
           SELECT
             dm.from_player_id, dm.to_player_id, dm.content AS last_content, dm.created_at AS last_at, dm.read_at,
+            dm.replied_by_admin_id,
+            ad.username AS replied_by_admin_username,
             pf.username AS from_username, pt.username AS to_username,
             pf.avatar_emoji AS from_avatar, pt.avatar_emoji AS to_avatar,
             (SELECT COUNT(*) FROM direct_messages WHERE from_player_id = dm.to_player_id AND to_player_id = dm.from_player_id AND read_at IS NULL) AS unread_count
           FROM direct_messages dm
           LEFT JOIN players pf ON pf.id = dm.from_player_id
           LEFT JOIN players pt ON pt.id = dm.to_player_id
+          LEFT JOIN admins ad ON ad.id = dm.replied_by_admin_id
           WHERE dm.id IN (
             SELECT MAX(id) FROM direct_messages GROUP BY (CASE WHEN from_player_id < to_player_id THEN from_player_id ELSE to_player_id END), (CASE WHEN from_player_id > to_player_id THEN from_player_id ELSE to_player_id END)
           )
@@ -607,10 +625,10 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
         // 拿 AI 客服 bot
         const _bot = await env.DB.prepare("SELECT id, username FROM players WHERE username = '灯灯客服'").first();
         if (!_bot) return err(500, 'AI 客服未初始化，请先调用 /api/init');
-        // 插入 DM
+        // 插入 DM (v17.8: 记录是哪位管理员代发, 区别于 AI 客服自动回复)
         const _ins = await env.DB.prepare(
-          "INSERT INTO direct_messages (from_player_id, to_player_id, content) VALUES (?, ?, ?)"
-        ).bind(_bot.id, _tp.id, _content).run();
+          "INSERT INTO direct_messages (from_player_id, to_player_id, content, replied_by_admin_id) VALUES (?, ?, ?, ?)"
+        ).bind(_bot.id, _tp.id, _content, _admin.id).run();
         return ok({ id: _ins.meta.last_row_id, from: '灯灯客服', to: _tp.username, sent_by_admin: _admin.username });
       }
 
