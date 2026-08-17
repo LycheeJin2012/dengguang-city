@@ -343,15 +343,48 @@ function cborDecode(data) {
 }
 
 // COSE EC2 公钥 -> JWK
+// 注意: cborDecode 对 major 5 (map) 返回 JS object, cborDecode 对 major 4 (array) 返回 array.
+// 两种编码都见过, 所以用兼容写法: 优先当 object 读, 否则用固定索引当 array 读
 function coseToJwk(cose) {
-  if (!cose || cose[1] !== 2) throw new Error('COSE: 非 EC2 密钥');
-  const alg = cose[3];
-  if (alg !== -7) throw new Error('COSE: 仅支持 ES256 (alg=-7)，实际 ' + alg);
-  const crv = cose[-1];
-  if (crv !== 1) throw new Error('COSE: 仅支持 P-256 (crv=1)，实际 ' + crv);
-  const x = cose[-2];
-  const y = cose[-3];
+  if (!cose) throw new Error('COSE: 空');
+
+  // 兼容 array / object 两种 CBOR 编码
+  const isArr = Array.isArray(cose);
+  const get = (label, arrIdx) => isArr ? cose[arrIdx] : cose[label];
+
+  const kty = get(1, 1);
+  if (kty !== 2) throw new Error('COSE: 非 EC2 密钥, kty=' + kty);
+
+  const alg = get(3, 3);
+  if (alg !== -7) throw new Error('COSE: 仅支持 ES256 (alg=-7), 实际 ' + alg);
+
+  const crv = get(-1, 5);
+  if (crv !== 1) throw new Error('COSE: 仅支持 P-256 (crv=1), 实际 ' + crv);
+
+  let x = get(-2, 7);
+  let y = get(-3, 9);
   if (!x || !y) throw new Error('COSE: 缺少 x 或 y');
+
+  // v17.8 fix: 某些 authenticator 编码时省略前导 0 字节, x/y 可能只有 31 字节
+  // P-256 严格要求 32 字节 (256 bits), 否则 importKey 报 "Invalid EC key"
+  const pad32 = (b) => {
+    if (b.length === 32) return b;
+    if (b.length < 32) {
+      const out = new Uint8Array(32);
+      out.set(b, 32 - b.length);  // 前导 0 补齐
+      return out;
+    }
+    if (b.length > 32) {
+      // 截断前导 0
+      let i = 0;
+      while (i < b.length - 32 && b[i] === 0) i++;
+      return b.slice(i, i + 32);
+    }
+    return b;
+  };
+  x = pad32(x);
+  y = pad32(y);
+
   return { kty: 'EC', crv: 'P-256', alg: 'ES256', ext: false,
            x: bytesToB64url(x), y: bytesToB64url(y) };
 }
