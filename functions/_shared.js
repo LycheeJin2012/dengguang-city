@@ -473,13 +473,33 @@ function derToRawSig(der) {
 
 // 验签 ES256
 async function verifyEs256(jwk, signature, authData, clientDataJSON) {
-  const pubKey = await crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+  // v17.10: 兜底 — 老 jwk (v17.5 admin passkey 时代注册, pad32 修复前) 的 x/y 可能 31 字节
+  // 尝试 importKey, 失败时用 base64url decode 再 pad 再 base64url 一次
+  let _pubKey;
+  try {
+    _pubKey = await crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+  } catch (e) {
+    if (!/Invalid EC key/i.test(String(e?.message || e))) throw e;
+    const pad32b64 = (s) => {
+      try {
+        let bin = Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+        if (bin.length === 32) return s;
+        const out = new Uint8Array(32);
+        out.set(bin, 32 - bin.length);
+        let bin2 = '';
+        for (let i = 0; i < out.length; i++) bin2 += String.fromCharCode(out[i]);
+        return btoa(bin2).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      } catch (_) { return s; }
+    };
+    const _fixed = { ...jwk, x: pad32b64(jwk.x), y: pad32b64(jwk.y) };
+    _pubKey = await crypto.subtle.importKey('jwk', _fixed, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+  }
   const clientDataHash = await crypto.subtle.digest('SHA-256', clientDataJSON);
   const signed = new Uint8Array(authData.length + 32);
   signed.set(authData, 0);
   signed.set(new Uint8Array(clientDataHash), authData.length);
   const rawSig = derToRawSig(signature);
-  return await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, pubKey, rawSig, signed);
+  return await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, _pubKey, rawSig, signed);
 }
 
 function verifyClientData(clientDataBytes, expectedChallenge, expectedOrigin) {
