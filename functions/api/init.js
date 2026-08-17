@@ -167,6 +167,34 @@ export async function onRequestPost(context) {
     adminInfo = { username: 'LycheeJin', action: 'already_exists' };
   }
 
+  // 3.5 AI 客服 system 玩家（不存在则创建，存在则跳过）
+  const AI_BOT_USERNAME = '灯灯客服';
+  const botExisting = await env.DB.prepare(
+    "SELECT id FROM players WHERE username = ?"
+  ).bind(AI_BOT_USERNAME).first();
+  let botInfo = { username: AI_BOT_USERNAME, action: 'already_exists' };
+  if (!botExisting) {
+    const randomPwd = 'AI_BOT_NO_LOGIN_' + crypto.randomUUID();
+    const { hash: bHash, salt: bSalt } = await hashPassword(randomPwd);
+    try {
+      await env.DB.prepare(
+        "INSERT INTO players (username, email, password_hash, salt, game_id, status, bio, avatar_emoji) VALUES (?, ?, ?, ?, ?, 'active', ?, ?)"
+      ).bind(
+        AI_BOT_USERNAME,
+        'ai-bot@system.local',
+        bHash,
+        bSalt,
+        'AI_BOT',
+        '我是 AI 客服灯灯，由市政厅训练。',
+        '🤖'
+      ).run();
+      botInfo.action = 'created';
+    } catch (e) {
+      botInfo.action = 'failed';
+      botInfo.error = String(e.message || e).slice(0, 100);
+    }
+  }
+
   // 4. 返回
   const tables = await env.DB.prepare(
     "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"
@@ -176,6 +204,7 @@ export async function onRequestPost(context) {
     initialized: true,
     tables: tables.results.map(r => r.name),
     migrations: migrationResults,
-    admin: adminInfo
+    admin: adminInfo,
+    ai_bot: botInfo
   });
 }
