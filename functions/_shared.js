@@ -304,6 +304,11 @@ function cborDecode(data) {
     const major = b >> 5;
     const info = b & 0x1f;
     if (major === 0) return readUint(v, info);
+    if (major === 1) {
+      // 负整数: -1 - n (n 用无符号整数表示, 实际值是 -1 - n)
+      const n = readUint(v, info);
+      return -1 - n;
+    }
     if (major === 2) {
       const len = readUint(v, info);
       const out = new Uint8Array(data.buffer, data.byteOffset + offset, len);
