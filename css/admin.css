@@ -361,27 +361,23 @@ body.admin-body {
 .msg-item.is-read .msg-name { color: var(--c-stone-dark); }
 
 .msg-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-  flex-wrap: wrap;
+  display: block;
 }
 .msg-head-left {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  flex: 1 1 auto;
-  min-width: 0;
+  padding-right: 100px;  /* 给右下角的时间留位置 */
+  position: relative;
+  min-height: 26px;
 }
 .msg-time {
+  position: absolute;
+  top: 4px;
+  right: 0;
   font-family: var(--font-pixel);
   font-size: 9px;
   color: var(--c-stone-dark);
   letter-spacing: 1px;
   white-space: nowrap;
-  flex-shrink: 0;
-  margin-left: auto;
-  align-self: flex-start;
-  padding-top: 3px;
 }
 .msg-type {
   font-family: var(--font-pixel);
@@ -663,8 +659,8 @@ body.admin-body {
   .msg-filter { flex-direction: column; align-items: flex-start; padding: 12px 16px; }
   .msg-filter select { width: 100%; }
   .msg-item { padding: 12px 14px; }
-  .msg-item .msg-head { flex-direction: column; align-items: stretch; gap: 6px; }
-  .msg-item .msg-time { margin-left: 0; padding-top: 0; }
+  .msg-item .msg-head-left { padding-right: 0; min-height: 0; }
+  .msg-item .msg-time { position: static; margin-top: 4px; }
   .admin-item { flex-wrap: wrap; }
   .admin-actions { width: 100%; }
   .admin-tabs { flex-wrap: nowrap; }
