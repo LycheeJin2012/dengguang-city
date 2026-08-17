@@ -146,8 +146,9 @@ export async function aiAutoReply(env, userMessage, context = 'message') {
   if (!env || !env.OPENAI_API_KEY) return null;
   const text = String(userMessage || '').trim().slice(0, 100);
   if (!text) return null;
-  const baseUrl = (env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
-  const model = env.OPENAI_MODEL || 'gpt-4o-mini';
+  // 默认 MiniMax（MiniMax）的 OpenAI 兼容端点
+  const baseUrl = (env.OPENAI_BASE_URL || 'https://api.minimax.chat/v1').replace(/\/+$/, '');
+  const model = env.OPENAI_MODEL || 'abab6.5s-chat';
 
   const sys = context === 'dm'
     ? `你是「灯光市 AI 客服」灯灯。灯光市是一座 Minecraft 服务器上的像素城市。

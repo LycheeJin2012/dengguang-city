@@ -88,8 +88,8 @@ export async function onRequestPost(context) {
 
   // OpenAI 兼容配置（用户在 CF Pages Dashboard 环境变量里设置）
   const apiKey = env.OPENAI_API_KEY;
-  const baseUrl = (env.OPENAI_BASE_URL || 'https://api.openai.com/v1').replace(/\/+$/, '');
-  const model = env.OPENAI_MODEL || 'gpt-4o-mini';
+  const baseUrl = (env.OPENAI_BASE_URL || 'https://api.minimax.chat/v1').replace(/\/+$/, '');
+  const model = env.OPENAI_MODEL || 'abab6.5s-chat';
   if (!apiKey) {
     return err(500, 'AI 未配置：管理员需在 Cloudflare Pages → Settings → Environment variables 设置 OPENAI_API_KEY');
   }
