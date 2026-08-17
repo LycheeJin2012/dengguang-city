@@ -130,8 +130,69 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { env } = context;
+  const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
+
+  // 子路由：POST /api/init?action=ai-test（admin 鉴权，测 AI 真实连通性）
+  const _url = new URL(request.url);
+  if (_url.searchParams.get('action') === 'ai-test') {
+    const cookie = request.headers.get('Cookie') || '';
+    const _m = cookie.match(/lc_session=([^;]+)/);
+    if (!_m) return err(401, '未登录');
+    const _sess = await env.DB.prepare('SELECT admin_id, expires_at FROM sessions WHERE token = ?').bind(_m[1]).first();
+    if (!_sess || !_sess.admin_id) return err(403, '需要管理员权限');
+    if (Date.now() / 1000 > (_sess.expires_at || 0)) return err(401, '会话已过期');
+
+    const _body = await request.json().catch(() => ({}));
+    const testMsg = (_body.message || '你好').toString().slice(0, 100);
+    const overrideBase = _body.base_url;
+    const overrideKey = _body.api_key;
+    const overrideModel = _body.model;
+
+    const apiKey = overrideKey || env.OPENAI_API_KEY;
+    const baseUrl = (overrideBase || env.OPENAI_BASE_URL || 'https://api.minimax.chat/v1').replace(/\/+$/, '');
+    const model = overrideModel || env.OPENAI_MODEL || 'abab6.5s-chat';
+
+    if (!apiKey) {
+      return ok({ ok: false, stage: 'config', error: 'OPENAI_API_KEY 未配置' });
+    }
+
+    const url = `${baseUrl}/chat/completions`;
+    const reqBody = {
+      model,
+      messages: [
+        { role: 'system', content: '你是灯灯。请用一句话（30 字内）自我介绍。' },
+        { role: 'user', content: testMsg },
+      ],
+      temperature: 0.5,
+      max_tokens: 100,
+    };
+
+    let networkError = null, respStatus = null, respText = '', respBody = null;
+    const t0 = Date.now();
+    try {
+      const resp = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
+        body: JSON.stringify(reqBody),
+      });
+      respStatus = resp.status;
+      respText = await resp.text().catch(() => '');
+      try { respBody = JSON.parse(respText); } catch (e) {}
+    } catch (e) {
+      networkError = e?.message || String(e);
+    }
+    const elapsed = Date.now() - t0;
+
+    if (networkError) {
+      return ok({ ok: false, stage: 'network', error: networkError, url, model, key_prefix: apiKey.slice(0, 10) + '...', elapsed_ms: elapsed });
+    }
+    if (respStatus !== 200) {
+      return ok({ ok: false, stage: 'http', http_status: respStatus, url, model, key_prefix: apiKey.slice(0, 10) + '...', elapsed_ms: elapsed, raw: respText.slice(0, 500), parsed: respBody });
+    }
+    const draft = respBody?.choices?.[0]?.message?.content || '';
+    return ok({ ok: true, url, model, key_prefix: apiKey.slice(0, 10) + '...', elapsed_ms: elapsed, draft, full: respBody });
+  }
 
   // 1. 建表
   for (const sql of SCHEMA) {
