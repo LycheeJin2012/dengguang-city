@@ -217,9 +217,10 @@ body.admin-body {
   letter-spacing: 1px;
   position: relative;
   transition: all 0.15s;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   white-space: nowrap;
   flex-shrink: 0;
   cursor: pointer;
