@@ -363,7 +363,7 @@
     const grid = document.querySelector('#notice .notice-grid');
     if (!grid) return;
     try {
-      const r = await fetch('/api/init?action=announcements-list', { credentials: 'omit' });
+      const r = await fetch('/api/announcements', { credentials: 'omit' });
       if (!r.ok) return; // 后端未就绪时保留占位卡片
       const d = await r.json();
       const anns = (d && d.announcements) || [];

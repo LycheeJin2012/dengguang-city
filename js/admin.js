@@ -1026,7 +1026,7 @@ async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
     list.innerHTML = '<p class="empty-state">载入中…</p>';
     empty.style.display = 'none';
     try {
-      const r = await fetch('/api/init?action=announcements-list', { credentials: 'same-origin' });
+      const r = await fetch('/api/announcements', { credentials: 'same-origin' });
       const d = await r.json();
       if (!r.ok || d.error) throw new Error(d.error || '加载失败');
       const anns = d.announcements || [];
