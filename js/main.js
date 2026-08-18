@@ -1715,7 +1715,8 @@
           <a href="#" id="navSigninBtn" class="nav-logout-link" title="每日签到领绿宝石" style="color:#fc6;font-weight:700;">🎁 签到</a>
           <a href="profile.html" class="nav-user-name" style="text-decoration:none;color:inherit;">${escapeHtml(p.avatar_emoji || '👤')} ${escapeHtml(p.username)}</a>
           ${adminLink}
-          <a href="dm.html" class="nav-logout-link" style="color:var(--c-emerald);">📨 私信</a>
+          <a href="dm.html" class="nav-logout-link" style="color:var(--c-emerald);position:relative;">📨 私信<span id="dmBadge" style="display:none;position:absolute;top:-4px;right:-8px;background:#f33;color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:9px;line-height:1.2;min-width:16px;text-align:center;">0</span></a>
+          <a href="#notice" class="nav-logout-link" id="navAnn" style="color:#fc6;position:relative;display:none;">📢<span id="annBadge" style="display:none;position:absolute;top:-4px;right:-8px;background:#f93;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:9px;line-height:1.2;">新</span></a>
           <a href="#" id="navLogout" class="nav-logout-link">登出</a>
         `;
         prefillContactForm(p);
@@ -1729,6 +1730,14 @@
         // v19: nav 签到按钮 (上方菜单快捷入口)
         const nsb = document.getElementById('navSigninBtn');
         if (nsb) nsb.addEventListener('click', (e) => { e.preventDefault(); openSigninModal(); });
+        // v19: 点 📢 公告时记录 lastSeen
+        const ann = document.getElementById('navAnn');
+        if (ann) ann.addEventListener('click', (e) => {
+          try { localStorage.setItem('lc_announcement_last_seen', String(Date.now())); } catch (e) {}
+          // 隐藏角标
+          const ab = document.getElementById('annBadge');
+          if (ab) ab.style.display = 'none';
+        });
         // 顺便也拉一次签到状态, 让 🎁 旁边显示 "✓" 标记
         fetchSigninStatus().then(d => {
           const nsb = document.getElementById('navSigninBtn');
@@ -1746,6 +1755,40 @@
     }
   }
   if (navUserSlot) refreshUserState();
+
+  // v19: 未读轮询 — 每 30s 拉一次 unread-summary, 更新 nav 角标
+  let _unreadTimer = null;
+  async function pollUnread() {
+    try {
+      const r = await fetch('/api/init?action=unread-summary', { credentials: 'include' });
+      const d = await r.json();
+      if (!d.logged_in) return;
+      // DM 角标
+      const dmB = document.getElementById('dmBadge');
+      if (dmB) {
+        if (d.dm > 0) { dmB.style.display = ''; dmB.textContent = d.dm > 99 ? '99+' : String(d.dm); }
+        else dmB.style.display = 'none';
+      }
+      // 公告本地 lastSeen: localStorage 记录最新公告 id, 如果新公告 > lastSeen 就显示
+      try {
+        if (d.announcement) {
+          const _key = 'lc_announcement_last_seen';
+          const _seen = parseInt(localStorage.getItem(_key) || '0', 10);
+          const ann = document.getElementById('navAnn');
+          const annB = document.getElementById('annBadge');
+          if (d.announcement.id > _seen) {
+            if (ann) ann.style.display = '';
+            if (annB) annB.style.display = '';
+          } else {
+            if (ann) ann.style.display = 'none';
+          }
+        }
+      } catch (e) {}
+    } catch (e) {}
+  }
+  if (_unreadTimer) clearInterval(_unreadTimer);
+  _unreadTimer = setInterval(pollUnread, 30000);
+  pollUnread(); // 立即拉一次
 })();
 console.log("v17.2 ready");
 // v17.2 push 1786962036

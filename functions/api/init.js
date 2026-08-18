@@ -274,6 +274,33 @@ export async function onRequestGet(context) {
   // v19: GET /api/init?action=signin-status  (player 登录)
   const _u = new URL(request.url);
   const _a = _u.searchParams.get('action') || '';
+  if (_a === 'unread-summary') {
+    // 公开给登录玩家: 返回 DM / 留言回复 / 最新公告 id
+    const _ck = request.headers.get('Cookie') || '';
+    const _m = _ck.match(/lc_session=([^;]+)/);
+    if (!_m) return ok({ logged_in: false, dm: 0, msg_replies: 0, announcement: null });
+    const _sess = await env.DB.prepare('SELECT player_id, expires_at FROM sessions WHERE token = ?').bind(_m[1]).first();
+    if (!_sess || !_sess.player_id || new Date(_sess.expires_at) <= new Date()) {
+      return ok({ logged_in: false, dm: 0, msg_replies: 0, announcement: null });
+    }
+    const _pid = _sess.player_id;
+    const _dm = await env.DB.prepare(
+      'SELECT COUNT(*) AS c FROM direct_messages WHERE to_player_id = ? AND read_at IS NULL'
+    ).bind(_pid).first();
+    const _msgs = await env.DB.prepare(
+      "SELECT COUNT(*) AS c FROM messages WHERE player_id = ? AND admin_reply IS NOT NULL AND admin_reply != ''"
+    ).bind(_pid).first();
+    const _ann = await env.DB.prepare(
+      "SELECT id, created_at, title FROM announcements ORDER BY created_at DESC LIMIT 1"
+    ).first();
+    return ok({
+      logged_in: true,
+      player_id: _pid,
+      dm: _dm?.c || 0,
+      msg_replies: _msgs?.c || 0,
+      announcement: _ann || null,
+    });
+  }
   if (_a === 'signin-status') {
     // cookie 解析
     const _ck = request.headers.get('Cookie') || '';
