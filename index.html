@@ -860,7 +860,16 @@
     </div>
   </div>
 
-  <script src="js/main.js" defer></script>
+  <script>
+    // v19: 给 <script src="js/main.js"> 加 cache-bust 参数, 避免 CF 边缘 cache 卡住老版
+    (function() {
+      var v = '20260818-v19';
+      var s = document.createElement('script');
+      s.src = 'js/main.js?v=' + v;
+      s.defer = true;
+      document.currentScript.parentNode.insertBefore(s, document.currentScript);
+    })();
+  </script>
 </body>
 </html>
 // Mon Aug 17 17:53:42 CST 2026
