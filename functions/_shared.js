@@ -472,27 +472,44 @@ function derToRawSig(der) {
 }
 
 // 验签 ES256
-async function verifyEs256(jwk, signature, authData, clientDataJSON) {
+async function verifyEs256(env, pk, jwk, signature, authData, clientDataJSON) {
   // v17.10: 兜底 — 老 jwk (v17.5 admin passkey 时代注册, pad32 修复前) 的 x/y 可能 31 字节
-  // 尝试 importKey, 失败时用 base64url decode 再 pad 再 base64url 一次
+  // 1) 尝试原 jwk 直接 importKey
+  // 2) 失败时把 x/y 从 base64url decode, 前导 0 补齐到 32 字节, 重新 base64url 编码
+  // 3) 成功就 UPDATE db 把这个 passkey 的 jwk 改成 32 字节版, 以后登录就快
+  const pad32b64 = (s) => {
+    try {
+      let bin = Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+      if (bin.length === 32) return s;
+      const out = new Uint8Array(32);
+      out.set(bin, 32 - bin.length);
+      let bin2 = '';
+      for (let i = 0; i < out.length; i++) bin2 += String.fromCharCode(out[i]);
+      return btoa(bin2).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    } catch (_) { return s; }
+  };
   let _pubKey;
+  let _fixed = null;
   try {
     _pubKey = await crypto.subtle.importKey('jwk', jwk, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
   } catch (e) {
     if (!/Invalid EC key/i.test(String(e?.message || e))) throw e;
-    const pad32b64 = (s) => {
+    _fixed = { ...jwk, x: pad32b64(jwk.x), y: pad32b64(jwk.y) };
+    try {
+      _pubKey = await crypto.subtle.importKey('jwk', _fixed, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+    } catch (e2) {
+      throw new Error('EC 公钥 x/y 长度异常, 即使补齐仍失败: ' + (e2?.message || e2));
+    }
+    // 主动 UPDATE db 修复这个 passkey 的 jwk (避免下次再走兜底)
+    if (env && pk && pk.id) {
       try {
-        let bin = Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
-        if (bin.length === 32) return s;
-        const out = new Uint8Array(32);
-        out.set(bin, 32 - bin.length);
-        let bin2 = '';
-        for (let i = 0; i < out.length; i++) bin2 += String.fromCharCode(out[i]);
-        return btoa(bin2).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      } catch (_) { return s; }
-    };
-    const _fixed = { ...jwk, x: pad32b64(jwk.x), y: pad32b64(jwk.y) };
-    _pubKey = await crypto.subtle.importKey('jwk', _fixed, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['verify']);
+        await env.DB.prepare('UPDATE passkeys SET public_key_jwk = ? WHERE id = ?')
+          .bind(JSON.stringify(_fixed), pk.id).run();
+        console.log('passkey: 已修复 jwk (id=' + pk.id + ')');
+      } catch (e3) {
+        console.warn('passkey: jwk UPDATE 失败 (id=' + pk.id + '): ' + (e3?.message || e3));
+      }
+    }
   }
   const clientDataHash = await crypto.subtle.digest('SHA-256', clientDataJSON);
   const signed = new Uint8Array(authData.length + 32);
@@ -701,7 +718,7 @@ export async function passkeyLoginFinish(env, body, rpId, expectedOrigin) {
   if (!(parsed.flags & 0x01)) throw new Error('用户在场标志缺失');
 
   const jwk = JSON.parse(pk.public_key_jwk);
-  const ok = await verifyEs256(jwk, signature, authData, clientDataJSON);
+  const ok = await verifyEs256(env, pk, jwk, signature, authData, clientDataJSON);
   if (!ok) throw new Error('签名验证失败');
 
   if (parsed.signCount > 0 && pk.sign_count > 0 && parsed.signCount <= pk.sign_count) {
