@@ -238,18 +238,7 @@ export async function onRequestGet(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
 
-  // v17.8: 公告公开读取 GET /api/init?action=announcements-list
-  const _u = new URL(request.url);
-  if (_u.searchParams.get('action') === 'announcements-list') {
-    try {
-      const rows = await env.DB.prepare(
-        'SELECT a.*, ad.username as admin_username FROM announcements a LEFT JOIN admins ad ON ad.id = a.created_by ORDER BY a.created_at DESC LIMIT 30'
-      ).all();
-      return ok({ announcements: rows.results || [] });
-    } catch (e) {
-      return err(500, '查询失败: ' + e.message);
-    }
-  }
+  // v18: GET /api/init?action=announcements-list 已拆到 functions/api/announcements.js
 
   const tables = await env.DB.prepare(
     "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
