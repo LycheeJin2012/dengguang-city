@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>私信 · 灯光市</title>
+<link rel="preload" href="css/style.css" as="style" />
+<link rel="preload" href="js/dm.js" as="script" />
 <link rel="stylesheet" href="css/style.css">
 <style>
   body { background: var(--c-bg-2, #e8e0c8); }
@@ -130,6 +132,6 @@
   <!-- 登录提示 / DM 主界面，由 JS 渲染 -->
 </div>
 
-<script src="js/dm.js"></script>
+<script src="js/dm.js" defer></script>
 </body>
 </html>
