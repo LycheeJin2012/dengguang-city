@@ -17,13 +17,35 @@
     return d.toISOString().slice(5, 10); // MM-DD
   }
 
-  // 检查登录态
+  // v18: 立刻渲染 loading 态, 避免 cold start 时白屏
+  app.innerHTML = `
+    <div class="dm-login-hint" style="padding:60px 20px;">
+      <div style="font-size:32px;margin-bottom:12px;">⏳</div>
+      <p style="color:var(--c-stone);font-size:13px;">正在验证登录态…</p>
+    </div>
+  `;
+
+  // 检查登录态 (带 8s 超时, 避免 CF Pages cold start 卡死)
+  // v18: 兼容 combined session (v17.10 后, 玩家进过管理后台会同时有 player+admin)
+  // 用 d.player 判断 (combined session 也包含 d.player), 不要用 d.role === 'player'
   let me = null;
+  let _errMsg = '';
   try {
-    const r = await fetch('/api/login', { credentials: 'include' });
+    const _ctrl = new AbortController();
+    const _timer = setTimeout(() => _ctrl.abort(), 8000);
+    const r = await fetch('/api/login', { credentials: 'include', signal: _ctrl.signal });
+    clearTimeout(_timer);
     const d = await r.json();
-    if (r.ok && d.ok && d.role === 'player') me = d.user;
-  } catch (e) {}
+    if (r.ok && d.ok && d.player && d.player.status === 'active') {
+      me = d.player;
+    } else if (!r.ok) {
+      _errMsg = 'session ' + r.status;
+    } else if (d.ok && !d.player) {
+      _errMsg = '当前是管理员账号, 没有关联玩家身份';
+    }
+  } catch (e) {
+    _errMsg = '网络超时/失败: ' + (e?.message || e);
+  }
 
   // 顶栏
   if (navUserSlot) {
@@ -46,14 +68,24 @@
   }
 
   if (!me) {
+    // v18: 区分"未登录"和"网络失败", 给用户 retry 选项
+    const _isNet = _errMsg.startsWith('网络');
     app.innerHTML = `
       <div class="dm-login-hint">
         <div style="font-size:48px;margin-bottom:12px;">📨</div>
-        <h2 style="color:var(--c-stone-dark);margin:0 0 8px;">请先登录玩家账号</h2>
-        <p style="font-size:13px;line-height:1.6;">私信是玩家之间的私人交流，<br>需要登录后才能使用。</p>
-        <a href="index.html" class="btn btn-primary" style="display:inline-block;margin-top:12px;text-decoration:none;background:var(--c-emerald);color:white;padding:8px 20px;border:3px solid var(--c-stone-dark);box-shadow:2px 2px 0 var(--c-stone-dark);">返回首页</a>
+        <h2 style="color:var(--c-stone-dark);margin:0 0 8px;">${_isNet ? '网络好像有点慢' : '请先登录玩家账号'}</h2>
+        <p style="font-size:13px;line-height:1.6;">${_isNet
+          ? '验证登录态超时, 可能是网络抖动或 Functions 冷启动。<br>点下面按钮重试, 或回首页重新登录。'
+          : '私信是玩家之间的私人交流，<br>需要登录后才能使用。'}</p>
+        ${_errMsg ? `<p style="font-size:11px;color:#999;margin-top:6px;">(${escapeHtml(_errMsg)})</p>` : ''}
+        <div style="display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;">
+          <button id="dmRetryBtn" class="btn btn-primary" style="background:var(--c-emerald);color:white;padding:8px 20px;border:3px solid var(--c-stone-dark);box-shadow:2px 2px 0 var(--c-stone-dark);cursor:pointer;font-size:13px;">🔄 重试</button>
+          <a href="index.html" class="btn" style="display:inline-block;background:var(--c-gold);color:var(--c-stone-dark);padding:8px 20px;border:3px solid var(--c-stone-dark);box-shadow:2px 2px 0 var(--c-stone-dark);text-decoration:none;font-size:13px;">返回首页</a>
+        </div>
       </div>
     `;
+    const _retry = document.getElementById('dmRetryBtn');
+    if (_retry) _retry.onclick = () => location.reload();
     return;
   }
 
