@@ -298,12 +298,15 @@
           const aaguid = (k.aaguid || '').slice(0, 16) + '…';
           const lastUsed = k.last_used_at ? '上次使用: ' + k.last_used_at : '尚未使用';
           return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--c-bg-2,#e8e0c8);border:2px solid var(--c-stone,#7a6a5a);margin-bottom:6px">
-            <div>
+            <div style="flex:1;min-width:0;">
               <div style="font-size:14px;font-weight:700;color:var(--c-stone-dark,#4a3a2a)">🔑 ${escapeHtml(k.name)}</div>
               <div style="font-size:11px;color:var(--c-stone)">注册于 ${k.created_at} · ${lastUsed}</div>
-              <div style="font-size:10px;color:var(--c-stone);font-family:monospace">id: ${aaguid}</div>
+              <div style="font-size:10px;color:var(--c-stone);font-family:monospace">cred_id: ${escapeHtml((k.credential_id || '').slice(0, 16))}…</div>
             </div>
-            <button type="button" data-pkid="${k.id}" class="pk-del-btn" style="background:#a33;color:#fff;border:2px solid var(--c-stone-dark);padding:6px 10px;font-size:12px;cursor:pointer">🗑 删除</button>
+            <div style="display:flex;gap:4px;flex-shrink:0;">
+              <button type="button" data-pkcred="${escapeHtml(k.credential_id || '')}" class="pk-test-btn" style="background:var(--c-emerald);color:#fff;border:2px solid var(--c-stone-dark);padding:6px 10px;font-size:12px;cursor:pointer">🧪 测试</button>
+              <button type="button" data-pkid="${k.id}" class="pk-del-btn" style="background:#a33;color:#fff;border:2px solid var(--c-stone-dark);padding:6px 10px;font-size:12px;cursor:pointer">🗑</button>
+            </div>
           </div>`;
         }).join('');
         passkeyList.querySelectorAll('.pk-del-btn').forEach(btn => {
@@ -324,6 +327,59 @@
             } catch (e) {
               passkeyMsg.textContent = '✗ ' + e.message;
               passkeyMsg.style.color = 'var(--c-red, #c33)';
+            }
+          };
+        });
+        // v17.10: 测试通行密钥 — 注册后用 navigator.credentials.get 验证一次
+        passkeyList.querySelectorAll('.pk-test-btn').forEach(btn => {
+          btn.onclick = async () => {
+            const credId = btn.dataset.pkcred;
+            if (!credId) { passkeyMsg.textContent = '✗ 该密钥无 credential_id'; return; }
+            const orig = btn.textContent;
+            btn.disabled = true; btn.textContent = '⏳ 验证中…';
+            passkeyMsg.textContent = '正在验证通行密钥, 请触摸指纹/Face ID...';
+            passkeyMsg.style.color = 'var(--c-stone)';
+            try {
+              const r1 = await fetch('/api/init?action=passkey-test-start', {
+                method: 'POST', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ credential_id: credId }),
+              });
+              const d1 = await r1.json();
+              if (!r1.ok || d1.error) throw new Error(d1.error || '获取挑战失败');
+              const opts = d1.publicKey;
+              opts.challenge = b64urlToBuf(opts.challenge);
+              const cred = await navigator.credentials.get({ publicKey: opts });
+              if (!cred) throw new Error('未选择凭据');
+              const r2 = await fetch('/api/init?action=passkey-test-finish', {
+                method: 'POST', credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  challenge_token: d1.challenge_token,
+                  credential: {
+                    id: cred.id,
+                    rawId: bufToB64url(cred.rawId),
+                    type: cred.type,
+                    response: {
+                      clientDataJSON: bufToB64url(cred.response.clientDataJSON),
+                      authenticatorData: bufToB64url(cred.response.authenticatorData),
+                      signature: bufToB64url(cred.response.signature),
+                    }
+                  }
+                }),
+              });
+              const d2 = await r2.json();
+              if (!r2.ok || !d2.ok) throw new Error(d2.error || '验证失败');
+              passkeyMsg.textContent = '✓ 通行密钥有效! ' + (d2.message || '');
+              passkeyMsg.style.color = 'var(--c-emerald)';
+              setTimeout(() => passkeyMsg.textContent = '', 4000);
+              loadPasskeys();
+            } catch (e) {
+              passkeyMsg.textContent = '✗ ' + e.message;
+              passkeyMsg.style.color = 'var(--c-red, #c33)';
+              setTimeout(() => passkeyMsg.textContent = '', 5000);
+            } finally {
+              btn.disabled = false; btn.textContent = orig;
             }
           };
         });

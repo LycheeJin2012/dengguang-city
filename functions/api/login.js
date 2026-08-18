@@ -63,9 +63,10 @@ export async function onRequestPost(context) {
     userId = admin.id;
   }
 
-  // v17.9: 合并账号 - 如果 linked,创建一个 combined session (player_id + admin_id 都设)
-  // 玩家登录时: 检查 players.linked_admin_id → 在 session 里加 admin_id
-  // 管理员登录时: 检查 admins.linked_player_id → 在 session 里加 player_id
+  // v17.10 修订: 玩家/管理员登录只创建单身份 session
+  // - 玩家密码 → 只创建 player session (登录首页)
+  // - 管理员密码 → 只创建 admin session (登录管理后台)
+  // 进入合并/管理后台需要另外调 admin-enter-password 或 passkey-admin-enter 升级
   let _adminIdForSession = null;
   let _playerIdForSession = null;
   let _linkedPeer = null;
@@ -75,7 +76,6 @@ export async function onRequestPost(context) {
       'SELECT a.id, a.username, a.role FROM players p LEFT JOIN admins a ON a.id = p.linked_admin_id WHERE p.id = ?'
     ).bind(userId).first();
     if (_link && _link.id) {
-      _adminIdForSession = _link.id;
       _linkedPeer = { kind: 'admin', id: _link.id, username: _link.username, role: _link.role };
     }
   } else {
@@ -84,7 +84,6 @@ export async function onRequestPost(context) {
       'SELECT p.id, p.username FROM admins a LEFT JOIN players p ON p.id = a.linked_player_id WHERE a.id = ?'
     ).bind(userId).first();
     if (_link && _link.id) {
-      _playerIdForSession = _link.id;
       _linkedPeer = { kind: 'player', id: _link.id, username: _link.username };
     }
   }

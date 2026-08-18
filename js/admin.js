@@ -38,12 +38,174 @@ async function boot(){
     const d=await GET('/api/login');
     // 移除 boot loading 覆盖层
     const _ld = document.getElementById('bootLoading'); if (_ld) _ld.remove();
-    if(d.ok&&d.user&&d.role&&d.role!=='player'){window._me=d.user;renderDash();}
-    else showView('login');
+    // v17.10: 三种 session 状态
+    // - combined (有 admin+player): 直接进 dash
+    // - 纯 admin (role: super/admin): 直接进 dash
+    // - 纯 player (role: player): 弹"二级密码" modal (需输入关联管理员密码 或 用 passkey)
+    // - 未登录: 弹标准登录框
+    if (d.ok && d.user) {
+      if (d.role && d.role !== 'player') {
+        // 纯管理员 或 combined session
+        window._me = d.user;
+        renderDash();
+      } else if (d.player && d.player.linked_admin_id) {
+        // 玩家 session + 已绑管理员 → 弹二级密码 modal
+        showView('login'); // 显示登录框骨架
+        showAdminEnterModal(d.player, d.player.linked_admin_id);
+      } else {
+        // 玩家但没绑管理员 → 登录框
+        showView('login');
+        const el = $('#loginError');
+        if (el) el.textContent = '当前是玩家账号, 但未绑定管理员账号, 无法进入管理后台';
+      }
+    } else {
+      showView('login');
+    }
   }catch(e){
     const _ld = document.getElementById('bootLoading'); if (_ld) _ld.remove();
     const el=$('#loginError');if(el)el.textContent='启动失败: '+e.message;showView('login');
   }
+}
+
+// v17.10: 二级密码 modal (玩家 session + 关联管理员时弹)
+// 提供两种进入方式: 输入管理员密码 / 用通行密钥
+function showAdminEnterModal(player, adminId) {
+  // 关掉旧 modal
+  const old = document.getElementById('adminEnterBackdrop');
+  if (old) old.remove();
+  const mask = document.createElement('div');
+  mask.id = 'adminEnterBackdrop';
+  mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  mask.innerHTML = `
+    <div style="background:#1a1a2e;border:2px solid #6cf;border-radius:8px;padding:24px;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);">
+      <h3 style="margin:0 0 4px;color:#6cf;font-size:18px;">🛡️ 进入管理后台</h3>
+      <p style="color:#9ab;font-size:12px;margin:0 0 16px;line-height:1.5;">
+        当前已登录玩家 <b style="color:#fff">${esc(player.username)}</b>。<br>
+        进入管理需要 <b style="color:#fc6">二级验证</b>: 输入关联管理员的密码, 或用通行密钥。
+      </p>
+      <div id="adminEnterTabs" style="display:flex;gap:4px;margin-bottom:14px;">
+        <button id="tabPw" class="btn btn-primary btn-sm" style="flex:1;">🔑 管理员密码</button>
+        <button id="tabPk" class="btn btn-ghost btn-sm" style="flex:1;">🔐 通行密钥</button>
+      </div>
+      <div id="adminEnterPw">
+        <label style="color:#9ab;font-size:12px;display:block;margin-bottom:4px;">关联管理员密码</label>
+        <input type="password" id="adminEnterPwInput" placeholder="管理员密码 (至少 8 位)" style="width:100%;padding:8px;background:#0a0a1e;color:#fff;border:1px solid #446;font-size:14px;">
+        <div id="adminEnterMsg" style="min-height:18px;font-size:12px;margin-top:6px;"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn-ghost btn-sm" id="adminEnterCancel" style="flex:1;">取消</button>
+          <button class="btn btn-primary btn-sm" id="adminEnterPwBtn" style="flex:2;">✓ 进入管理</button>
+        </div>
+      </div>
+      <div id="adminEnterPk" style="display:none;">
+        <p style="color:#9ab;font-size:12px;margin:0 0 10px;">使用你已注册的通行密钥验证身份</p>
+        <div id="adminEnterPkMsg" style="min-height:18px;font-size:12px;margin:6px 0;"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn-ghost btn-sm" id="adminEnterCancel2" style="flex:1;">取消</button>
+          <button class="btn btn-primary btn-sm" id="adminEnterPkBtn" style="flex:2;">🔐 用通行密钥进入</button>
+        </div>
+      </div>
+      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #334;text-align:center;">
+        <a href="/" style="color:#9ab;font-size:12px;text-decoration:none;">← 返回首页 (玩家身份保持登录)</a>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(mask);
+
+  // 切 tab
+  document.getElementById('tabPw').onclick = () => {
+    document.getElementById('tabPw').className = 'btn btn-primary btn-sm';
+    document.getElementById('tabPk').className = 'btn btn-ghost btn-sm';
+    document.getElementById('adminEnterPw').style.display = '';
+    document.getElementById('adminEnterPk').style.display = 'none';
+  };
+  document.getElementById('tabPk').onclick = () => {
+    document.getElementById('tabPk').className = 'btn btn-primary btn-sm';
+    document.getElementById('tabPw').className = 'btn btn-ghost btn-sm';
+    document.getElementById('adminEnterPk').style.display = '';
+    document.getElementById('adminEnterPw').style.display = 'none';
+  };
+
+  // 取消
+  const cancel = () => mask.remove();
+  document.getElementById('adminEnterCancel').onclick = cancel;
+  document.getElementById('adminEnterCancel2').onclick = cancel;
+  // 阻止点背景关闭 (二级密码必填)
+  mask.addEventListener('click', e => { if (e.target === mask) { /* noop */ } });
+
+  // 密码登录
+  document.getElementById('adminEnterPwBtn').onclick = async () => {
+    const pw = document.getElementById('adminEnterPwInput').value;
+    const msgEl = document.getElementById('adminEnterMsg');
+    msgEl.style.color = '#f99';
+    if (!pw || pw.length < 8) { msgEl.textContent = '请输入密码'; return; }
+    const btn = document.getElementById('adminEnterPwBtn');
+    btn.disabled = true; btn.textContent = '验证中…';
+    try {
+      const r = await POST('/api/init?action=admin-enter-password', { admin_password: pw });
+      if (!r.ok) throw new Error(r.error || '验证失败');
+      msgEl.style.color = '#9f9';
+      msgEl.textContent = '✓ 验证通过, 进入管理...';
+      setTimeout(() => { mask.remove(); location.reload(); }, 600);
+    } catch (e) {
+      msgEl.textContent = '✗ ' + e.message;
+      btn.disabled = false; btn.textContent = '✓ 进入管理';
+    }
+  };
+
+  // 通行密钥登录
+  document.getElementById('adminEnterPkBtn').onclick = async () => {
+    const msgEl = document.getElementById('adminEnterPkMsg');
+    msgEl.style.color = '#f99';
+    if (!window.PublicKeyCredential) { msgEl.textContent = '浏览器不支持通行密钥'; return; }
+    const btn = document.getElementById('adminEnterPkBtn');
+    btn.disabled = true; btn.textContent = '等待认证…';
+    try {
+      const r1 = await POST('/api/init?action=passkey-admin-enter-start', {});
+      if (!r1.ok) throw new Error(r1.error || '开始挑战失败');
+      const opts = r1.publicKey;
+      opts.challenge = b64urlToBuf(opts.challenge);
+      const cred = await navigator.credentials.get({ publicKey: opts });
+      if (!cred) throw new Error('未选择凭据');
+      const r2 = await POST('/api/init?action=passkey-admin-enter-finish', {
+        challenge_token: r1.challenge_token,
+        credential: {
+          id: cred.id,
+          rawId: bufToB64url(cred.rawId),
+          type: cred.type,
+          response: {
+            clientDataJSON: bufToB64url(cred.response.clientDataJSON),
+            authenticatorData: bufToB64url(cred.response.authenticatorData),
+            signature: bufToB64url(cred.response.signature),
+          }
+        }
+      });
+      if (!r2.ok) throw new Error(r2.error || '验证失败');
+      msgEl.style.color = '#9f9';
+      msgEl.textContent = '✓ 验证通过, 进入管理...';
+      setTimeout(() => { mask.remove(); location.reload(); }, 600);
+    } catch (e) {
+      msgEl.textContent = '✗ ' + e.message;
+      btn.disabled = false; btn.textContent = '🔐 用通行密钥进入';
+    }
+  };
+
+  // 密码输入框 focus
+  setTimeout(() => document.getElementById('adminEnterPwInput')?.focus(), 50);
+}
+
+function b64urlToBuf(s) {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}
+function bufToB64url(buf) {
+  const b = new Uint8Array(buf);
+  let s = '';
+  for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
 async function doLogin(){

@@ -750,19 +750,18 @@ export async function passkeyLoginFinish(env, body, rpId, expectedOrigin) {
     const _link = await env.DB.prepare("SELECT p.id, p.username, p.status FROM admins a LEFT JOIN players p ON p.id = a.linked_player_id WHERE a.id = ?").bind(_admin.id).first();
     if (_link && _link.id && _link.status === 'active') _player = _link;
   }
-  if (_admin) {
-    const { token, expires_at } = await createSession(env, _player ? _player.id : null, _admin.id);
-    return {
-      admin: _admin,
-      player: _player,
-      token, expires_at,
-      kind: 'admin',  // 兼容字段
-      combined: !!_player
-    };
-  }
+  // v17.10 修订: passkey 登录默认只创建单身份 session
+  // - 只有 player → 创建 player session (登录首页)
+  // - 只有 admin → 创建 admin session (登录管理后台)
+  // - 双绑 → 创建 player session (首页), 用户要进管理可再调 passkey-admin-enter
+  // 这样保证两套密码仍独立, 玩家密码进首页, 管理员密码进管理
   if (_player) {
     const { token, expires_at } = await createSession(env, _player.id, null);
-    return { player: _player, token, expires_at, kind: 'player' };
+    return { player: _player, token, expires_at, kind: 'player', admin: _admin || null };
+  }
+  if (_admin) {
+    const { token, expires_at } = await createSession(env, null, _admin.id);
+    return { admin: _admin, token, expires_at, kind: 'admin' };
   }
   throw new Error('该通行密钥未关联任何账号');
 }
