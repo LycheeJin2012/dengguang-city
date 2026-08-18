@@ -1,7 +1,7 @@
 /* ============================================
    灯光市人民政府 · 交互脚本
    ============================================ */
-(function () {
+(async function () {
   'use strict';
 
   /* ---------- 1. 移动端菜单 ---------- */
@@ -432,28 +432,48 @@
   }, { passive: true });
 
   /* ---------- 10. 实景图集 + Lightbox ---------- */
-  const GALLERY = [
-    { num: '01', cat: 'city', label: '市中心发言台', file: 'assets/gallery/01-pyramid.jpg' },
-    { num: '02', cat: 'city', label: '树屋酒店', file: 'assets/gallery/02-overview-day.jpg' },
-    { num: '03', cat: 'nature', label: '图书馆&公园结合体', file: 'assets/gallery/03-cherry-cabin.jpg' },
-    { num: '04', cat: 'nature', label: '樱花特色城区', file: 'assets/gallery/04-cherry-house.jpg' },
-    { num: '05', cat: 'city', label: '人民英雄纪念碑', file: 'assets/gallery/05-monument.jpg' },
-    { num: '06', cat: 'city', label: '城市俯瞰', file: 'assets/gallery/06-overview-aerial.jpg' },
-    { num: '07', cat: 'road', label: '公路&铁路跨溪立交', file: 'assets/gallery/07-railway.jpg' },
-    { num: '09', cat: 'road', label: '灯光火车站', file: 'assets/gallery/09-station-interior.jpg' },
-    { num: '11', cat: 'kart', label: '灯光国际赛车场', file: 'assets/gallery/11-kart-start.jpg' },
-    { num: '12', cat: 'kart', label: '国际赛车场·俯视', file: 'assets/gallery/12-kart-overview.jpg' },
-    { num: '13', cat: 'kart', label: '国际赛车场·弯道区', file: 'assets/gallery/13-kart-turn.jpg' },
-    { num: '14', cat: 'kart', label: '国际赛车场·直道', file: 'assets/gallery/14-kart-straight.jpg' },
-    { num: '15', cat: 'kart', label: '国际赛车场·隧道', file: 'assets/gallery/15-kart-tunnel.jpg' },
-    { num: '16', cat: 'kart', label: '国际赛车场·双车道', file: 'assets/gallery/16-kart-dual-lane.jpg' },
-    { num: '17', cat: 'kart', label: '国际赛车场·发夹弯', file: 'assets/gallery/17-kart-hairpin.jpg' },
-    { num: '18', cat: 'kart', label: '国际赛车场·全景', file: 'assets/gallery/18-kart-aerial.jpg' },
-    { num: '19', cat: 'city', label: '假山', file: 'assets/gallery/19-kart-mushroom.jpg' },
-    { num: '20', cat: 'city', label: '树屋酒店', file: 'assets/gallery/20-treehouse-real.jpg' },
-    { num: '21', cat: 'city', label: '图书馆&附魔中心', file: 'assets/gallery/21-circuit-car.jpg' },
-    { num: '22', cat: 'city', label: '优秀样板房', file: 'assets/gallery/22-circuit-build.jpg' },
-  ];
+  // v18: 从 /api/gallery 拉 (super 后台可管理)
+  // 兼容老格式: 旧 GALLERY 用 g.file 字段, 新 API 用 g.file_url
+  let GALLERY = [];
+  try {
+    const _r = await fetch('/api/gallery', { credentials: 'omit' });
+    const _d = await _r.json();
+    if (_d && _d.items) {
+      GALLERY = _d.items.map(it => ({
+        num: String(it.num).padStart(2, '0'),
+        cat: it.cat,
+        label: it.label,
+        file: it.file_url  // 兼容旧代码
+      }));
+    }
+  } catch (e) {
+    console.error('加载图集失败:', e);
+  }
+  if (GALLERY.length === 0) {
+    // 兜底: 静态资源 (若 API 还没建好, 用旧版硬编码)
+    GALLERY = [
+      { num: '01', cat: 'city', label: '市中心发言台', file: 'assets/gallery/01-pyramid.jpg' },
+      { num: '02', cat: 'city', label: '树屋酒店', file: 'assets/gallery/02-overview-day.jpg' },
+      { num: '03', cat: 'nature', label: '图书馆&公园结合体', file: 'assets/gallery/03-cherry-cabin.jpg' },
+      { num: '04', cat: 'nature', label: '樱花特色城区', file: 'assets/gallery/04-cherry-house.jpg' },
+      { num: '05', cat: 'city', label: '人民英雄纪念碑', file: 'assets/gallery/05-monument.jpg' },
+      { num: '06', cat: 'city', label: '城市俯瞰', file: 'assets/gallery/06-overview-aerial.jpg' },
+      { num: '07', cat: 'road', label: '公路&铁路跨溪立交', file: 'assets/gallery/07-railway.jpg' },
+      { num: '09', cat: 'road', label: '灯光火车站', file: 'assets/gallery/09-station-interior.jpg' },
+      { num: '11', cat: 'kart', label: '灯光国际赛车场', file: 'assets/gallery/11-kart-start.jpg' },
+      { num: '12', cat: 'kart', label: '国际赛车场·俯视', file: 'assets/gallery/12-kart-overview.jpg' },
+      { num: '13', cat: 'kart', label: '国际赛车场·弯道区', file: 'assets/gallery/13-kart-turn.jpg' },
+      { num: '14', cat: 'kart', label: '国际赛车场·直道', file: 'assets/gallery/14-kart-straight.jpg' },
+      { num: '15', cat: 'kart', label: '国际赛车场·隧道', file: 'assets/gallery/15-kart-tunnel.jpg' },
+      { num: '16', cat: 'kart', label: '国际赛车场·双车道', file: 'assets/gallery/16-kart-dual-lane.jpg' },
+      { num: '17', cat: 'kart', label: '国际赛车场·发夹弯', file: 'assets/gallery/17-kart-hairpin.jpg' },
+      { num: '18', cat: 'kart', label: '国际赛车场·全景', file: 'assets/gallery/18-kart-aerial.jpg' },
+      { num: '19', cat: 'city', label: '假山', file: 'assets/gallery/19-kart-mushroom.jpg' },
+      { num: '20', cat: 'city', label: '树屋酒店', file: 'assets/gallery/20-treehouse-real.jpg' },
+      { num: '21', cat: 'city', label: '图书馆&附魔中心', file: 'assets/gallery/21-circuit-car.jpg' },
+      { num: '22', cat: 'city', label: '优秀样板房', file: 'assets/gallery/22-circuit-build.jpg' },
+    ];
+  }
 
   const GAL_FILTERS = [
     { id: 'all',    label: '全部', count: GALLERY.length },

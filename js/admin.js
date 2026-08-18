@@ -1020,6 +1020,12 @@ async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
   // ============================================================
   async function renderAnnouncements() {
     if (!window._me || window._me.role !== 'super') return;
+    // super 可见 "+ 发布新公告" 按钮
+    const _annCreateBtn = document.getElementById('annCreateBtn');
+    if (_annCreateBtn) {
+      _annCreateBtn.style.display = '';
+      _annCreateBtn.onclick = () => showAnnModal(null);
+    }
     const list = document.getElementById('annList');
     const empty = document.getElementById('annEmpty');
     if (!list || !empty) return;
@@ -1144,6 +1150,211 @@ async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
   const btnAnnCreate = document.getElementById('btnAnnCreate');
   if (btnAnnCreate) btnAnnCreate.addEventListener('click', () => showAnnModal(null));
 
+  // ============================================================
+  // v18: 首页图集管理 (super only)
+  // ============================================================
+  let _galAll = [];      // 缓存当前列表
+  let _galFilter = '';   // 当前分类过滤
+  async function renderGallery() {
+    if (!window._me || window._me.role !== 'super') return;
+    const _galCreateBtn = document.getElementById('galCreateBtn');
+    if (_galCreateBtn) {
+      _galCreateBtn.style.display = '';
+      _galCreateBtn.onclick = () => showGalModal(null);
+    }
+    const grid = document.getElementById('galGrid');
+    const empty = document.getElementById('galEmpty');
+    if (!grid || !empty) return;
+    grid.innerHTML = '<p class="empty-state">载入中…</p>';
+    empty.style.display = 'none';
+    try {
+      const r = await fetch('/api/gallery?all=1', { credentials: 'same-origin' });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || '加载失败');
+      _galAll = d.items || [];
+      // 分类过滤按钮激活态
+      document.querySelectorAll('.gal-cat-btn').forEach(b => {
+        b.classList.toggle('active', (b.dataset.cat || '') === _galFilter);
+      });
+      const list = _galFilter ? _galAll.filter(x => x.cat === _galFilter) : _galAll;
+      if (list.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = '';
+        return;
+      }
+      grid.innerHTML = list.map(it => `
+        <div class="gal-item" data-id="${it.id}" style="background:#fff;border:2px solid ${it.is_published ? '#5fa' : '#aaa'};border-radius:6px;overflow:hidden;display:flex;flex-direction:column;">
+          <div style="aspect-ratio:1/1;background:#000;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+            <img src="${esc(it.file_url)}" alt="${esc(it.label)}" loading="lazy" style="max-width:100%;max-height:100%;object-fit:contain;" onerror="this.style.opacity=.3;this.alt='加载失败'" />
+          </div>
+          <div style="padding:8px;font-size:12px;line-height:1.4;">
+            <div style="font-weight:700;color:#4a3a2a;margin-bottom:2px;">#${it.num} ${esc(it.label)}</div>
+            <div style="color:#7a6a5a;">${esc(it.cat)}${it.is_featured ? ' · ⭐精选' : ''}${it.is_published ? '' : ' · ⛔草稿'}</div>
+            <div style="display:flex;gap:4px;margin-top:6px;">
+              <button class="btn btn-ghost btn-sm gal-edit" data-id="${it.id}" style="flex:1;font-size:11px;padding:4px;">✎</button>
+              <button class="btn btn-ghost btn-sm gal-toggle" data-id="${it.id}" style="flex:1;font-size:11px;padding:4px;">${it.is_published ? '下架' : '上架'}</button>
+              <button class="btn btn-ghost btn-sm gal-feat" data-id="${it.id}" style="flex:1;font-size:11px;padding:4px;">${it.is_featured ? '取消精选' : '⭐精选'}</button>
+              <button class="btn btn-ghost btn-sm gal-del" data-id="${it.id}" style="flex:1;font-size:11px;padding:4px;background:#c33;color:#fff;">🗑</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
+      grid.querySelectorAll('.gal-edit').forEach(b => b.onclick = () => {
+        const it = _galAll.find(x => x.id === +b.dataset.id);
+        if (it) showGalModal(it);
+      });
+      grid.querySelectorAll('.gal-toggle').forEach(b => b.onclick = () => galToggle(+b.dataset.id));
+      grid.querySelectorAll('.gal-feat').forEach(b => b.onclick = () => galFeat(+b.dataset.id));
+      grid.querySelectorAll('.gal-del').forEach(b => b.onclick = () => galDel(+b.dataset.id));
+    } catch (e) {
+      grid.innerHTML = '<p style="color:#c33;padding:20px;text-align:center">✗ ' + esc(e.message) + '</p>';
+    }
+  }
+
+  function showGalModal(item) {
+    const isNew = !item;
+    const old = document.getElementById('galModalBackdrop');
+    if (old) old.remove();
+    const bd = document.createElement('div');
+    bd.id = 'galModalBackdrop';
+    bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    const _v = (k) => item ? esc(item[k] || '') : '';
+    bd.innerHTML = `
+      <div style="background:#1a1a2e;border:2px solid #6cf;border-radius:8px;padding:18px;max-width:560px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;">
+        <h3 style="margin:0 0 12px;color:#6cf;font-size:16px;">${isNew ? '🖼️ 添加首页图片' : '✎ 编辑图片 #' + item.id}</h3>
+        <label style="display:block;margin-bottom:8px;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">编号 (1-999, 唯一, 控制显示顺序)</span>
+          <input id="galNum" type="number" min="1" max="999" value="${_v('num')}" style="width:100%;padding:8px 10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+        </label>
+        <label style="display:block;margin-bottom:8px;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">分类</span>
+          <select id="galCat" style="width:100%;padding:8px 10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;box-sizing:border-box;">
+            <option value="city">城市 (city)</option>
+            <option value="road">路网 (road)</option>
+            <option value="kart">赛道 (kart)</option>
+            <option value="nature">自然 (nature)</option>
+            <option value="announcement">公告配图 (announcement)</option>
+          </select>
+        </label>
+        <label style="display:block;margin-bottom:8px;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">标题 (label, 80 字内)</span>
+          <input id="galLabel" maxlength="80" value="${_v('label')}" placeholder="如：市中心发言台" style="width:100%;padding:8px 10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+        </label>
+        <label style="display:block;margin-bottom:8px;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">图片 URL (https:// 开头, 也支持 data:image/...)</span>
+          <textarea id="galUrl" maxlength="2000" placeholder="https://... 或 data:image/png;base64,..." style="width:100%;min-height:80px;padding:8px 10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:monospace;font-size:12px;line-height:1.4;resize:vertical;box-sizing:border-box;">${_v('file_url')}</textarea>
+        </label>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
+          <label style="display:flex;align-items:center;gap:4px;color:#ccc;font-size:13px;">
+            排序 (小在前)
+            <input id="galSort" type="number" value="${_v('sort_order') || 0}" style="width:80px;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;" />
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;color:#ccc;font-size:13px;">
+            <input id="galFeat" type="checkbox" ${item && item.is_featured ? 'checked' : ''} /> ⭐ 精选
+          </label>
+          <label style="display:flex;align-items:center;gap:4px;color:#ccc;font-size:13px;">
+            <input id="galPub" type="checkbox" ${isNew || (item && item.is_published) ? 'checked' : ''} /> 📢 上架
+          </label>
+        </label>
+        <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+          <button id="galCancel" type="button" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">取消</button>
+          <button id="galSave" type="button" style="background:#6cf;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:13px;">${isNew ? '🖼️ 添加' : '💾 保存'}</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(bd);
+    if (item) {
+      // 选中 cat
+      const _catEl = bd.querySelector('#galCat');
+      if (_catEl) _catEl.value = item.cat || 'city';
+    }
+    const close = () => bd.remove();
+    bd.addEventListener('click', e => { if (e.target === bd) close(); });
+    bd.querySelector('#galCancel').onclick = close;
+    bd.querySelector('#galSave').onclick = async () => {
+      const num = parseInt(bd.querySelector('#galNum').value, 10);
+      const cat = bd.querySelector('#galCat').value;
+      const label = bd.querySelector('#galLabel').value.trim();
+      const file_url = bd.querySelector('#galUrl').value.trim();
+      const sort_order = parseInt(bd.querySelector('#galSort').value, 10) || 0;
+      const is_featured = bd.querySelector('#galFeat').checked ? 1 : 0;
+      const is_published = bd.querySelector('#galPub').checked ? 1 : 0;
+      if (!num || num < 1) { alert('编号必须是正整数'); return; }
+      if (!label) { alert('标题必填'); return; }
+      if (!file_url) { alert('图片 URL 必填'); return; }
+      if (!/^https?:\/\//i.test(file_url) && !/^data:image\//i.test(file_url)) {
+        alert('URL 必须是 https:// 或 data:image/ 开头'); return;
+      }
+      const btn = bd.querySelector('#galSave');
+      btn.disabled = true; btn.textContent = '⏳ 保存中...';
+      try {
+        const url = isNew ? '/api/gallery' : '/api/gallery?id=' + item.id;
+        const method = isNew ? 'POST' : 'PATCH';
+        const r = await fetch(url, {
+          method, credentials: 'same-origin',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ num, cat, label, file_url, sort_order, is_featured, is_published })
+        });
+        const d = await r.json();
+        if (!r.ok || d.error) throw new Error(d.error || '保存失败');
+        close();
+        renderGallery();
+      } catch (e) {
+        alert('保存失败: ' + e.message);
+        btn.disabled = false; btn.textContent = isNew ? '🖼️ 添加' : '💾 保存';
+      }
+    };
+    setTimeout(() => bd.querySelector('#galLabel').focus(), 50);
+  }
+
+  async function galToggle(id) {
+    const it = _galAll.find(x => x.id === id);
+    if (!it) return;
+    try {
+      const r = await fetch('/api/gallery?id=' + id, {
+        method: 'PATCH', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_published: !it.is_published ? 1 : 0 })
+      });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || '失败');
+      renderGallery();
+    } catch (e) { alert('操作失败: ' + e.message); }
+  }
+  async function galFeat(id) {
+    const it = _galAll.find(x => x.id === id);
+    if (!it) return;
+    try {
+      const r = await fetch('/api/gallery?id=' + id, {
+        method: 'PATCH', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_featured: !it.is_featured ? 1 : 0 })
+      });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || '失败');
+      renderGallery();
+    } catch (e) { alert('操作失败: ' + e.message); }
+  }
+  async function galDel(id) {
+    if (!confirm('删除该图片？此操作不可恢复。')) return;
+    try {
+      const r = await fetch('/api/gallery?id=' + id, {
+        method: 'DELETE', credentials: 'same-origin'
+      });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || '失败');
+      renderGallery();
+    } catch (e) { alert('删除失败: ' + e.message); }
+  }
+
+  // 分类过滤
+  document.querySelectorAll('.gal-cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _galFilter = btn.dataset.cat || '';
+      renderGallery();
+    });
+  });
+
 function renderDash(){
   try{
     const a=window._me;
@@ -1163,6 +1374,7 @@ function renderDash(){
   safeRender(renderCircuits);
   safeRender(renderAdminList);
   safeRender(renderAnnouncements);
+  safeRender(renderGallery);
   // 仅 super 可见 DM 监管 tab
   try {
     if (window._me && window._me.role === 'super') {

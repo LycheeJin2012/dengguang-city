@@ -89,6 +89,9 @@
       <button class="tab" data-tab="license">🚗 驾照考试 <span class="tab-count" id="licensePending">0</span></button>
       <button class="tab" data-tab="kart">🏁 赛道报名 <span class="tab-count" id="kartPending">0</span></button>
       <button class="tab" data-tab="circuit">🏎️ 国际赛车场 <span class="tab-count" id="circuitPending">0</span></button>
+      <button class="tab" data-tab="announcements" id="tabAnnouncements">📢 公告管理</button>
+      <button class="tab" data-tab="gallery" id="tabGallery">🖼️ 首页图集</button>
+      <button class="tab" data-tab="dms" id="tabDms">💬 私信监管</button>
       <button class="tab" data-tab="admins" id="tabAdmins">🛡️ 管理员账号</button>
       <button class="tab" data-tab="password">🔑 修改我的密码</button>
     </nav>
@@ -272,6 +275,47 @@
       <div id="circuitEmpty" class="empty-state" style="display:none">
         <div class="empty-icon">🏎️</div>
         <p>暂无报名</p>
+      </div>
+    </section>
+
+    <!-- Tab: 公告管理 (仅 super) -->
+    <section class="tab-pane" id="pane-announcements">
+      <div class="pane-head">
+        <h2>📢 市政公告管理</h2>
+        <div class="pane-tools">
+          <span class="tag tag-super">仅 SUPER</span>
+          <button class="btn btn-primary btn-sm" id="annCreateBtn" style="display:none">+ 发布新公告</button>
+        </div>
+      </div>
+      <p class="hint">公告会出现在首页"市政公告"栏目, 所有人可见。仅 super 管理员可发布/编辑/删除。</p>
+      <div id="annList"></div>
+      <div id="annEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">📢</div>
+        <p>暂无公告, 点右上"+ 发布新公告"创建第一条</p>
+      </div>
+    </section>
+
+    <!-- Tab: 首页图集管理 (仅 super) -->
+    <section class="tab-pane" id="pane-gallery">
+      <div class="pane-head">
+        <h2>🖼️ 首页图集管理</h2>
+        <div class="pane-tools">
+          <span class="tag tag-super">仅 SUPER</span>
+          <button class="btn btn-primary btn-sm" id="galCreateBtn" style="display:none">+ 添加图片</button>
+        </div>
+      </div>
+      <p class="hint">管理首页"城市风貌"和"实景图集"栏目用的所有图片。修改后, 首页 index.html 会立即拉新版本。</p>
+      <div class="filter-bar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn btn-ghost btn-sm gal-cat-btn active" data-cat="">全部</button>
+        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="city">城市</button>
+        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="road">路网</button>
+        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="kart">赛道</button>
+        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="nature">自然</button>
+      </div>
+      <div id="galGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px;"></div>
+      <div id="galEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">🖼️</div>
+        <p>暂无图片, 点右上"+ 添加图片"开始</p>
       </div>
     </section>
 

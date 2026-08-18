@@ -188,7 +188,23 @@ const SCHEMA = [
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT,
     FOREIGN KEY (created_by) REFERENCES admins(id)
-  )`
+  )`,
+  // v18: 首页图集管理 (super only, 公开读)
+  `CREATE TABLE IF NOT EXISTS gallery_items (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    num INTEGER NOT NULL,
+    cat TEXT NOT NULL,           -- city / road / kart / nature / announcement
+    label TEXT NOT NULL,
+    file_url TEXT NOT NULL,       -- https://... 或 data:image/...
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_featured INTEGER NOT NULL DEFAULT 0,
+    is_published INTEGER NOT NULL DEFAULT 1,
+    created_by INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT,
+    FOREIGN KEY (created_by) REFERENCES admins(id)
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_gallery_num ON gallery_items(num)`
 ];
 
 // ALTER 迁移：给已存在的表加新字段（重复加会报"duplicate column"，吞掉）
