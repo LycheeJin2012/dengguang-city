@@ -316,6 +316,16 @@ export async function onRequestGet(context) {
     });
   }
 
+  // v19: 自动 MIGRATIONS — 任何 GET 都会确保 schema/字段最新
+  // (解决"用户没主动 POST /api/init" 导致 MIGRATIONS 没跑, 新字段缺失)
+  // 走 SCHEMA 幂等 (CREATE TABLE IF NOT EXISTS) + MIGRATIONS try/catch 吞错
+  for (const sql of SCHEMA) {
+    try { await env.DB.prepare(sql).run(); } catch (e) {}
+  }
+  for (const sql of MIGRATIONS) {
+    try { await env.DB.prepare(sql).run(); } catch (e) {}
+  }
+
   const tables = await env.DB.prepare(
     "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
   ).all();
