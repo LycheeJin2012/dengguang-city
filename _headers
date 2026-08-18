@@ -1,9 +1,15 @@
-# v18 perf: 让 HTML 不被边缘 cache
+# v18 perf: 让 HTML 不被边缘 cache, 确保用户总拿最新版本
 /*.html
   Cache-Control: no-cache, no-store, must-revalidate
 /
   Cache-Control: no-cache, no-store, must-revalidate
+/admin
+  Cache-Control: no-cache, no-store, must-revalidate
+/profile
+  Cache-Control: no-cache, no-store, must-revalidate
+/dm
+  Cache-Control: no-cache, no-store, must-revalidate
+/hotel
+  Cache-Control: no-cache, no-store, must-revalidate
 /announcements
   Cache-Control: no-cache, no-store, must-revalidate
-
-# 静态资源 (CSS/JS/图片) 走默认 cache 7 天
