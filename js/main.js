@@ -1439,6 +1439,175 @@
     });
   }
 
+  /* ---------- 14.5 服务卡：每日签到 → 打开签到 modal ---------- */
+  const srvSignin = document.getElementById('srvSignin');
+  if (srvSignin) {
+    srvSignin.addEventListener('click', (e) => {
+      e.preventDefault();
+      openSigninModal();
+    });
+  }
+
+  // 主页加载时拉签到状态, 决定是否显示 streak badge
+  fetchSigninStatus().then(updateSigninBadge).catch(() => {});
+
+  // ---- 签到 helper ----
+  async function fetchSigninStatus() {
+    const r = await fetch('/api/init?action=signin-status', { credentials: 'same-origin' });
+    const d = await r.json();
+    if (!d.ok) throw new Error(d.error || '签到状态查询失败');
+    return d;
+  }
+
+  function updateSigninBadge(d) {
+    const badge = document.getElementById('signinStreakBadge');
+    const numEl = document.getElementById('signinStreakNum');
+    if (!badge || !numEl) return;
+    if (d.signed_today) {
+      // 今天已签: 显示蓝色"✓ 今日已签"
+      numEl.innerHTML = '<span style="color:#7dd87e">✓ 今日已签</span>';
+      badge.style.display = '';
+    } else if (d.current_streak > 0) {
+      numEl.textContent = d.current_streak;
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  function emeraldEmoji(n) {
+    if (n >= 200) return '💎💎💎';
+    if (n >= 60) return '💎💎';
+    if (n >= 30) return '💎';
+    return '·';
+  }
+
+  function renderRecentDays(d) {
+    // 渲染最近 7 天日历 (含今天)
+    const days = [];
+    const todayDate = new Date(d.today);
+    for (let i = 6; i >= 0; i--) {
+      const dt = new Date(todayDate.getTime() - i * 86400000);
+      const ds = dt.toISOString().slice(0, 10);
+      const rec = d.recent.find(r => r.signin_date === ds);
+      const isToday = (ds === d.today);
+      days.push({ date: ds, signin: !!rec, streak: rec ? rec.streak : 0, today: isToday });
+    }
+    return days.map(x => {
+      const md = x.date.slice(5).replace('-', '/');
+      return `<div class="signin-day ${x.signin ? 'signed' : ''} ${x.today ? 'today' : ''}" title="${x.date}">
+        <div class="day-date">${md}</div>
+        <div class="day-mark">${x.signin ? '💎' : '·'}</div>
+      </div>`;
+    }).join('');
+  }
+
+  async function openSigninModal() {
+    // 关闭已有
+    const old = document.getElementById('signinModalBackdrop');
+    if (old) old.remove();
+
+    let d;
+    try {
+      d = await fetchSigninStatus();
+    } catch (e) {
+      // 未登录
+      const msg = (e.message || '').includes('登录') || (e.message || '').includes('会话')
+        ? '请先在右上角登录市民账号, 再来签到'
+        : '网络错误: ' + e.message;
+      showToast(msg, 'err');
+      return;
+    }
+
+    const backdrop = document.createElement('div');
+    backdrop.id = 'signinModalBackdrop';
+    backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    backdrop.innerHTML = `
+      <div style="background:#1a1a2e;border:2px solid #6cf;border-radius:8px;padding:24px;max-width:440px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+          <h3 style="margin:0;color:#6cf;font-size:18px;">🎁 每日签到</h3>
+          <button class="signin-close" style="background:none;border:none;color:#9ab;font-size:20px;cursor:pointer;line-height:1;">×</button>
+        </div>
+        <div style="display:flex;gap:14px;align-items:center;background:#0f1024;padding:14px;border-radius:6px;margin-bottom:14px;">
+          <div style="font-size:38px;">💎</div>
+          <div style="flex:1;">
+            <div style="color:#9ab;font-size:11px;line-height:1.4;">当前绿宝石</div>
+            <div style="color:#ffd23f;font-size:24px;font-weight:bold;line-height:1.2;">${d.emeralds}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:#9ab;font-size:11px;line-height:1.4;">连续 / 总</div>
+            <div style="color:#7dd87e;font-size:18px;font-weight:bold;line-height:1.2;">🔥 ${d.current_streak} <span style="color:#9ab;font-size:13px;font-weight:normal;">/ ${d.total_days} 天</span></div>
+          </div>
+        </div>
+        <div style="margin-bottom:14px;">
+          <div style="color:#9ab;font-size:12px;margin-bottom:6px;">最近 7 天</div>
+          <div class="signin-week">${renderRecentDays(d)}</div>
+        </div>
+        <div style="color:#9ab;font-size:11px;line-height:1.6;margin-bottom:14px;background:#0a0a1e;padding:8px;border-radius:4px;">
+          奖励规则: 7 天一个循环<br>
+          第 1 天 +1 💎 · 第 2 天 +2 · ... · 第 7 天 +7 💎<br>
+          第 8 天重新从 +1 开始 (一周循环往复)
+        </div>
+        <button class="btn btn-primary btn-block" id="signinBtn" ${d.signed_today ? 'disabled' : ''}>
+          ${d.signed_today ? '✓ 今日已签, 明天再来' : '🎁 签到领绿宝石'}
+        </button>
+        <div id="signinMsg" style="min-height:18px;font-size:12px;margin-top:8px;text-align:center;"></div>
+      </div>
+    `;
+    document.body.appendChild(backdrop);
+
+    backdrop.querySelector('.signin-close').onclick = () => backdrop.remove();
+    backdrop.addEventListener('click', e => { if (e.target === backdrop) backdrop.remove(); });
+
+    const btn = document.getElementById('signinBtn');
+    if (btn && !btn.disabled) {
+      btn.onclick = async () => {
+        btn.disabled = true;
+        const msg = document.getElementById('signinMsg');
+        msg.style.color = '#fc6';
+        msg.textContent = '签到中…';
+        try {
+          const r = await fetch('/api/init?action=signin', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+          const rd = await r.json();
+          if (!rd.ok) throw new Error(rd.error || '签到失败');
+          msg.style.color = '#7dd87e';
+          msg.textContent = rd.message + (rd.bonus ? ' (连签奖励!)' : '');
+          // 更新 modal 数字
+          const emeraldEl = backdrop.querySelector('[style*="color:#ffd23f"]');
+          if (emeraldEl) emeraldEl.textContent = rd.emeralds;
+          btn.textContent = '✓ 今日已签, 明天再来';
+          // 重新拉一次状态, 更新日历 + 角标
+          const fresh = await fetchSigninStatus();
+          const weekEl = backdrop.querySelector('.signin-week');
+          if (weekEl) weekEl.innerHTML = renderRecentDays(fresh);
+          updateSigninBadge(fresh);
+          // 全屏闪光特效
+          showSigninFlash(rd.today_emeralds);
+        } catch (e) {
+          msg.style.color = '#f99';
+          msg.textContent = '✗ ' + e.message;
+          btn.disabled = false;
+        }
+      };
+    }
+  }
+
+  function showSigninFlash(n) {
+    const flash = document.createElement('div');
+    flash.style.cssText = 'position:fixed;inset:0;z-index:999999;pointer-events:none;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);animation:signin-fade 1.4s forwards;';
+    flash.innerHTML = `<div style="text-align:center;color:#ffd23f;font-size:60px;font-weight:bold;text-shadow:0 0 30px #ffd23f;">
+      +${n} 💎
+    </div>
+    <style>@keyframes signin-fade {
+      0% { opacity:0; transform:scale(.6); }
+      20% { opacity:1; transform:scale(1.1); }
+      40% { opacity:1; transform:scale(1); }
+      100% { opacity:0; transform:scale(1); }
+    }</style>`;
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 1500);
+  }
+
   if (loginForm) {
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();

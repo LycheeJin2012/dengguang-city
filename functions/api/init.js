@@ -204,7 +204,20 @@ const SCHEMA = [
     updated_at TEXT,
     FOREIGN KEY (created_by) REFERENCES admins(id)
   )`,
-  `CREATE UNIQUE INDEX IF NOT EXISTS idx_gallery_num ON gallery_items(num)`
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_gallery_num ON gallery_items(num)`,
+  // v19: 每日签到 (玩家每日登录领绿宝石)
+  `CREATE TABLE IF NOT EXISTS daily_signin (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id INTEGER NOT NULL,
+    signin_date TEXT NOT NULL,        -- YYYY-MM-DD (本地日期)
+    streak INTEGER NOT NULL DEFAULT 1, -- 连续天数
+    emeralds_earned INTEGER NOT NULL DEFAULT 10,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(player_id, signin_date),
+    FOREIGN KEY (player_id) REFERENCES players(id)
+  )`,
+  `CREATE INDEX IF NOT EXISTS idx_signin_player ON daily_signin(player_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_signin_date ON daily_signin(signin_date DESC)`
 ];
 
 // ALTER 迁移：给已存在的表加新字段（重复加会报"duplicate column"，吞掉）
@@ -248,6 +261,8 @@ const MIGRATIONS = [
   `CREATE INDEX IF NOT EXISTS idx_passkeys_admin ON passkeys(admin_id)`,
   `CREATE INDEX IF NOT EXISTS idx_announcements_created ON announcements(created_at DESC)`,
   `CREATE INDEX IF NOT EXISTS idx_webauthn_expires ON webauthn_challenges(expires_at)`,
+  // v19: 每日签到 — players.emeralds 绿宝石余额 + daily_signin 表 (已建在 SCHEMA)
+  `ALTER TABLE players ADD COLUMN emeralds INTEGER NOT NULL DEFAULT 0`,
 ];
 
 export async function onRequestGet(context) {
@@ -1130,6 +1145,96 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
     } catch (e) {
       return err(500, 'admin-logout err: ' + (e?.message || String(e)) + ' | sess=' + JSON.stringify(_sess));
     }
+  }
+
+  // ============================================================
+  // v19: 每日签到 — GET 查状态, POST 签到领绿宝石
+  // GET  /api/init?action=signin-status       (player 登录)
+  // POST /api/init?action=signin              (player 登录, 同日只发一次)
+  // ============================================================
+  if (_action === 'signin-status' || _action === 'signin') {
+    if (!_sess || !_sess.player_id) return err(401, '需要玩家登录');
+    if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
+    // 取玩家 + 绿宝石余额
+    const _p = await env.DB.prepare('SELECT id, username, emeralds FROM players WHERE id = ?')
+      .bind(_sess.player_id).first();
+    if (!_p) return err(404, '玩家不存在');
+    // 今日日期 (本地时间 → UTC+8 简化: 用 server now 转 Asia/Shanghai 字符串)
+    const _today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai' }).format(new Date()); // YYYY-MM-DD
+    // 查今日是否已签
+    const _todayRow = await env.DB.prepare(
+      'SELECT id, streak, emeralds_earned FROM daily_signin WHERE player_id = ? AND signin_date = ?'
+    ).bind(_p.id, _today).first();
+    // 查最近 7 天签到记录
+    const _recent = await env.DB.prepare(
+      'SELECT signin_date, streak, emeralds_earned FROM daily_signin WHERE player_id = ? ORDER BY signin_date DESC LIMIT 7'
+    ).bind(_p.id).all();
+    // 总签到天数
+    const _totalRow = await env.DB.prepare(
+      'SELECT COUNT(*) AS c, COALESCE(MAX(streak), 0) AS max_streak FROM daily_signin WHERE player_id = ?'
+    ).bind(_p.id).first();
+    // 算当前连续 (从最近一次签到往前数, 中间没断的就是 streak)
+    let _curStreak = 0;
+    if (_recent.results.length) {
+      _curStreak = _recent.results[0].streak;
+      // 校验: 如果最近一次不是今天也不是昨天, 当前连续归零
+      const _yest = new Date(new Date(_today).getTime() - 86400000).toISOString().slice(0, 10);
+      if (_recent.results[0].signin_date !== _today && _recent.results[0].signin_date !== _yest) {
+        _curStreak = 0;
+      }
+    }
+    if (_action === 'signin-status') {
+      return ok({
+        signed_today: !!_todayRow,
+        today_streak: _todayRow ? _todayRow.streak : 0,
+        today_emeralds: _todayRow ? _todayRow.emeralds_earned : 0,
+        current_streak: _curStreak,
+        max_streak: _totalRow ? _totalRow.max_streak : 0,
+        total_days: _totalRow ? _totalRow.c : 0,
+        emeralds: _p.emeralds || 0,
+        recent: _recent.results,
+        today: _today,
+      });
+    }
+    // POST signin
+    if (_todayRow) {
+      return err(409, '今天已经签到过了, 明天再来', {
+        signed_today: true,
+        today_streak: _todayRow.streak,
+        today_emeralds: _todayRow.emeralds_earned,
+        emeralds: _p.emeralds || 0,
+      });
+    }
+    // 算本次连续天数 (看昨天是否签到)
+    const _yest2 = new Date(new Date(_today).getTime() - 86400000).toISOString().slice(0, 10);
+    const _yestRow = await env.DB.prepare(
+      'SELECT id, streak FROM daily_signin WHERE player_id = ? AND signin_date = ?'
+    ).bind(_p.id, _yest2).first();
+    const _newStreak = _yestRow ? (_yestRow.streak + 1) : 1;
+    // v19 奖励: 7 天一个循环, 第 1 天 1 绿宝, 第 7 天 7 绿宝, 第 8 天回到 1
+    const _dayInCycle = ((_newStreak - 1) % 7) + 1; // 1..7 循环
+    const _reward = _dayInCycle;
+    // 写库
+    try {
+      await env.DB.prepare(
+        'INSERT INTO daily_signin (player_id, signin_date, streak, emeralds_earned) VALUES (?, ?, ?, ?)'
+      ).bind(_p.id, _today, _newStreak, _reward).run();
+    } catch (e) {
+      // UNIQUE 冲突 = 同一玩家同日重复签到 (race condition)
+      return err(409, '今天已经签到过了, 明天再来');
+    }
+    const _newEmeralds = (_p.emeralds || 0) + _reward;
+    await env.DB.prepare('UPDATE players SET emeralds = ? WHERE id = ?')
+      .bind(_newEmeralds, _p.id).run();
+    return ok({
+      signed_today: true,
+      today_streak: _newStreak,
+      today_emeralds: _reward,
+      day_in_cycle: _dayInCycle,
+      current_streak: _newStreak,
+      emeralds: _newEmeralds,
+      message: '签到成功! +' + _reward + ' 💎 (本周第 ' + _dayInCycle + ' / 7 天)',
+    });
   }
 
   // 1. 建表

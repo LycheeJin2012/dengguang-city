@@ -2777,3 +2777,88 @@ textarea { resize: vertical; min-height: 90px; }
   .footer-cols { grid-template-columns: 1fr 1fr; }
   .footer-bottom .container { font-size: 11px; }
 }
+
+/* ---------- admin-new.html 二级密码 modal 的 tab 按钮 ---------- */
+.enter-tab {
+  flex: 1;
+  padding: 8px 10px;
+  border: 2px solid #446;
+  background: #0f1024;
+  color: #c8d6f0;
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all .15s;
+}
+.enter-tab:hover {
+  background: #1a1f3a;
+  border-color: #6cf;
+  color: #fff;
+}
+.enter-tab-active {
+  background: #2a7a3a;
+  border-color: #7dd87e;
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(125,216,126,.25) inset;
+}
+.enter-tab-active:hover {
+  background: #2e8a40;
+}
+
+/* ---------- 每日签到 (v19) ---------- */
+.signin-streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  padding: 3px 10px;
+  background: rgba(255, 210, 63, .15);
+  border: 1px solid #ffd23f;
+  border-radius: 12px;
+  font-size: 12px;
+  color: #ffd23f;
+  font-weight: 500;
+}
+.signin-streak .streak-flame {
+  font-size: 14px;
+  filter: drop-shadow(0 0 4px rgba(255, 100, 0, .5));
+}
+.signin-week {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.signin-day {
+  background: #0a0a1e;
+  border: 1px solid #334;
+  border-radius: 4px;
+  padding: 6px 2px;
+  text-align: center;
+  min-height: 50px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.signin-day.signed {
+  background: #14261a;
+  border-color: #4a8a3a;
+}
+.signin-day.signed .day-mark {
+  color: #ffd23f;
+  font-size: 16px;
+}
+.signin-day.today {
+  border-color: #6cf;
+  box-shadow: 0 0 0 1px #6cf;
+}
+.signin-day .day-date {
+  color: #9ab;
+  font-size: 10px;
+  font-family: 'Press Start 2P', monospace;
+}
+.signin-day .day-mark {
+  color: #446;
+  font-size: 14px;
+}

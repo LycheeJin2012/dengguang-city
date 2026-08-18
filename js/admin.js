@@ -84,8 +84,8 @@ function showAdminEnterModal(player, adminId) {
         进入管理需要 <b style="color:#fc6">二级验证</b>: 输入关联管理员的密码, 或用通行密钥。
       </p>
       <div id="adminEnterTabs" style="display:flex;gap:4px;margin-bottom:14px;">
-        <button id="tabPw" class="btn btn-primary btn-sm" style="flex:1;">🔑 管理员密码</button>
-        <button id="tabPk" class="btn btn-ghost btn-sm" style="flex:1;">🔐 通行密钥</button>
+        <button id="tabPw" class="enter-tab enter-tab-active" style="flex:1;">🔑 管理员密码</button>
+        <button id="tabPk" class="enter-tab" style="flex:1;">🔐 通行密钥</button>
       </div>
       <div id="adminEnterPw">
         <label style="color:#9ab;font-size:12px;display:block;margin-bottom:4px;">关联管理员密码</label>
@@ -113,14 +113,14 @@ function showAdminEnterModal(player, adminId) {
 
   // 切 tab
   document.getElementById('tabPw').onclick = () => {
-    document.getElementById('tabPw').className = 'btn btn-primary btn-sm';
-    document.getElementById('tabPk').className = 'btn btn-ghost btn-sm';
+    document.getElementById('tabPw').className = 'enter-tab enter-tab-active';
+    document.getElementById('tabPk').className = 'enter-tab';
     document.getElementById('adminEnterPw').style.display = '';
     document.getElementById('adminEnterPk').style.display = 'none';
   };
   document.getElementById('tabPk').onclick = () => {
-    document.getElementById('tabPk').className = 'btn btn-primary btn-sm';
-    document.getElementById('tabPw').className = 'btn btn-ghost btn-sm';
+    document.getElementById('tabPk').className = 'enter-tab enter-tab-active';
+    document.getElementById('tabPw').className = 'enter-tab';
     document.getElementById('adminEnterPk').style.display = '';
     document.getElementById('adminEnterPw').style.display = 'none';
   };
