@@ -271,6 +271,51 @@ export async function onRequestGet(context) {
 
   // v18: GET /api/init?action=announcements-list 已拆到 functions/api/announcements.js
 
+  // v19: GET /api/init?action=signin-status  (player 登录)
+  const _u = new URL(request.url);
+  const _a = _u.searchParams.get('action') || '';
+  if (_a === 'signin-status') {
+    // cookie 解析
+    const _ck = request.headers.get('Cookie') || '';
+    const _m = _ck.match(/lc_session=([^;]+)/);
+    if (!_m) return err(401, '未登录');
+    const _sess = await env.DB.prepare('SELECT player_id, expires_at FROM sessions WHERE token = ?').bind(_m[1]).first();
+    if (!_sess || !_sess.player_id) return err(401, '需要玩家登录');
+    if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
+    const _p = await env.DB.prepare('SELECT id, username, emeralds FROM players WHERE id = ?')
+      .bind(_sess.player_id).first();
+    if (!_p) return err(404, '玩家不存在');
+    const _today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai' }).format(new Date());
+    const _todayRow = await env.DB.prepare(
+      'SELECT id, streak, emeralds_earned FROM daily_signin WHERE player_id = ? AND signin_date = ?'
+    ).bind(_p.id, _today).first();
+    const _recent = await env.DB.prepare(
+      'SELECT signin_date, streak, emeralds_earned FROM daily_signin WHERE player_id = ? ORDER BY signin_date DESC LIMIT 7'
+    ).bind(_p.id).all();
+    const _totalRow = await env.DB.prepare(
+      'SELECT COUNT(*) AS c, COALESCE(MAX(streak), 0) AS max_streak FROM daily_signin WHERE player_id = ?'
+    ).bind(_p.id).first();
+    let _curStreak = 0;
+    if (_recent.results.length) {
+      _curStreak = _recent.results[0].streak;
+      const _yest = new Date(new Date(_today).getTime() - 86400000).toISOString().slice(0, 10);
+      if (_recent.results[0].signin_date !== _today && _recent.results[0].signin_date !== _yest) {
+        _curStreak = 0;
+      }
+    }
+    return ok({
+      signed_today: !!_todayRow,
+      today_streak: _todayRow ? _todayRow.streak : 0,
+      today_emeralds: _todayRow ? _todayRow.emeralds_earned : 0,
+      current_streak: _curStreak,
+      max_streak: _totalRow ? _totalRow.max_streak : 0,
+      total_days: _totalRow ? _totalRow.c : 0,
+      emeralds: _p.emeralds || 0,
+      recent: _recent.results,
+      today: _today,
+    });
+  }
+
   const tables = await env.DB.prepare(
     "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name"
   ).all();
