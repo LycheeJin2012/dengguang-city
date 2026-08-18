@@ -763,6 +763,39 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   // v17.10: super 诊断/修复 passkey jwk (x/y 字节长度)
   // POST /api/init?action=admin-passkey-fix-jwks  (super)
   // ============================================================
+  if (_action === 'admin-passkey-reregister') {
+    if (!_me || _me.role !== 'super') return err(403, '只有 super 管理员可运行');
+    // 一次性 UPDATE: 对所有 passkey 把 jwk.x 取 last 32 字节, jwk.y 取 last 32 字节 (跳过 CBOR 头)
+    // 因为 db 里的 jwk.x/y 实际是整个 COSE_Key binary, x 在偏移 11-42, y 在偏移 46-77
+    const rows = await env.DB.prepare('SELECT id, public_key_jwk FROM passkeys').all();
+    const out = [];
+    for (const r of (rows.results || [])) {
+      let jwk = {}; try { jwk = JSON.parse(r.public_key_jwk); } catch (e) {}
+      try {
+        const xFull = Uint8Array.from(atob((jwk.x || '').replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+        const yFull = Uint8Array.from(atob((jwk.y || '').replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+        if (xFull.length === 77 && yFull.length === 77) {
+          // x 在 [11, 43), y 在 [46, 78)
+          const xBytes = xFull.slice(11, 43);
+          const yBytes = yFull.slice(46, 78);
+          const toB64 = (b) => {
+            let s = ''; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+            return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+          };
+          const newJwk = { kty: 'EC', crv: 'P-256', alg: 'ES256', ext: false, x: toB64(xBytes), y: toB64(yBytes) };
+          await env.DB.prepare('UPDATE passkeys SET public_key_jwk = ? WHERE id = ?')
+            .bind(JSON.stringify(newJwk), r.id).run();
+          out.push({ id: r.id, fixed: true, new_x: newJwk.x.substring(0, 12) + '...', new_y: newJwk.y.substring(0, 12) + '...' });
+        } else {
+          out.push({ id: r.id, fixed: false, reason: 'xFull=' + xFull.length + ' yFull=' + yFull.length });
+        }
+      } catch (e) {
+        out.push({ id: r.id, fixed: false, reason: e.message });
+      }
+    }
+    return ok({ total: out.length, list: out });
+  }
+
   if (_action === 'admin-passkey-debug') {
     if (!_me || _me.role !== 'super') return err(403, '只有 super 管理员可运行');
     const rows = await env.DB.prepare('SELECT id, credential_id, public_key_jwk FROM passkeys ORDER BY id').all();
