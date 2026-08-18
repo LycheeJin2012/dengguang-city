@@ -78,6 +78,16 @@ export async function onRequestPatch(context) {
     const { hash, salt } = await hashPassword(pw);
     await env.DB.prepare('UPDATE admins SET password_hash = ?, salt = ? WHERE id = ?').bind(hash, salt, id).run();
   }
+  // v20: 改用户名 (仅 super, 不能改自己)
+  if (body.username && body.username !== target.username) {
+    if (me.role !== 'super') return err(403, '只有 super 可改用户名');
+    if (target.id === me.id) return err(400, '不能改自己的用户名');
+    const _newU = body.username.trim();
+    if (!isUsername(_newU)) return err(400, '用户名需 3-32 字符 [a-zA-Z0-9_-]');
+    const _exist = await env.DB.prepare('SELECT id FROM admins WHERE username = ? AND id != ?').bind(_newU, id).first();
+    if (_exist) return err(409, '用户名已被占用');
+    await env.DB.prepare('UPDATE admins SET username = ? WHERE id = ?').bind(_newU, id).run();
+  }
   // 改角色（仅 super）
   if (body.role && body.role !== target.role) {
     if (me.role !== 'super') return err(403, '只有 super 可改角色');

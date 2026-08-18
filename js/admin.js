@@ -707,6 +707,7 @@ async function renderBookings(){
           ${b.note?`<div>📝 ${esc(b.note)}</div>`:''}
         </div>
         <div class="msg-actions book-actions">
+          <button class="btn btn-primary btn-sm" data-act="edit">✎ 编辑</button>
           <select class="book-status-sel">${opts}</select>
           <button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>
         </div>
@@ -714,8 +715,11 @@ async function renderBookings(){
     }).join('');
     box.querySelectorAll('.msg-item').forEach(el=>{
       const id=+el.dataset.id;
+      const _b = list.find(x => x.id === id);
       el.querySelector('.book-status-sel').onchange=(e)=>bookStatus(id,e.target.value);
       el.querySelector('[data-act="del"]').onclick=()=>bookDel(id);
+      const _eb = el.querySelector('[data-act="edit"]');
+      if (_eb) _eb.onclick = () => _b && bookEdit(_b);
     });
   }catch(e){console.error(e);}
 }
@@ -727,6 +731,86 @@ async function bookDel(id){
   if(!confirm('删除该订单？'))return;
   try{await DEL('/api/admin/bookings?id='+id);renderBookings();}
   catch(e){alert('失败: '+e.message);}
+}
+
+// v20: 酒店预订编辑 modal
+function bookEdit(b) {
+  const old = document.getElementById('bookEditBackdrop');
+  if (old) old.remove();
+  const bd = document.createElement('div');
+  bd.id = 'bookEditBackdrop';
+  bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  bd.innerHTML = `
+    <div style="background:#1a1a2e;border:2px solid #fc6;border-radius:8px;padding:18px;max-width:540px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;">
+      <h3 style="margin:0 0 12px;color:#fc6;font-size:16px;">✎ 编辑酒店预订 #${b.id}</h3>
+      <label style="display:block;margin-bottom:8px;">
+        <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">姓名</span>
+        <input id="beName" value="${esc(b.name||'')}" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+      </label>
+      <label style="display:block;margin-bottom:8px;">
+        <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">联系方式</span>
+        <input id="beContact" value="${esc(b.contact||'')}" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+      </label>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <label style="flex:1;display:block;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">入住日期</span>
+          <input id="beIn" type="date" value="${esc(b.in_date||'')}" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+        </label>
+        <label style="flex:1;display:block;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">退房日期</span>
+          <input id="beOut" type="date" value="${esc(b.out_date||'')}" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <label style="flex:1;display:block;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">人数</span>
+          <input id="bePersons" type="number" min="1" value="${b.persons||1}" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+        </label>
+        <label style="flex:1;display:flex;align-items:center;gap:6px;color:#ccc;font-size:13px;padding-top:18px;">
+          <input id="beBf" type="checkbox" ${b.breakfast ? 'checked' : ''} /> 🍳 含早餐
+        </label>
+      </div>
+      <label style="display:block;margin-bottom:8px;">
+        <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">特殊要求</span>
+        <textarea id="beNote" rows="2" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;line-height:1.4;resize:vertical;box-sizing:border-box;">${esc(b.note||'')}</textarea>
+      </label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+        <button id="beCancel" type="button" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">取消</button>
+        <button id="beSave" type="button" style="background:#fc6;color:#000;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:13px;">💾 保存</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(bd);
+  const close = () => bd.remove();
+  bd.addEventListener('click', e => { if (e.target === bd) close(); });
+  bd.querySelector('#beCancel').onclick = close;
+  bd.querySelector('#beSave').onclick = async () => {
+    const btn = bd.querySelector('#beSave');
+    btn.disabled = true; btn.textContent = '⏳ 保存中...';
+    try {
+      const body = {
+        name: bd.querySelector('#beName').value.trim(),
+        contact: bd.querySelector('#beContact').value.trim(),
+        in_date: bd.querySelector('#beIn').value,
+        out_date: bd.querySelector('#beOut').value,
+        persons: parseInt(bd.querySelector('#bePersons').value, 10) || 1,
+        breakfast: bd.querySelector('#beBf').checked ? 1 : 0,
+        note: bd.querySelector('#beNote').value.trim(),
+      };
+      const r = await fetch('/api/admin/bookings?id=' + b.id, {
+        method: 'PATCH', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || '保存失败');
+      close();
+      renderBookings();
+    } catch (e) {
+      alert('保存失败: ' + e.message);
+      btn.disabled = false; btn.textContent = '💾 保存';
+    }
+  };
 }
 
 async function renderLicense(){
@@ -799,15 +883,18 @@ async function renderKarts(){
           ${k.car?`<span class="gallery-num">车号 #${esc(k.car)}</span>`:''}
         </div><div class="msg-time">${fmt(k.created_at)}</div></div>
         <div class="msg-actions book-actions">
+          <button class="btn btn-primary btn-sm" data-act="edit">✎ 编辑</button>
           <select class="book-status-sel">${opts}</select>
           <button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>
         </div>
       </article>`;
     }).join('');
     box.querySelectorAll('.msg-item').forEach(el=>{
-      const id=el.dataset.id;
+      const id=+el.dataset.id;
+      const _k = list.find(x => x.id === id);
       el.querySelector('.book-status-sel').onchange=(e)=>kartStatus(id,e.target.value);
       el.querySelector('[data-act="del"]').onclick=()=>kartDel(id);
+      el.querySelector('[data-act="edit"]')?.addEventListener('click', () => _k && kartCircuitEdit(_k, 'kart'));
     });
   }catch(e){console.error(e);}
 }
@@ -843,21 +930,107 @@ async function renderCircuits(){
           ${c.license?`<span class="gallery-num">${esc(c.license)}</span>`:''}
         </div><div class="msg-time">${fmt(c.created_at)}</div></div>
         <div class="msg-actions book-actions">
+          <button class="btn btn-primary btn-sm" data-act="edit">✎ 编辑</button>
           <select class="book-status-sel">${opts}</select>
           <button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>
         </div>
       </article>`;
     }).join('');
     box.querySelectorAll('.msg-item').forEach(el=>{
-      const id=el.dataset.id;
+      const id=+el.dataset.id;
+      const _c = list.find(x => x.id === id);
       el.querySelector('.book-status-sel').onchange=(e)=>circuitStatus(id,e.target.value);
       el.querySelector('[data-act="del"]').onclick=()=>circuitDel(id);
+      el.querySelector('[data-act="edit"]')?.addEventListener('click', () => _c && kartCircuitEdit(_c, 'circuit'));
     });
   }catch(e){console.error(e);}
 }
 async function circuitStatus(id,s){
   try{await PATCH('/api/admin/circuit?id='+id,{status:s});renderCircuits();}
   catch(e){alert('失败: '+e.message);}
+}
+
+// v20: 赛道/赛车场报名编辑 modal (公用)
+function kartCircuitEdit(it, kind) {
+  const old = document.getElementById('kcEditBackdrop');
+  if (old) old.remove();
+  const bd = document.createElement('div');
+  bd.id = 'kcEditBackdrop';
+  bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  const isK = kind === 'kart';
+  const _type = isK ? '🏁 赛道报名' : '🏎️ 国际赛车场';
+  const _color = isK ? '#fc6' : '#c6f';
+  const _endpoint = isK ? '/api/admin/kart' : '/api/admin/circuit';
+  const _statusOpts = (isK ? ['pending','approved','rejected'] : ['pending','confirmed','cancelled'])
+    .map(s => `<option value="${s}" ${s===it.status?'selected':''}>${({pending:'待处理',approved:'已批准',rejected:'已拒绝',confirmed:'已确认',cancelled:'已取消'})[s]}</option>`).join('');
+  bd.innerHTML = `
+    <div style="background:#1a1a2e;border:2px solid ${_color};border-radius:8px;padding:18px;max-width:540px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;">
+      <h3 style="margin:0 0 12px;color:${_color};font-size:16px;">✎ 编辑${_type} #${it.id}</h3>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <label style="flex:1;display:block;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">姓名</span>
+          <input id="kcName" value="${esc(it.name||'')}" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+        </label>
+        <label style="flex:1;display:block;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">联系方式</span>
+          <input id="kcContact" value="${esc(it.contact||'')}" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+        </label>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:8px;">
+        <label style="flex:1;display:block;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">场次 (session)</span>
+          <input id="kcSession" value="${esc(it.session||'')}" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+        </label>
+        <label style="flex:1;display:block;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">${isK ? '车辆 (car)' : '驾照 (license)'}</span>
+          <input id="kcCar" value="${esc((isK?it.car:it.license)||'')}" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+        </label>
+      </div>
+      <label style="display:block;margin-bottom:8px;">
+        <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">状态</span>
+        <select id="kcStatus" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;">${_statusOpts}</select>
+      </label>
+      <label style="display:block;margin-bottom:8px;">
+        <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">备注</span>
+        <textarea id="kcNote" rows="2" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;line-height:1.4;resize:vertical;box-sizing:border-box;">${esc(it.note||'')}</textarea>
+      </label>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+        <button id="kcCancel" type="button" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">取消</button>
+        <button id="kcSave" type="button" style="background:${_color};color:#000;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:13px;">💾 保存</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(bd);
+  const close = () => bd.remove();
+  bd.addEventListener('click', e => { if (e.target === bd) close(); });
+  bd.querySelector('#kcCancel').onclick = close;
+  bd.querySelector('#kcSave').onclick = async () => {
+    const btn = bd.querySelector('#kcSave');
+    btn.disabled = true; btn.textContent = '⏳ 保存中...';
+    try {
+      const body = {
+        name: bd.querySelector('#kcName').value.trim(),
+        contact: bd.querySelector('#kcContact').value.trim(),
+        session: bd.querySelector('#kcSession').value.trim(),
+        status: bd.querySelector('#kcStatus').value,
+        note: bd.querySelector('#kcNote').value.trim(),
+      };
+      if (isK) body.car = bd.querySelector('#kcCar').value.trim();
+      else body.license = bd.querySelector('#kcCar').value.trim();
+      const r = await fetch(_endpoint + '?id=' + it.id, {
+        method: 'PATCH', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || '保存失败');
+      close();
+      (isK ? renderKarts : renderCircuits)();
+    } catch (e) {
+      alert('保存失败: ' + e.message);
+      btn.disabled = false; btn.textContent = '💾 保存';
+    }
+  };
 }
 async function circuitDel(id){
   if(!confirm('删除该报名？'))return;
@@ -887,6 +1060,7 @@ async function renderAdminList(){
           ${linkedBadge}
         </div>
         <div class="admin-actions">
+          ${me.role==='super'?`<button class="btn btn-primary btn-sm" data-act="edit">✎ 编辑</button>`:''}
           ${me.role==='super'?`<button class="btn btn-ghost btn-sm" data-act="link">${a.linked_player_id?'⛓️‍💥 解除合并':'🔗 合并玩家'}</button>`:''}
           ${me.role==='super'?`<button class="btn btn-ghost btn-sm" data-act="reset">${isMe?'修改密码':'重置密码'}</button>`:''}
           ${canDel?`<button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>`:''}
@@ -894,7 +1068,9 @@ async function renderAdminList(){
       </article>`;
     }).join('');
     box.querySelectorAll('.admin-item').forEach(el=>{
-      const id=el.dataset.id;
+      const id=+el.dataset.id;
+      const _a = list.find(x => x.id === id);
+      el.querySelector('[data-act="edit"]')?.addEventListener('click',()=>_a && adminEdit(_a));
       el.querySelector('[data-act="reset"]')?.addEventListener('click',()=>adminReset(id));
       el.querySelector('[data-act="del"]')?.addEventListener('click',()=>adminDel(id));
       el.querySelector('[data-act="link"]')?.addEventListener('click',()=>adminLink(id));
@@ -906,6 +1082,65 @@ async function adminReset(id){
   if(np.length<8){alert('至少 8 位');return;}
   try{await PATCH('/api/admin/admins?id='+id,{new_password:np});alert('已重置');}
   catch(e){alert('失败: '+e.message);}
+}
+
+// v20: 管理员账号编辑 (用户名 + 角色)
+function adminEdit(a) {
+  const old = document.getElementById('adminEditBackdrop');
+  if (old) old.remove();
+  const bd = document.createElement('div');
+  bd.id = 'adminEditBackdrop';
+  bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  const isMe = window._me && a.id === window._me.id;
+  bd.innerHTML = `
+    <div style="background:#1a1a2e;border:2px solid #a6a;border-radius:8px;padding:18px;max-width:440px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);">
+      <h3 style="margin:0 0 12px;color:#c8c;font-size:16px;">✎ 编辑管理员 #${a.id}</h3>
+      <label style="display:block;margin-bottom:8px;">
+        <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">用户名 (3-32 字符)</span>
+        <input id="admUser" value="${esc(a.username)}" ${isMe?'disabled':''} style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:${isMe?'#1a1a2a':'#0f0f1a'};color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;" />
+      </label>
+      <label style="display:block;margin-bottom:8px;">
+        <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">角色</span>
+        <select id="admRole" ${isMe?'disabled':''} style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:${isMe?'#1a1a2a':'#0f0f1a'};color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;">
+          <option value="admin" ${a.role==='admin'?'selected':''}>ADMIN (普通管理员)</option>
+          <option value="super" ${a.role==='super'?'selected':''}>SUPER (超级管理员)</option>
+        </select>
+      </label>
+      ${isMe?'<p style="color:#a6a;font-size:11px;margin-bottom:8px;">⚠️ 自己的账号不能改用户名/角色, 用"修改密码"按钮改密码</p>':''}
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
+        <button id="admCancel" type="button" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">取消</button>
+        <button id="admSave" type="button" style="background:#a6a;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:13px;">💾 保存</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(bd);
+  const close = () => bd.remove();
+  bd.addEventListener('click', e => { if (e.target === bd) close(); });
+  bd.querySelector('#admCancel').onclick = close;
+  bd.querySelector('#admSave').onclick = async () => {
+    const btn = bd.querySelector('#admSave');
+    btn.disabled = true; btn.textContent = '⏳ 保存中...';
+    try {
+      const body = {};
+      const newU = bd.querySelector('#admUser').value.trim();
+      const newR = bd.querySelector('#admRole').value;
+      if (!isMe && newU !== a.username) body.username = newU;
+      if (!isMe && newR !== a.role) body.role = newR;
+      if (Object.keys(body).length === 0) { close(); return; }
+      const r = await fetch('/api/admin/admins?id=' + a.id, {
+        method: 'PATCH', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || '保存失败');
+      close();
+      renderAdminList();
+    } catch (e) {
+      alert('保存失败: ' + e.message);
+      btn.disabled = false; btn.textContent = '💾 保存';
+    }
+  };
 }
 async function adminDel(id){
   if(!confirm('删除该管理员？'))return;
@@ -1241,8 +1476,15 @@ async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
           <input id="galLabel" maxlength="80" value="${_v('label')}" placeholder="如：市中心发言台" style="width:100%;padding:8px 10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;box-sizing:border-box;" />
         </label>
         <label style="display:block;margin-bottom:8px;">
-          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">图片 URL (https:// 开头, 也支持 data:image/...)</span>
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">图片 (二选一)</span>
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+            <input id="galFile" type="file" accept="image/*" style="flex:1;font-size:12px;color:#ccc;" />
+            <span style="color:#888;font-size:11px;">或粘贴 URL ↓</span>
+          </div>
           <textarea id="galUrl" maxlength="2000" placeholder="https://... 或 data:image/png;base64,..." style="width:100%;min-height:80px;padding:8px 10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:monospace;font-size:12px;line-height:1.4;resize:vertical;box-sizing:border-box;">${_v('file_url')}</textarea>
+          <div id="galPreview" style="margin-top:6px;max-width:100%;max-height:160px;overflow:hidden;display:${_v('file_url') ? 'block' : 'none'};">
+            <img id="galPreviewImg" src="${_v('file_url')}" style="max-width:100%;max-height:160px;border-radius:4px;" />
+          </div>
         </label>
         <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:8px;">
           <label style="display:flex;align-items:center;gap:4px;color:#ccc;font-size:13px;">
@@ -1267,6 +1509,32 @@ async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
       // 选中 cat
       const _catEl = bd.querySelector('#galCat');
       if (_catEl) _catEl.value = item.cat || 'city';
+    }
+    // v20: 文件选择 → FileReader 转 base64 → 填入 URL + 预览
+    const _fileInput = bd.querySelector('#galFile');
+    const _urlInput = bd.querySelector('#galUrl');
+    const _preview = bd.querySelector('#galPreview');
+    const _previewImg = bd.querySelector('#galPreviewImg');
+    if (_fileInput) {
+      _fileInput.addEventListener('change', (e) => {
+        const f = e.target.files && e.target.files[0];
+        if (!f) return;
+        if (f.size > 1500 * 1024) { alert('文件太大 (上限 1.5MB), 请压缩后再试'); _fileInput.value = ''; return; }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const dataUrl = ev.target.result;
+          _urlInput.value = dataUrl;
+          if (_previewImg) _previewImg.src = dataUrl;
+          if (_preview) _preview.style.display = 'block';
+        };
+        reader.readAsDataURL(f);
+      });
+    }
+    if (_urlInput) {
+      _urlInput.addEventListener('input', () => {
+        if (_previewImg) _previewImg.src = _urlInput.value;
+        if (_preview) _preview.style.display = _urlInput.value ? 'block' : 'none';
+      });
     }
     const close = () => bd.remove();
     bd.addEventListener('click', e => { if (e.target === bd) close(); });
