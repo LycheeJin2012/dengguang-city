@@ -1284,12 +1284,9 @@
         clearTimeout(timeoutId);
         loginMsg.textContent = '✓ 通行密钥登录成功！';
         loginMsg.style.color = 'var(--c-emerald)';
-        setTimeout(async () => {
-          closeLoginModal();
-          loginMsg.style.color = '';
-          await refreshUserState();
-          loadPublicMessages();
-        }, 600);
+        // 强制 reload 让浏览器完整应用 Set-Cookie + 新 session
+        // (避免 refreshUserState() 拿不到新 cookie 时只更新部分 UI 的情况)
+        setTimeout(() => { location.reload(); }, 600);
       } catch (e) {
         clearTimeout(timeoutId);
         const msg = e.name === 'NotAllowedError' ? '已取消' :
