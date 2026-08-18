@@ -214,7 +214,7 @@
   if (bookCancel) bookCancel.addEventListener('click', closeBookModal);
   if (bookMask) bookMask.addEventListener('click', (e) => { if (e.target === bookMask) closeBookModal(); });
   if (bookForm) {
-    bookForm.addEventListener('submit', (e) => {
+    bookForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const inD = new Date(bookIn.value);
       const outD = new Date(bookOut.value);
@@ -238,34 +238,45 @@
       submitBtn.disabled = true;
       bookMsg.textContent = '';
       try {
-        const list = JSON.parse(localStorage.getItem('lc_bookings_hotel_v15') || '[]');
-        list.unshift({
-          id: 'bk_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
-          room_id: bookRoom.id,
-          room_name: bookRoom.name,
-          in_date: bookIn.value,
-          out_date: bookOut.value,
-          nights,
-          persons,
-          breakfast: wantBreakfast,
-          name,
-          contact,
-          note,
-          created_at: new Date().toISOString()
+        // v18: 改用 server 端 /api/bookings (跨设备同步, admin 可见)
+        const res = await fetch('/api/bookings', {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            room_id: bookRoom.id,
+            room_name: bookRoom.name,
+            in_date: bookIn.value,
+            out_date: bookOut.value,
+            nights,
+            persons,
+            breakfast: wantBreakfast ? 1 : 0,
+            name, contact, note
+          })
         });
-        localStorage.setItem('lc_bookings_hotel_v15', JSON.stringify(list));
-        submitBtn.textContent = '✓ 已提交（仅本机浏览器可见）';
-        submitBtn.style.background = 'var(--c-emerald)';
-        bookForm.reset();
-        setTimeout(() => closeBookModal(), 1500);
+        const data = await res.json();
+        if (res.ok && data.ok) {
+          submitBtn.textContent = '✓ 已提交（跨设备同步, 管理员会确认）';
+          submitBtn.style.background = 'var(--c-emerald)';
+          bookForm.reset();
+          setTimeout(() => closeBookModal(), 1500);
+        } else if (res.status === 401) {
+          bookMsg.textContent = '请先登录玩家账号再预订';
+          submitBtn.textContent = origText;
+          submitBtn.disabled = false;
+          setTimeout(() => {
+            closeBookModal();
+            location.href = 'index.html?action=login&reason=' + encodeURIComponent('请先登录玩家账号再预订酒店');
+          }, 1200);
+        } else {
+          bookMsg.textContent = '✗ ' + (data.error || '提交失败');
+          submitBtn.textContent = origText;
+          submitBtn.disabled = false;
+        }
       } catch (err) {
         bookMsg.textContent = '提交失败：' + err.message;
-      } finally {
-        setTimeout(() => {
-          submitBtn.textContent = origText;
-          submitBtn.style.background = '';
-          submitBtn.disabled = false;
-        }, 2200);
+        submitBtn.textContent = origText;
+        submitBtn.disabled = false;
       }
     });
   }
