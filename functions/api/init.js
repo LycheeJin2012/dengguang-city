@@ -9,6 +9,9 @@ import {
   listPasskeys, deletePasskey,
   isUsername, isEmail, aiAutoReply, stripHtml,
   isNonEmpty, verifyPassword,
+  randomToken, bytesToB64url, b64urlToBytes, expectedRpIdHash,
+  verifyEs256, parseAuthData, verifyClientData,
+  resolveSubjectFromSession,
 } from '../_shared.js';
 
 // 从 request URL 解析 rpId（passkey 的域）
