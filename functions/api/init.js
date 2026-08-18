@@ -384,8 +384,9 @@ export async function onRequestPost(context) {
   // POST /api/init?action=passkey-login-finish      (公开, 自动识别 player/admin)
   // POST /api/init?action=passkey-list              (需玩家 OR 管理员登录)
   // POST /api/init?action=passkey-delete            (需玩家 OR 管理员登录)
+  // v17.10: passkey-admin-enter-* 走外部独立块 (玩家 session 升级 combined 用)
   // ============================================================
-  if (_action.startsWith('passkey-')) {
+  if (_action.startsWith('passkey-') && !_action.startsWith('passkey-admin-enter-')) {
     try {
       const rpId = getRpId(request);
       const origin = getOrigin(request);
@@ -876,6 +877,7 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   if (_action === 'passkey-admin-enter-start') {
     if (!_sess || !_sess.player_id) return err(401, '需要先登录玩家账号');
     if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
+    const _rpId = getRpId(request);
     const _player = await env.DB.prepare('SELECT id, linked_admin_id FROM players WHERE id = ?').bind(_sess.player_id).first();
     if (!_player || !_player.linked_admin_id) return err(403, '该玩家账号未绑定管理员账号');
     const _ids = [_sess.player_id, _player.linked_admin_id];
@@ -901,7 +903,7 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
       challenge_token: _token,
       publicKey: {
         challenge: bytesToB64url(_challenge),
-        rpId,
+        rpId: _rpId,
         allowCredentials,
         userVerification: 'preferred',
         timeout: 60000,
@@ -909,87 +911,19 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
     });
   }
   // ============================================================
-  // v17.10: 玩家测试已注册的通行密钥 (不创建 session, 只验证)
-  // POST /api/init?action=passkey-test-start   (玩家或管理员登录)
-  //   body: { credential_id: string }
-  //   返回 challenge + allowCredentials=[该 credential_id 单个]
-  // POST /api/init?action=passkey-test-finish  (同上)
+  // v17.10: 玩家 session 用 passkey 验证后升级为 combined
+  // POST /api/init?action=passkey-admin-enter-finish  (玩家 session, 需先 start)
   //   body: { challenge_token, credential }
+  //   验证: 任何能识别该玩家+关联 admin 的 passkey 都能进
+  //   升级: 写 admin_id 到 session (Set-Cookie)
+  // 注: passkey-test-start/finish 已在上面的 try 块里处理 (line 455/492),
+  //    不要在这里再定义, 会落不到这里
   // ============================================================
-  if (_action === 'passkey-test-start') {
-    if (!_sess) return err(401, '需要先登录');
-    if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
-    const _b = await request.json().catch(() => ({}));
-    const _credId = (_b.credential_id || '').trim();
-    if (!_credId) return err(400, 'credential_id 必填');
-    // 验证 passkey 属于当前 subject
-    const _pk = await env.DB.prepare('SELECT * FROM passkeys WHERE credential_id = ?').bind(_credId).first();
-    if (!_pk) return err(404, '通行密钥不存在');
-    if (_sess.player_id) {
-      if (_pk.player_id !== _sess.player_id && _pk.admin_id !== (await env.DB.prepare('SELECT linked_admin_id FROM players WHERE id = ?').bind(_sess.player_id).first())?.linked_admin_id) {
-        return err(403, '该通行密钥不属于你的账号');
-      }
-    } else if (_sess.admin_id) {
-      if (_pk.admin_id !== _sess.admin_id && _pk.player_id !== (await env.DB.prepare('SELECT linked_player_id FROM admins WHERE id = ?').bind(_sess.admin_id).first())?.linked_player_id) {
-        return err(403, '该通行密钥不属于你的账号');
-      }
-    }
-    const _challenge = crypto.getRandomValues(new Uint8Array(32));
-    const _token = randomToken(24);
-    const _expires = new Date(Date.now() + 300_000).toISOString();
-    await env.DB.prepare(
-      "INSERT OR REPLACE INTO webauthn_challenges (token, challenge, purpose, player_id, expires_at) VALUES (?, ?, 'test', ?, ?)"
-    ).bind(_token, bytesToB64url(_challenge), `test:${_credId}`, _expires).run();
-    return ok({
-      challenge_token: _token,
-      publicKey: {
-        challenge: bytesToB64url(_challenge),
-        rpId,
-        allowCredentials: [{ id: _credId, type: 'public-key', transports: JSON.parse(_pk.transports || '[]') }],
-        userVerification: 'preferred',
-        timeout: 60000,
-      }
-    });
-  }
-  if (_action === 'passkey-test-finish') {
-    if (!_sess) return err(401, '需要先登录');
-    if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
-    const _b = await request.json().catch(() => ({}));
-    const { challenge_token: _ct, credential } = _b;
-    if (!_ct || !credential) return err(400, '缺少参数');
-    const _ch = await env.DB.prepare(
-      "SELECT challenge, player_id, expires_at FROM webauthn_challenges WHERE token = ? AND purpose = 'test'"
-    ).bind(_ct).first();
-    if (!_ch) return err(400, 'challenge 无效');
-    if (new Date(_ch.expires_at) < new Date()) {
-      await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(_ct).run();
-      return err(400, 'challenge 已过期');
-    }
-    await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(_ct).run();
-    const _targetCredId = (_ch.player_id || '').replace(/^test:/, '');
-    if (credential.id !== _targetCredId) return err(401, '凭据 ID 不匹配');
-    const _pk = await env.DB.prepare('SELECT * FROM passkeys WHERE credential_id = ?').bind(credential.id).first();
-    if (!_pk) return err(401, '该通行密钥未注册');
-    const _loginOrigin = { type: 'webauthn.get', origin };
-    const _cdj = b64urlToBytes(credential.response.clientDataJSON);
-    const _ad = b64urlToBytes(credential.response.authenticatorData);
-    const _sig = b64urlToBytes(credential.response.signature);
-    verifyClientData(_cdj, _ch.challenge, _loginOrigin);
-    const _parsed = parseAuthData(_ad);
-    const _expected = await expectedRpIdHash(rpId);
-    if (bytesToB64url(_parsed.rpIdHash) !== bytesToB64url(_expected)) return err(401, 'rpIdHash 不匹配');
-    if (!(_parsed.flags & 0x01)) return err(401, '用户在场标志缺失');
-    const _jwk = JSON.parse(_pk.public_key_jwk);
-    const _ok = await verifyEs256(env, _pk, _jwk, _sig, _ad, _cdj);
-    if (!_ok) return err(401, '签名验证失败');
-    await env.DB.prepare("UPDATE passkeys SET sign_count = ?, last_used_at = datetime('now') WHERE id = ?")
-      .bind(_parsed.signCount, _pk.id).run();
-    return ok({ verified: true, message: '该通行密钥能正常登录' });
-  }
-
   if (_action === 'passkey-admin-enter-finish') {
     if (!_sess || !_sess.player_id) return err(401, '需要先登录玩家账号');
     if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
+    const _rpId = getRpId(request);
+    const _origin = getOrigin(request);
     const _b = await request.json().catch(() => ({}));
     const { challenge_token: _ct, credential } = _b;
     if (!_ct || !credential) return err(400, '缺少 challenge_token 或 credential');
@@ -1017,13 +951,13 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
     if (_pk.player_id !== _sess.player_id && _pk.admin_id !== _adminId) {
       return err(401, '该通行密钥不属于此账号');
     }
-    const _loginOrigin = { type: 'webauthn.get', origin };
+    const _loginOrigin = { type: 'webauthn.get', origin: _origin };
     const _clientDataJSON = b64urlToBytes(credential.response.clientDataJSON);
     const _authData = b64urlToBytes(credential.response.authenticatorData);
     const _signature = b64urlToBytes(credential.response.signature);
     verifyClientData(_clientDataJSON, _ch.challenge, _loginOrigin);
     const _parsed = parseAuthData(_authData);
-    const _expected = await expectedRpIdHash(rpId);
+    const _expected = await expectedRpIdHash(_rpId);
     if (bytesToB64url(_parsed.rpIdHash) !== bytesToB64url(_expected)) return err(401, 'rpIdHash 不匹配');
     if (!(_parsed.flags & 0x01)) return err(401, '用户在场标志缺失');
     const _jwk = JSON.parse(_pk.public_key_jwk);

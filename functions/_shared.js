@@ -430,7 +430,7 @@ function coseToJwk(cose) {
 }
 
 // 解析 authenticatorData
-function parseAuthData(authData) {
+export function parseAuthData(authData) {
   if (authData.length < 37) throw new Error('authData 太短');
   const rpIdHash = authData.slice(0, 32);
   const flags = authData[32];
@@ -472,7 +472,7 @@ function derToRawSig(der) {
 }
 
 // 验签 ES256
-async function verifyEs256(env, pk, jwk, signature, authData, clientDataJSON) {
+export async function verifyEs256(env, pk, jwk, signature, authData, clientDataJSON) {
   // v17.10: 兜底 — 老 jwk (v17.5 admin passkey 时代注册, pad32 修复前) 的 x/y 可能 31 字节
   // 1) 尝试原 jwk 直接 importKey
   // 2) 失败时把 x/y 从 base64url decode, 前导 0 补齐到 32 字节, 重新 base64url 编码
@@ -519,7 +519,7 @@ async function verifyEs256(env, pk, jwk, signature, authData, clientDataJSON) {
   return await crypto.subtle.verify({ name: 'ECDSA', hash: 'SHA-256' }, _pubKey, rawSig, signed);
 }
 
-function verifyClientData(clientDataBytes, expectedChallenge, expectedOrigin) {
+export function verifyClientData(clientDataBytes, expectedChallenge, expectedOrigin) {
   const clientData = JSON.parse(new TextDecoder().decode(clientDataBytes));
   if (clientData.type !== expectedOrigin.type) throw new Error('clientData.type 不匹配');
   if (clientData.origin !== expectedOrigin.origin) throw new Error('clientData.origin 不匹配: ' + clientData.origin);
@@ -527,7 +527,7 @@ function verifyClientData(clientDataBytes, expectedChallenge, expectedOrigin) {
   return clientData;
 }
 
-async function expectedRpIdHash(rpId) {
+export async function expectedRpIdHash(rpId) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(rpId));
   return new Uint8Array(buf);
 }
