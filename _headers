@@ -1,15 +1,37 @@
-# v18 perf: 让 HTML 不被边缘 cache, 确保用户总拿最新版本
+# v18 perf: 强制 HTML 不被任何层 cache, 确保用户总拿最新版本
+# CF Pages 边缘 cache 默认 7 天, 必须显式覆盖
 /*.html
   Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
 /
   Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+  Expires: 0
 /admin
   Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+/admin.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
 /profile
   Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+/profile.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
 /dm
   Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+/dm.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
 /hotel
   Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
+/hotel.html
+  Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
 /announcements
   Cache-Control: no-cache, no-store, must-revalidate
+  Pragma: no-cache
