@@ -498,7 +498,7 @@ export async function onRequestPost(context) {
         const loginOrigin = { type: 'webauthn.get', origin };
         const _data = await passkeyLoginFinish(env, _body, rpId, loginOrigin);
         // v17.10: combined session — 可能同时有 admin 和 player
-        const cookie = `lc_session=${_data.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=28800`;
+        const cookie = `lc_session=${_data.token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=28800`;
         let userObj = {};
         if (_data.kind === 'admin' || _data.admin) {
           userObj = { id: _data.admin.id, username: _data.admin.username, role: _data.admin.role };
@@ -934,7 +934,7 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
     // 创建 combined session, Set-Cookie
     const _r = await createSession(env, _sess.player_id, _link.id);
     if (_m) await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(_m[1]).run();
-    const _cookie = `lc_session=${_r.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`;
+    const _cookie = `lc_session=${_r.token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${8*3600}`;
     return new Response(JSON.stringify({
       ok: true, combined: true,
       admin: { id: _link.id, username: _link.username, role: _link.role },
@@ -1047,7 +1047,7 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
     // 升级 session 为 combined
     const _r = await createSession(env, _sess.player_id, _adminId);
     if (_m) await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(_m[1]).run();
-    const _cookie = `lc_session=${_r.token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`;
+    const _cookie = `lc_session=${_r.token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${8*3600}`;
     const _admin = await env.DB.prepare('SELECT id, username, role FROM admins WHERE id = ?').bind(_adminId).first();
     return new Response(JSON.stringify({
       ok: true, combined: true,
@@ -1181,8 +1181,8 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
         await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(_m[1]).run();
       }
       const _cookie = _newToken
-        ? `lc_session=${_newToken}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`
-        : `lc_session=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
+        ? `lc_session=${_newToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${8*3600}`
+        : `lc_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
       return new Response(JSON.stringify({ ok: true, kept_player: !!_sess.player_id }), {
         status: 200,
         headers: { 'Content-Type': 'application/json; charset=utf-8', 'Set-Cookie': _cookie }

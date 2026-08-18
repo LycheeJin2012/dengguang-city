@@ -91,7 +91,7 @@ export async function onRequestPost(context) {
   const { token, expires_at } = await createSession(env, _playerIdForSession, _adminIdForSession);
 
   // Set-Cookie 也写一份方便浏览器调用
-  const cookie = `lc_session=${token}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${8*3600}`;
+  const cookie = `lc_session=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${8*3600}`;
 
   // 如果是浏览器原生 form 提交（无 fetch），用 302 重定向回原页面，避免 in-app browser 不触发 JS
   const accept = request.headers.get('Accept') || '';
