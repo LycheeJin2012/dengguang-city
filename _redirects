@@ -1,5 +1,3 @@
 # v18: admin.html → admin-new.html (CF Pages 边缘 cache 卡住老 admin.html)
 /admin       /admin-new.html?v=20260818  301
 /admin.html  /admin-new.html?v=20260818  301
-EOF
-cat _redirects
