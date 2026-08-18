@@ -1,0 +1,659 @@
+/* ============================================
+   灯光市人民政府 · 赛博朋克 UI 主题 (v22)
+   玻璃拟态 + 霓虹辉光 + 微动画
+   覆盖: 主页 / 管理后台 / 玩家主页 / 私信
+   ============================================ */
+
+/* ---------- 全局变量 (主题色) ---------- */
+:root {
+  --cyber-bg: #07071a;
+  --cyber-bg-2: #0d0d24;
+  --cyber-panel: rgba(20, 22, 48, 0.55);
+  --cyber-panel-solid: #14162a;
+  --cyber-border: rgba(0, 229, 255, 0.25);
+  --cyber-border-strong: rgba(0, 229, 255, 0.55);
+  --cyber-cyan: #00e5ff;
+  --cyber-cyan-dim: #00a8c4;
+  --cyber-pink: #ff3df0;
+  --cyber-pink-dim: #b823a8;
+  --cyber-amber: #ffb84d;
+  --cyber-green: #6cff7a;
+  --cyber-red: #ff5e5e;
+  --cyber-text: #e2e6f5;
+  --cyber-text-dim: #8a90b0;
+  --cyber-mono: 'JetBrains Mono', 'Fira Code', 'SF Mono', Consolas, monospace;
+}
+
+/* ---------- 赛博网格背景 (覆盖 body 渐变) ---------- */
+body.admin-body,
+body.dm-body,
+body.profile-body {
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 0%, rgba(0, 229, 255, 0.08), transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255, 61, 240, 0.06), transparent 60%),
+    linear-gradient(180deg, #07071a 0%, #0a0a1f 50%, #07071a 100%);
+  background-attachment: fixed;
+  color: var(--cyber-text);
+  position: relative;
+}
+body.admin-body::before,
+body.dm-body::before,
+body.profile-body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0, 229, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 229, 255, 0.04) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 70%, transparent 100%);
+}
+
+/* 让 page 内容浮在网格之上 */
+.admin-header, .admin-warn, .user-bar, .admin-tabs, main, .tab-pane, .dm-wrap, .profile-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+/* ---------- 顶部 admin-header 玻璃 + 霓虹下边 ---------- */
+.admin-header {
+  background: linear-gradient(180deg, rgba(20, 22, 48, 0.85), rgba(13, 13, 36, 0.65)) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--cyber-border) !important;
+  box-shadow: 0 1px 0 rgba(0, 229, 255, 0.15), 0 8px 32px rgba(0, 0, 0, 0.4) !important;
+  position: sticky;
+  top: 0;
+  z-index: 30;
+}
+.admin-logo b {
+  color: var(--cyber-cyan) !important;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.45);
+  letter-spacing: 2px;
+}
+.admin-logo span {
+  color: var(--cyber-text-dim) !important;
+  font-family: var(--cyber-mono) !important;
+  font-size: 9px;
+  letter-spacing: 3px;
+}
+.header-link {
+  font-family: var(--cyber-mono) !important;
+  font-size: 11px !important;
+  background: transparent !important;
+  color: var(--cyber-text) !important;
+  border: 1px solid var(--cyber-border) !important;
+  border-radius: 4px;
+  padding: 6px 14px !important;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+}
+.header-link:hover {
+  background: rgba(0, 229, 255, 0.1) !important;
+  color: var(--cyber-cyan) !important;
+  border-color: var(--cyber-cyan) !important;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.3);
+  transform: translateY(-1px);
+}
+
+/* ---------- 安全提示条 (玻璃 + amber 边框) ---------- */
+.admin-warn {
+  background: linear-gradient(90deg, rgba(255, 184, 77, 0.08), rgba(255, 184, 77, 0.04)) !important;
+  color: var(--cyber-amber) !important;
+  border-bottom: 1px solid rgba(255, 184, 77, 0.2) !important;
+  font-family: var(--font-cn) !important;
+  font-size: 13px !important;
+}
+
+/* ---------- 登录 view (玻璃 + 霓虹边框) ---------- */
+.view-login {
+  padding: 100px 24px !important;
+}
+.login-card {
+  background: var(--cyber-panel) !important;
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--cyber-border-strong) !important;
+  border-radius: 8px !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 229, 255, 0.08) inset,
+    0 0 40px rgba(0, 229, 255, 0.15),
+    0 16px 48px rgba(0, 0, 0, 0.5) !important;
+  color: var(--cyber-text) !important;
+}
+.login-head h1 {
+  color: var(--cyber-cyan) !important;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.5);
+}
+.login-head p {
+  color: var(--cyber-text-dim) !important;
+}
+.login-form label > span {
+  color: var(--cyber-text-dim) !important;
+  font-family: var(--cyber-mono);
+  font-size: 11px !important;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+.login-form input {
+  background: rgba(0, 0, 0, 0.4) !important;
+  color: var(--cyber-text) !important;
+  border: 1px solid var(--cyber-border) !important;
+  font-family: var(--cyber-mono);
+  font-size: 14px !important;
+}
+.login-form input:focus {
+  border-color: var(--cyber-cyan) !important;
+  box-shadow: 0 0 0 3px rgba(0, 229, 255, 0.15) !important;
+  outline: none;
+}
+.login-error {
+  background: rgba(255, 94, 94, 0.1) !important;
+  border: 1px solid rgba(255, 94, 94, 0.4) !important;
+  color: var(--cyber-red) !important;
+  font-family: var(--cyber-mono);
+  font-size: 12px;
+}
+
+/* ---------- 顶部 user-bar 玻璃 ---------- */
+.user-bar {
+  background: linear-gradient(180deg, rgba(20, 22, 48, 0.7), rgba(13, 13, 36, 0.4)) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--cyber-border) !important;
+  border-radius: 6px;
+  margin: 16px 24px 0;
+  padding: 10px 18px;
+}
+.user-info b {
+  color: var(--cyber-cyan) !important;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+  font-family: var(--font-cn);
+}
+.role-tag {
+  font-family: var(--cyber-mono) !important;
+  font-size: 10px !important;
+  letter-spacing: 1.5px;
+  background: rgba(0, 229, 255, 0.15) !important;
+  color: var(--cyber-cyan) !important;
+  border: 1px solid var(--cyber-border) !important;
+  border-radius: 3px;
+}
+.role-tag.role-super {
+  background: rgba(255, 61, 240, 0.15) !important;
+  color: var(--cyber-pink) !important;
+  border-color: rgba(255, 61, 240, 0.4);
+  box-shadow: 0 0 8px rgba(255, 61, 240, 0.2);
+}
+
+/* ---------- Tab nav 玻璃 + 霓虹激活 ---------- */
+.admin-tabs {
+  background: var(--cyber-panel) !important;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--cyber-border) !important;
+  border-radius: 6px;
+  margin: 16px 24px 0;
+  padding: 6px;
+  gap: 4px !important;
+  display: flex;
+  flex-wrap: wrap;
+}
+.admin-tabs .tab {
+  background: transparent !important;
+  color: var(--cyber-text-dim) !important;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-family: var(--cyber-mono);
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  padding: 8px 14px;
+  position: relative;
+  transition: all 0.2s ease;
+  text-shadow: none;
+  box-shadow: none;
+  flex: 0 0 auto;
+}
+.admin-tabs .tab:hover {
+  background: rgba(0, 229, 255, 0.08) !important;
+  color: var(--cyber-cyan) !important;
+  border-color: var(--cyber-border) !important;
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.3);
+}
+.admin-tabs .tab.active {
+  background: linear-gradient(180deg, rgba(0, 229, 255, 0.18), rgba(0, 229, 255, 0.08)) !important;
+  color: var(--cyber-cyan) !important;
+  border-color: var(--cyber-cyan) !important;
+  box-shadow:
+    0 0 0 1px rgba(0, 229, 255, 0.4) inset,
+    0 0 16px rgba(0, 229, 255, 0.25);
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.5);
+}
+.admin-tabs .tab-count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 6px;
+  background: var(--cyber-cyan) !important;
+  color: #000 !important;
+  font-weight: 700;
+  font-size: 10px;
+  border-radius: 8px;
+  font-family: var(--cyber-mono);
+}
+
+/* ---------- Tab pane ---------- */
+.tab-pane {
+  background: var(--cyber-panel) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--cyber-border) !important;
+  border-radius: 6px;
+  margin: 16px 24px 32px;
+  padding: 18px;
+}
+.pane-head h2 {
+  color: var(--cyber-cyan) !important;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+  font-family: var(--font-cn);
+  font-size: 18px;
+  border-bottom: 1px solid var(--cyber-border);
+  padding-bottom: 10px;
+  margin: 0 0 14px;
+}
+.pane-tools .tag {
+  font-family: var(--cyber-mono);
+  font-size: 10px;
+  background: rgba(255, 61, 240, 0.12);
+  color: var(--cyber-pink);
+  border: 1px solid rgba(255, 61, 240, 0.3);
+  padding: 2px 8px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+}
+
+/* ---------- msg-item / article (玻璃) ---------- */
+.msg-item {
+  background: rgba(13, 13, 36, 0.5) !important;
+  border: 1px solid rgba(0, 229, 255, 0.12) !important;
+  border-left: 3px solid var(--cyber-cyan) !important;
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+  color: var(--cyber-text) !important;
+}
+.msg-item:hover {
+  border-color: rgba(0, 229, 255, 0.35);
+  background: rgba(20, 22, 48, 0.7) !important;
+  transform: translateX(2px);
+}
+.msg-item.unread {
+  border-left-color: var(--cyber-pink) !important;
+  background: rgba(255, 61, 240, 0.04) !important;
+}
+.msg-name {
+  color: var(--cyber-text) !important;
+  font-family: var(--font-cn);
+}
+.msg-time {
+  color: var(--cyber-text-dim) !important;
+  font-family: var(--cyber-mono);
+  font-size: 11px;
+}
+.msg-content {
+  color: var(--cyber-text) !important;
+  font-family: var(--font-cn);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.msg-player-tag, .msg-type {
+  font-family: var(--cyber-mono);
+  font-size: 10px;
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--cyber-cyan);
+  border: 1px solid var(--cyber-border);
+  padding: 1px 7px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+}
+.book-status {
+  font-family: var(--cyber-mono);
+  font-size: 10px;
+  padding: 1px 7px;
+  border-radius: 3px;
+  letter-spacing: 1px;
+}
+
+/* ---------- buttons (霓虹 + 渐变) ---------- */
+.btn {
+  font-family: var(--cyber-mono) !important;
+  font-size: 12px !important;
+  letter-spacing: 1px;
+  border-radius: 4px;
+  padding: 6px 12px;
+  transition: all 0.2s ease;
+  text-shadow: none;
+  box-shadow: none;
+}
+.btn-primary {
+  background: linear-gradient(180deg, #00e5ff 0%, #00a8c4 100%) !important;
+  color: #000 !important;
+  border: 1px solid var(--cyber-cyan) !important;
+  font-weight: 700;
+}
+.btn-primary:hover {
+  background: linear-gradient(180deg, #2bf3ff 0%, #00e5ff 100%) !important;
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.5);
+  transform: translateY(-1px);
+}
+.btn-ghost {
+  background: transparent !important;
+  color: var(--cyber-text-dim) !important;
+  border: 1px solid var(--cyber-border) !important;
+}
+.btn-ghost:hover {
+  background: rgba(0, 229, 255, 0.1) !important;
+  color: var(--cyber-cyan) !important;
+  border-color: var(--cyber-cyan);
+}
+.btn-danger {
+  color: var(--cyber-red) !important;
+  border-color: rgba(255, 94, 94, 0.35);
+}
+.btn-danger:hover {
+  background: rgba(255, 94, 94, 0.12) !important;
+  border-color: var(--cyber-red);
+  box-shadow: 0 0 12px rgba(255, 94, 94, 0.3);
+}
+.btn-block {
+  width: 100%;
+  padding: 10px !important;
+  font-size: 14px !important;
+}
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ---------- form (input/select/textarea) ---------- */
+.pane-head input,
+.pane-head select,
+.tab-pane input,
+.tab-pane select,
+.tab-pane textarea,
+.admin-tabs + .tab-pane input,
+.admin-tabs + .tab-pane select {
+  background: rgba(0, 0, 0, 0.4);
+  color: var(--cyber-text);
+  border: 1px solid var(--cyber-border);
+  border-radius: 4px;
+  font-family: var(--cyber-mono);
+  font-size: 13px;
+  padding: 6px 10px;
+  transition: all 0.2s ease;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: var(--cyber-cyan);
+  box-shadow: 0 0 0 2px rgba(0, 229, 255, 0.15);
+  outline: none;
+}
+
+/* ---------- select / dropdown ---------- */
+select option {
+  background: var(--cyber-panel-solid);
+  color: var(--cyber-text);
+}
+
+/* ---------- radio filter (tab pane 顶部) ---------- */
+.filter-bar,
+.tab-pane > label,
+.pane-head + .filter-bar {
+  background: transparent !important;
+}
+input[type="radio"] + label,
+.tab-pane label input[type="radio"] {
+  accent-color: var(--cyber-cyan);
+}
+
+/* ---------- empty state ---------- */
+.empty-state {
+  color: var(--cyber-text-dim);
+  font-family: var(--cyber-mono);
+  text-align: center;
+  padding: 30px 20px;
+  border: 1px dashed var(--cyber-border);
+  border-radius: 4px;
+  background: rgba(0, 229, 255, 0.02);
+}
+.empty-icon { font-size: 36px; opacity: 0.6; }
+
+/* ---------- 图集 grid ---------- */
+.gal-item {
+  background: var(--cyber-panel-solid) !important;
+  border: 1px solid var(--cyber-border) !important;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+.gal-item:hover {
+  border-color: var(--cyber-cyan);
+  box-shadow: 0 0 16px rgba(0, 229, 255, 0.2);
+  transform: translateY(-2px);
+}
+
+/* ---------- 公告 item ---------- */
+.ann-item {
+  border-left: 3px solid var(--cyber-pink) !important;
+  background: linear-gradient(90deg, rgba(255, 61, 240, 0.04), rgba(13, 13, 36, 0.5)) !important;
+}
+.msg-read-tag {
+  font-family: var(--cyber-mono);
+  font-size: 9px;
+  background: rgba(255, 61, 240, 0.15) !important;
+  color: var(--cyber-pink) !important;
+  border: 1px solid rgba(255, 61, 240, 0.35) !important;
+  padding: 1px 6px;
+  border-radius: 3px;
+  letter-spacing: 1.5px;
+}
+
+/* ---------- 管理员账号 item ---------- */
+.admin-item {
+  background: rgba(13, 13, 36, 0.5);
+  border: 1px solid var(--cyber-border);
+  border-radius: 4px;
+  padding: 10px 14px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 8px;
+  transition: all 0.2s ease;
+}
+.admin-item:hover {
+  border-color: var(--cyber-cyan);
+  background: rgba(20, 22, 48, 0.7);
+}
+.admin-avatar {
+  font-size: 28px;
+  filter: drop-shadow(0 0 6px rgba(0, 229, 255, 0.4));
+}
+.me-tag {
+  font-family: var(--cyber-mono);
+  font-size: 9px;
+  background: var(--cyber-cyan);
+  color: #000;
+  padding: 1px 6px;
+  border-radius: 3px;
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+/* ---------- stats card (顶部统计) ---------- */
+.stats-row,
+.tab-pane .stats-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+/* ---------- modal 玻璃 + 霓虹边框 (覆盖 admin.js 内联) ---------- */
+[style*="background:#1a1a2e"],
+[style*="background: #1a1a2e"] {
+  background: var(--cyber-panel) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--cyber-border-strong) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5) !important;
+  color: var(--cyber-text) !important;
+}
+
+/* ---------- scrollbar 赛博 ---------- */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track {
+  background: var(--cyber-bg);
+}
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--cyber-cyan-dim), var(--cyber-pink-dim));
+  border-radius: 5px;
+  border: 2px solid var(--cyber-bg);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--cyber-cyan), var(--cyber-pink));
+}
+
+/* ---------- 微动画 ---------- */
+@keyframes cyber-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 229, 255, 0.5); }
+  50% { box-shadow: 0 0 0 6px rgba(0, 229, 255, 0); }
+}
+@keyframes cyber-scan {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.btn-primary:not(:disabled) {
+  animation: cyber-pulse 2.4s infinite;
+}
+
+/* ---------- dm.html / profile.html 同步应用 ---------- */
+.dm-wrap, .profile-wrap {
+  background: transparent;
+  color: var(--cyber-text);
+}
+
+/* ---------- 主页 nav 玻璃 ---------- */
+.nav-user-name,
+.nav-emerald,
+.nav-logout-link {
+  font-family: var(--cyber-mono) !important;
+  letter-spacing: 0.5px;
+}
+.nav-emerald {
+  background: rgba(255, 215, 64, 0.12) !important;
+  color: #ffd740 !important;
+  border: 1px solid rgba(255, 215, 64, 0.4) !important;
+  border-radius: 12px !important;
+  font-weight: 600 !important;
+  font-size: 12px !important;
+}
+#dmBadge, #annBadge {
+  font-family: var(--cyber-mono) !important;
+  background: var(--cyber-red) !important;
+  color: #fff !important;
+  border: 1px solid #ff8080 !important;
+  box-shadow: 0 0 8px rgba(255, 94, 94, 0.6);
+}
+
+/* ---------- footer 赛博 ---------- */
+.footer {
+  background: linear-gradient(180deg, transparent, rgba(7, 7, 26, 0.95));
+  color: var(--cyber-text-dim);
+  border-top: 1px solid var(--cyber-border);
+  font-family: var(--cyber-mono);
+  font-size: 12px;
+}
+.footer h4 {
+  color: var(--cyber-cyan);
+  letter-spacing: 2px;
+  font-size: 13px;
+  text-transform: uppercase;
+}
+.footer a {
+  color: var(--cyber-text-dim) !important;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.footer a:hover {
+  color: var(--cyber-cyan) !important;
+  text-shadow: 0 0 6px rgba(0, 229, 255, 0.4);
+}
+
+/* ---------- 主页 hero / 卡片轻量霓虹 ---------- */
+.service-card,
+.scene-card,
+.notice-card,
+.flow-card,
+.data-card {
+  background: var(--cyber-panel) !important;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--cyber-border) !important;
+  border-radius: 6px;
+  transition: all 0.25s ease;
+}
+.service-card:hover,
+.scene-card:hover,
+.notice-card:hover,
+.data-card:hover {
+  border-color: var(--cyber-cyan);
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.15);
+  transform: translateY(-3px);
+}
+.service-card h3,
+.notice-card h2 {
+  color: var(--cyber-cyan);
+  font-family: var(--font-cn);
+}
+.service-card p,
+.notice-card p,
+.scene-card p,
+.data-card p {
+  color: var(--cyber-text-dim);
+}
+
+/* ---------- 主页 hero 渐变光斑 ---------- */
+.hero {
+  background:
+    radial-gradient(ellipse 60% 50% at 50% 0%, rgba(0, 229, 255, 0.1), transparent 60%),
+    radial-gradient(ellipse 40% 30% at 50% 100%, rgba(255, 61, 240, 0.06), transparent 60%);
+}
+
+/* ---------- 玩家主页 (profile) 玻璃 ---------- */
+.profile-header,
+.profile-card,
+.profile-stat {
+  background: var(--cyber-panel) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--cyber-border);
+  border-radius: 6px;
+}
+
+/* ---------- 消息回复 / 私信 thread ---------- */
+.dm-msg-bubble,
+.dm-thread-item {
+  background: rgba(20, 22, 48, 0.6) !important;
+  border: 1px solid var(--cyber-border) !important;
+  border-radius: 6px;
+  color: var(--cyber-text);
+}
+.dm-msg-bubble.self {
+  background: linear-gradient(135deg, rgba(0, 229, 255, 0.15), rgba(0, 229, 255, 0.05)) !important;
+  border-color: var(--cyber-border-strong) !important;
+}
+
+/* ---------- 数字角标 (待办/未读) ---------- */
+.tab-count,
+.book-pending,
+.unread-count,
+.msg-unread {
+  font-family: var(--cyber-mono) !important;
+  font-weight: 700;
+}
