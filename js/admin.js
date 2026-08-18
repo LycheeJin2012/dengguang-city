@@ -164,6 +164,10 @@ function showAdminEnterModal(player, adminId) {
       if (!r1.ok) throw new Error(r1.error || '开始挑战失败');
       const opts = r1.publicKey;
       opts.challenge = b64urlToBuf(opts.challenge);
+      // WebAuthn 要求 allowCredentials[].id 必须是 BufferSource, 不是 base64url 字符串
+      if (opts.allowCredentials) {
+        opts.allowCredentials = opts.allowCredentials.map((c) => ({ ...c, id: b64urlToBuf(c.id) }));
+      }
       const cred = await navigator.credentials.get({ publicKey: opts });
       if (!cred) throw new Error('未选择凭据');
       const r2 = await POST('/api/init?action=passkey-admin-enter-finish', {

@@ -353,6 +353,10 @@
               if (!r1.ok || d1.error) throw new Error(d1.error || '获取挑战失败');
               const opts = d1.publicKey;
               opts.challenge = b64urlToBuf(opts.challenge);
+              // WebAuthn 要求 allowCredentials[].id 必须是 BufferSource
+              if (opts.allowCredentials) {
+                opts.allowCredentials = opts.allowCredentials.map((c) => ({ ...c, id: b64urlToBuf(c.id) }));
+              }
               const cred = await navigator.credentials.get({ publicKey: opts });
               if (!cred) throw new Error('未选择凭据');
               const r2 = await fetch('/api/init?action=passkey-test-finish', {
