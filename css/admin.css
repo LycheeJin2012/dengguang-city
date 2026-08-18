@@ -18,7 +18,7 @@ body.admin-body {
   padding: 14px 24px;
   display: flex; justify-content: space-between; align-items: center;
   position: sticky; top: 0; z-index: 30;
-  box-shadow: 0 4px 0 var(--c-stone-dark);
+  box-shadow: 0 4px 0 var(--cyber-text-dim);
 }
 .admin-logo {
   display: flex; gap: 12px; align-items: center;
@@ -33,20 +33,20 @@ body.admin-body {
 .admin-logo span {
   font-family: var(--font-pixel);
   font-size: 8px;
-  color: var(--c-stone-light);
+  color: var(--cyber-border);
   letter-spacing: 2px;
 }
 .admin-header-right { display: flex; gap: 12px; align-items: center; }
 .header-link {
   font-family: var(--font-pixel);
   font-size: 10px;
-  color: var(--c-paper);
+  color: transparent;
   padding: 8px 14px;
-  border: 2px solid var(--c-paper);
+  border: 2px solid transparent;
   transition: all 0.15s;
 }
 .header-link:hover {
-  background: var(--c-paper);
+  background: transparent;
   color: var(--c-dark);
 }
 
@@ -73,9 +73,9 @@ body.admin-body {
 .login-card {
   width: 100%;
   max-width: 440px;
-  background: var(--c-paper);
+  background: transparent;
   border: 4px solid var(--c-black);
-  box-shadow: 8px 8px 0 var(--c-stone-dark);
+  box-shadow: 8px 8px 0 var(--cyber-text-dim);
   padding: 40px 32px;
   color: var(--c-dark);
 }
@@ -96,7 +96,7 @@ body.admin-body {
 .login-head p {
   font-family: var(--font-pixel);
   font-size: 9px;
-  color: var(--c-stone-dark);
+  color: var(--cyber-text-dim);
   letter-spacing: 3px;
 }
 .login-form { display: flex; flex-direction: column; gap: 16px; }
@@ -124,7 +124,7 @@ body.admin-body {
 .login-hint {
   font-family: var(--font-cn);
   font-size: 13px;
-  color: var(--c-stone-dark);
+  color: var(--cyber-text-dim);
   background: #fff8dc;
   border: 2px dashed var(--c-gold);
   padding: 10px 12px;
@@ -145,7 +145,7 @@ body.admin-body {
 
 /* 用户条 */
 .user-bar {
-  background: var(--c-paper);
+  background: transparent;
   color: var(--c-dark);
   border: 3px solid var(--c-black);
   box-shadow: 5px 5px 0 var(--c-stone);
@@ -177,7 +177,7 @@ body.admin-body {
   letter-spacing: 1px;
 }
 .role-super { background: var(--c-gold); color: var(--c-dark); }
-.role-admin { background: var(--c-stone-light); color: var(--c-dark); }
+.role-admin { background: var(--cyber-border); color: var(--c-dark); }
 .me-tag {
   font-family: var(--font-pixel);
   font-size: 8px;
@@ -201,7 +201,7 @@ body.admin-body {
   overflow-x: auto;
   gap: 0;
   border-bottom: 4px solid var(--c-black);
-  background: var(--c-bg-2);
+  background: transparent;
   padding: 0 4px;
   /* v17.7: 隐藏横向滚动条 — 滚动功能保留但视觉上不显示 */
   scrollbar-width: none;  /* Firefox */
@@ -230,9 +230,9 @@ body.admin-body {
   flex-shrink: 0;
   cursor: pointer;
 }
-.admin-tabs .tab:hover { background: var(--c-stone-light); color: var(--c-dark); }
+.admin-tabs .tab:hover { background: var(--cyber-border); color: var(--c-dark); }
 .admin-tabs .tab.active {
-  background: var(--c-paper);
+  background: transparent;
   color: var(--c-grass-dark);
   box-shadow: 0 -4px 0 var(--c-gold);
   z-index: 1;
@@ -260,7 +260,7 @@ body.admin-body {
 .pane-head {
   display: flex; justify-content: space-between; align-items: center;
   min-height: 56px;
-  background: var(--c-paper);
+  background: transparent;
   color: var(--c-dark);
   border: 3px solid var(--c-black);
   border-bottom: none;
@@ -292,7 +292,7 @@ body.admin-body {
    过滤器栏
    ============================================ */
 .msg-filter {
-  background: var(--c-paper);
+  background: transparent;
   color: var(--c-dark);
   border: 3px solid var(--c-black);
   border-bottom: none;
@@ -340,14 +340,14 @@ body.admin-body {
    列表容器 + 列表项
    ============================================ */
 .msg-list {
-  background: var(--c-bg-2);
+  background: transparent;
   border: 3px solid var(--c-black);
   border-top: none;
   padding: 16px;
   display: flex; flex-direction: column; gap: 14px;
 }
 .msg-item {
-  background: var(--c-paper);
+  background: transparent;
   border: 3px solid var(--c-black);
   box-shadow: 4px 4px 0 var(--c-stone);
   padding: 14px 16px;
@@ -358,8 +358,8 @@ body.admin-body {
 }
 .msg-item:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--c-stone); }
 .msg-item.is-read { opacity: 0.78; }
-.msg-item.is-read .msg-content { color: var(--c-stone-dark); }
-.msg-item.is-read .msg-name { color: var(--c-stone-dark); }
+.msg-item.is-read .msg-content { color: var(--cyber-text-dim); }
+.msg-item.is-read .msg-name { color: var(--cyber-text-dim); }
 
 .msg-head {
   display: block;
@@ -377,7 +377,7 @@ body.admin-body {
   right: 0;
   font-family: var(--font-pixel);
   font-size: 9px;
-  color: var(--c-stone-dark);
+  color: var(--cyber-text-dim);
   letter-spacing: 1px;
   white-space: nowrap;
 }
@@ -420,23 +420,23 @@ body.admin-body {
   height: 18px;
   line-height: 1;
 }
-.msg-read-tag { background: var(--c-stone-light); color: var(--c-stone-dark); border-color: var(--c-stone); }
-.msg-legacy-tag { background: var(--c-stone); color: var(--c-paper); border-color: var(--c-stone-dark); }
+.msg-read-tag { background: var(--cyber-border); color: var(--cyber-text-dim); border-color: var(--c-stone); }
+.msg-legacy-tag { background: var(--c-stone); color: transparent; border-color: var(--cyber-text-dim); }
 .msg-replied-tag { background: #1a3a1a; color: #9f9; border-color: #6f6; }
 .msg-player-tag { background: var(--c-water); }
-.gallery-num { background: var(--c-stone-light); color: var(--c-stone-dark); border-color: var(--c-stone); }
+.gallery-num { background: var(--cyber-border); color: var(--cyber-text-dim); border-color: var(--c-stone); }
 
 .msg-contact {
   font-family: var(--font-cn);
   font-size: 13px;
-  color: var(--c-stone-dark);
+  color: var(--cyber-text-dim);
 }
 .msg-content {
   font-family: var(--font-cn);
   font-size: 14px;
   color: var(--c-dark);
   line-height: 1.65;
-  background: var(--c-bg);
+  background: transparent;
   border: 2px solid var(--c-stone);
   padding: 10px 12px;
   white-space: pre-wrap;
@@ -445,7 +445,7 @@ body.admin-body {
 .msg-actions {
   display: flex; gap: 8px; flex-wrap: wrap;
   padding-top: 8px;
-  border-top: 2px dashed var(--c-stone-light);
+  border-top: 2px dashed var(--cyber-border);
   margin-top: 2px;
 }
 .msg-actions .btn { height: 32px; }
@@ -453,10 +453,10 @@ body.admin-body {
 .empty-state {
   text-align: center;
   padding: 60px 20px;
-  background: var(--c-bg-2);
+  background: transparent;
   border: 3px solid var(--c-black);
   border-top: none;
-  color: var(--c-stone-dark);
+  color: var(--cyber-text-dim);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -470,7 +470,7 @@ body.admin-body {
    管理员列表
    ============================================ */
 .admin-list {
-  background: var(--c-bg-2);
+  background: transparent;
   border: 3px solid var(--c-black);
   border-top: none;
   padding: 16px;
@@ -478,7 +478,7 @@ body.admin-body {
 }
 .admin-item {
   display: flex; align-items: center; gap: 14px;
-  background: var(--c-paper);
+  background: transparent;
   border: 3px solid var(--c-black);
   box-shadow: 4px 4px 0 var(--c-stone);
   padding: 14px 16px;
@@ -505,7 +505,7 @@ body.admin-body {
 .admin-sub {
   font-family: var(--font-cn);
   font-size: 13px;
-  color: var(--c-stone-dark);
+  color: var(--cyber-text-dim);
   margin-top: 4px;
 }
 .admin-actions { display: flex; gap: 8px; flex-shrink: 0; }
@@ -515,7 +515,7 @@ body.admin-body {
    修改密码表单
    ============================================ */
 .pwd-form {
-  background: var(--c-paper);
+  background: transparent;
   color: var(--c-dark);
   border: 3px solid var(--c-black);
   border-top: none;
@@ -543,7 +543,7 @@ body.admin-body {
   font-family: var(--font-cn);
   font-size: 14px;
   color: var(--c-dark);
-  background: var(--c-bg);
+  background: transparent;
   border: 2px solid var(--c-stone);
   padding: 10px 14px;
   margin: 0;
@@ -552,7 +552,7 @@ body.admin-body {
   font-family: var(--font-cn);
   font-size: 14px;
   color: var(--c-dark);
-  background: var(--c-bg);
+  background: transparent;
   border: 2px solid var(--c-stone);
   padding: 8px 12px;
   line-height: 1.7;
@@ -574,7 +574,7 @@ body.admin-body {
 .st-pending    { background: var(--c-redstone); }
 .st-confirmed  { background: var(--c-water); }
 .st-checkin    { background: var(--c-emerald); }
-.st-completed  { background: var(--c-stone-dark); }
+.st-completed  { background: var(--cyber-text-dim); }
 .st-cancelled  { background: var(--c-stone); }
 
 .book-actions {
@@ -602,9 +602,9 @@ body.admin-body {
 }
 .modal {
   width: 100%; max-width: 480px;
-  background: var(--c-paper);
+  background: transparent;
   border: 4px solid var(--c-black);
-  box-shadow: 8px 8px 0 var(--c-stone-dark);
+  box-shadow: 8px 8px 0 var(--cyber-text-dim);
   color: var(--c-dark);
   max-height: 90vh;
   display: flex; flex-direction: column;
@@ -674,3 +674,6 @@ body.admin-body {
 @media (max-width: 480px) {
   .admin-tabs .tab { font-size: 9px; padding: 0 8px; }
 }
+
+/* v22: 主题适配深色背景, 文字默认浅色 */
+body.admin-body { color: var(--cyber-text); }

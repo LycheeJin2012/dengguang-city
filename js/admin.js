@@ -1280,10 +1280,10 @@ async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
         <article class="msg-item ann-item" data-id="${a.id}">
           <div class="msg-head"><div class="msg-head-left">
             <b class="msg-name">📢 ${esc(a.title)}</b>
-            <span class="msg-read-tag" style="background:#a6a;color:#fff;border-color:#86a;">仅 SUPER</span>
-          </div><div class="msg-time">${fmt(a.created_at)}${a.updated_at ? ' <span style="color:#a6a">· 已编辑</span>' : ''}</div></div>
-          <div class="msg-content" style="white-space:pre-wrap">${esc(a.content)}</div>
-          <div class="msg-content" style="background:#f5f0fa;border-color:#cac;font-size:11px;color:#86a;">
+            <span class="msg-read-tag">仅 SUPER</span>
+          </div><div class="msg-time">${fmt(a.created_at)}${a.updated_at ? ' <span class="ann-edited">· 已编辑</span>' : ''}</div></div>
+          <div class="msg-content ann-content">${esc(a.content)}</div>
+          <div class="msg-content ann-meta">
             ✍️ 发布者：${esc(a.admin_username || '未知')} · 📅 ${fmt(a.created_at)}${a.updated_at ? ' · 🕓 更新：' + fmt(a.updated_at) : ''}
           </div>
           <div class="msg-actions book-actions">
