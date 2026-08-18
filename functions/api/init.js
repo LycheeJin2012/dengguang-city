@@ -760,6 +760,48 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   }
 
   // ============================================================
+  // v17.10: super 诊断/修复 passkey jwk (x/y 字节长度)
+  // POST /api/init?action=admin-passkey-fix-jwks  (super)
+  // ============================================================
+  if (_action === 'admin-passkey-fix-jwks') {
+    if (!_me || _me.role !== 'super') return err(403, '只有 super 管理员可运行');
+    const rows = await env.DB.prepare('SELECT id, credential_id, public_key_jwk FROM passkeys').all();
+    const _b64len = (s) => { try {
+      return Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)).length;
+    } catch (_) { return -1; }};
+    const _pad = (s) => {
+      try {
+        const bin = Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
+        if (bin.length === 32) return s;
+        const out = new Uint8Array(32);
+        out.set(bin, 32 - bin.length);
+        let bin2 = '';
+        for (let i = 0; i < out.length; i++) bin2 += String.fromCharCode(out[i]);
+        return btoa(bin2).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      } catch (_) { return s; }
+    };
+    const list = [];
+    for (const r of (rows.results || [])) {
+      let jwk = {};
+      try { jwk = JSON.parse(r.public_key_jwk); } catch (e) {}
+      const xl = _b64len(jwk.x);
+      const yl = _b64len(jwk.y);
+      const needs = (xl !== 32) || (yl !== 32);
+      const out = { id: r.id, cred: r.credential_id, x_len: xl, y_len: yl, needs_fix: needs };
+      if (needs) {
+        const newJwk = { ...jwk, x: _pad(jwk.x), y: _pad(jwk.y) };
+        await env.DB.prepare('UPDATE passkeys SET public_key_jwk = ? WHERE id = ?')
+          .bind(JSON.stringify(newJwk), r.id).run();
+        out.fixed = true;
+        out.new_x_len = _b64len(newJwk.x);
+        out.new_y_len = _b64len(newJwk.y);
+      }
+      list.push(out);
+    }
+    return ok({ total: list.length, fixed: list.filter(x => x.fixed).length, list });
+  }
+
+  // ============================================================
   // v17.9: admin-only logout - 只清 admin 身份,保留 player 身份
   // POST /api/init?action=admin-logout
   // ============================================================
