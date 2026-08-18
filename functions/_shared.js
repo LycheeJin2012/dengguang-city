@@ -382,51 +382,39 @@ function cborDecode(data) {
   return readItem();
 }
 
-// COSE EC2 公钥 -> JWK
-// 注意: cborDecode 对 major 5 (map) 返回 JS object, cborDecode 对 major 4 (array) 返回 array.
-// 两种编码都见过, 所以用兼容写法: 优先当 object 读, 否则用固定索引当 array 读
-function coseToJwk(cose) {
-  if (!cose) throw new Error('COSE: 空');
-
-  // 兼容 array / object 两种 CBOR 编码
-  const isArr = Array.isArray(cose);
-  const get = (label, arrIdx) => isArr ? cose[arrIdx] : cose[label];
-
-  const kty = get(1, 1);
-  if (kty !== 2) throw new Error('COSE: 非 EC2 密钥, kty=' + kty);
-
-  const alg = get(3, 3);
-  if (alg !== -7) throw new Error('COSE: 仅支持 ES256 (alg=-7), 实际 ' + alg);
-
-  const crv = get(-1, 5);
-  if (crv !== 1) throw new Error('COSE: 仅支持 P-256 (crv=1), 实际 ' + crv);
-
-  let x = get(-2, 7);
-  let y = get(-3, 9);
-  if (!x || !y) throw new Error('COSE: 缺少 x 或 y');
-
+// COSE EC2 公钥 (raw bytes) -> JWK
+// v17.10.3 简化: 不依赖 cborDecode, 直接 slice 固定偏移拿 x/y 坐标
+// WebAuthn COSE_Key EC2 布局 (固定 77 字节):
+//   offset 0:    a5 (CBOR map of 5 items)
+//   offset 1-9:  kty(1)+val(2)+alg(3)+val(26 20)+crv(-1=20)+val(1)+x(-2=21)+header(58 20)
+//   offset 10-41: x 坐标 (32 字节, 大端)
+//   offset 42-44: y header (22 58 20)
+//   offset 45-76: y 坐标 (32 字节, 大端)
+// 总 77 字节 = 4 (head) + 5 (alg+crv+x-header) + 32 (x) + 3 (y-header) + 32 (y) + 1 (a5 本身) = 77
+// 修法: 之前 [11,43) 和 [46,78) 错位 [off-by-one] — 漏掉 x[0] 多吞 0x22, y 越界只 31 字节
+function coseToJwk(coseBytes) {
+  if (!coseBytes || coseBytes.length < 77) {
+    throw new Error('COSE: 太短或空, len=' + (coseBytes ? coseBytes.length : 0));
+  }
+  const b = coseBytes instanceof Uint8Array ? coseBytes : new Uint8Array(coseBytes);
+  // 验证首字节是 COSE_Key map (a5)
+  if (b[0] !== 0xa5) {
+    throw new Error('COSE: 首字节不是 map(0xa5), 实际 0x' + b[0].toString(16));
+  }
+  const x = b.slice(10, 42);  // 32 字节
+  const y = b.slice(45, 77);  // 32 字节
   // v17.8 fix: 某些 authenticator 编码时省略前导 0 字节, x/y 可能只有 31 字节
-  // P-256 严格要求 32 字节 (256 bits), 否则 importKey 报 "Invalid EC key"
   const pad32 = (b) => {
     if (b.length === 32) return b;
     if (b.length < 32) {
       const out = new Uint8Array(32);
-      out.set(b, 32 - b.length);  // 前导 0 补齐
+      out.set(b, 32 - b.length);
       return out;
     }
-    if (b.length > 32) {
-      // 截断前导 0
-      let i = 0;
-      while (i < b.length - 32 && b[i] === 0) i++;
-      return b.slice(i, i + 32);
-    }
-    return b;
+    return b;  // > 32 字节, 不应发生
   };
-  x = pad32(x);
-  y = pad32(y);
-
   return { kty: 'EC', crv: 'P-256', alg: 'ES256', ext: false,
-           x: bytesToB64url(x), y: bytesToB64url(y) };
+           x: bytesToB64url(pad32(x)), y: bytesToB64url(pad32(y)) };
 }
 
 // 解析 authenticatorData
@@ -598,7 +586,16 @@ export async function passkeyRegisterFinish(env, body, subject, rpId, expectedOr
   if (!(parsed.flags & 0x01)) throw new Error('用户在场标志缺失');
   if (!(parsed.flags & 0x40)) throw new Error('AT 标志缺失');
 
-  const jwk = coseToJwk(parsed.attestedCredentialData.cosePubKey);
+  // v17.10.3: coseToJwk 接受 raw bytes, 这里需要从 authData 重新切出 COSE_Key bytes
+  // (parsed.attestedCredentialData.cosePubKey 是 cborDecode 后的 object, 不能再用)
+  // 找 AAGUID (16) + credIdLen (2) + credId 后到 authData 末尾 = COSE_Key bytes
+  // 更直接: 调一个内部 helper 切 COSE_Key
+  const authData = att.authData;
+  let _off = 37 + 16 + 2;
+  const _credIdLen = (authData[_off - 2] << 8) | authData[_off - 1];
+  _off += _credIdLen;
+  const coseBytes = authData.slice(_off);
+  const jwk = coseToJwk(coseBytes);
   const credId = parsed.attestedCredentialData.credentialId;
   const aaguid = parsed.attestedCredentialData.aaguid;
   const credIdB64 = bytesToB64url(credId);

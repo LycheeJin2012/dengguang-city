@@ -984,8 +984,10 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   // ============================================================
   if (_action === 'admin-passkey-reregister') {
     if (!_me || _me.role !== 'super') return err(403, '只有 super 管理员可运行');
-    // 一次性 UPDATE: 对所有 passkey 把 jwk.x 取 last 32 字节, jwk.y 取 last 32 字节 (跳过 CBOR 头)
-    // 因为 db 里的 jwk.x/y 实际是整个 COSE_Key binary, x 在偏移 11-42, y 在偏移 46-77
+    // v17.10.3: 修 COSE_Key 偏移 [10, 42) 和 [45, 77) — 之前 [11, 43) / [46, 78) off-by-one
+    // 还支持 force=1: 重新切所有 jwk (处理被旧版错位覆盖的 passkey)
+    const _body = await request.json().catch(() => ({}));
+    const _force = !!_body.force;
     const rows = await env.DB.prepare('SELECT id, public_key_jwk FROM passkeys').all();
     const out = [];
     for (const r of (rows.results || [])) {
@@ -994,9 +996,14 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
         const xFull = Uint8Array.from(atob((jwk.x || '').replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
         const yFull = Uint8Array.from(atob((jwk.y || '').replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0));
         if (xFull.length === 77 && yFull.length === 77) {
-          // x 在 [11, 43), y 在 [46, 78)
-          const xBytes = xFull.slice(11, 43);
-          const yBytes = yFull.slice(46, 78);
+          // v17.10.3: 修正 COSE_Key EC2 偏移
+          // offset 0: a5 (map 5)
+          // offset 1-9: kty(01 02) + alg(03 26 20) + crv(20 01) + x key(21) + x header(58 20)
+          // offset 10-41: x 坐标 (32 字节)
+          // offset 42-44: y key(22) + y header(58 20)
+          // offset 45-76: y 坐标 (32 字节)
+          const xBytes = xFull.slice(10, 42);
+          const yBytes = yFull.slice(45, 77);
           const toB64 = (b) => {
             let s = ''; for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
             return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
@@ -1005,6 +1012,8 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
           await env.DB.prepare('UPDATE passkeys SET public_key_jwk = ? WHERE id = ?')
             .bind(JSON.stringify(newJwk), r.id).run();
           out.push({ id: r.id, fixed: true, new_x: newJwk.x.substring(0, 12) + '...', new_y: newJwk.y.substring(0, 12) + '...' });
+        } else if (_force) {
+          out.push({ id: r.id, fixed: false, reason: 'force 模式: x/y 不是 77 字节, 无法重建 (id=' + r.id + ', xLen=' + xFull.length + ', yLen=' + yFull.length + ')', irreversible: true });
         } else {
           out.push({ id: r.id, fixed: false, reason: 'xFull=' + xFull.length + ' yFull=' + yFull.length });
         }
