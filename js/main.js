@@ -1575,6 +1575,9 @@
           // 更新 modal 数字
           const emeraldEl = backdrop.querySelector('[style*="color:#ffd23f"]');
           if (emeraldEl) emeraldEl.textContent = rd.emeralds;
+          // 更新 nav 角标 (不用刷页)
+          const navE = document.getElementById('navEmeraldNum');
+          if (navE) navE.textContent = rd.emeralds;
           btn.textContent = '✓ 今日已签, 明天再来';
           // 重新拉一次状态, 更新日历 + 角标
           const fresh = await fetchSigninStatus();
@@ -1710,6 +1713,9 @@
           : '';
         navUserSlot.innerHTML = `
           <span class="nav-user-name">${escapeHtml(p.avatar_emoji || '👤')} ${escapeHtml(p.username)}</span>
+          <span class="nav-emerald" title="绿宝石余额" style="background:rgba(255,210,63,.15);border:1px solid #ffd23f;border-radius:12px;padding:2px 8px;font-size:12px;color:#ffd23f;font-weight:600;display:inline-flex;align-items:center;gap:3px;">
+            💎 <span id="navEmeraldNum">${p.emeralds || 0}</span>
+          </span>
           ${adminLink}
           <a href="profile.html" class="nav-logout-link" style="color:var(--c-emerald);">👤 主页</a>
           <a href="dm.html" class="nav-logout-link" style="color:var(--c-emerald);">📨 私信</a>

@@ -153,7 +153,7 @@ export async function onRequestGet(context) {
     }
     if (sess.player_id) {
       try {
-        player = await env.DB.prepare('SELECT id, username, email, game_id, status, avatar_emoji, bio, linked_admin_id FROM players WHERE id = ?').bind(sess.player_id).first();
+        player = await env.DB.prepare('SELECT id, username, email, game_id, status, avatar_emoji, bio, linked_admin_id, emeralds FROM players WHERE id = ?').bind(sess.player_id).first();
       } catch (e) { return err(500, 'player select err: ' + e.message); }
     }
     // combined session (有两边): 选当前 URL 想看的角色
