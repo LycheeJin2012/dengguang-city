@@ -217,6 +217,21 @@ const MIGRATIONS = [
   `ALTER TABLE players ADD COLUMN linked_admin_id INTEGER`,
   // v17.9: backfill players.linked_admin_id 从 admins.linked_player_id 反向回填
   `UPDATE players SET linked_admin_id = (SELECT id FROM admins WHERE admins.linked_player_id = players.id) WHERE linked_admin_id IS NULL`,
+  // v18: 加 D1 索引加速常用查询
+  `CREATE INDEX IF NOT EXISTS idx_messages_status_created ON messages(status, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_messages_player ON messages(player_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_dm_from_to ON direct_messages(from_player_id, to_player_id, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_dm_to_unread ON direct_messages(to_player_id, read_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_dm_pair_created ON direct_messages(from_player_id, to_player_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_bookings_player ON bookings(player_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_kart_player ON kart_signups(player_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_circuit_player ON circuit_signups(player_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_license_player ON license_signups(player_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_msg_comments_msg ON message_comments(message_id, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_passkeys_player ON passkeys(player_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_passkeys_admin ON passkeys(admin_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_announcements_created ON announcements(created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_webauthn_expires ON webauthn_challenges(expires_at)`,
 ];
 
 export async function onRequestGet(context) {
