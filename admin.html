@@ -1,7 +1,18 @@
 <!DOCTYPE html>
-<html><head>
+<html lang="zh-CN">
+<head>
 <meta charset="UTF-8">
 <title>跳转中...</title>
-<meta http-equiv="refresh" content="0;url=/admin-new.html?v=20260818">
-<script>location.replace('/admin-new.html?v=20260818-' + Date.now().toString(36));</script>
-</head><body><a href="/admin-new.html?v=20260818">点此进入管理后台</a></body></html>
+<meta http-equiv="refresh" content="0;url=/admin-new.html?v=20260818-redirect">
+<link rel="canonical" href="/admin-new.html?v=20260818-redirect">
+<script>
+  // 多重跳转保险
+  try { window.location.replace('/admin-new.html?v=20260818-redirect&t=' + Date.now()); } catch (e) {}
+  try { window.location.href = '/admin-new.html?v=20260818-redirect&t=' + Date.now(); } catch (e) {}
+  setTimeout(function(){ window.location = '/admin-new.html?v=20260818-redirect&t=' + Date.now(); }, 100);
+</script>
+</head>
+<body>
+<p>正在跳转... 如果没有自动跳转, <a href="/admin-new.html?v=20260818-redirect">点此进入管理后台</a></p>
+</body>
+</html>
