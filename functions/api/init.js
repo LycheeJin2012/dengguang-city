@@ -387,9 +387,10 @@ export async function onRequestPost(context) {
       const rpId = getRpId(request);
       const origin = getOrigin(request);
       const expectedOrigin = { type: 'webauthn.create', origin };  // register 用 create
+      // 提一次 readToken + getSession 给所有 passkey-* 共享
+      const _tok = readToken(request);
+      const _sess = _tok ? await getSession(env, _tok) : null;
       if (_action === 'passkey-register-start') {
-        const _tok = readToken(request);
-        const _sess = await getSession(env, _tok);
         if (!_sess) return err(401, '需要先登录');
         const _subject = await resolveSubjectFromSession(env, _sess);
         if (!_subject) return err(401, '账号不存在或已禁用');
@@ -397,8 +398,6 @@ export async function onRequestPost(context) {
         return ok(_data);
       }
       if (_action === 'passkey-register-finish') {
-        const _tok = readToken(request);
-        const _sess = await getSession(env, _tok);
         if (!_sess) return err(401, '需要先登录');
         const _subject = await resolveSubjectFromSession(env, _sess);
         if (!_subject) return err(401, '账号不存在或已禁用');
@@ -434,8 +433,6 @@ export async function onRequestPost(context) {
         });
       }
       if (_action === 'passkey-list') {
-        const _tok = readToken(request);
-        const _sess = await getSession(env, _tok);
         if (!_sess) return err(401, '需要先登录');
         const _subject = await resolveSubjectFromSession(env, _sess);
         if (!_subject) return err(401, '账号不存在或已禁用');
@@ -443,8 +440,6 @@ export async function onRequestPost(context) {
         return ok({ passkeys: _rows.results || [] });
       }
       if (_action === 'passkey-delete') {
-        const _tok = readToken(request);
-        const _sess = await getSession(env, _tok);
         if (!_sess) return err(401, '需要先登录');
         const _subject = await resolveSubjectFromSession(env, _sess);
         if (!_subject) return err(401, '账号不存在或已禁用');
@@ -453,6 +448,78 @@ export async function onRequestPost(context) {
         if (!_id) return err(400, 'id 必填');
         await deletePasskey(env, _subject, _id);
         return ok({ deleted: _id });
+      }
+      if (_action === 'passkey-test-start') {
+        if (!_sess) return err(401, '需要先登录');
+        if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
+        const _b = await request.json().catch(() => ({}));
+        const _credId = (_b.credential_id || '').trim();
+        if (!_credId) return err(400, 'credential_id 必填');
+        const _pk = await env.DB.prepare('SELECT * FROM passkeys WHERE credential_id = ?').bind(_credId).first();
+        if (!_pk) return err(404, '通行密钥不存在');
+        // 验证 passkey 属于当前 subject
+        if (_sess.player_id) {
+          const _pl = await env.DB.prepare('SELECT linked_admin_id FROM players WHERE id = ?').bind(_sess.player_id).first();
+          if (_pk.player_id !== _sess.player_id && _pk.admin_id !== (_pl?.linked_admin_id || null)) {
+            return err(403, '该通行密钥不属于你的账号');
+          }
+        } else if (_sess.admin_id) {
+          const _al = await env.DB.prepare('SELECT linked_player_id FROM admins WHERE id = ?').bind(_sess.admin_id).first();
+          if (_pk.admin_id !== _sess.admin_id && _pk.player_id !== (_al?.linked_player_id || null)) {
+            return err(403, '该通行密钥不属于你的账号');
+          }
+        }
+        const _challenge = crypto.getRandomValues(new Uint8Array(32));
+        const _token = randomToken(24);
+        const _expires = new Date(Date.now() + 300_000).toISOString();
+        await env.DB.prepare(
+          "INSERT OR REPLACE INTO webauthn_challenges (token, challenge, purpose, player_id, expires_at) VALUES (?, ?, 'test', ?, ?)"
+        ).bind(_token, bytesToB64url(_challenge), `test:${_credId}`, _expires).run();
+        return ok({
+          challenge_token: _token,
+          publicKey: {
+            challenge: bytesToB64url(_challenge),
+            rpId,
+            allowCredentials: [{ id: _credId, type: 'public-key', transports: JSON.parse(_pk.transports || '[]') }],
+            userVerification: 'preferred',
+            timeout: 60000,
+          }
+        });
+      }
+      if (_action === 'passkey-test-finish') {
+        if (!_sess) return err(401, '需要先登录');
+        if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
+        const _b = await request.json().catch(() => ({}));
+        const { challenge_token: _ct, credential } = _b;
+        if (!_ct || !credential) return err(400, '缺少参数');
+        const _ch = await env.DB.prepare(
+          "SELECT challenge, player_id, expires_at FROM webauthn_challenges WHERE token = ? AND purpose = 'test'"
+        ).bind(_ct).first();
+        if (!_ch) return err(400, 'challenge 无效');
+        if (new Date(_ch.expires_at) < new Date()) {
+          await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(_ct).run();
+          return err(400, 'challenge 已过期');
+        }
+        await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(_ct).run();
+        const _targetCredId = (_ch.player_id || '').replace(/^test:/, '');
+        if (credential.id !== _targetCredId) return err(401, '凭据 ID 不匹配');
+        const _pk = await env.DB.prepare('SELECT * FROM passkeys WHERE credential_id = ?').bind(credential.id).first();
+        if (!_pk) return err(401, '该通行密钥未注册');
+        const _loginOrigin = { type: 'webauthn.get', origin };
+        const _cdj = b64urlToBytes(credential.response.clientDataJSON);
+        const _ad = b64urlToBytes(credential.response.authenticatorData);
+        const _sig = b64urlToBytes(credential.response.signature);
+        verifyClientData(_cdj, _ch.challenge, _loginOrigin);
+        const _parsed = parseAuthData(_ad);
+        const _expected = await expectedRpIdHash(rpId);
+        if (bytesToB64url(_parsed.rpIdHash) !== bytesToB64url(_expected)) return err(401, 'rpIdHash 不匹配');
+        if (!(_parsed.flags & 0x01)) return err(401, '用户在场标志缺失');
+        const _jwk = JSON.parse(_pk.public_key_jwk);
+        const _ok = await verifyEs256(env, _pk, _jwk, _sig, _ad, _cdj);
+        if (!_ok) return err(401, '签名验证失败');
+        await env.DB.prepare("UPDATE passkeys SET sign_count = ?, last_used_at = datetime('now') WHERE id = ?")
+          .bind(_parsed.signCount, _pk.id).run();
+        return ok({ verified: true, message: '该通行密钥能正常登录' });
       }
       return err(400, '未知 passkey action: ' + _action);
     } catch (e) {
