@@ -286,7 +286,11 @@
 
     async function loadPasskeys() {
       try {
-        const r = await fetch('/api/init?action=passkey-list', { credentials: 'include' });
+        // v17.10: passkey-list 端点只接受 POST (init.js 路由都在 onRequestPost)
+        const r = await fetch('/api/init?action=passkey-list', {
+          method: 'POST', credentials: 'include',
+          headers: { 'Content-Type': 'application/json' }, body: '{}'
+        });
         const d = await r.json();
         if (!r.ok || d.error) throw new Error(d.error || '获取失败');
         const ks = d.passkeys || [];
