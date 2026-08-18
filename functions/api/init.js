@@ -763,6 +763,26 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
   // v17.10: super 诊断/修复 passkey jwk (x/y 字节长度)
   // POST /api/init?action=admin-passkey-fix-jwks  (super)
   // ============================================================
+  if (_action === 'admin-passkey-debug') {
+    if (!_me || _me.role !== 'super') return err(403, '只有 super 管理员可运行');
+    const rows = await env.DB.prepare('SELECT id, credential_id, public_key_jwk FROM passkeys ORDER BY id').all();
+    return ok({ passkeys: (rows.results || []).map(r => {
+      let jwk = {}; try { jwk = JSON.parse(r.public_key_jwk); } catch (e) {}
+      return {
+        id: r.id,
+        cred: r.credential_id,
+        jwk_raw_len: r.public_key_jwk.length,
+        jwk_kty: jwk.kty,
+        jwk_crv: jwk.crv,
+        jwk_alg: jwk.alg,
+        x: jwk.x,
+        y: jwk.y,
+        x_len: (jwk.x || '').length,
+        y_len: (jwk.y || '').length,
+      };
+    })});
+  }
+
   if (_action === 'admin-passkey-fix-jwks') {
     if (!_me || _me.role !== 'super') return err(403, '只有 super 管理员可运行');
     const rows = await env.DB.prepare('SELECT id, credential_id, public_key_jwk FROM passkeys').all();
