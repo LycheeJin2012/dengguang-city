@@ -1709,12 +1709,12 @@
           ? `<a href="admin.html" class="nav-logout-link" style="color:#a6a;font-weight:700;">🛡️ 管理后台</a>`
           : '';
         navUserSlot.innerHTML = `
-          <span class="nav-user-name">${escapeHtml(p.avatar_emoji || '👤')} ${escapeHtml(p.username)}</span>
           <span class="nav-emerald" title="绿宝石余额" style="background:rgba(255,210,63,.15);border:1px solid #ffd23f;border-radius:12px;padding:2px 8px;font-size:12px;color:#ffd23f;font-weight:600;display:inline-flex;align-items:center;gap:3px;">
             💎 <span id="navEmeraldNum">${p.emeralds || 0}</span>
           </span>
+          <a href="#" id="navSigninBtn" class="nav-logout-link" title="每日签到领绿宝石" style="color:#fc6;font-weight:700;">🎁 签到</a>
+          <a href="profile.html" class="nav-user-name" style="text-decoration:none;color:inherit;">${escapeHtml(p.avatar_emoji || '👤')} ${escapeHtml(p.username)}</a>
           ${adminLink}
-          <a href="profile.html" class="nav-logout-link" style="color:var(--c-emerald);">👤 主页</a>
           <a href="dm.html" class="nav-logout-link" style="color:var(--c-emerald);">📨 私信</a>
           <a href="#" id="navLogout" class="nav-logout-link">登出</a>
         `;
@@ -1726,6 +1726,16 @@
           await refreshUserState();
           loadPublicMessages();
         });
+        // v19: nav 签到按钮 (上方菜单快捷入口)
+        const nsb = document.getElementById('navSigninBtn');
+        if (nsb) nsb.addEventListener('click', (e) => { e.preventDefault(); openSigninModal(); });
+        // 顺便也拉一次签到状态, 让 🎁 旁边显示 "✓" 标记
+        fetchSigninStatus().then(d => {
+          const nsb = document.getElementById('navSigninBtn');
+          if (!nsb) return;
+          if (d.signed_today) nsb.textContent = '✓ 已签';
+          else if (d.current_streak > 0) nsb.textContent = `🎁 ${d.current_streak}天`;
+        }).catch(() => {});
       } else {
         navUserSlot.innerHTML = `<a href="#" id="navLogin" class="nav-login-link">玩家登录</a>`;
         const ll = document.getElementById('navLogin');
