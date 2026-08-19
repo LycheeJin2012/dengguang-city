@@ -697,3 +697,306 @@ body.admin-body {
   background-color: var(--cyber-bg) !important;
   color: var(--cyber-text) !important;
 }
+
+/* ============================================
+   v22.1: Linear 风格 admin 侧边栏布局
+   ============================================ */
+
+/* 隐藏旧 .user-bar (移到 sidebar 内) */
+.user-bar { display: none !important; }
+/* 隐藏旧横向 .admin-tabs (移到 sidebar 内) */
+.admin-tabs { display: none !important; }
+
+/* dashboard 用 grid 布局: sidebar + main */
+.view-dash {
+  display: grid !important;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+  gap: 0;
+  align-items: stretch;
+}
+
+/* 侧边栏 */
+.admin-sidebar {
+  background: linear-gradient(180deg, #0a0a1f 0%, #06061a 100%);
+  border-right: 1px solid var(--cyber-border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+.admin-side-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--cyber-border);
+}
+.admin-side-brand .logo-block {
+  flex-shrink: 0;
+  width: 32px; height: 32px;
+}
+.admin-side-brand .block-grass,
+.admin-side-brand .block-dirt {
+  width: 16px; height: 16px;
+}
+.admin-side-brand-text b {
+  display: block;
+  color: var(--cyber-cyan);
+  font-family: var(--font-cn);
+  font-size: 16px;
+  letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(0, 229, 255, 0.4);
+}
+.admin-side-brand-text span {
+  display: block;
+  color: var(--cyber-text-dim);
+  font-family: var(--cyber-mono);
+  font-size: 9px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+.admin-side-nav {
+  flex: 1;
+  padding: 12px 10px;
+  overflow-y: auto;
+}
+.admin-side-group {
+  font-family: var(--cyber-mono);
+  font-size: 9px;
+  color: var(--cyber-text-dim);
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 14px 10px 6px;
+  margin: 0;
+  opacity: 0.55;
+}
+.admin-side-nav .tab {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 38px !important;
+  padding: 0 12px !important;
+  margin: 0 0 2px !important;
+  border: none !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  color: var(--cyber-text-dim) !important;
+  font-family: var(--font-cn) !important;
+  font-size: 13px !important;
+  letter-spacing: 0 !important;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.admin-side-nav .tab:hover {
+  background: rgba(0, 229, 255, 0.08) !important;
+  color: var(--cyber-cyan) !important;
+}
+.admin-side-nav .tab.active {
+  background: linear-gradient(90deg, rgba(0, 229, 255, 0.18), rgba(0, 229, 255, 0.04)) !important;
+  color: var(--cyber-cyan) !important;
+  box-shadow: inset 3px 0 0 var(--cyber-cyan) !important;
+  font-weight: 600;
+}
+.admin-side-nav .tab.active::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 6px; bottom: 6px;
+  width: 2px;
+  background: var(--cyber-cyan);
+  box-shadow: 0 0 8px var(--cyber-cyan);
+  border-radius: 1px;
+}
+.admin-side-nav .tab-count {
+  margin-left: auto !important;
+  background: var(--cyber-cyan) !important;
+  color: #000 !important;
+  font-size: 10px !important;
+  font-weight: 700 !important;
+  padding: 1px 6px !important;
+  border: none !important;
+  min-width: 18px;
+  text-align: center;
+  border-radius: 9px !important;
+}
+
+.admin-side-foot {
+  border-top: 1px solid var(--cyber-border);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.admin-side-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+}
+.admin-side-user .user-avatar {
+  font-size: 26px;
+  filter: drop-shadow(0 0 4px rgba(0, 229, 255, 0.4));
+}
+.admin-side-user b {
+  display: block;
+  color: var(--cyber-text);
+  font-family: var(--font-cn);
+  font-size: 13px;
+  line-height: 1.2;
+}
+.admin-side-user .role-tag {
+  font-size: 9px !important;
+  padding: 1px 6px !important;
+  margin-top: 2px;
+  display: inline-block;
+}
+.admin-side-link {
+  color: var(--cyber-text-dim) !important;
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  padding: 6px 10px;
+  border-radius: 4px;
+  border: 1px solid var(--cyber-border);
+  display: block;
+  text-align: center;
+  transition: all 0.2s;
+}
+.admin-side-link:hover {
+  background: rgba(0, 229, 255, 0.08);
+  color: var(--cyber-cyan) !important;
+  border-color: var(--cyber-cyan);
+}
+#btnLogout2 {
+  width: 100%;
+  font-size: 11px !important;
+}
+
+/* 主区域 */
+.admin-main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;  /* 防止 grid item overflow */
+  min-height: 100vh;
+  background: transparent;
+}
+.admin-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 28px;
+  border-bottom: 1px solid var(--cyber-border);
+  background: linear-gradient(180deg, rgba(7, 7, 26, 0.6), rgba(7, 7, 26, 0.3));
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.admin-topbar-eyebrow {
+  font-family: var(--cyber-mono);
+  font-size: 9px;
+  color: var(--cyber-cyan);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  display: block;
+  margin-bottom: 4px;
+  opacity: 0.6;
+}
+.admin-topbar-title {
+  font-family: var(--font-cn);
+  font-size: 20px;
+  color: var(--cyber-text);
+  margin: 0;
+  letter-spacing: 1px;
+  text-shadow: 0 0 12px rgba(0, 229, 255, 0.25);
+}
+.admin-topbar-time {
+  font-family: var(--cyber-mono);
+  font-size: 11px;
+  color: var(--cyber-text-dim);
+  letter-spacing: 1px;
+}
+
+.admin-panes {
+  flex: 1;
+  padding: 20px 28px 40px;
+  overflow-y: auto;
+}
+.admin-panes .tab-pane {
+  background: transparent !important;
+  border: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+.admin-panes .pane-head {
+  display: none;  /* 顶栏已显示标题, 内部不再重复 */
+}
+.admin-panes .pane-tools {
+  margin-bottom: 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* msg-item 卡片更精致 */
+.admin-panes .msg-item,
+.admin-panes .admin-item,
+.admin-panes .gal-item {
+  background: linear-gradient(135deg, rgba(20, 22, 48, 0.4), rgba(13, 13, 36, 0.2)) !important;
+  border: 1px solid var(--cyber-border) !important;
+  border-left: 3px solid var(--cyber-cyan) !important;
+  border-radius: 8px !important;
+  padding: 14px 18px !important;
+  margin-bottom: 10px;
+  transition: all 0.2s ease;
+}
+.admin-panes .msg-item:hover,
+.admin-panes .admin-item:hover {
+  border-color: var(--cyber-cyan) !important;
+  border-left-color: var(--cyber-cyan) !important;
+  box-shadow: 0 0 24px rgba(0, 229, 255, 0.1);
+  transform: translateX(3px);
+  background: linear-gradient(135deg, rgba(20, 22, 48, 0.6), rgba(13, 13, 36, 0.3)) !important;
+}
+.admin-panes .msg-content {
+  background: rgba(0, 0, 0, 0.3) !important;
+  border: 1px solid rgba(0, 229, 255, 0.1) !important;
+  border-radius: 6px;
+  padding: 12px 16px;
+  color: var(--cyber-text);
+  line-height: 1.7;
+  font-size: 14px;
+}
+
+/* 移动端 fallback: <900px 时改回顶部 tab */
+@media (max-width: 900px) {
+  .view-dash {
+    grid-template-columns: 1fr;
+  }
+  .admin-sidebar {
+    position: static;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--cyber-border);
+  }
+  .admin-side-nav {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .admin-side-nav .tab {
+    width: auto !important;
+    height: auto !important;
+    padding: 6px 10px !important;
+  }
+  .admin-side-group { width: 100%; padding: 8px 0 4px; }
+  .admin-side-foot { flex-direction: row; flex-wrap: wrap; }
+  .admin-side-foot > * { flex: 1; min-width: 100px; }
+}

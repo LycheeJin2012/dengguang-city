@@ -1663,14 +1663,59 @@ function renderDash(){
   } catch (e) {}
 }
 
-// tab 切换
-$$('.admin-tabs .tab').forEach(btn=>{
+// tab 切换 (v22.1: 同时驱动 sidebar 按钮 + topbar 标题)
+const _TAB_TITLES = {
+  messages: '市民留言',
+  players: '玩家管理',
+  bookings: '酒店预订',
+  license: '驾照考试',
+  kart: '赛道报名',
+  circuit: '国际赛车场',
+  announcements: '公告管理',
+  gallery: '首页图集',
+  dms: '私信监管',
+  admins: '管理员账号',
+  password: '修改我的密码',
+};
+$$('.tab').forEach(btn=>{
+  if (!btn.dataset.tab) return;
   btn.addEventListener('click',()=>{
     const t=btn.dataset.tab;
-    $$('.admin-tabs .tab').forEach(b=>b.classList.toggle('active',b===btn));
+    $$('.tab').forEach(b=>b.classList.toggle('active',b===btn && b.dataset.tab));
     $$('.tab-pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+t));
+    const _tt = document.getElementById('adminTopbarTitle');
+    if (_tt) _tt.textContent = _TAB_TITLES[t] || t;
   });
 });
+
+// topbar 实时时钟
+function _tickClock() {
+  const _el = document.getElementById('adminTopbarTime');
+  if (!_el) return;
+  const _d = new Date();
+  const _pad = (n) => String(n).padStart(2, '0');
+  _el.textContent = `${_d.getFullYear()}-${_pad(_d.getMonth()+1)}-${_pad(_d.getDate())} ${_pad(_d.getHours())}:${_pad(_d.getMinutes())}:${_pad(_d.getSeconds())}`;
+}
+_tickClock();
+setInterval(_tickClock, 1000);
+
+// 同步 #userName/#userRole 到 sidebar 副本
+function _syncSidebarUser() {
+  const _n = document.getElementById('userName');
+  const _r = document.getElementById('userRole');
+  const _n2 = document.getElementById('userName2');
+  const _r2 = document.getElementById('userRole2');
+  if (_n && _n2) _n2.textContent = _n.textContent;
+  if (_r && _r2) _r2.textContent = _r.textContent;
+  // 绑定退出按钮 (sidebar 副本)
+  const _lo2 = document.getElementById('btnLogout2');
+  if (_lo2) _lo2.addEventListener('click', async (e) => {
+    e.preventDefault();
+    await fetch('/api/login', { method: 'DELETE', credentials: 'include' });
+    location.reload();
+  });
+}
+new MutationObserver(_syncSidebarUser).observe(document.getElementById('userName') || document.body, { childList: true, characterData: true, subtree: true });
 
 // 过滤 radio 切换
 ['msgFilter','playerFilter','bookFilter','licenseFilter','kartFilter','circuitFilter'].forEach(name=>{
@@ -2000,7 +2045,7 @@ async function renderDmAiStruggle() {
   const btnAiStruggle = document.getElementById('btnDmAiStruggle');
   if (btnAiStruggle) btnAiStruggle.onclick = () => renderDmAiStruggle();
   // tab 切换钩子：进入 dms tab 时拉数据
-  document.querySelectorAll('.admin-tabs .tab').forEach(btn => {
+  document.querySelectorAll('.tab[data-tab]').forEach(btn => {
     btn.addEventListener('click', () => {
       if (btn.dataset.tab === 'dms') renderDms();
     });
