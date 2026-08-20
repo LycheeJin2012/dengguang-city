@@ -705,3 +705,45 @@ body.admin-body {
   letter-spacing: 1px;
   padding: 1px 6px;
 }
+
+/* ============================================
+   v25: sub-tabs (驾照 / 酒店 / 赛车场 tab 内的二级切换)
+   ============================================ */
+.subtabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 3px solid var(--c-black);
+  background: var(--c-bg-2);
+  margin: 8px 0 12px;
+  padding: 0 4px;
+  flex-wrap: wrap;
+}
+.subtab {
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  background: var(--c-stone);
+  color: white;
+  height: 32px;
+  padding: 0 14px;
+  border: 2px solid var(--c-black);
+  border-bottom: none;
+  margin-right: 4px;
+  margin-bottom: -3px;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.subtab:hover { background: var(--c-stone-light); color: var(--c-dark); }
+.subtab.active {
+  background: var(--c-paper);
+  color: var(--c-grass-dark);
+  box-shadow: 0 -3px 0 var(--c-gold);
+  position: relative;
+  z-index: 1;
+}
+.subview { display: block; }
+.subview[style*="display:none"] { display: none; }
