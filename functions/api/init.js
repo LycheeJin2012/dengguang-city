@@ -205,6 +205,61 @@ const SCHEMA = [
     FOREIGN KEY (created_by) REFERENCES admins(id)
   )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_gallery_num ON gallery_items(num)`,
+  // v25: 酒店/赛车场/驾照考试信息管理 (super only)
+  `CREATE TABLE IF NOT EXISTS hotels (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    address TEXT,
+    description TEXT,
+    image_url TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT
+  )`,
+  `CREATE TABLE IF NOT EXISTS hotel_rooms (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    hotel_id INTEGER NOT NULL,
+    name TEXT NOT NULL,
+    capacity INTEGER NOT NULL DEFAULT 2,
+    beds TEXT,
+    breakfast_included INTEGER NOT NULL DEFAULT 1,
+    price_per_night INTEGER NOT NULL DEFAULT 100,
+    description TEXT,
+    image_url TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    FOREIGN KEY (hotel_id) REFERENCES hotels(id) ON DELETE CASCADE
+  )`,
+  `CREATE TABLE IF NOT EXISTS race_tracks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    length_km REAL,
+    laps INTEGER,
+    difficulty TEXT,
+    description TEXT,
+    image_url TEXT,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT
+  )`,
+  `CREATE TABLE IF NOT EXISTS license_requirements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    exam_type TEXT NOT NULL,           -- B / A / S
+    title TEXT NOT NULL,
+    description TEXT,
+    requirements TEXT,
+    min_age INTEGER DEFAULT 16,
+    duration_minutes INTEGER DEFAULT 30,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    is_active INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT
+  )`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_license_req_type ON license_requirements(exam_type)`,
+  `CREATE INDEX IF NOT EXISTS idx_hotel_rooms_hotel ON hotel_rooms(hotel_id)`,
   // v19: 每日签到 (玩家每日登录领绿宝石)
   `CREATE TABLE IF NOT EXISTS daily_signin (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1379,6 +1434,82 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
       botInfo.action = 'failed';
       botInfo.error = String(e.message || e).slice(0, 100);
     }
+  }
+
+  // ============================================================
+  // v25: 酒店 / 赛车场 / 驾照考试 信息管理 (super only)
+  // /api/init?action=hotels-manage   (GET 公开 / POST super 新建)
+  // /api/init?action=hotels-manage&id=X (PATCH/DELETE super)
+  // /api/init?action=hotel-rooms-manage  (GET ?hotel_id=X / POST/PATCH/DELETE super)
+  // /api/init?action=race-tracks-manage  (GET 公开 / POST super / PATCH/DELETE super)
+  // /api/init?action=license-req-manage  (GET 公开 / POST super / PATCH/DELETE super)
+  // ============================================================
+
+  if (_action === 'hotels-manage' || _action === 'hotel-rooms-manage' || _action === 'race-tracks-manage' || _action === 'license-req-manage') {
+    const _tbl = ({ 'hotels-manage': 'hotels', 'hotel-rooms-manage': 'hotel_rooms', 'race-tracks-manage': 'race_tracks', 'license-req-manage': 'license_requirements' })[_action];
+    const _allowedFields = {
+      hotels: ['name', 'address', 'description', 'image_url', 'sort_order', 'is_active'],
+      hotel_rooms: ['hotel_id', 'name', 'capacity', 'beds', 'breakfast_included', 'price_per_night', 'description', 'image_url', 'sort_order', 'is_active'],
+      race_tracks: ['name', 'length_km', 'laps', 'difficulty', 'description', 'image_url', 'sort_order', 'is_active'],
+      license_requirements: ['exam_type', 'title', 'description', 'requirements', 'min_age', 'duration_minutes', 'sort_order', 'is_active'],
+    }[_tbl];
+
+    // GET 公开
+    if (request.method === 'GET') {
+      const _u = new URL(request.url);
+      const _id = _u.searchParams.get('id');
+      const _hotelId = _u.searchParams.get('hotel_id');
+      let _sql, _params;
+      if (_id) {
+        _sql = `SELECT * FROM ${_tbl} WHERE id = ?`;
+        _params = [_id];
+      } else if (_hotelId && _tbl === 'hotel_rooms') {
+        _sql = `SELECT * FROM hotel_rooms WHERE hotel_id = ? ORDER BY sort_order, id`;
+        _params = [_hotelId];
+      } else {
+        _sql = `SELECT * FROM ${_tbl} ORDER BY sort_order, id`;
+        _params = [];
+      }
+      const _rows = await env.DB.prepare(_sql).bind(..._params).all();
+      return ok({ items: _rows.results || [] });
+    }
+
+    // POST / PATCH / DELETE — super only
+    if (!_me || _me.role !== 'super') return err(403, '仅 super 管理员可管理此信息');
+    if (request.method === 'POST') {
+      const _b = await request.json().catch(() => ({}));
+      const _vals = _allowedFields.map(f => _b[f] !== undefined ? _b[f] : null);
+      const _ph = _allowedFields.map(() => '?').join(',');
+      const _ins = await env.DB.prepare(`INSERT INTO ${_tbl} (${_allowedFields.join(',')}) VALUES (${_ph})`).bind(..._vals).run();
+      // hotels: 自动 update updated_at
+      if (_tbl === 'hotels' || _tbl === 'race_tracks' || _tbl === 'license_requirements') {
+        await env.DB.prepare(`UPDATE ${_tbl} SET updated_at = datetime('now') WHERE id = ?`).bind(_ins.meta.last_row_id).run();
+      }
+      return ok({ id: _ins.meta.last_row_id, created: true });
+    }
+    if (request.method === 'PATCH') {
+      const _u = new URL(request.url);
+      const _id = parseInt(_u.searchParams.get('id') || '0', 10);
+      if (!_id) return err(400, 'id 必填');
+      const _b = await request.json().catch(() => ({}));
+      const _sets = []; const _vals = [];
+      for (const f of _allowedFields) {
+        if (f in _b) { _sets.push(`${f} = ?`); _vals.push(_b[f]); }
+      }
+      if (_sets.length === 0) return err(400, '没有可更新字段');
+      _sets.push('updated_at = datetime(\'now\')');
+      _vals.push(_id);
+      await env.DB.prepare(`UPDATE ${_tbl} SET ${_sets.join(', ')} WHERE id = ?`).bind(..._vals).run();
+      return ok({ id: _id, updated: _sets.length - 1 });
+    }
+    if (request.method === 'DELETE') {
+      const _u = new URL(request.url);
+      const _id = parseInt(_u.searchParams.get('id') || '0', 10);
+      if (!_id) return err(400, 'id 必填');
+      await env.DB.prepare(`DELETE FROM ${_tbl} WHERE id = ?`).bind(_id).run();
+      return ok({ deleted: _id });
+    }
+    return err(405, 'method not allowed');
   }
 
   // 4. 返回
