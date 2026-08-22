@@ -398,6 +398,40 @@ export async function onRequestGet(context) {
     });
   }
 
+  // v25: GET 公开拉列表 (前端 renderHotelManage / renderTrackManage 等)
+  // hotels-manage / hotel-rooms-manage / race-tracks-manage / license-req-manage
+  if (_a === 'hotels-manage' || _a === 'hotel-rooms-manage' || _a === 'race-tracks-manage' || _a === 'license-req-manage') {
+    const _tbl = ({ 'hotels-manage': 'hotels', 'hotel-rooms-manage': 'hotel_rooms', 'race-tracks-manage': 'race_tracks', 'license-req-manage': 'license_requirements' })[_a];
+    const _id = _u.searchParams.get('id');
+    const _hotelId = _u.searchParams.get('hotel_id');
+    let _sql, _params;
+    if (_id) {
+      _sql = `SELECT * FROM ${_tbl} WHERE id = ?`;
+      _params = [_id];
+    } else if (_hotelId && _tbl === 'hotel_rooms') {
+      _sql = `SELECT * FROM hotel_rooms WHERE hotel_id = ? ORDER BY sort_order, id`;
+      _params = [_hotelId];
+    } else {
+      _sql = `SELECT * FROM ${_tbl} ORDER BY sort_order, id`;
+      _params = [];
+    }
+    const _rows = await env.DB.prepare(_sql).bind(..._params).all();
+    return ok({ items: _rows.results || [] });
+  }
+
+  // v25: GET /api/init?action=players-list (admin 玩家管理 — 含 emeralds 字段)
+  if (_a === 'players-list') {
+    const _ck = request.headers.get('Cookie') || '';
+    const _m = _ck.match(/lc_session=([^;]+)/);
+    if (!_m) return err(401, '未登录');
+    const _sess = await env.DB.prepare('SELECT admin_id, player_id, expires_at FROM sessions WHERE token = ?').bind(_m[1]).first();
+    if (!_sess || new Date(_sess.expires_at) <= new Date()) return err(401, '会话过期');
+    const _rows = await env.DB.prepare(
+      "SELECT id, username, email, status, emeralds, created_at, last_login_at FROM players ORDER BY id"
+    ).all();
+    return ok({ items: _rows.results || [] });
+  }
+
   // v19: 自动 MIGRATIONS — 任何 GET 都会确保 schema/字段最新
   // (解决"用户没主动 POST /api/init" 导致 MIGRATIONS 没跑, 新字段缺失)
   // 走 SCHEMA 幂等 (CREATE TABLE IF NOT EXISTS) + MIGRATIONS try/catch 吞错
@@ -796,11 +830,12 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
       }
 
       if (_adm === 'admin-player-list') {
-        // 玩家列表 + 最后活跃时间 (从 sessions 表查最近登录) + 注册时间
+        // 玩家列表 + 最后活跃时间 (从 sessions 表查最近登录) + 注册时间 + 💎 绿宝石余额
         const _q = (_url.searchParams.get('q') || '').trim();
         let _sql = `
           SELECT
             p.id, p.username, p.email, p.game_id, p.status, p.bio, p.avatar_emoji, p.created_at,
+            COALESCE(p.emeralds, 0) AS emeralds,
             (SELECT MAX(s.expires_at) FROM sessions s WHERE s.player_id = p.id) AS last_session
           FROM players p
           WHERE 1=1

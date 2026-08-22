@@ -548,9 +548,10 @@ async function renderPlayers(){
           <span class="msg-player-tag">${STATUS_LABEL[p.status]||p.status}</span>
           ${p.game_id?`<span class="gallery-num" title="游戏ID" style="margin-left:4px">🎮 ${esc(p.game_id)}</span>`:''}
         </div><div class="msg-time">注册：${fmt(p.created_at)}</div></div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--c-stone-dark);padding:4px 0 2px">
+        <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--c-stone-dark);padding:4px 0 2px;align-items:center">
           <span title="注册时间">📅 已注册：${fmt(p.created_at)}</span>
           <span title="最后活跃">🕒 最后活跃：${lastSession}</span>
+          <span title="💎 绿宝石余额 (来自每日签到)">💎 <b style="color:#2a8;color:var(--c-dark)">${(p.emeralds||0).toLocaleString()}</b> 颗</span>
         </div>
         <p class="msg-content" style="font-size:13px;color:var(--c-stone-dark);margin:6px 0">${p.bio?esc(p.bio):'<i>暂无简介</i>'}</p>
         <div class="msg-actions book-actions">
@@ -2421,7 +2422,7 @@ function showRoomModal(it) {
     const btn = bd.querySelector('#rmSave');
     btn.disabled = true; btn.textContent = '⏳ 保存中...';
     const body = {
-      hotel_id: it ? it.hotel_id : (it.hotel_id || null),
+      hotel_id: (it && it.hotel_id) || null,
       name: bd.querySelector('#rmName').value.trim(),
       capacity: parseInt(bd.querySelector('#rmCap').value, 10) || 2,
       beds: bd.querySelector('#rmBeds').value.trim(),
