@@ -2200,19 +2200,14 @@ function showLicenseReqModal(it) {
   };
 }
 
-// v25.3: 统一 fetchWithTimeout — 用 AbortController (8s 超时)
-async function _fetchWithTimeout(url, ms = 8000) {
-  const ctrl = new AbortController();
-  const tid = setTimeout(() => ctrl.abort(), ms);
-  try {
-    const r = await fetch(url, { credentials: 'same-origin', signal: ctrl.signal });
-    return r;
-  } catch (e) {
-    if (e.name === 'AbortError') throw new Error('请求超时 (' + ms + 'ms)');
-    throw e;
-  } finally {
-    clearTimeout(tid);
-  }
+// v25.5: 强制 2s 后 set "载入中" 替换成 "点 新建酒店 按钮" 提示
+// 解决某些浏览器 fetch 卡死时 一直 载入中... 的问题
+function _forceShowManageBtn(list, empty, btn) {
+  setTimeout(() => {
+    if (list && list.innerHTML.indexOf('载入中') >= 0) {
+      list.innerHTML = '<p style="color:#c95;padding:14px;text-align:center">⚠️ 加载超时, 请刷新重试</p>';
+    }
+  }, 4000);
 }
 
 // 酒店 + 房型 管理
@@ -2222,8 +2217,15 @@ async function renderHotelManage() {
   if (!list || !empty) return;
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
+  // v25.5: 4s 兜底, 避免一直 loading
+  const _safetyTimer = setTimeout(() => {
+    if (list.innerHTML.indexOf('载入中') >= 0) {
+      list.innerHTML = '<p style="color:#c95;padding:14px;text-align:center">⚠️ 加载超时, 请刷新重试</p>';
+    }
+  }, 4000);
   try {
-    const r = await _fetchWithTimeout('/api/init?action=hotels-manage');
+    const r = await fetch('/api/init?action=hotels-manage', { credentials: 'same-origin' });
+    clearTimeout(_safetyTimer);
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || '加载失败');
     const items = d.items || [];
@@ -2232,7 +2234,7 @@ async function renderHotelManage() {
     const _isSuper = _me && _me.role === 'super';
     empty.style.display = 'none';
     // 同时拉所有房间 (一次拉完)
-    const _roomsResp = await _fetchWithTimeout('/api/init?action=hotel-rooms-manage');
+    const _roomsResp = await fetch('/api/init?action=hotel-rooms-manage', { credentials: 'same-origin' });
     const _roomsD = await _roomsResp.json();
     const _allRooms = _roomsD.items || [];
     list.innerHTML = items.map(h => {
