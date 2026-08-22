@@ -2046,3 +2046,117 @@ async function renderDmAiStruggle() {
 
 boot();
 })();
+
+// ============================================================
+// v25.20: 酒店/赛车场/驾照 manage 渲染 (用 window.__manageData, 不 fetch)
+// ============================================================
+(function(){
+  // sub-tab 切换
+  document.addEventListener('click', function(e){
+    var tab = e.target.closest('.subtab');
+    if (!tab) return;
+    var nav = tab.closest('.subtabs');
+    if (!nav) return;
+    var pane = nav.dataset.pane;
+    var sub = tab.dataset.sub;
+    nav.querySelectorAll('.subtab').forEach(function(b){ b.classList.toggle('active', b === tab); });
+    document.querySelectorAll('.subview[data-subview^="'+pane+'-"]').forEach(function(sv){
+      sv.style.display = (sv.dataset.subview === pane+'-'+sub) ? '' : 'none';
+    });
+    if (sub === 'manage') {
+      if (pane === 'bookings') renderHotelManage();
+      else if (pane === 'license') renderLicenseManage();
+      else if (pane === 'kart') renderTrackManage();
+    }
+  });
+
+  // super 才看 manage 按钮
+  if (window._me && window._me.role === 'super') {
+    document.querySelectorAll('[data-super-only]').forEach(function(el){ el.style.display = ''; });
+  }
+
+  // escape
+  function esc(s) { return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){ return ({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;',"'":'&#39;'})[c]; }); }
+
+  // 渲染酒店
+  function renderHotelManage(){
+    var list = document.getElementById('hotelManageList');
+    var empty = document.getElementById('hotelManageEmpty');
+    var addBtn = document.getElementById('hotelManageAddBtn');
+    if (!list || !empty) return;
+    var d = window.__manageData || {};
+    var hotels = d.hotels || [];
+    var rooms = d.rooms || [];
+    if (hotels.length === 0) {
+      list.innerHTML = '';
+      empty.style.display = '';
+      return;
+    }
+    empty.style.display = 'none';
+    list.innerHTML = hotels.map(function(h){
+      var hrs = rooms.filter(function(r){ return r.hotel_id === h.id; });
+      return '<article class="msg-item ann-item">' +
+        '<div class="msg-head"><div class="msg-head-left"><b class="msg-name">🏨 ' + esc(h.name) + '</b>' +
+        (h.is_active ? '' : ' <span class="msg-read-tag">已下架</span>') +
+        ' <span class="gallery-num">' + hrs.length + ' 房型</span></div>' +
+        '<div class="msg-time">' + esc(h.sort_order || 0) + '</div></div>' +
+        (h.image_url ? '<div style="margin:8px 0;"><img src="' + esc(h.image_url) + '" style="max-width:240px;max-height:120px;border:2px solid var(--c-stone);" /></div>' : '') +
+        (h.address ? '<div class="msg-content">📍 ' + esc(h.address) + '</div>' : '') +
+        (h.description ? '<div class="msg-content" style="white-space:pre-wrap">' + esc(h.description) + '</div>' : '') +
+        (hrs.length > 0 ? '<div style="margin:8px 0;padding:8px;background:var(--c-bg-2);border:1px solid var(--c-stone);">' +
+          hrs.map(function(r){
+            return '<div style="display:flex;gap:6px;align-items:center;font-family:var(--font-pixel);font-size:11px;padding:4px 0;">' +
+              '<span style="flex:1;">🛏️ ' + esc(r.name) + ' · ' + r.capacity + '人 · ' + (r.breakfast_included ? '🍳' : '—') + '</span>' +
+              '<span style="color:var(--c-grass-dark);font-weight:700;">💎 ' + r.price_per_night + '/晚</span>' +
+              '</div>';
+          }).join('') + '</div>' : '') +
+        '</article>';
+    }).join('');
+  }
+
+  // 渲染赛车场
+  function renderTrackManage(){
+    var list = document.getElementById('trackManageList');
+    var empty = document.getElementById('trackManageEmpty');
+    if (!list || !empty) return;
+    var d = window.__manageData || {};
+    var tracks = d.tracks || [];
+    if (tracks.length === 0) {
+      list.innerHTML = '';
+      empty.style.display = '';
+      return;
+    }
+    empty.style.display = 'none';
+    list.innerHTML = tracks.map(function(t){
+      return '<article class="msg-item ann-item">' +
+        '<div class="msg-head"><div class="msg-head-left"><b class="msg-name">🏁 ' + esc(t.name) + '</b></div>' +
+        '<div class="msg-time">' + (t.length_km || '?') + ' km / ' + (t.laps || '?') + ' 圈</div></div>' +
+        (t.difficulty ? '<div class="msg-content">难度: ' + esc(t.difficulty) + '</div>' : '') +
+        (t.description ? '<div class="msg-content" style="white-space:pre-wrap">' + esc(t.description) + '</div>' : '') +
+        '</article>';
+    }).join('');
+  }
+
+  // 渲染驾照要求
+  function renderLicenseManage(){
+    var list = document.getElementById('licenseManageList');
+    var empty = document.getElementById('licenseManageEmpty');
+    if (!list || !empty) return;
+    var d = window.__manageData || {};
+    var reqs = d.licenseReq || [];
+    if (reqs.length === 0) {
+      list.innerHTML = '';
+      empty.style.display = '';
+      return;
+    }
+    empty.style.display = 'none';
+    list.innerHTML = reqs.map(function(l){
+      return '<article class="msg-item ann-item">' +
+        '<div class="msg-head"><div class="msg-head-left"><b class="msg-name">🎫 ' + esc(l.exam_type) + ' 级 · ' + esc(l.title) + '</b></div>' +
+        '<div class="msg-time">' + (l.min_age || 16) + '+ · ' + (l.duration_minutes || 30) + ' 分钟</div></div>' +
+        (l.description ? '<div class="msg-content" style="white-space:pre-wrap">' + esc(l.description) + '</div>' : '') +
+        (l.requirements ? '<div class="msg-content" style="background:#fff8e0;">📋 ' + esc(l.requirements) + '</div>' : '') +
+        '</article>';
+    }).join('');
+  }
+})();

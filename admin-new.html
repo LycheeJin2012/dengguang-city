@@ -180,24 +180,40 @@
           <button class="btn btn-ghost btn-sm" id="btnBookClearDone">清除已完成</button>
         </div>
       </div>
-      <div class="msg-filter">
-        <label><input type="radio" name="bookFilter" value="all" checked /> 全部 <span id="bookCntAll">0</span></label>
-        <label><input type="radio" name="bookFilter" value="pending" /> 待处理 <span id="bookCntPending">0</span></label>
-        <label><input type="radio" name="bookFilter" value="confirmed" /> 已确认 <span id="bookCntConfirmed">0</span></label>
-        <label><input type="radio" name="bookFilter" value="completed" /> 已完成 <span id="bookCntCompleted">0</span></label>
-        <select id="bookRoomFilter">
-          <option value="">全部房型</option>
-          <option value="standard">树上标间</option>
-          <option value="queen">树上大床房</option>
-          <option value="luxury">树上双床豪华房</option>
-        </select>
+      <nav class="subtabs" data-pane="bookings">
+        <button class="subtab active" data-sub="signup">📋 预订记录</button>
+        <button class="subtab" data-sub="manage" data-super-only>🏨 酒店管理 (SUPER)</button>
+      </nav>
+      <div class="subview" data-subview="bookings-signup">
+        <div class="msg-filter">
+          <label><input type="radio" name="bookFilter" value="all" checked /> 全部 <span id="bookCntAll">0</span></label>
+          <label><input type="radio" name="bookFilter" value="pending" /> 待处理 <span id="bookCntPending">0</span></label>
+          <label><input type="radio" name="bookFilter" value="confirmed" /> 已确认 <span id="bookCntConfirmed">0</span></label>
+          <label><input type="radio" name="bookFilter" value="completed" /> 已完成 <span id="bookCntCompleted">0</span></label>
+          <select id="bookRoomFilter">
+            <option value="">全部房型</option>
+            <option value="standard">树上标间</option>
+            <option value="queen">树上大床房</option>
+            <option value="luxury">树上双床豪华房</option>
+          </select>
+        </div>
+        <div id="bookList" class="msg-list">
+          <!-- JS 渲染 -->
+        </div>
+        <div id="bookEmpty" class="empty-state" style="display:none">
+          <div class="empty-icon">🏨</div>
+          <p>暂无订单</p>
+        </div>
       </div>
-      <div id="bookList" class="msg-list">
-        <!-- JS 渲染 -->
-      </div>
-      <div id="bookEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">🏨</div>
-        <p>暂无订单</p>
+      <div class="subview" data-subview="bookings-manage" style="display:none">
+        <div id="hotelManageList" class="msg-list"></div>
+        <div id="hotelManageEmpty" class="empty-state" style="display:none">
+          <div class="empty-icon">🏨</div>
+          <p>暂无酒店。点右上"新增酒店"创建,再为它添加房型。</p>
+        </div>
+        <div class="pane-tools" id="hotelManageAddBtn" data-super-only style="display:none;margin-top:8px;">
+          <button class="btn btn-primary btn-sm" id="btnAddHotel">+ 新建酒店</button>
+        </div>
       </div>
     </section>
 
@@ -209,16 +225,32 @@
           <button class="btn btn-ghost btn-sm" id="btnLicenseRefresh">🔄 刷新</button>
         </div>
       </div>
-      <div class="msg-filter">
-        <label><input type="radio" name="licenseFilter" value="pending" checked /> 待审 <span id="cntLicPending">0</span></label>
-        <label><input type="radio" name="licenseFilter" value="passed" /> 通过 <span id="cntLicPassed">0</span></label>
-        <label><input type="radio" name="licenseFilter" value="failed" /> 未通过 <span id="cntLicFailed">0</span></label>
-        <label><input type="radio" name="licenseFilter" value="all" /> 全部 <span id="cntLicAll">0</span></label>
+      <nav class="subtabs" data-pane="license">
+        <button class="subtab active" data-sub="signup">📋 报名记录</button>
+        <button class="subtab" data-sub="manage" data-super-only>🎫 考试要求 (SUPER)</button>
+      </nav>
+      <div class="subview" data-subview="license-signup">
+        <div class="msg-filter">
+          <label><input type="radio" name="licenseFilter" value="pending" checked /> 待审 <span id="cntLicPending">0</span></label>
+          <label><input type="radio" name="licenseFilter" value="passed" /> 通过 <span id="cntLicPassed">0</span></label>
+          <label><input type="radio" name="licenseFilter" value="failed" /> 未通过 <span id="cntLicFailed">0</span></label>
+          <label><input type="radio" name="licenseFilter" value="all" /> 全部 <span id="cntLicAll">0</span></label>
+        </div>
+        <div id="licenseList" class="msg-list"></div>
+        <div id="licenseEmpty" class="empty-state" style="display:none">
+          <div class="empty-icon">🚗</div>
+          <p>暂无报名</p>
+        </div>
       </div>
-      <div id="licenseList" class="msg-list"></div>
-      <div id="licenseEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">🚗</div>
-        <p>暂无报名</p>
+      <div class="subview" data-subview="license-manage" style="display:none">
+        <div id="licenseManageList" class="msg-list"></div>
+        <div id="licenseManageEmpty" class="empty-state" style="display:none">
+          <div class="empty-icon">🎫</div>
+          <p>暂无驾照要求。点右上"新增"创建 B/A/S 级要求。</p>
+        </div>
+        <div class="pane-tools" id="licenseManageAddBtn" data-super-only style="display:none;margin-top:8px;">
+          <button class="btn btn-primary btn-sm" id="btnAddLicReq">+ 新增驾照要求</button>
+        </div>
       </div>
     </section>
 
@@ -230,25 +262,41 @@
           <button class="btn btn-ghost btn-sm" id="btnKartClearDone">清除已处理</button>
         </div>
       </div>
-      <div class="msg-filter">
-        <label><input type="radio" name="kartFilter" value="all" checked /> 全部 <span id="kartCntAll">0</span></label>
-        <label><input type="radio" name="kartFilter" value="pending" /> 待审核 <span id="kartCntPending">0</span></label>
-        <label><input type="radio" name="kartFilter" value="approved" /> 已批准 <span id="kartCntApproved">0</span></label>
-        <label><input type="radio" name="kartFilter" value="rejected" /> 已拒绝 <span id="kartCntRejected">0</span></label>
-        <select id="kartSessionFilter">
-          <option value="">全部场次</option>
-          <option>周六 14:00 计时赛</option>
-          <option>周六 20:00 接力赛</option>
-          <option>周日 10:00 教学场</option>
-          <option>其他时间</option>
-        </select>
+      <nav class="subtabs" data-pane="kart">
+        <button class="subtab active" data-sub="signup">📋 赛道报名</button>
+        <button class="subtab" data-sub="manage" data-super-only>🏁 赛车场管理 (SUPER)</button>
+      </nav>
+      <div class="subview" data-subview="kart-signup">
+        <div class="msg-filter">
+          <label><input type="radio" name="kartFilter" value="all" checked /> 全部 <span id="kartCntAll">0</span></label>
+          <label><input type="radio" name="kartFilter" value="pending" /> 待审核 <span id="kartCntPending">0</span></label>
+          <label><input type="radio" name="kartFilter" value="approved" /> 已批准 <span id="kartCntApproved">0</span></label>
+          <label><input type="radio" name="kartFilter" value="rejected" /> 已拒绝 <span id="kartCntRejected">0</span></label>
+          <select id="kartSessionFilter">
+            <option value="">全部场次</option>
+            <option>周六 14:00 计时赛</option>
+            <option>周六 20:00 接力赛</option>
+            <option>周日 10:00 教学场</option>
+            <option>其他时间</option>
+          </select>
+        </div>
+        <div id="kartList" class="msg-list">
+          <!-- JS 渲染 -->
+        </div>
+        <div id="kartEmpty" class="empty-state" style="display:none">
+          <div class="empty-icon">🏁</div>
+          <p>暂无报名</p>
+        </div>
       </div>
-      <div id="kartList" class="msg-list">
-        <!-- JS 渲染 -->
-      </div>
-      <div id="kartEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">🏁</div>
-        <p>暂无报名</p>
+      <div class="subview" data-subview="kart-manage" style="display:none">
+        <div id="trackManageList" class="msg-list"></div>
+        <div id="trackManageEmpty" class="empty-state" style="display:none">
+          <div class="empty-icon">🏁</div>
+          <p>暂无赛车场。点右上"新建赛车场"创建。</p>
+        </div>
+        <div class="pane-tools" id="trackManageAddBtn" data-super-only style="display:none;margin-top:8px;">
+          <button class="btn btn-primary btn-sm" id="btnAddTrack">+ 新建赛车场</button>
+        </div>
       </div>
     </section>
 
@@ -382,6 +430,8 @@
       }, 800); // 兜底, 防止 JS 错误时一直卡 loading
     });
   </script>
+  <!-- v25.20: manage data 同步注入 (eval 设 window.__manageData) -->
+  <script src="/api/admin/manage-data?keys=hotels,rooms,tracks,licenseReq&_=v2520"></script>
   <script src="js/admin.js" defer></script>
 </body>
 </html>
