@@ -1560,3 +1560,29 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
     ai_bot: botInfo
   });
 }
+
+// v25.1: CF Pages Functions 只 export onRequestGet/Post, DELETE 请求会被 405
+// 所以把 v25 manage actions 的 DELETE 单独放到 onRequestDelete 处理
+export async function onRequestDelete(context) {
+  const { env, request } = context;
+  if (!env.DB) return err(500, 'D1 binding DB not configured');
+  const _url = new URL(request.url);
+  const _action = _url.searchParams.get('action') || '';
+  if (_action !== 'hotels-manage' && _action !== 'hotel-rooms-manage' && _action !== 'race-tracks-manage' && _action !== 'license-req-manage') {
+    return err(404, 'unknown action');
+  }
+  // 鉴权: super only
+  const _ck = request.headers.get('Cookie') || '';
+  const _m = _ck.match(/lc_session=([^;]+)/);
+  if (!_m) return err(401, '未登录');
+  const _sess = await env.DB.prepare('SELECT admin_id, expires_at FROM sessions WHERE token = ?').bind(_m[1]).first();
+  if (!_sess || !_sess.admin_id || new Date(_sess.expires_at) <= new Date()) return err(401, '会话过期');
+  const _me = await env.DB.prepare('SELECT id, role FROM admins WHERE id = ?').bind(_sess.admin_id).first();
+  if (!_me || _me.role !== 'super') return err(403, '仅 super 管理员可管理此信息');
+  const _tbl = ({ 'hotels-manage': 'hotels', 'hotel-rooms-manage': 'hotel_rooms', 'race-tracks-manage': 'race_tracks', 'license-req-manage': 'license_requirements' })[_action];
+  const _id = parseInt(_url.searchParams.get('id') || '0', 10);
+  if (!_id) return err(400, 'id 必填');
+  // hotel 删除时 CASCADE 删 rooms (D1 外键 ON DELETE CASCADE, hotel_rooms.hotel_id)
+  await env.DB.prepare(`DELETE FROM ${_tbl} WHERE id = ?`).bind(_id).run();
+  return ok({ deleted: _id });
+}
