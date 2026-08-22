@@ -1,9 +1,7 @@
-// v25.15: /api/admin-new — 读取完整 admin-new.html + 注入数据
+// v25.16: /api/admin-new — 用 env.ASSETS 读完整 admin-new.html + 注入数据
 // 用户用 https://dengguang-city.pages.dev/api/admin-new 访问
-// 100% server-rendered, 数据在 <script>window.__manageData = {...}</script> 里
-// admin.v2513.js 仍可读 window.__manageData 渲染 (无需 fetch)
 export async function onRequestGet(context) {
-  const { env, request } = context;
+  const { env } = context;
   // 拿数据
   let dataJson = '{"hotels":[],"rooms":[],"tracks":[],"licenseReq":[]}';
   try {
@@ -16,15 +14,18 @@ export async function onRequestGet(context) {
     dataJson = JSON.stringify({ error: String(e.message) });
   }
 
-  // 读完整 admin-new.html (从同源 fetch 静态文件)
-  // 用请求 URL 的 origin 拼路径
-  const origin = new URL(request.url).origin;
+  // 用 env.ASSETS 读 admin-new.html (CF Pages Functions 标准读静态文件方式)
   let html = '';
   try {
-    const r = await fetch(origin + '/admin-new.html', { headers: { 'Cache-Control': 'no-cache' } });
-    html = await r.text();
+    if (env.ASSETS) {
+      html = await env.ASSETS.fetch('https://assets.local/admin-new.html').then(r => r.text());
+    } else {
+      // fallback: 不用 fetch, 直接构造完整 HTML (用模板字符串)
+      html = _inlineAdminNewHtml();
+    }
   } catch (e) {
-    return new Response('读 admin-new.html 失败: ' + e.message, { status: 500, headers: { 'Content-Type': 'text/plain' } });
+    // fallback
+    html = _inlineAdminNewHtml();
   }
 
   // 在 head 里最前面注入数据
@@ -37,4 +38,23 @@ export async function onRequestGet(context) {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
     },
   });
+}
+
+// 简化版完整 admin-new HTML (在 env.ASSETS 拿不到时用)
+function _inlineAdminNewHtml() {
+  return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>管理后台 | 灯光市人民政府</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/admin.css" />
+</head>
+<body class="admin-body">
+  <div id="view-dash">
+    <p>完整 HTML 模板没加载到, 请直接看 <a href="/api/admin/manage-data?keys=hotels,rooms,tracks,licenseReq">原始数据</a></p>
+  </div>
+  <script src="/js/admin.v2513.js?v=v2516"></script>
+</body>
+</html>`;
 }
