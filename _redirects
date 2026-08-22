@@ -1,3 +1,7 @@
 # v18: admin.html → admin-new.html (CF Pages 边缘 cache 卡住老 admin.html)
 /admin       /admin-new.html?v=20260818  301
 /admin.html  /admin-new.html?v=20260818  301
+
+# v25.15: /admin-new → /api/admin-new (server-rendered, 数据嵌在 HTML 里)
+/admin-new   /api/admin-new  301
+/admin-new.html /api/admin-new 301
