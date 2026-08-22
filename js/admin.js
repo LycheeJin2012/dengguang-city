@@ -2070,8 +2070,12 @@ async function renderLicenseManage() {
   if (!list || !empty) return;
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
+  const _fetchWithTimeout = (url, ms = 8000) => Promise.race([
+    fetch(url, { credentials: 'same-origin' }),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('请求超时 (' + ms + 'ms)')), ms)),
+  ]);
   try {
-    const r = await fetch('/api/init?action=license-req-manage', { credentials: 'same-origin' });
+    const r = await _fetchWithTimeout('/api/init?action=license-req-manage');
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || '加载失败');
     const items = d.items || [];
@@ -2207,8 +2211,13 @@ async function renderHotelManage() {
   if (!list || !empty) return;
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
+  // v25.3: 加 8s fetch 超时降级, 避免一直 "载入中..."
+  const _fetchWithTimeout = (url, ms = 8000) => Promise.race([
+    fetch(url, { credentials: 'same-origin' }),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('请求超时 (' + ms + 'ms)')), ms)),
+  ]);
   try {
-    const r = await fetch('/api/init?action=hotels-manage', { credentials: 'same-origin' });
+    const r = await _fetchWithTimeout('/api/init?action=hotels-manage');
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || '加载失败');
     const items = d.items || [];
@@ -2217,7 +2226,7 @@ async function renderHotelManage() {
     const _isSuper = _me && _me.role === 'super';
     empty.style.display = 'none';
     // 同时拉所有房间 (一次拉完)
-    const _roomsResp = await fetch('/api/init?action=hotel-rooms-manage', { credentials: 'same-origin' });
+    const _roomsResp = await _fetchWithTimeout('/api/init?action=hotel-rooms-manage');
     const _roomsD = await _roomsResp.json();
     const _allRooms = _roomsD.items || [];
     list.innerHTML = items.map(h => {
@@ -2455,8 +2464,12 @@ async function renderTrackManage() {
   if (!list || !empty) return;
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
+  const _fetchWithTimeout = (url, ms = 8000) => Promise.race([
+    fetch(url, { credentials: 'same-origin' }),
+    new Promise((_, rej) => setTimeout(() => rej(new Error('请求超时 (' + ms + 'ms)')), ms)),
+  ]);
   try {
-    const r = await fetch('/api/init?action=race-tracks-manage', { credentials: 'same-origin' });
+    const r = await _fetchWithTimeout('/api/init?action=race-tracks-manage');
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || '加载失败');
     const items = d.items || [];
