@@ -2071,10 +2071,10 @@ async function renderLicenseManage() {
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
   try {
-    const r = await _fetchWithTimeout('/api/init?action=license-req-manage');
+    const r = await _fetchWithTimeout('/api/admin/license-req');
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || '加载失败');
-    const items = d.items || [];
+    const items = d.requirements || [];
     if (items.length === 0) {
       list.innerHTML = '';
       empty.style.display = '';
@@ -2108,7 +2108,7 @@ async function renderLicenseManage() {
       list.querySelectorAll('[data-act="del-lic-req"]').forEach(b => b.onclick = async () => {
         if (!confirm('删除该驾照要求？')) return;
         const id = b.closest('.msg-item').dataset.id;
-        const r = await fetch('/api/init?action=license-req-manage&id=' + id, { method: 'DELETE', credentials: 'same-origin' });
+        const r = await fetch('/api/admin/license-req?id=' + id, { method: 'DELETE', credentials: 'same-origin' });
         const d = await r.json();
         if (!r.ok || d.error) return alert('失败: ' + d.error);
         renderLicenseManage();
@@ -2186,7 +2186,7 @@ function showLicenseReqModal(it) {
     };
     if (!body.title) { alert('标题必填'); btn.disabled = false; btn.textContent = '💾 保存'; return; }
     try {
-      const url = isNew ? '/api/init?action=license-req-manage' : '/api/init?action=license-req-manage&id=' + it.id;
+      const url = isNew ? '/api/admin/license-req' : '/api/admin/license-req?id=' + it.id;
       const method = isNew ? 'POST' : 'PATCH';
       const r = await fetch(url, { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const d = await r.json();
@@ -2225,21 +2225,22 @@ async function renderHotelManage() {
   const list = document.getElementById('hotelManageList');
   const empty = document.getElementById('hotelManageEmpty');
   if (!list || !empty) return;
-  list.innerHTML = '<p class="empty-state">载入中… (v25.7)</p>';
+  list.innerHTML = '<p class="empty-state">载入中… (v25.10)</p>';
   empty.style.display = 'none';
   try {
-    const r = await fetch('/api/init?action=hotels-manage', { credentials: 'same-origin' });
+    // v25.10: 改用 /api/admin/hotels (独立 endpoint, 之前 /api/init?action=hotels-manage 在浏览器 fetch 卡死)
+    const r = await fetch('/api/admin/hotels', { credentials: 'same-origin' });
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || '加载失败');
-    const items = d.items || [];
+    const items = d.hotels || [];
     if (items.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
     const _me = window._me;
     const _isSuper = _me && _me.role === 'super';
     empty.style.display = 'none';
     // 同时拉所有房间 (一次拉完)
-    const _roomsResp = await fetch('/api/init?action=hotel-rooms-manage', { credentials: 'same-origin' });
+    const _roomsResp = await fetch('/api/admin/hotel-rooms', { credentials: 'same-origin' });
     const _roomsD = await _roomsResp.json();
-    const _allRooms = _roomsD.items || [];
+    const _allRooms = _roomsD.rooms || [];
     list.innerHTML = items.map(h => {
       const _hrs = _allRooms.filter(r => r.hotel_id === h.id);
       return `<article class="msg-item ann-item" data-id="${h.id}">
@@ -2282,14 +2283,14 @@ async function renderHotelManage() {
       });
       list.querySelectorAll('[data-act="del-room"]').forEach(b => b.onclick = async () => {
         if (!confirm('删除该房型？')) return;
-        const r = await fetch('/api/init?action=hotel-rooms-manage&id=' + b.dataset.rid, { method: 'DELETE', credentials: 'same-origin' });
+        const r = await fetch('/api/admin/hotel-rooms?id=' + b.dataset.rid, { method: 'DELETE', credentials: 'same-origin' });
         if (!(await r.json()).ok) return alert('失败');
         renderHotelManage();
       });
       list.querySelectorAll('[data-act="del-hotel"]').forEach(b => b.onclick = async () => {
         if (!confirm('删除该酒店？所有房型也会被删除。')) return;
         const id = b.closest('.msg-item').dataset.id;
-        const r = await fetch('/api/init?action=hotels-manage&id=' + id, { method: 'DELETE', credentials: 'same-origin' });
+        const r = await fetch('/api/admin/hotels?id=' + id, { method: 'DELETE', credentials: 'same-origin' });
         if (!(await r.json()).ok) return alert('失败');
         renderHotelManage();
       });
@@ -2379,7 +2380,7 @@ function showHotelModal(it) {
     };
     if (!body.name) { alert('酒店名必填'); btn.disabled = false; btn.textContent = '💾 保存'; return; }
     try {
-      const url = isNew ? '/api/init?action=hotels-manage' : '/api/init?action=hotels-manage&id=' + it.id;
+      const url = isNew ? '/api/admin/hotels' : '/api/admin/hotels?id=' + it.id;
       const method = isNew ? 'POST' : 'PATCH';
       const r = await fetch(url, { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const d = await r.json();
@@ -2454,7 +2455,7 @@ function showRoomModal(it) {
     if (!body.name) { alert('房型名必填'); btn.disabled = false; btn.textContent = '💾 保存'; return; }
     if (!body.hotel_id) { alert('缺少 hotel_id'); btn.disabled = false; btn.textContent = '💾 保存'; return; }
     try {
-      const url = isNew ? '/api/init?action=hotel-rooms-manage' : '/api/init?action=hotel-rooms-manage&id=' + it.id;
+      const url = isNew ? '/api/admin/hotel-rooms' : '/api/admin/hotel-rooms?id=' + it.id;
       const method = isNew ? 'POST' : 'PATCH';
       const r = await fetch(url, { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const d = await r.json();
@@ -2476,10 +2477,10 @@ async function renderTrackManage() {
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
   try {
-    const r = await _fetchWithTimeout('/api/init?action=race-tracks-manage');
+    const r = await _fetchWithTimeout('/api/admin/race-tracks');
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || '加载失败');
-    const items = d.items || [];
+    const items = d.tracks || [];
     if (items.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
     const _me = window._me;
     const _isSuper = _me && _me.role === 'super';
@@ -2510,7 +2511,7 @@ async function renderTrackManage() {
       list.querySelectorAll('[data-act="del-track"]').forEach(b => b.onclick = async () => {
         if (!confirm('删除该赛车场？')) return;
         const id = b.closest('.msg-item').dataset.id;
-        const r = await fetch('/api/init?action=race-tracks-manage&id=' + id, { method: 'DELETE', credentials: 'same-origin' });
+        const r = await fetch('/api/admin/race-tracks?id=' + id, { method: 'DELETE', credentials: 'same-origin' });
         if (!(await r.json()).ok) return alert('失败');
         renderTrackManage();
       });
@@ -2610,7 +2611,7 @@ function showTrackModal(it) {
     };
     if (!body.name) { alert('赛车场名必填'); btn.disabled = false; btn.textContent = '💾 保存'; return; }
     try {
-      const url = isNew ? '/api/init?action=race-tracks-manage' : '/api/init?action=race-tracks-manage&id=' + it.id;
+      const url = isNew ? '/api/admin/race-tracks' : '/api/admin/race-tracks?id=' + it.id;
       const method = isNew ? 'POST' : 'PATCH';
       const r = await fetch(url, { method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const d = await r.json();
