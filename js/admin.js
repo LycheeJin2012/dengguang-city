@@ -2070,10 +2070,6 @@ async function renderLicenseManage() {
   if (!list || !empty) return;
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
-  const _fetchWithTimeout = (url, ms = 8000) => Promise.race([
-    fetch(url, { credentials: 'same-origin' }),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('请求超时 (' + ms + 'ms)')), ms)),
-  ]);
   try {
     const r = await _fetchWithTimeout('/api/init?action=license-req-manage');
     const d = await r.json();
@@ -2204,6 +2200,21 @@ function showLicenseReqModal(it) {
   };
 }
 
+// v25.3: 统一 fetchWithTimeout — 用 AbortController (8s 超时)
+async function _fetchWithTimeout(url, ms = 8000) {
+  const ctrl = new AbortController();
+  const tid = setTimeout(() => ctrl.abort(), ms);
+  try {
+    const r = await fetch(url, { credentials: 'same-origin', signal: ctrl.signal });
+    return r;
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('请求超时 (' + ms + 'ms)');
+    throw e;
+  } finally {
+    clearTimeout(tid);
+  }
+}
+
 // 酒店 + 房型 管理
 async function renderHotelManage() {
   const list = document.getElementById('hotelManageList');
@@ -2211,11 +2222,6 @@ async function renderHotelManage() {
   if (!list || !empty) return;
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
-  // v25.3: 加 8s fetch 超时降级, 避免一直 "载入中..."
-  const _fetchWithTimeout = (url, ms = 8000) => Promise.race([
-    fetch(url, { credentials: 'same-origin' }),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('请求超时 (' + ms + 'ms)')), ms)),
-  ]);
   try {
     const r = await _fetchWithTimeout('/api/init?action=hotels-manage');
     const d = await r.json();
@@ -2464,10 +2470,6 @@ async function renderTrackManage() {
   if (!list || !empty) return;
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
-  const _fetchWithTimeout = (url, ms = 8000) => Promise.race([
-    fetch(url, { credentials: 'same-origin' }),
-    new Promise((_, rej) => setTimeout(() => rej(new Error('请求超时 (' + ms + 'ms)')), ms)),
-  ]);
   try {
     const r = await _fetchWithTimeout('/api/init?action=race-tracks-manage');
     const d = await r.json();
