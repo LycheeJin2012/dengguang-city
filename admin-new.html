@@ -17,8 +17,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="preload" href="css/style.css" as="style" />
   <link rel="preload" href="css/admin.css" as="style" />
-  <!-- v25.8: 不再用 <link rel=preload> (它会预加载并缓存), 让 dynamic script 来加载 admin.js 带 cache-bust -->
-  <!-- <link rel="preload" href="js/admin.js" as="script" /> -->
+  <!-- v25.10: 用版本化的文件名 admin.v2510.js — 新 URL 永远不会被浏览器磁盘缓存命中 -->
+  <!-- <link rel="preload" href="js/admin.v2510.js" as="script" /> -->
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/admin.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2370ad34'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='10' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='3' y='10' width='3' height='3' fill='%23ffd23f'/%3E%3C/svg%3E" />
@@ -429,10 +429,10 @@
       }, 800); // 兜底, 防止 JS 错误时一直卡 loading
     });
   </script>
-  <script>/* v25.4: 强制带 ?v= 参数, 避免 CF 边缘 cache 卡住老版 */
+  <script>/* v25.10: 加载版本化文件名, 浏览器磁盘缓存不会命中 */
     (function() {
       var s = document.createElement('script');
-      s.src = 'js/admin.js?v=v25.4-' + Date.now().toString(36);
+      s.src = 'js/admin.v2510.js';
       s.defer = true;
       document.currentScript.parentNode.insertBefore(s, document.currentScript);
     })();
