@@ -2212,20 +2212,23 @@ function _forceShowManageBtn(list, empty, btn) {
 
 // 酒店 + 房型 管理
 async function renderHotelManage() {
-  window.__renderHotelManage = (window.__renderHotelManage || 0) + 1;
-  console.log('[v25.6] renderHotelManage called #' + window.__renderHotelManage);
+  // v25.7: 极端兜底 — function 入口立刻启动 1.5s 定时器
+  // 不管后面 fetch / 渲染卡在哪, 1.5s 后强制给用户反馈
+  const list0 = document.getElementById('hotelManageList');
+  if (list0) {
+    setTimeout(() => {
+      if (list0 && list0.innerHTML.indexOf('载入中') >= 0) {
+        list0.innerHTML = '<p style="color:#c95;padding:14px;text-align:center">⏰ 1.5s 兜底触发: 函数卡了, 请刷新重试</p>';
+      }
+    }, 1500);
+  }
   const list = document.getElementById('hotelManageList');
   const empty = document.getElementById('hotelManageEmpty');
   if (!list || !empty) return;
-  list.innerHTML = '<p class="empty-state">载入中… (v25.6)</p>';
+  list.innerHTML = '<p class="empty-state">载入中… (v25.7)</p>';
   empty.style.display = 'none';
-  // v25.5: 4s 兜底, 避免一直 loading
-  const _safetyTimer = setTimeout(() => {
-    list.innerHTML = '<p style="color:#c95;padding:14px;text-align:center">⚠️ 加载超时 (4s 兜底) 请刷新重试</p>';
-  }, 4000);
   try {
     const r = await fetch('/api/init?action=hotels-manage', { credentials: 'same-origin' });
-    clearTimeout(_safetyTimer);
     const d = await r.json();
     if (!r.ok || d.error) throw new Error(d.error || '加载失败');
     const items = d.items || [];
