@@ -2212,16 +2212,16 @@ function _forceShowManageBtn(list, empty, btn) {
 
 // 酒店 + 房型 管理
 async function renderHotelManage() {
+  window.__renderHotelManage = (window.__renderHotelManage || 0) + 1;
+  console.log('[v25.6] renderHotelManage called #' + window.__renderHotelManage);
   const list = document.getElementById('hotelManageList');
   const empty = document.getElementById('hotelManageEmpty');
   if (!list || !empty) return;
-  list.innerHTML = '<p class="empty-state">载入中…</p>';
+  list.innerHTML = '<p class="empty-state">载入中… (v25.6)</p>';
   empty.style.display = 'none';
   // v25.5: 4s 兜底, 避免一直 loading
   const _safetyTimer = setTimeout(() => {
-    if (list.innerHTML.indexOf('载入中') >= 0) {
-      list.innerHTML = '<p style="color:#c95;padding:14px;text-align:center">⚠️ 加载超时, 请刷新重试</p>';
-    }
+    list.innerHTML = '<p style="color:#c95;padding:14px;text-align:center">⚠️ 加载超时 (4s 兜底) 请刷新重试</p>';
   }, 4000);
   try {
     const r = await fetch('/api/init?action=hotels-manage', { credentials: 'same-origin' });
