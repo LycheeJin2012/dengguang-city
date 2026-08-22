@@ -429,10 +429,12 @@
       }, 800); // 兜底, 防止 JS 错误时一直卡 loading
     });
   </script>
+  <!-- v25.11: 同步加载 manage data (server-side 注入, 不用 fetch) -->
+  <script src="/api/admin/manage-data.js?keys=hotels,rooms,tracks,licenseReq&t=v2511"></script>
   <script>/* v25.10: 加载版本化文件名, 浏览器磁盘缓存不会命中 */
     (function() {
       var s = document.createElement('script');
-      s.src = 'js/admin.v2510.js';
+      s.src = 'js/admin.v2510.js?v=v2511-' + Date.now().toString(36);
       s.defer = true;
       document.currentScript.parentNode.insertBefore(s, document.currentScript);
     })();

@@ -2071,10 +2071,9 @@ async function renderLicenseManage() {
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
   try {
-    const r = await _fetchWithTimeout('/api/admin/license-req');
-    const d = await r.json();
-    if (!r.ok || d.error) throw new Error(d.error || '加载失败');
-    const items = d.requirements || [];
+    // v25.11: 用 server-side 注入的 window.__manageData, 不用 fetch
+    const data = window.__manageData || {};
+    const items = data.licenseReq || [];
     if (items.length === 0) {
       list.innerHTML = '';
       empty.style.display = '';
@@ -2218,19 +2217,14 @@ async function renderHotelManage() {
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
   try {
-    // v25.10: 改用 /api/admin/hotels (独立 endpoint, 之前 /api/init?action=hotels-manage 在浏览器 fetch 卡死)
-    const r = await fetch('/api/admin/hotels', { credentials: 'same-origin' });
-    const d = await r.json();
-    if (!r.ok || d.error) throw new Error(d.error || '加载失败');
-    const items = d.hotels || [];
+    // v25.11: 改用 server-side 注入的 window.__manageData, 不用 fetch (浏览器 fetch 在某些环境卡死)
+    const data = window.__manageData || {};
+    const items = data.hotels || [];
     if (items.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
     const _me = window._me;
     const _isSuper = _me && _me.role === 'super';
     empty.style.display = 'none';
-    // 同时拉所有房间 (一次拉完)
-    const _roomsResp = await fetch('/api/admin/hotel-rooms', { credentials: 'same-origin' });
-    const _roomsD = await _roomsResp.json();
-    const _allRooms = _roomsD.rooms || [];
+    const _allRooms = data.rooms || [];
     list.innerHTML = items.map(h => {
       const _hrs = _allRooms.filter(r => r.hotel_id === h.id);
       return `<article class="msg-item ann-item" data-id="${h.id}">
@@ -2467,10 +2461,9 @@ async function renderTrackManage() {
   list.innerHTML = '<p class="empty-state">载入中…</p>';
   empty.style.display = 'none';
   try {
-    const r = await _fetchWithTimeout('/api/admin/race-tracks');
-    const d = await r.json();
-    if (!r.ok || d.error) throw new Error(d.error || '加载失败');
-    const items = d.tracks || [];
+    // v25.11: 用 server-side 注入的 window.__manageData, 不用 fetch
+    const data = window.__manageData || {};
+    const items = data.tracks || [];
     if (items.length === 0) { list.innerHTML = ''; empty.style.display = ''; return; }
     const _me = window._me;
     const _isSuper = _me && _me.role === 'super';
