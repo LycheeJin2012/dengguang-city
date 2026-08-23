@@ -2160,3 +2160,146 @@ boot();
     }).join('');
   }
 })();
+
+// ============================================================
+// v25.22: + 新建按钮 click handler (inline form, 不弹 modal)
+// ============================================================
+(function(){
+  // esc helper (复用了之前那个, 但确保能用)
+  function esc2(s) { return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){ return ({'<':'&lt;','>':'&gt;','&amp;':'&amp;','"':'&quot;',"'":'&#39;'})[c]; }); }
+
+  // 通用: 简易 inline form
+  function _buildInlineForm(opts) {
+    var fields = opts.fields.map(function(f){
+      return '<label style="display:block;margin:6px 0;font-size:13px;">' +
+        '<span style="display:block;font-weight:700;margin-bottom:2px;">' + esc2(f.label) + '</span>' +
+        (f.type === 'textarea' ? '<textarea data-f="' + f.name + '" rows="3" style="width:100%;padding:6px;border:2px solid var(--c-black);font-family:var(--font-cn);">' + esc2(f.value || '') + '</textarea>'
+          : '<input data-f="' + f.name + '" type="' + (f.type || 'text') + '" value="' + esc2(f.value || '') + '" style="width:100%;padding:6px;border:2px solid var(--c-black);font-family:var(--font-cn);" />') +
+        '</label>';
+    }).join('');
+    return '<div style="background:#fffbe5;border:3px solid var(--c-black);padding:12px;margin:8px 0;box-shadow:4px 4px 0 var(--c-stone-dark);">' +
+      '<div style="font-weight:700;color:var(--c-grass-dark);margin-bottom:8px;">' + esc2(opts.title) + '</div>' +
+      fields +
+      '<div style="margin-top:8px;display:flex;gap:6px;">' +
+        '<button data-act="save" class="btn btn-primary btn-sm">💾 保存</button>' +
+        '<button data-act="cancel" class="btn btn-ghost btn-sm">取消</button>' +
+      '</div></div>';
+  }
+
+  // 通用: 提交表单 → API
+  async function _submitForm(btn, action, body, onSuccess) {
+    var form = btn.closest('[data-form-wrap]') || btn.parentElement.parentElement;
+    var inputs = form.querySelectorAll('[data-f]');
+    inputs.forEach(function(inp){ body[inp.dataset.f] = inp.value; });
+    btn.disabled = true; btn.textContent = '⏳ 保存中...';
+    try {
+      var r = await fetch(action, { method: 'POST', credentials: 'same-origin', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(body) });
+      var d = await r.json();
+      if (!r.ok || d.error) throw new Error(d.error || '保存失败');
+      if (onSuccess) onSuccess(d);
+    } catch (e) {
+      alert('保存失败: ' + e.message);
+      btn.disabled = false; btn.textContent = '💾 保存';
+    }
+  }
+
+  // + 新建酒店
+  var _btnAddHotel = document.getElementById('btnAddHotel');
+  if (_btnAddHotel) {
+    _btnAddHotel.addEventListener('click', function(){
+      var list = document.getElementById('hotelManageList');
+      var oldForm = list.querySelector('[data-form-wrap]');
+      if (oldForm) oldForm.remove();
+      var div = document.createElement('div');
+      div.setAttribute('data-form-wrap', 'hotel');
+      div.innerHTML = _buildInlineForm({
+        title: '🏨 新建酒店',
+        fields: [
+          {name: 'name', label: '酒店名 *'},
+          {name: 'address', label: '地址'},
+          {name: 'description', label: '介绍', type: 'textarea'},
+          {name: 'image_url', label: '图片 URL (选填)'},
+          {name: 'sort_order', label: '排序', type: 'number', value: '99'},
+        ]
+      });
+      list.insertBefore(div, list.firstChild);
+      div.querySelector('[data-act="cancel"]').addEventListener('click', function(){ div.remove(); });
+      div.querySelector('[data-act="save"]').addEventListener('click', function(){
+        _submitForm(this, '/api/admin/hotels', {is_active:1}, function(){
+          // 重新渲染
+          var p = div.parentElement;
+          div.remove();
+          // 找 renderHotelManage 函数
+          // 因为函数在 IIFE 内部, 不直接可访问 — 触发 subtab click 重新渲染
+          var subtab = document.querySelector('.subtab.active[data-sub="manage"]');
+          if (subtab) { subtab.click(); subtab.click(); }
+        });
+      });
+    });
+  }
+
+  // + 新建赛车场
+  var _btnAddTrack = document.getElementById('btnAddTrack');
+  if (_btnAddTrack) {
+    _btnAddTrack.addEventListener('click', function(){
+      var list = document.getElementById('trackManageList');
+      var oldForm = list.querySelector('[data-form-wrap]');
+      if (oldForm) oldForm.remove();
+      var div = document.createElement('div');
+      div.setAttribute('data-form-wrap', 'track');
+      div.innerHTML = _buildInlineForm({
+        title: '🏁 新建赛车场',
+        fields: [
+          {name: 'name', label: '赛车场名 *'},
+          {name: 'length_km', label: '长度 (km)', type: 'number', value: '1.0'},
+          {name: 'laps', label: '圈数', type: 'number', value: '8'},
+          {name: 'difficulty', label: '难度 (简单/中等/困难)'},
+          {name: 'description', label: '介绍', type: 'textarea'},
+          {name: 'sort_order', label: '排序', type: 'number', value: '99'},
+        ]
+      });
+      list.insertBefore(div, list.firstChild);
+      div.querySelector('[data-act="cancel"]').addEventListener('click', function(){ div.remove(); });
+      div.querySelector('[data-act="save"]').addEventListener('click', function(){
+        _submitForm(this, '/api/admin/race-tracks', {is_active:1}, function(){
+          div.remove();
+          var subtab = document.querySelector('.subtab.active[data-sub="manage"]');
+          if (subtab) { subtab.click(); subtab.click(); }
+        });
+      });
+    });
+  }
+
+  // + 新增驾照要求
+  var _btnAddLicReq = document.getElementById('btnAddLicReq');
+  if (_btnAddLicReq) {
+    _btnAddLicReq.addEventListener('click', function(){
+      var list = document.getElementById('licenseManageList');
+      var oldForm = list.querySelector('[data-form-wrap]');
+      if (oldForm) oldForm.remove();
+      var div = document.createElement('div');
+      div.setAttribute('data-form-wrap', 'license');
+      div.innerHTML = _buildInlineForm({
+        title: '🎫 新增驾照要求',
+        fields: [
+          {name: 'exam_type', label: '类型 (B / A / S) *'},
+          {name: 'title', label: '标题 *'},
+          {name: 'description', label: '介绍', type: 'textarea'},
+          {name: 'requirements', label: '要求', type: 'textarea'},
+          {name: 'min_age', label: '最小年龄', type: 'number', value: '16'},
+          {name: 'duration_minutes', label: '时长 (分钟)', type: 'number', value: '45'},
+          {name: 'sort_order', label: '排序', type: 'number', value: '99'},
+        ]
+      });
+      list.insertBefore(div, list.firstChild);
+      div.querySelector('[data-act="cancel"]').addEventListener('click', function(){ div.remove(); });
+      div.querySelector('[data-act="save"]').addEventListener('click', function(){
+        _submitForm(this, '/api/admin/license-req', {is_active:1}, function(){
+          div.remove();
+          var subtab = document.querySelector('.subtab.active[data-sub="manage"]');
+          if (subtab) { subtab.click(); subtab.click(); }
+        });
+      });
+    });
+  }
+})();
