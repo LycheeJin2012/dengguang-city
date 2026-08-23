@@ -2536,12 +2536,22 @@ boot();
 // v25.23: render 函数加 ✎ / 🗑 / + 房型 按钮
 // ============================================================
 (function(){
-  // 替换 renderHotelManage
+  // 替换 renderHotelManage (v25.28 加 sync XHR 兜底)
   function renderHotelManage(){
     var list = document.getElementById('hotelManageList');
     var empty = document.getElementById('hotelManageEmpty');
     if (!list || !empty) return;
-    var d = window.__manageData || {};
+    var d = window.__manageData;
+    if (!d || (!d.hotels && !d.rooms)) {
+      // v25.28: 兜底 — 用 sync XHR 拿数据 (Safari 同步 script 可能没生效)
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/admin/manage-data?keys=hotels,rooms&_=' + Date.now(), false);
+        xhr.send();
+        if (xhr.status === 200) { eval(xhr.responseText); }
+      } catch (e) { console.error('renderHotelManage sync xhr failed', e); }
+      d = window.__manageData || {};
+    }
     var hotels = d.hotels || [];
     var rooms = d.rooms || [];
     if (hotels.length === 0) {
@@ -2578,12 +2588,21 @@ boot();
         '</article>';
     }).join('');
   }
-  // 替换 renderTrackManage
+  // 替换 renderTrackManage (v25.28 加 sync XHR 兜底)
   function renderTrackManage(){
     var list = document.getElementById('trackManageList');
     var empty = document.getElementById('trackManageEmpty');
     if (!list || !empty) return;
-    var d = window.__manageData || {};
+    var d = window.__manageData;
+    if (!d || (!d.tracks && !d.rooms && !d.hotels)) {
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/admin/manage-data?keys=hotels,rooms,tracks&_=' + Date.now(), false);
+        xhr.send();
+        if (xhr.status === 200) { eval(xhr.responseText); }
+      } catch (e) { console.error('renderTrackManage sync xhr failed', e); }
+      d = window.__manageData || {};
+    }
     var tracks = d.tracks || [];
     if (tracks.length === 0) {
       list.innerHTML = '';
@@ -2606,12 +2625,21 @@ boot();
         '</article>';
     }).join('');
   }
-  // 替换 renderLicenseManage
+  // 替换 renderLicenseManage (v25.28 加 sync XHR 兜底)
   function renderLicenseManage(){
     var list = document.getElementById('licenseManageList');
     var empty = document.getElementById('licenseManageEmpty');
     if (!list || !empty) return;
-    var d = window.__manageData || {};
+    var d = window.__manageData;
+    if (!d || !d.licenseReq) {
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/admin/manage-data?keys=licenseReq&_=' + Date.now(), false);
+        xhr.send();
+        if (xhr.status === 200) { eval(xhr.responseText); }
+      } catch (e) { console.error('renderLicenseManage sync xhr failed', e); }
+      d = window.__manageData || {};
+    }
     var reqs = d.licenseReq || [];
     if (reqs.length === 0) {
       list.innerHTML = '';
