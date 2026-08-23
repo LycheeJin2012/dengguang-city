@@ -2347,6 +2347,36 @@ boot();
         '<button data-act="cancel" class="btn btn-ghost btn-sm">取消</button>' +
       '</div></div>';
   }
+  // 把文件转 base64
+  function _fileToDataURL(input, callback) {
+    var f = input.files && input.files[0];
+    if (!f) return callback(null);
+    if (f.size > 1500 * 1024) { alert('文件太大 (上限 1.5MB)'); input.value = ''; return callback(null); }
+    var r = new FileReader();
+    r.onload = function(ev) { callback(ev.target.result); };
+    r.readAsDataURL(f);
+  }
+  function _attachFileUpload(form) {
+    // 给 data-f=image_url 的 input 加个 file 选择
+    var inputs = form.querySelectorAll('input[data-f="image_url"]');
+    inputs.forEach(function(inp){
+      if (inp.dataset.fileAttached) return;
+      inp.dataset.fileAttached = '1';
+      inp.placeholder = '图片 URL 或选文件';
+      inp.style.marginTop = '4px';
+      var file = document.createElement('input');
+      file.type = 'file';
+      file.accept = 'image/*';
+      file.style.cssText = 'display:block;width:100%;margin-top:4px;padding:4px;border:2px solid var(--c-black);font-size:11px;background:var(--c-bg-2);';
+      file.addEventListener('change', function(){
+        _fileToDataURL(file, function(dataUrl){
+          if (dataUrl) inp.value = dataUrl;
+        });
+      });
+      inp.parentNode.appendChild(file);
+    });
+  }
+
   function _formValues(form) {
     var out = {};
     form.querySelectorAll('[data-f]').forEach(function(inp){ out[inp.dataset.f] = inp.value; });
@@ -2389,6 +2419,7 @@ boot();
         var form = list.firstChild;
         form.querySelector('[data-act="cancel"]').onclick = function(){ form.remove(); };
         form.querySelector('[data-act="save"]').onclick = async function() {
+          _attachFileUpload(form);
           var v = _formValues(form);
           v.is_active = parseInt(v.is_active, 10);
           v.sort_order = parseInt(v.sort_order, 10);
@@ -2419,6 +2450,7 @@ boot();
             {name: 'price_per_night', label: '每晚价格 (💎)', type: 'number', required: true, value: 100},
             {name: 'breakfast_included', label: '含早餐 (1=是, 0=否)', type: 'number', value: 1},
             {name: 'description', label: '描述', type: 'textarea'},
+            {name: 'image_url', label: '图片 URL (或选文件)'},
             {name: 'sort_order', label: '排序', type: 'number', value: 99},
           ],
         });
@@ -2454,6 +2486,7 @@ boot();
             {name: 'price_per_night', label: '每晚价格 (💎)', type: 'number', required: true, value: r.price_per_night},
             {name: 'breakfast_included', label: '含早餐', type: 'number', value: r.breakfast_included != null ? r.breakfast_included : 1},
             {name: 'description', label: '描述', type: 'textarea', value: r.description || ''},
+            {name: 'image_url', label: '图片 URL (或选文件)', value: r.image_url || ''},
             {name: 'sort_order', label: '排序', type: 'number', value: r.sort_order || 0},
             {name: 'is_active', label: '上架', type: 'number', value: r.is_active != null ? r.is_active : 1},
           ],
@@ -2538,6 +2571,7 @@ boot();
             {name: 'exam_type', label: '类型 (B/A/S)', required: true, value: l.exam_type},
             {name: 'title', label: '标题', required: true, value: l.title},
             {name: 'description', label: '介绍', type: 'textarea', value: l.description || ''},
+            {name: 'image_url', label: '图片 URL (或选文件)', value: l.image_url || ''},
             {name: 'requirements', label: '要求', type: 'textarea', value: l.requirements || ''},
             {name: 'min_age', label: '最小年龄', type: 'number', value: l.min_age || 16},
             {name: 'duration_minutes', label: '时长 (分钟)', type: 'number', value: l.duration_minutes || 30},
@@ -2692,4 +2726,25 @@ boot();
   } else {
     document.querySelectorAll('[data-super-only]').forEach(function(el){ el.style.display = 'none'; });
   }
+})();
+
+
+// v25.24: delegated file upload (任何 form 出现时, 找 image_url input 加 file 选择)
+(function(){
+  document.body.addEventListener('change', function(e){
+    if (e.target.type !== 'file') return;
+    if (e.target.files && e.target.files[0]) {
+      var f = e.target.files[0];
+      if (f.size > 1500 * 1024) { alert('文件太大 (上限 1.5MB)'); e.target.value = ''; return; }
+      var r = new FileReader();
+      r.onload = function(ev){
+        // 找相邻的 image_url input
+        var fileInput = e.target;
+        var parent = fileInput.parentNode;
+        var urlInput = parent.querySelector('input[data-f="image_url"]');
+        if (urlInput) urlInput.value = ev.target.result;
+      };
+      r.readAsDataURL(f);
+    }
+  });
 })();

@@ -3,10 +3,25 @@
    ============================================ */
 
 body.admin-body {
-  background: var(--c-bg, #f3e9c8);
+  background:
+    repeating-linear-gradient(0deg, transparent 0 23px, rgba(154, 123, 79, 0.04) 23px 24px),
+    repeating-linear-gradient(90deg, transparent 0 23px, rgba(154, 123, 79, 0.04) 23px 24px),
+    var(--c-bg, #f3e9c8);
   color: var(--c-dark, #2a1f10);
   min-height: 100vh;
 }
+/* v25.24: 各 tab pane 不同色调 (米色系列, 有差异) */
+#pane-messages   { background: #f5ecd5; }
+#pane-players    { background: #f0e8c8; }
+#pane-bookings   { background: #ebe2bc; }
+#pane-license    { background: #e6dcb0; }
+#pane-kart       { background: #f5ecd5; }
+#pane-circuit    { background: #f0e8c8; }
+#pane-announcements { background: #ebe2bc; }
+#pane-gallery    { background: #e6dcb0; }
+#pane-password   { background: #f5ecd5; }
+#pane-admins     { background: #f0e8c8; }
+#pane-dms        { background: #ebe2bc; }
 
 /* ---------- 顶部 ---------- */
 .admin-header {
