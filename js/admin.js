@@ -2303,3 +2303,393 @@ boot();
     });
   }
 })();
+
+// ============================================================
+// v25.23: 完整 CRUD: ✎ 编辑 + 🗑 删除 + + 房型
+// ============================================================
+(function(){
+  function esc3(s) { return String(s == null ? '' : s).replace(/[<>&"']/g, function(c){ return ({'<':'&lt;','>':'&gt;','&amp;':'&amp;','"':'&quot;',"'":'&#39;'})[c]; }); }
+  async function _apiCall(method, url, body) {
+    var opts = { method: method, credentials: 'same-origin', headers: { 'Content-Type': 'application/json' } };
+    if (body) opts.body = JSON.stringify(body);
+    var r = await fetch(url, opts);
+    var d = await r.json().catch(function(){ return {}; });
+    if (!r.ok || d.error) throw new Error(d.error || '操作失败');
+    return d;
+  }
+  function _refetchData() {
+    // 重新拉一次 manage-data 并 eval
+    var s = document.createElement('script');
+    s.src = '/api/admin/manage-data?keys=hotels,rooms,tracks,licenseReq&_=' + Date.now();
+    document.head.appendChild(s);
+  }
+  function _rebuildList(pane, listId) {
+    // 简单办法: 触发 active sub-tab 的 click 两次
+    var sub = document.querySelector('.subtab.active[data-sub="manage"]');
+    if (sub) { sub.click(); sub.click(); }
+  }
+
+  // 通用编辑表单 (hotel / track / licReq 都用这个)
+  function _editForm(opts) {
+    // opts: { title, fields: [{name,label,type,value}], apiUrl, listId, onSaved }
+    var fields = opts.fields.map(function(f){
+      return '<label style="display:block;margin:6px 0;font-size:13px;">' +
+        '<span style="display:block;font-weight:700;margin-bottom:2px;">' + esc3(f.label) + (f.required ? ' *' : '') + '</span>' +
+        (f.type === 'textarea' ? '<textarea data-f="' + f.name + '" rows="3" style="width:100%;padding:6px;border:2px solid var(--c-black);font-family:var(--font-cn);">' + esc3(f.value || '') + '</textarea>'
+          : '<input data-f="' + f.name + '" type="' + (f.type || 'text') + '" value="' + esc3(f.value || '') + '"' + (f.required ? ' required' : '') + ' style="width:100%;padding:6px;border:2px solid var(--c-black);font-family:var(--font-cn);" />') +
+        '</label>';
+    }).join('');
+    return '<div data-form-wrap="' + esc3(opts.formKey) + '" style="background:#fffbe5;border:3px solid var(--c-black);padding:12px;margin:8px 0;box-shadow:4px 4px 0 var(--c-stone-dark);">' +
+      '<div style="font-weight:700;color:var(--c-grass-dark);margin-bottom:8px;">' + esc3(opts.title) + '</div>' +
+      fields +
+      '<div style="margin-top:8px;display:flex;gap:6px;">' +
+        '<button data-act="save" class="btn btn-primary btn-sm">💾 保存</button>' +
+        '<button data-act="cancel" class="btn btn-ghost btn-sm">取消</button>' +
+      '</div></div>';
+  }
+  function _formValues(form) {
+    var out = {};
+    form.querySelectorAll('[data-f]').forEach(function(inp){ out[inp.dataset.f] = inp.value; });
+    return out;
+  }
+
+  // --- ✎ 编辑 / 🗑 删除 按钮 (delegation 到 list container) ---
+  function _attachCrudHandlers(opts) {
+    // opts: { listId, type (hotel/track/licenseReq/room) }
+    var list = document.getElementById(opts.listId);
+    if (!list) return;
+    // 先移除旧 listener (避免重复)
+    var key = '_crud_' + opts.listId;
+    if (list[key]) list.removeEventListener('click', list[key]);
+    list[key] = async function(e) {
+      var btn = e.target.closest('button[data-act]');
+      if (!btn) return;
+      var act = btn.dataset.act;
+      var id = +btn.dataset.id;
+      var wrap = list.querySelector('[data-form-wrap]');
+      if (wrap) wrap.remove();
+
+      if (act === 'edit-hotel') {
+        var hotels = (window.__manageData && window.__manageData.hotels) || [];
+        var item = hotels.find(function(h){ return h.id === id; });
+        if (!item) return;
+        var div = document.createElement('div');
+        div.innerHTML = _editForm({
+          title: '✎ 编辑酒店', formKey: 'edit-hotel-' + id,
+          fields: [
+            {name: 'name', label: '酒店名', required: true, value: item.name},
+            {name: 'address', label: '地址', value: item.address || ''},
+            {name: 'description', label: '介绍', type: 'textarea', value: item.description || ''},
+            {name: 'image_url', label: '图片 URL', value: item.image_url || ''},
+            {name: 'sort_order', label: '排序', type: 'number', value: item.sort_order || 0},
+            {name: 'is_active', label: '上架 (1=是, 0=否)', type: 'number', value: item.is_active != null ? item.is_active : 1},
+          ],
+        });
+        list.insertBefore(div.firstChild, list.firstChild);
+        var form = list.firstChild;
+        form.querySelector('[data-act="cancel"]').onclick = function(){ form.remove(); };
+        form.querySelector('[data-act="save"]').onclick = async function() {
+          var v = _formValues(form);
+          v.is_active = parseInt(v.is_active, 10);
+          v.sort_order = parseInt(v.sort_order, 10);
+          try {
+            await _apiCall('PATCH', '/api/admin/hotels?id=' + id, v);
+            form.remove();
+            _refetchData();
+            setTimeout(function(){ _rebuildList('bookings', 'hotelManageList'); }, 300);
+          } catch (e) { alert('保存失败: ' + e.message); }
+        };
+      }
+      else if (act === 'del-hotel') {
+        if (!confirm('删除酒店 (会级联删所有房型)?')) return;
+        try {
+          await _apiCall('DELETE', '/api/admin/hotels?id=' + id);
+          _refetchData();
+          setTimeout(function(){ _rebuildList('bookings', 'hotelManageList'); }, 300);
+        } catch (e) { alert('删除失败: ' + e.message); }
+      }
+      else if (act === 'add-room') {
+        var div2 = document.createElement('div');
+        div2.innerHTML = _editForm({
+          title: '🛏️ 新建房型 (酒店 #' + id + ')', formKey: 'add-room-' + id,
+          fields: [
+            {name: 'name', label: '房型名', required: true},
+            {name: 'capacity', label: '人数', type: 'number', value: 2},
+            {name: 'beds', label: '床型', value: '1.8m 大床'},
+            {name: 'price_per_night', label: '每晚价格 (💎)', type: 'number', required: true, value: 100},
+            {name: 'breakfast_included', label: '含早餐 (1=是, 0=否)', type: 'number', value: 1},
+            {name: 'description', label: '描述', type: 'textarea'},
+            {name: 'sort_order', label: '排序', type: 'number', value: 99},
+          ],
+        });
+        list.insertBefore(div2.firstChild, list.firstChild);
+        var form2 = list.firstChild;
+        form2.querySelector('[data-act="cancel"]').onclick = function(){ form2.remove(); };
+        form2.querySelector('[data-act="save"]').onclick = async function() {
+          var v = _formValues(form2);
+          v.hotel_id = id;
+          v.capacity = parseInt(v.capacity, 10) || 2;
+          v.price_per_night = parseInt(v.price_per_night, 10) || 0;
+          v.breakfast_included = parseInt(v.breakfast_included, 10) || 0;
+          v.sort_order = parseInt(v.sort_order, 10) || 0;
+          try {
+            await _apiCall('POST', '/api/admin/hotel-rooms', v);
+            form2.remove();
+            _refetchData();
+            setTimeout(function(){ _rebuildList('bookings', 'hotelManageList'); }, 300);
+          } catch (e) { alert('保存失败: ' + e.message); }
+        };
+      }
+      else if (act === 'edit-room') {
+        var rooms = (window.__manageData && window.__manageData.rooms) || [];
+        var r = rooms.find(function(x){ return x.id === id; });
+        if (!r) return;
+        var div3 = document.createElement('div');
+        div3.innerHTML = _editForm({
+          title: '✎ 编辑房型 #' + id, formKey: 'edit-room-' + id,
+          fields: [
+            {name: 'name', label: '房型名', required: true, value: r.name},
+            {name: 'capacity', label: '人数', type: 'number', value: r.capacity || 2},
+            {name: 'beds', label: '床型', value: r.beds || ''},
+            {name: 'price_per_night', label: '每晚价格 (💎)', type: 'number', required: true, value: r.price_per_night},
+            {name: 'breakfast_included', label: '含早餐', type: 'number', value: r.breakfast_included != null ? r.breakfast_included : 1},
+            {name: 'description', label: '描述', type: 'textarea', value: r.description || ''},
+            {name: 'sort_order', label: '排序', type: 'number', value: r.sort_order || 0},
+            {name: 'is_active', label: '上架', type: 'number', value: r.is_active != null ? r.is_active : 1},
+          ],
+        });
+        list.insertBefore(div3.firstChild, list.firstChild);
+        var form3 = list.firstChild;
+        form3.querySelector('[data-act="cancel"]').onclick = function(){ form3.remove(); };
+        form3.querySelector('[data-act="save"]').onclick = async function() {
+          var v = _formValues(form3);
+          v.capacity = parseInt(v.capacity, 10);
+          v.price_per_night = parseInt(v.price_per_night, 10);
+          v.breakfast_included = parseInt(v.breakfast_included, 10);
+          v.sort_order = parseInt(v.sort_order, 10);
+          v.is_active = parseInt(v.is_active, 10);
+          try {
+            await _apiCall('PATCH', '/api/admin/hotel-rooms?id=' + id, v);
+            form3.remove();
+            _refetchData();
+            setTimeout(function(){ _rebuildList('bookings', 'hotelManageList'); }, 300);
+          } catch (e) { alert('保存失败: ' + e.message); }
+        };
+      }
+      else if (act === 'del-room') {
+        if (!confirm('删除房型?')) return;
+        try {
+          await _apiCall('DELETE', '/api/admin/hotel-rooms?id=' + id);
+          _refetchData();
+          setTimeout(function(){ _rebuildList('bookings', 'hotelManageList'); }, 300);
+        } catch (e) { alert('删除失败: ' + e.message); }
+      }
+      else if (act === 'edit-track') {
+        var tracks = (window.__manageData && window.__manageData.tracks) || [];
+        var t = tracks.find(function(x){ return x.id === id; });
+        if (!t) return;
+        var div4 = document.createElement('div');
+        div4.innerHTML = _editForm({
+          title: '✎ 编辑赛车场', formKey: 'edit-track-' + id,
+          fields: [
+            {name: 'name', label: '赛车场名', required: true, value: t.name},
+            {name: 'length_km', label: '长度 (km)', type: 'number', value: t.length_km || 0},
+            {name: 'laps', label: '圈数', type: 'number', value: t.laps || 0},
+            {name: 'difficulty', label: '难度', value: t.difficulty || ''},
+            {name: 'description', label: '介绍', type: 'textarea', value: t.description || ''},
+            {name: 'image_url', label: '图片 URL', value: t.image_url || ''},
+            {name: 'sort_order', label: '排序', type: 'number', value: t.sort_order || 0},
+            {name: 'is_active', label: '上架', type: 'number', value: t.is_active != null ? t.is_active : 1},
+          ],
+        });
+        list.insertBefore(div4.firstChild, list.firstChild);
+        var form4 = list.firstChild;
+        form4.querySelector('[data-act="cancel"]').onclick = function(){ form4.remove(); };
+        form4.querySelector('[data-act="save"]').onclick = async function() {
+          var v = _formValues(form4);
+          v.length_km = parseFloat(v.length_km);
+          v.laps = parseInt(v.laps, 10);
+          v.sort_order = parseInt(v.sort_order, 10);
+          v.is_active = parseInt(v.is_active, 10);
+          try {
+            await _apiCall('PATCH', '/api/admin/race-tracks?id=' + id, v);
+            form4.remove();
+            _refetchData();
+            setTimeout(function(){ _rebuildList('kart', 'trackManageList'); }, 300);
+          } catch (e) { alert('保存失败: ' + e.message); }
+        };
+      }
+      else if (act === 'del-track') {
+        if (!confirm('删除赛车场?')) return;
+        try {
+          await _apiCall('DELETE', '/api/admin/race-tracks?id=' + id);
+          _refetchData();
+          setTimeout(function(){ _rebuildList('kart', 'trackManageList'); }, 300);
+        } catch (e) { alert('删除失败: ' + e.message); }
+      }
+      else if (act === 'edit-license') {
+        var lics = (window.__manageData && window.__manageData.licenseReq) || [];
+        var l = lics.find(function(x){ return x.id === id; });
+        if (!l) return;
+        var div5 = document.createElement('div');
+        div5.innerHTML = _editForm({
+          title: '✎ 编辑驾照要求', formKey: 'edit-lic-' + id,
+          fields: [
+            {name: 'exam_type', label: '类型 (B/A/S)', required: true, value: l.exam_type},
+            {name: 'title', label: '标题', required: true, value: l.title},
+            {name: 'description', label: '介绍', type: 'textarea', value: l.description || ''},
+            {name: 'requirements', label: '要求', type: 'textarea', value: l.requirements || ''},
+            {name: 'min_age', label: '最小年龄', type: 'number', value: l.min_age || 16},
+            {name: 'duration_minutes', label: '时长 (分钟)', type: 'number', value: l.duration_minutes || 30},
+            {name: 'sort_order', label: '排序', type: 'number', value: l.sort_order || 0},
+            {name: 'is_active', label: '上架', type: 'number', value: l.is_active != null ? l.is_active : 1},
+          ],
+        });
+        list.insertBefore(div5.firstChild, list.firstChild);
+        var form5 = list.firstChild;
+        form5.querySelector('[data-act="cancel"]').onclick = function(){ form5.remove(); };
+        form5.querySelector('[data-act="save"]').onclick = async function() {
+          var v = _formValues(form5);
+          v.min_age = parseInt(v.min_age, 10);
+          v.duration_minutes = parseInt(v.duration_minutes, 10);
+          v.sort_order = parseInt(v.sort_order, 10);
+          v.is_active = parseInt(v.is_active, 10);
+          try {
+            await _apiCall('PATCH', '/api/admin/license-req?id=' + id, v);
+            form5.remove();
+            _refetchData();
+            setTimeout(function(){ _rebuildList('license', 'licenseManageList'); }, 300);
+          } catch (e) { alert('保存失败: ' + e.message); }
+        };
+      }
+      else if (act === 'del-license') {
+        if (!confirm('删除驾照要求?')) return;
+        try {
+          await _apiCall('DELETE', '/api/admin/license-req?id=' + id);
+          _refetchData();
+          setTimeout(function(){ _rebuildList('license', 'licenseManageList'); }, 300);
+        } catch (e) { alert('删除失败: ' + e.message); }
+      }
+    };
+    list.addEventListener('click', list[key]);
+  }
+
+  // 挂上 4 个 list 的 handler
+  _attachCrudHandlers({ listId: 'hotelManageList', type: 'hotel' });
+  _attachCrudHandlers({ listId: 'trackManageList', type: 'track' });
+  _attachCrudHandlers({ listId: 'licenseManageList', type: 'licenseReq' });
+})();
+
+// ============================================================
+// v25.23: render 函数加 ✎ / 🗑 / + 房型 按钮
+// ============================================================
+(function(){
+  // 替换 renderHotelManage
+  function renderHotelManage(){
+    var list = document.getElementById('hotelManageList');
+    var empty = document.getElementById('hotelManageEmpty');
+    if (!list || !empty) return;
+    var d = window.__manageData || {};
+    var hotels = d.hotels || [];
+    var rooms = d.rooms || [];
+    if (hotels.length === 0) {
+      list.innerHTML = '';
+      empty.style.display = '';
+      return;
+    }
+    empty.style.display = 'none';
+    var _me = (window._me || {}).role === 'super';
+    list.innerHTML = hotels.map(function(h){
+      var hrs = rooms.filter(function(r){ return r.hotel_id === h.id; });
+      return '<article class="msg-item ann-item">' +
+        '<div class="msg-head"><div class="msg-head-left"><b class="msg-name">🏨 ' + esc(h.name) + '</b>' +
+        (h.is_active ? '' : ' <span class="msg-read-tag">已下架</span>') +
+        ' <span class="gallery-num">' + hrs.length + ' 房型</span></div>' +
+        '<div class="msg-time">' + esc(h.sort_order || 0) + '</div></div>' +
+        (h.image_url ? '<div style="margin:8px 0;"><img src="' + esc(h.image_url) + '" style="max-width:240px;max-height:120px;border:2px solid var(--c-stone);" /></div>' : '') +
+        (h.address ? '<div class="msg-content">📍 ' + esc(h.address) + '</div>' : '') +
+        (h.description ? '<div class="msg-content" style="white-space:pre-wrap">' + esc(h.description) + '</div>' : '') +
+        (hrs.length > 0 ? '<div style="margin:8px 0;padding:8px;background:var(--c-bg-2);border:1px solid var(--c-stone);">' +
+          hrs.map(function(r){
+            return '<div style="display:flex;gap:6px;align-items:center;font-family:var(--font-pixel);font-size:11px;padding:4px 0;">' +
+              '<span style="flex:1;">🛏️ ' + esc(r.name) + ' · ' + r.capacity + '人 · ' + (r.breakfast_included ? '🍳' : '—') + '</span>' +
+              '<span style="color:var(--c-grass-dark);font-weight:700;">💎 ' + r.price_per_night + '/晚</span>' +
+              (_me ? '<button data-act="edit-room" data-id="' + r.id + '" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px;">✎</button>' +
+              '<button data-act="del-room" data-id="' + r.id + '" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 6px;">🗑</button>' : '') +
+              '</div>';
+          }).join('') + '</div>' : '') +
+        (_me ? '<div class="msg-actions book-actions">' +
+          '<button data-act="edit-hotel" data-id="' + h.id + '" class="btn btn-primary btn-sm">✎ 编辑酒店</button>' +
+          '<button data-act="add-room" data-id="' + h.id + '" class="btn btn-primary btn-sm">+ 房型</button>' +
+          '<button data-act="del-hotel" data-id="' + h.id + '" class="btn btn-ghost btn-sm" style="background:#c33;color:white;">🗑 删除</button>' +
+        '</div>' : '') +
+        '</article>';
+    }).join('');
+  }
+  // 替换 renderTrackManage
+  function renderTrackManage(){
+    var list = document.getElementById('trackManageList');
+    var empty = document.getElementById('trackManageEmpty');
+    if (!list || !empty) return;
+    var d = window.__manageData || {};
+    var tracks = d.tracks || [];
+    if (tracks.length === 0) {
+      list.innerHTML = '';
+      empty.style.display = '';
+      return;
+    }
+    empty.style.display = 'none';
+    var _me = (window._me || {}).role === 'super';
+    list.innerHTML = tracks.map(function(t){
+      return '<article class="msg-item ann-item">' +
+        '<div class="msg-head"><div class="msg-head-left"><b class="msg-name">🏁 ' + esc(t.name) + '</b></div>' +
+        '<div class="msg-time">' + (t.length_km || '?') + ' km / ' + (t.laps || '?') + ' 圈</div></div>' +
+        (t.image_url ? '<div style="margin:8px 0;"><img src="' + esc(t.image_url) + '" style="max-width:240px;max-height:120px;" /></div>' : '') +
+        (t.difficulty ? '<div class="msg-content">难度: ' + esc(t.difficulty) + '</div>' : '') +
+        (t.description ? '<div class="msg-content" style="white-space:pre-wrap">' + esc(t.description) + '</div>' : '') +
+        (_me ? '<div class="msg-actions book-actions">' +
+          '<button data-act="edit-track" data-id="' + t.id + '" class="btn btn-primary btn-sm">✎ 编辑</button>' +
+          '<button data-act="del-track" data-id="' + t.id + '" class="btn btn-ghost btn-sm" style="background:#c33;color:white;">🗑 删除</button>' +
+        '</div>' : '') +
+        '</article>';
+    }).join('');
+  }
+  // 替换 renderLicenseManage
+  function renderLicenseManage(){
+    var list = document.getElementById('licenseManageList');
+    var empty = document.getElementById('licenseManageEmpty');
+    if (!list || !empty) return;
+    var d = window.__manageData || {};
+    var reqs = d.licenseReq || [];
+    if (reqs.length === 0) {
+      list.innerHTML = '';
+      empty.style.display = '';
+      return;
+    }
+    empty.style.display = 'none';
+    var _me = (window._me || {}).role === 'super';
+    list.innerHTML = reqs.map(function(l){
+      return '<article class="msg-item ann-item">' +
+        '<div class="msg-head"><div class="msg-head-left"><b class="msg-name">🎫 ' + esc(l.exam_type) + ' 级 · ' + esc(l.title) + '</b></div>' +
+        '<div class="msg-time">' + (l.min_age || 16) + '+ · ' + (l.duration_minutes || 30) + ' 分钟</div></div>' +
+        (l.description ? '<div class="msg-content" style="white-space:pre-wrap">' + esc(l.description) + '</div>' : '') +
+        (l.requirements ? '<div class="msg-content" style="background:#fff8e0;">📋 ' + esc(l.requirements) + '</div>' : '') +
+        (_me ? '<div class="msg-actions book-actions">' +
+          '<button data-act="edit-license" data-id="' + l.id + '" class="btn btn-primary btn-sm">✎ 编辑</button>' +
+          '<button data-act="del-license" data-id="' + l.id + '" class="btn btn-ghost btn-sm" style="background:#c33;color:white;">🗑 删除</button>' +
+        '</div>' : '') +
+        '</article>';
+    }).join('');
+  }
+  // 重新 attach (因为 render 函数变了, CRUD handler 需要重新挂)
+  // 触发 sub-tab click 重新渲染
+  // 立即调用一次
+  // (实际上 attachCrudHandlers 已经在文件末尾调用, 这里不需要重复)
+
+  // 同步 data-super-only visibility (super 才看按钮)
+  if (window._me && window._me.role === 'super') {
+    document.querySelectorAll('[data-super-only]').forEach(function(el){ el.style.display = ''; });
+  } else {
+    document.querySelectorAll('[data-super-only]').forEach(function(el){ el.style.display = 'none'; });
+  }
+})();
