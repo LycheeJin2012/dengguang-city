@@ -2721,11 +2721,29 @@ boot();
   // (实际上 attachCrudHandlers 已经在文件末尾调用, 这里不需要重复)
 
   // 同步 data-super-only visibility (super 才看按钮)
-  if (window._me && window._me.role === 'super') {
-    document.querySelectorAll('[data-super-only]').forEach(function(el){ el.style.display = ''; });
-  } else {
-    document.querySelectorAll('[data-super-only]').forEach(function(el){ el.style.display = 'none'; });
+  function _applySuperOnlyVisibility() {
+    if (window._me && window._me.role === 'super') {
+      document.querySelectorAll('[data-super-only]').forEach(function(el){
+        // 子 tab 按钮 (subtab) 强制显示, 其它 (新增按钮) 也显示
+        el.style.display = '';
+      });
+    } else {
+      document.querySelectorAll('[data-super-only]').forEach(function(el){
+        el.style.display = 'none';
+      });
+    }
   }
+  // 立即跑一次
+  _applySuperOnlyVisibility();
+  // v25.25: boot() 后再跑一次 (因为 IIFE 早于 boot, window._me 还没设)
+  // 监听 bootDone 事件 / 用 setTimeout / 监听 userName 变化
+  var _superCheckInterval = setInterval(function() {
+    if (window._me && window._me.role === 'super') {
+      _applySuperOnlyVisibility();
+      clearInterval(_superCheckInterval);
+    }
+  }, 100);
+  setTimeout(function() { clearInterval(_superCheckInterval); }, 5000);
 })();
 
 
