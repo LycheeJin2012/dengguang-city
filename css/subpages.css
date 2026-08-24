@@ -84,6 +84,7 @@
   padding: 6px 10px;
   border: 2px solid var(--c-black);
   background: var(--c-paper);
+  width: auto;
 }
 .hotel-filters .filter-reset {
   font-family: var(--font-cn);
