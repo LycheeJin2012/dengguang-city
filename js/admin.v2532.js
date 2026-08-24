@@ -1278,6 +1278,7 @@ async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
       }
       list.innerHTML = anns.map(a => `
         <article class="msg-item ann-item" data-id="${a.id}">
+          ${a.image_url ? `<img src="${esc(a.image_url)}" alt="封面图" loading="lazy" style="width:100%;max-height:140px;object-fit:cover;border-radius:4px;margin-bottom:8px;display:block;" onerror="this.style.opacity=0" />` : ''}
           <div class="msg-head"><div class="msg-head-left">
             <b class="msg-name">📢 ${esc(a.title)}</b>
             <span class="msg-read-tag">仅 SUPER</span>
@@ -1321,6 +1322,10 @@ async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
           <textarea id="annContent" maxlength="2000" placeholder="公告正文..." style="width:100%;min-height:160px;padding:10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;line-height:1.5;resize:vertical;box-sizing:border-box;">${esc(ann ? ann.content : '')}</textarea>
           <span id="annCount" style="display:block;color:#888;font-size:11px;margin-top:2px;text-align:right;">0 / 2000</span>
         </label>
+        <label style="display:block;margin-bottom:10px;">
+          <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">封面图（选填）</span>
+          <input id="annImageUrl" maxlength="2000" value="${esc(ann ? (ann.image_url || '') : '')}" placeholder="图片 URL 或选文件上传" style="width:100%;padding:8px 10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;box-sizing:border-box;" />
+        </label>
         <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
           <span style="flex:1;"></span>
           <button id="annCancel" type="button" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">取消</button>
@@ -1329,6 +1334,7 @@ async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
       </div>
     `;
     document.body.appendChild(bd);
+    _attachFileUpload(bd);
     const ti = bd.querySelector('#annTitle');
     const ta = bd.querySelector('#annContent');
     const cnt = bd.querySelector('#annCount');
@@ -1351,7 +1357,7 @@ async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
         const r = await fetch(url, {
           method, credentials: 'same-origin',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, content })
+          body: JSON.stringify({ title, content, image_url: bd.querySelector('#annImageUrl').value.trim() })
         });
         const d = await r.json();
         if (!r.ok || d.error) throw new Error(d.error || '保存失败');
@@ -2158,6 +2164,7 @@ boot();
       list.insertBefore(div, list.firstChild);
       div.querySelector('[data-act="cancel"]').addEventListener('click', function(){ div.remove(); });
       div.querySelector('[data-act="save"]').addEventListener('click', function(){
+        _attachFileUpload(div);
         _submitForm(this, '/api/admin/hotels', {is_active:1}, function(){
           // 重新渲染
           var p = div.parentElement;
@@ -2194,6 +2201,7 @@ boot();
       list.insertBefore(div, list.firstChild);
       div.querySelector('[data-act="cancel"]').addEventListener('click', function(){ div.remove(); });
       div.querySelector('[data-act="save"]').addEventListener('click', function(){
+        _attachFileUpload(div);
         _submitForm(this, '/api/admin/race-tracks', {is_active:1}, function(){
           div.remove();
           var subtab = document.querySelector('.subtab.active[data-sub="manage"]');
@@ -2227,6 +2235,7 @@ boot();
       list.insertBefore(div, list.firstChild);
       div.querySelector('[data-act="cancel"]').addEventListener('click', function(){ div.remove(); });
       div.querySelector('[data-act="save"]').addEventListener('click', function(){
+        _attachFileUpload(div);
         _submitForm(this, '/api/admin/license-req', {is_active:1}, function(){
           div.remove();
           var subtab = document.querySelector('.subtab.active[data-sub="manage"]');
