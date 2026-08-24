@@ -9,7 +9,7 @@
   <meta http-equiv="Expires" content="0" />
   <script>/* v18 cache-bust: CF Pages 边缘 cache 卡住, 强制带 ?v= 参数让 cache key 变 */
     if (location.search.indexOf('v=') < 0) {
-      location.replace(location.pathname + '?v=20260818-' + Date.now().toString(36));
+      location.replace(location.pathname + '?v=20260824-subview-' + Date.now().toString(36));
     }
   </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -209,7 +209,7 @@
           <p>暂无订单</p>
         </div>
       </div>
-      <div class="subview" data-subview="bookings-manage" style="display:none">
+      <div class="subview" data-subview="bookings-manage">
         <div id="hotelManageList" class="msg-list"></div>
         <div id="hotelManageEmpty" class="empty-state" style="display:none">
           <div class="empty-icon">🏨</div>
@@ -246,7 +246,7 @@
           <p>暂无报名</p>
         </div>
       </div>
-      <div class="subview" data-subview="license-manage" style="display:none">
+      <div class="subview" data-subview="license-manage">
         <div id="licenseManageList" class="msg-list"></div>
         <div id="licenseManageEmpty" class="empty-state" style="display:none">
           <div class="empty-icon">🎫</div>
@@ -292,7 +292,7 @@
           <p>暂无报名</p>
         </div>
       </div>
-      <div class="subview" data-subview="kart-manage" style="display:none">
+      <div class="subview" data-subview="kart-manage">
         <div id="trackManageList" class="msg-list"></div>
         <div id="trackManageEmpty" class="empty-state" style="display:none">
           <div class="empty-icon">🏁</div>
