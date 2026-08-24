@@ -1,53 +1,73 @@
 /* =====================================================
    树上酒店子页 · 房型浏览 + 筛选器 + 预订
-   与主站 index.html 共享 ROOMS 草案
+   v25.41: 从后端 /api/init?action=hotels-manage 拉真实数据
    ===================================================== */
 (function () {
   'use strict';
 
-  /* ---------- 1. 房型数据（草案） ---------- */
-  const ROOMS = [
-    {
-      id: 'std',
-      name: '树上标间',
-      icon: '🛏️',
-      status: '草拟',
-      bed: '床型待公告',
-      guests: 1,
-      view: '窗外',
-      features: ['家具配置待公告', '窗外景观待公告'],
-      price: null,
-      recommend: false
-    },
-    {
-      id: 'king',
-      name: '树上大床房',
-      icon: '🛌',
-      status: '草拟',
-      bed: '床型待公告',
-      guests: 2,
-      view: '景观',
-      features: ['家具配置待公告', '景观待公告'],
-      price: null,
-      recommend: false
-    },
-    {
-      id: 'lux',
-      name: '树上豪华房',
-      icon: '🏨',
-      status: '草拟',
-      bed: '床型待公告',
-      guests: 3,
-      view: '景观',
-      features: ['家具配置待公告', '景观待公告', '独立阳台待公告'],
-      price: null,
-      recommend: true
-    }
-  ];
-
-  /* ---------- 2. 工具 ---------- */
+  /* ---------- 1. 工具 ---------- */
   const $ = (s) => document.querySelector(s);
-  const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const escapeHtml = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const ROOMS = []; // 全局房型, 启动时从后端拉
+
+  // 状态: '草拟' / '开放' / '下架' 等
+  // 房间 icon 根据人数自动选
+  const ROOM_ICON = (cap) => cap >= 4 ? '🏨' : (cap >= 2 ? '🛌' : '🛏️');
+
+  /* ---------- 2. 加载数据 ---------- */
+  async function loadRooms() {
+    const grid = $('#roomGrid');
+    const count = $('#hotelCount');
+    if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>正在加载房型数据...</p></div>';
+    try {
+      // 1) 拉所有酒店
+      const hRes = await fetch('/api/init?action=hotels-manage', { credentials: 'include' });
+      const hData = await hRes.json();
+      if (!hRes.ok || !hData.ok) throw new Error(hData.error || '加载酒店失败');
+      const hotels = (hData.items || []).filter(h => h.is_active);
+      if (hotels.length === 0) {
+        if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🏨</div><p>酒店正在筹建中, 上线后会在这里显示。</p></div>';
+        if (count) count.textContent = '共 0 间 / 总 0 间';
+        return;
+      }
+      // 2) 拉所有房型 (并发)
+      const roomLists = await Promise.all(hotels.map(h =>
+        fetch('/api/init?action=hotel-rooms-manage&hotel_id=' + h.id, { credentials: 'include' })
+          .then(r => r.json().then(d => ({ hotel: h, items: (d.items || []).filter(x => x.is_active) })))
+          .catch(() => ({ hotel: h, items: [] }))
+      ));
+      // 3) 合并成统一 ROOMS 数组
+      ROOMS.length = 0;
+      let idx = 0;
+      for (const { hotel, items } of roomLists) {
+        for (const r of items) {
+          ROOMS.push({
+            id: r.id,
+            hotelId: hotel.id,
+            hotelName: hotel.name,
+            name: r.name,
+            icon: ROOM_ICON(r.capacity || 1),
+            status: '开放',
+            bed: r.beds || '床型待公告',
+            guests: r.capacity || 1,
+            view: '景观',
+            features: [
+              r.breakfast_included ? '含早餐' : '不含早餐',
+              hotel.address ? '地址: ' + hotel.address : null
+            ].filter(Boolean),
+            price: r.price_per_night,
+            recommend: idx === Math.max(0, roomLists.reduce((s, x) => s + x.items.length, 0) - 1), // 最后一个推荐
+            image: r.image_url || hotel.image_url || ''
+          });
+          idx++;
+        }
+      }
+      renderRooms();
+    } catch (e) {
+      if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><p>加载失败: ' + escapeHtml(e.message) + '</p></div>';
+      if (count) count.textContent = '— / —';
+    }
+  }
 
   /* ---------- 3. 筛选器 ---------- */
   const filters = { status: 'all', guests: 0, view: 'all' };
@@ -68,7 +88,8 @@
     const grid = $('#roomGrid');
     if (!grid) return;
     const list = applyFilters();
-    $('#hotelCount').textContent = `共 ${list.length} 间 / 总 ${ROOMS.length} 间`;
+    const count = $('#hotelCount');
+    if (count) count.textContent = `共 ${list.length} 间 / 总 ${ROOMS.length} 间`;
     if (list.length === 0) {
       grid.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>没有符合条件的房型，试试调整筛选条件。</p></div>';
       return;
@@ -78,7 +99,7 @@
         ${r.recommend ? '<div class="room-badge">★ 推荐</div>' : ''}
         <div class="room-head">
           <span class="room-icon">${r.icon}</span>
-          <h3 class="room-name">${escapeHtml(r.name)}<span class="room-status draft">${escapeHtml(r.status)}</span></h3>
+          <h3 class="room-name">${escapeHtml(r.name)}<span class="room-status active">${escapeHtml(r.status)}</span></h3>
         </div>
         <ul class="room-features">
           <li>床型：${escapeHtml(r.bed)}</li>
@@ -87,8 +108,8 @@
         </ul>
         <div class="room-foot">
           <div class="room-price">
-            <span class="room-price-cur">📋</span>
-            <span class="room-price-num">价格待公告</span>
+            <span class="room-price-cur">💎</span>
+            <span class="room-price-num">${r.price ? r.price + ' / 晚' : '价格待公告'}</span>
           </div>
           <div class="room-actions">
             <button type="button" class="btn btn-ghost btn-small" data-action="detail" data-id="${r.id}">详情</button>
@@ -99,7 +120,7 @@
     `).join('');
     grid.querySelectorAll('button[data-action]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const id = btn.dataset.id;
+        const id = parseInt(btn.dataset.id, 10);
         const room = ROOMS.find(x => x.id === id);
         if (!room) return;
         if (btn.dataset.action === 'detail') openRoomDetail(room);
@@ -114,24 +135,25 @@
   const roomBody = $('#roomBody');
   const roomClose = $('#roomClose');
   function openRoomDetail(r) {
-    roomTitle.textContent = `${r.icon} ${r.name}（${r.status}）`;
-    roomBody.innerHTML = `
+    if (roomTitle) roomTitle.textContent = `${r.icon} ${r.name}（${r.status}）`;
+    if (roomBody) roomBody.innerHTML = `
       <div class="rd-summary">
+        <p class="rd-line"><b>所属酒店：</b>${escapeHtml(r.hotelName)}</p>
         <p class="rd-line"><b>床型：</b>${escapeHtml(r.bed)}</p>
         <p class="rd-line"><b>适合：</b>${r.guests}+ 人</p>
-        <p class="rd-line"><b>景观：</b>${escapeHtml(r.view)}</p>
-        <p class="rd-line"><b>价格：</b>待公告</p>
+        <p class="rd-line"><b>价格：</b>${r.price ? '💎 ' + r.price + ' / 晚' : '待公告'}</p>
         <ul class="rd-features">
           ${r.features.map(f => `<li>${escapeHtml(f)}</li>`).join('')}
         </ul>
-        <p class="rd-note">房型草案。床型、家具、配置由市政厅与合作社讨论后定稿。</p>
         <div class="rd-cta">
           <button type="button" class="btn btn-primary" id="rdBook">▶ 意向登记</button>
         </div>
       </div>
     `;
-    roomMask.style.display = '';
-    document.body.style.overflow = 'hidden';
+    if (roomMask) {
+      roomMask.style.display = '';
+      document.body.style.overflow = 'hidden';
+    }
     setTimeout(() => {
       const b = $('#rdBook');
       if (b) b.addEventListener('click', () => { closeRoomDetail(); openBookModal(r); });
@@ -145,7 +167,7 @@
   if (roomClose) roomClose.addEventListener('click', closeRoomDetail);
   if (roomMask) roomMask.addEventListener('click', (e) => { if (e.target === roomMask) closeRoomDetail(); });
 
-  /* ---------- 6. 预订 Modal（localStorage 持久化） ---------- */
+  /* ---------- 6. 预订 Modal ---------- */
   const bookMask = $('#bookMask');
   const bookTitle = $('#bookTitle');
   const bookSummary = $('#bookSummary');
@@ -168,23 +190,23 @@
   function openBookModal(r) {
     if (!bookMask) return;
     bookRoom = r;
-    bookTitle.textContent = `预订 · ${r.name}`;
-    bookSummary.innerHTML = `
+    if (bookTitle) bookTitle.textContent = `预订 · ${r.name}`;
+    if (bookSummary) bookSummary.innerHTML = `
       <div>
         <b>${r.icon} ${r.name}</b>
-        <span class="book-room-meta">${r.bed} · ${r.guests}+ 人</span>
+        <span class="book-room-meta">${escapeHtml(r.bed)} · ${r.guests}+ 人${r.price ? ' · 💎 ' + r.price + '/晚' : ''}</span>
       </div>
     `;
     const today = new Date();
     const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
     const dayAfter = new Date(today); dayAfter.setDate(dayAfter.getDate() + 2);
-    bookIn.value = tomorrow.toISOString().slice(0, 10);
-    bookOut.value = dayAfter.toISOString().slice(0, 10);
-    bookMsg.textContent = '';
+    if (bookIn) bookIn.value = tomorrow.toISOString().slice(0, 10);
+    if (bookOut) bookOut.value = dayAfter.toISOString().slice(0, 10);
+    if (bookMsg) bookMsg.textContent = '';
     updateBookTotal();
     bookMask.style.display = '';
     document.body.style.overflow = 'hidden';
-    setTimeout(() => bookName.focus(), 50);
+    setTimeout(() => bookName && bookName.focus(), 50);
   }
   function closeBookModal() {
     if (!bookMask) return;
@@ -196,15 +218,22 @@
     const inD = new Date(bookIn.value);
     const outD = new Date(bookOut.value);
     if (isNaN(inD) || isNaN(outD) || outD <= inD) {
-      bookNights.textContent = '— 请选择有效日期';
-      bookTotal.textContent = '';
+      if (bookNights) bookNights.textContent = '— 请选择有效日期';
+      if (bookTotal) bookTotal.textContent = '';
       return;
     }
     const nights = Math.round((outD - inD) / 86400000);
     const persons = parseInt(bookGuests.value, 10) || 1;
     const wantBf = bookBreakfast && bookBreakfast.checked;
-    bookNights.textContent = `${nights} 晚 · ${persons} 人${wantBf ? ' · 含早餐' : ''}`;
-    bookTotal.textContent = '房费与早餐价格待市政厅公告';
+    if (bookNights) bookNights.textContent = `${nights} 晚 · ${persons} 人${wantBf ? ' · 含早餐' : ''}`;
+    if (bookTotal) {
+      if (bookRoom.price) {
+        const total = bookRoom.price * nights;
+        bookTotal.textContent = `💎 ${total}（${nights} 晚 × ${bookRoom.price}）`;
+      } else {
+        bookTotal.textContent = '价格待市政厅公告';
+      }
+    }
   }
   if (bookIn) bookIn.addEventListener('change', updateBookTotal);
   if (bookOut) bookOut.addEventListener('change', updateBookTotal);
@@ -236,7 +265,7 @@
       const origText = submitBtn.textContent;
       submitBtn.textContent = '提交中...';
       submitBtn.disabled = true;
-      bookMsg.textContent = '';
+      if (bookMsg) bookMsg.textContent = '';
       try {
         // v18: 改用 server 端 /api/bookings (跨设备同步, admin 可见)
         const res = await fetch('/api/bookings', {
@@ -311,6 +340,6 @@
     backTop.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
   }
 
-  /* ---------- 10. 首屏渲染 ---------- */
-  renderRooms();
+  /* ---------- 10. 首屏渲染 (拉后端数据) ---------- */
+  loadRooms();
 })();
