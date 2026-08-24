@@ -759,44 +759,5 @@ body.admin-body {
   position: relative;
   z-index: 1;
 }
-.subview { display: block; }
-.subview[style*="display:none"] { display: none; }
-
-/* v25.20: sub-tab 结构 (酒店/赛车场/驾照 的 报名记录 + SUPER 管理) */
-.subtabs {
-  display: flex;
-  gap: 0;
-  border-bottom: 3px solid var(--c-black, #000);
-  background: var(--c-bg-2, #efe9d8);
-  margin: 8px 0 12px;
-  padding: 0 4px;
-  flex-wrap: wrap;
-}
-.subtab {
-  font-family: var(--font-pixel);
-  font-size: 10px;
-  background: var(--c-stone, #6a5a48);
-  color: white;
-  height: 32px;
-  padding: 0 14px;
-  border: 2px solid var(--c-black, #000);
-  border-bottom: none;
-  margin-right: 4px;
-  margin-bottom: -3px;
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  white-space: nowrap;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.subtab:hover { background: var(--c-stone-light); color: var(--c-dark, #2a1f10); }
-.subtab.active {
-  background: var(--c-paper, #f5ecd5);
-  color: var(--c-grass-dark, #2a4);
-  box-shadow: 0 -3px 0 var(--c-gold, #fc6);
-  position: relative;
-  z-index: 1;
-}
-.subview { display: block; }
+.subview { display: none; }
+.subview.active { display: block; }
