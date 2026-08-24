@@ -2537,23 +2537,24 @@ boot();
 // ============================================================
 (function(){
   // 替换 renderHotelManage (v25.28 加 sync XHR 兜底)
-  function renderHotelManage(){
+  // v25.30: 直接 async fetch，不依赖 window.__manageData 全局变量
+  async function renderHotelManage(){
     var list = document.getElementById('hotelManageList');
     var empty = document.getElementById('hotelManageEmpty');
     if (!list || !empty) return;
-    var d = window.__manageData;
-    if (!d || (!d.hotels && !d.rooms)) {
-      // v25.28: 兜底 — 用 sync XHR 拿数据 (Safari 同步 script 可能没生效)
-      try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/admin/manage-data?keys=hotels,rooms&_=' + Date.now(), false);
-        xhr.send();
-        if (xhr.status === 200) { eval(xhr.responseText); }
-      } catch (e) { console.error('renderHotelManage sync xhr failed', e); }
-      d = window.__manageData || {};
+    var d;
+    try {
+      var r = await fetch('/api/admin/manage-data?keys=hotels,rooms');
+      var txt = await r.text();
+      // 从 JS 响应里提取 JSON
+      var m = txt.match(/window\.__manageData\s*=\s*({.+})\s*;/);
+      d = m ? JSON.parse(m[1]) : {};
+    } catch(e) {
+      console.error('renderHotelManage fetch failed', e);
+      d = {};
     }
-    var hotels = d.hotels || [];
-    var rooms = d.rooms || [];
+    var hotels = (d && d.hotels) || [];
+    var rooms = (d && d.rooms) || [];
     if (hotels.length === 0) {
       list.innerHTML = '';
       empty.style.display = '';
@@ -2589,21 +2590,22 @@ boot();
     }).join('');
   }
   // 替换 renderTrackManage (v25.28 加 sync XHR 兜底)
-  function renderTrackManage(){
+  // v25.30: 直接 async fetch，不依赖 window.__manageData 全局变量
+  async function renderTrackManage(){
     var list = document.getElementById('trackManageList');
     var empty = document.getElementById('trackManageEmpty');
     if (!list || !empty) return;
-    var d = window.__manageData;
-    if (!d || (!d.tracks && !d.rooms && !d.hotels)) {
-      try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/admin/manage-data?keys=hotels,rooms,tracks&_=' + Date.now(), false);
-        xhr.send();
-        if (xhr.status === 200) { eval(xhr.responseText); }
-      } catch (e) { console.error('renderTrackManage sync xhr failed', e); }
-      d = window.__manageData || {};
+    var d;
+    try {
+      var r = await fetch('/api/admin/manage-data?keys=hotels,rooms,tracks');
+      var txt = await r.text();
+      var m = txt.match(/window\.__manageData\s*=\s*({.+})\s*;/);
+      d = m ? JSON.parse(m[1]) : {};
+    } catch(e) {
+      console.error('renderTrackManage fetch failed', e);
+      d = {};
     }
-    var tracks = d.tracks || [];
+    var tracks = (d && d.tracks) || [];
     if (tracks.length === 0) {
       list.innerHTML = '';
       empty.style.display = '';
@@ -2626,21 +2628,22 @@ boot();
     }).join('');
   }
   // 替换 renderLicenseManage (v25.28 加 sync XHR 兜底)
-  function renderLicenseManage(){
+  // v25.30: 直接 async fetch，不依赖 window.__manageData 全局变量
+  async function renderLicenseManage(){
     var list = document.getElementById('licenseManageList');
     var empty = document.getElementById('licenseManageEmpty');
     if (!list || !empty) return;
-    var d = window.__manageData;
-    if (!d || !d.licenseReq) {
-      try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/admin/manage-data?keys=licenseReq&_=' + Date.now(), false);
-        xhr.send();
-        if (xhr.status === 200) { eval(xhr.responseText); }
-      } catch (e) { console.error('renderLicenseManage sync xhr failed', e); }
-      d = window.__manageData || {};
+    var d;
+    try {
+      var r = await fetch('/api/admin/manage-data?keys=licenseReq');
+      var txt = await r.text();
+      var m = txt.match(/window\.__manageData\s*=\s*({.+})\s*;/);
+      d = m ? JSON.parse(m[1]) : {};
+    } catch(e) {
+      console.error('renderLicenseManage fetch failed', e);
+      d = {};
     }
-    var reqs = d.licenseReq || [];
+    var reqs = (d && d.licenseReq) || [];
     if (reqs.length === 0) {
       list.innerHTML = '';
       empty.style.display = '';
