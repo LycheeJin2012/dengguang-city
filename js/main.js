@@ -709,6 +709,40 @@
     }
   });
 
+  /* ---------- 10.5 v25.43: 驾照要求 (从后端 license-req-manage 拉) ---------- */
+  async function loadLicenseReqs() {
+    const grid = document.getElementById('licenseGrid');
+    if (!grid) return;
+    try {
+      const res = await fetch('/api/init?action=license-req-manage', { credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || '加载失败');
+      const reqs = (data.items || []).filter(r => r.is_active);
+      if (reqs.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🚗</div><p>驾照考试暂未开放, 市政厅公告后启动。</p></div>';
+        return;
+      }
+      const gradeLabels = { B: 'B 级（初级）', A: 'A 级（中级）', S: 'S 级（高级 / 职业）' };
+      const gradeIcons = { B: '📝', A: '🏁', S: '🏆' };
+      const examTypes = { B: 'written', A: 'road', S: 'upgrade' };
+      const GRADE_CLASS = { S: 'license-grade-s' };
+      grid.innerHTML = reqs.map(r => {
+        const g = (r.exam_type || '').toUpperCase();
+        return `
+        <div class="license-card">
+          <div class="license-grade ${GRADE_CLASS[g] || ''}">${escHtml(g)}</div>
+          <h3>${escHtml(r.title || gradeLabels[g] || g + ' 级')}</h3>
+          <p>${escHtml(r.description || '')}</p>
+          <p style="font-size:12px;color:var(--c-stone-dark);margin-top:4px;">${escHtml(r.requirements || '').replace(/\n/g, ' · ')}</p>
+          <p style="font-size:12px;color:var(--c-stone-dark);">⏱ ${r.duration_minutes || 30} 分钟 · 最低 ${r.min_age || 16} 岁</p>
+          <button class="btn btn-primary btn-large" data-license="${examTypes[g] || 'written'}" data-grade="${escHtml(g)}">${gradeIcons[g] || '📝'} 报名 ${escHtml(g)} 级考试</button>
+        </div>`;
+      }).join('');
+    } catch (e) {
+      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><p>加载失败: ' + escHtml(e.message || '未知错误') + '</p></div>';
+    }
+  }
+
   /* ---------- 11.5 v25.42: 赛车场规格 (从后端 race-tracks-manage 拉) ---------- */
   async function loadKartSpecs() {
     const specEls = document.querySelectorAll('#kartSpecs [data-spec]');
@@ -1846,6 +1880,8 @@
   loadHotelRooms();
   // 2. 赛车场规格
   loadKartSpecs();
+  // 3. 驾照要求 (v25.43)
+  loadLicenseReqs();
 })();
-console.log("v25.42 ready");
+console.log("v25.43 ready");
 // v17.2 push 1786962036

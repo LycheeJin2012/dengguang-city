@@ -524,25 +524,9 @@
       <p class="license-intro">
         驾照考试由市政厅与赛车协会共同组织。报名需玩家登录，通过后获得对应等级的驾照。
       </p>
-      <div class="license-grid">
-        <div class="license-card">
-          <div class="license-grade">B</div>
-          <h3>B 级（初级）</h3>
-          <p>笔试 + 简单路考<br/>可驾驶：基本路面、轻轨</p>
-          <button class="btn btn-primary btn-large" data-license="written" data-grade="B">📝 报名 B 级笔试</button>
-        </div>
-        <div class="license-card">
-          <div class="license-grade">A</div>
-          <h3>A 级（中级）</h3>
-          <p>完整路考 + 场景应对<br/>可驾驶：高速、复杂路况</p>
-          <button class="btn btn-primary btn-large" data-license="road" data-grade="A">🏁 报名 A 级路考</button>
-        </div>
-        <div class="license-card">
-          <div class="license-grade license-grade-s">S</div>
-          <h3>S 级（高级 / 职业）</h3>
-          <p>升级赛 + 极限测试<br/>可驾驶：F1 级赛车</p>
-          <button class="btn btn-primary btn-large" data-license="upgrade" data-grade="S">🏆 报名 S 级升级</button>
-        </div>
+      <div class="license-grid" id="licenseGrid">
+        <!-- v25.43: 从 /api/init?action=license-req-manage 拉, JS 渲染 -->
+        <div class="empty-state"><div class="empty-icon">⏳</div><p>正在加载驾照要求...</p></div>
       </div>
     </div>
   </section>
@@ -863,7 +847,7 @@
   <script>
     // v19: 给 <script src="js/main.js"> 加 cache-bust 参数, 避免 CF 边缘 cache 卡住老版
     (function() {
-      var v = '20260824-ui-refactor';
+      var v = '20260824-license';
       var s = document.createElement('script');
       s.src = 'js/main.js?v=' + v;
       s.defer = true;

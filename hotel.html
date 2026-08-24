@@ -176,6 +176,14 @@
     </div>
   </div>
 
-  <script src="js/hotel.js" defer></script>
+  <script>
+    // v25.43: cache-bust 防止 CF 边缘 cache 卡住旧版 hotel.js
+    (function(){
+      var s = document.createElement('script');
+      s.src = 'js/hotel.js?v=20260824-hotel';
+      s.defer = true;
+      document.currentScript.parentNode.insertBefore(s, document.currentScript);
+    })();
+  </script>
 </body>
 </html>

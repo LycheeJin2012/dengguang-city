@@ -57,6 +57,14 @@
   </div>
 </div>
 
-<script src="js/profile.js" defer></script>
+<script>
+  // v25.43: cache-bust
+  (function(){
+    var s = document.createElement('script');
+    s.src = 'js/profile.js?v=20260824-profile';
+    s.defer = true;
+    document.currentScript.parentNode.insertBefore(s, document.currentScript);
+  })();
+</script>
 </body>
 </html>
