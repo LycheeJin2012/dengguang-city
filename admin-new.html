@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="preload" href="css/style.css" as="style" />
   <link rel="preload" href="css/admin.css" as="style" />
-  <link rel="preload" href="js/admin.js" as="script" />
+  <link rel="preload" href="js/admin.v2531.js" as="script" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/admin.css" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2370ad34'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='10' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='3' y='10' width='3' height='3' fill='%23ffd23f'/%3E%3C/svg%3E" />
@@ -430,7 +430,7 @@
       }, 800); // 兜底, 防止 JS 错误时一直卡 loading
     });
   </script>
-  <!-- v25.29: inline sync XHR 拿数据 (100% 保证 admin.js 跑前 window.__manageData 有值) -->
+  <!-- v25.31: inline sync XHR 拿数据 (100% 保证 admin.js 跑前 window.__manageData 有值) -->
   <script>
     (function(){
       try {
@@ -441,7 +441,7 @@
       } catch (e) { console.error('inline sync xhr failed', e); }
     })();
   </script>
-  <script src="js/admin.js" defer></script>
+  <script src="js/admin.v2531.js" defer></script>
 </body>
 </html>
 
