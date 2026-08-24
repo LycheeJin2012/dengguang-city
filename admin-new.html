@@ -430,8 +430,17 @@
       }, 800); // 兜底, 防止 JS 错误时一直卡 loading
     });
   </script>
-  <!-- v25.20: manage data 同步注入 (eval 设 window.__manageData) -->
-  <script src="/api/admin/manage-data?keys=hotels,rooms,tracks,licenseReq&_=v2520"></script>
+  <!-- v25.29: inline sync XHR 拿数据 (100% 保证 admin.js 跑前 window.__manageData 有值) -->
+  <script>
+    (function(){
+      try {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/admin/manage-data?keys=hotels,rooms,tracks,licenseReq&_=' + Date.now(), false);
+        xhr.send();
+        if (xhr.status === 200) { eval(xhr.responseText); }
+      } catch (e) { console.error('inline sync xhr failed', e); }
+    })();
+  </script>
   <script src="js/admin.js" defer></script>
 </body>
 </html>
