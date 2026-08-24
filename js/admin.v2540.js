@@ -2458,6 +2458,7 @@ boot();
         });
         list.insertBefore(div2.firstChild, list.firstChild);
         var form2 = list.firstChild;
+        _attachFileUpload(form2);  // v25.45: 立即挂文件上传
         form2.querySelector('[data-act="cancel"]').onclick = function(){ form2.remove(); };
         form2.querySelector('[data-act="save"]').onclick = async function() {
           var v = _formValues(form2);
@@ -2495,6 +2496,7 @@ boot();
         });
         list.insertBefore(div3.firstChild, list.firstChild);
         var form3 = list.firstChild;
+        _attachFileUpload(form3);  // v25.45: 立即挂文件上传
         form3.querySelector('[data-act="cancel"]').onclick = function(){ form3.remove(); };
         form3.querySelector('[data-act="save"]').onclick = async function() {
           var v = _formValues(form3);
@@ -2539,6 +2541,7 @@ boot();
         });
         list.insertBefore(div4.firstChild, list.firstChild);
         var form4 = list.firstChild;
+        _attachFileUpload(form4);  // v25.45: 立即挂文件上传
         form4.querySelector('[data-act="cancel"]').onclick = function(){ form4.remove(); };
         form4.querySelector('[data-act="save"]').onclick = async function() {
           var v = _formValues(form4);
