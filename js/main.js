@@ -197,7 +197,7 @@
         <div class="pm-head">
           <a href="#" class="pm-author-link" data-username="${escapeHtml(m.name)}" onclick="return false"><b>${escapeHtml(m.name)}</b></a>
           <span class="pm-type pm-type-${escapeHtml(m.type || '建议')}">${escapeHtml(m.type || '建议')}</span>
-          ${hasReply ? `<span class="msg-replied-tag" style="${isAi?'background:#1a3a1a;color:#9f9;border-color:#6f6':''}">${isAi?'🤖 AI 已回复':'💬 已回复'}</span>` : ''}
+          ${hasReply ? `<span class="msg-replied-tag${isAi ? ' msg-replied-tag-ai' : ' msg-replied-tag-human'}">${isAi?'🤖 AI 已回复':'💬 已回复'}</span>` : ''}
         </div>
         <p class="pm-content">${escapeHtml(m.content)}</p>
         ${hasReply ? `<div class="pm-reply-box"><b>📣 市政厅回复：</b>${escapeHtml(m.admin_reply)}</div>` : ''}
@@ -371,17 +371,17 @@
       // 渲染公告卡片
       grid.innerHTML = anns.map((a, i) => {
         const isLatest = i === 0;
-        const tag = isLatest ? '<span class="notice-tag" style="background:#a6a;color:#fff;">最新</span>' : '<span class="notice-tag tag-blue">公告</span>';
+        const tag = isLatest ? '<span class="tag tag-super">最新</span>' : '<span class="tag tag-info">公告</span>';
         const coverImg = a.image_url
-          ? `<img src="${escHtml(a.image_url)}" alt="公告配图" loading="lazy" style="width:100%;max-height:180px;object-fit:cover;border-radius:4px;margin-bottom:8px;display:block;" onerror="this.style.opacity=0" />`
+          ? `<img src="${escHtml(a.image_url)}" alt="公告配图" loading="lazy" class="notice-cover-img" onerror="this.style.opacity=0" />`
           : '';
         return `<article class="notice-card">
           <div class="notice-body">
             ${coverImg}
             ${tag}
             <h3>${escHtml(a.title)}</h3>
-            <p style="font-size:11px;color:#888;margin:0 0 6px;">📅 ${relativeTime(a.created_at)}${a.updated_at ? ' · <span style="color:#a6a">已编辑</span>' : ''} · ✍️ ${escHtml(a.admin_username || '市政厅')}</p>
-            <p style="white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;">${escHtml(a.content)}</p>
+            <p class="ann-meta">📅 ${relativeTime(a.created_at)}${a.updated_at ? ' · <span class="ann-meta-edited">已编辑</span>' : ''} · ✍️ ${escHtml(a.admin_username || '市政厅')}</p>
+            <p class="ann-content-preview">${escHtml(a.content)}</p>
             <a href="#ann-${a.id}" class="read-more" data-id="${a.id}">阅读全文 →</a>
           </div>
         </article>`;
@@ -407,21 +407,20 @@
     if (old) old.remove();
     const bd = document.createElement('div');
     bd.id = 'annViewModal';
-    bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    bd.className = 'modal-mask';
     const coverImg = ann.image_url
-      ? `<img src="${escHtml(ann.image_url)}" alt="公告配图" loading="lazy" style="width:100%;max-height:240px;object-fit:cover;border-radius:4px;margin-bottom:12px;display:block;" onerror="this.style.opacity=0" />`
+      ? `<img src="${escHtml(ann.image_url)}" alt="公告配图" loading="lazy" class="ann-view-cover" onerror="this.style.opacity=0" />`
       : '';
-    bd.innerHTML = `<div style="background:#fffbe8;border:4px solid #2d2d2d;border-radius:4px;padding:24px;max-width:640px;width:100%;max-height:85vh;overflow:auto;box-shadow:8px 8px 0 rgba(0,0,0,.25);">
-      ${coverImg}
-      <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;">
-        <span style="font-size:24px;">📢</span>
-        <div style="flex:1;">
-          <h2 style="margin:0;font-family:'Press Start 2P','VT323',monospace;font-size:14px;line-height:1.6;color:#1a3d12;">${escHtml(ann.title)}</h2>
-          <p style="margin:6px 0 0;font-size:11px;color:#888;">📅 ${fmtDate(ann.created_at)}${ann.updated_at ? ' · 🕓 更新：' + fmtDate(ann.updated_at) : ''} · ✍️ ${escHtml(ann.admin_username || '市政厅')}</p>
-        </div>
-        <button id="annViewClose" style="background:#2d2d2d;color:#fffbe8;border:none;padding:4px 10px;cursor:pointer;font-family:monospace;font-size:14px;">✕</button>
+    bd.innerHTML = `<div class="modal ann-view-modal">
+      <div class="modal-head">
+        <h3>📢 ${escHtml(ann.title)}</h3>
+        <button class="modal-close" id="annViewClose" aria-label="关闭">✕</button>
       </div>
-      <div style="font-size:14px;line-height:1.8;color:#1a3d12;white-space:pre-wrap;word-break:break-word;border-top:2px dashed #88a;padding-top:12px;">${escHtml(ann.content)}</div>
+      ${coverImg ? `<div class="modal-body ann-view-cover-wrap">${coverImg}</div>` : ''}
+      <div class="modal-body">
+        <p class="ann-view-meta">📅 ${fmtDate(ann.created_at)}${ann.updated_at ? ' · 🕓 更新：' + fmtDate(ann.updated_at) : ''} · ✍️ ${escHtml(ann.admin_username || '市政厅')}</p>
+        <div class="ann-view-content">${escHtml(ann.content)}</div>
+      </div>
     </div>`;
     document.body.appendChild(bd);
     const close = () => bd.remove();
@@ -999,7 +998,7 @@
     bookSummary.innerHTML = `
       <div>
         <b>${r.icon} ${r.name}</b><br/>
-        <span style="font-size:12px;color:var(--c-stone-dark)">${r.bed} · ${r.guests}</span>
+        <span class="book-sub">${r.bed} · ${r.guests}</span>
       </div>
       <div class="summary-price">💎 ${r.price} / 晚</div>
     `;
@@ -1341,22 +1340,22 @@
     if (old) old.remove();
     const bd = document.createElement('div');
     bd.id = 'passkeyOfferBackdrop';
-    bd.style.cssText = 'position:fixed;left:0;right:0;bottom:0;top:auto;z-index:10000;display:flex;justify-content:center;pointer-events:none;padding:14px';
+    bd.className = 'passkey-toast-mask';
     bd.innerHTML = `
-      <div style="pointer-events:auto;background:linear-gradient(135deg,#2a4a2a,#1a3a1a);border:3px solid var(--c-emerald,#4a4);border-radius:10px;padding:14px 18px;max-width:480px;width:100%;box-shadow:0 8px 28px rgba(0,0,0,.5);color:#dfd;font-family:inherit;line-height:1.55">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-          <span style="font-size:26px;line-height:1">🔑</span>
-          <div style="flex:1">
-            <b style="color:#fff;font-size:15px">欢迎！要不要顺便注册通行密钥？</b>
-            <div style="font-size:11px;color:#9c9;margin-top:2px">下次可指纹 / Face ID 一键登录，不用记密码</div>
+      <div class="passkey-toast">
+        <div class="passkey-toast-head">
+          <span class="passkey-toast-icon">🔑</span>
+          <div class="passkey-toast-body">
+            <b class="passkey-toast-title">欢迎！要不要顺便注册通行密钥？</b>
+            <div class="passkey-toast-sub">下次可指纹 / Face ID 一键登录，不用记密码</div>
           </div>
-          <button type="button" id="pkoClose" aria-label="关闭" style="background:none;border:none;color:#9c9;font-size:18px;cursor:pointer;padding:0 4px;line-height:1" title="关闭">×</button>
+          <button type="button" id="pkoClose" class="passkey-toast-close" aria-label="关闭" title="关闭">×</button>
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
-          <button type="button" id="pkoAdd" style="flex:1;min-width:120px;background:linear-gradient(135deg,#4a4,#2a2);color:#fff;border:2px solid var(--c-emerald,#6f6);padding:8px 12px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700">✅ 立即添加到通行密钥</button>
-          <button type="button" id="pkoLater" style="background:transparent;color:#9c9;border:2px solid #4a6;border-radius:6px;padding:8px 12px;cursor:pointer;font-size:12px">⏭ 下次再说</button>
+        <div class="passkey-toast-actions">
+          <button type="button" id="pkoAdd" class="passkey-toast-btn-add">✅ 立即添加到通行密钥</button>
+          <button type="button" id="pkoLater" class="passkey-toast-btn-later">⏭ 下次再说</button>
         </div>
-        <div id="pkoMsg" style="margin-top:8px;font-size:12px;min-height:16px;color:#9c9"></div>
+        <div id="pkoMsg" class="passkey-toast-msg"></div>
       </div>
     `;
     document.body.appendChild(bd);
@@ -1470,7 +1469,7 @@
     if (!badge || !numEl) return;
     if (d.signed_today) {
       // 今天已签: 显示蓝色"✓ 今日已签"
-      numEl.innerHTML = '<span style="color:#7dd87e">✓ 今日已签</span>';
+      numEl.innerHTML = '<span class="signin-badge-done">✓ 今日已签</span>';
       badge.style.display = '';
     } else if (d.current_streak > 0) {
       numEl.textContent = d.current_streak;
@@ -1526,29 +1525,29 @@
 
     const backdrop = document.createElement('div');
     backdrop.id = 'signinModalBackdrop';
-    backdrop.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    backdrop.className = 'signin-mask';
     backdrop.innerHTML = `
-      <div style="background:#1a1a2e;border:2px solid #6cf;border-radius:8px;padding:24px;max-width:440px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-          <h3 style="margin:0;color:#6cf;font-size:18px;">🎁 每日签到</h3>
-          <button class="signin-close" style="background:none;border:none;color:#9ab;font-size:20px;cursor:pointer;line-height:1;">×</button>
+      <div class="signin-modal">
+        <div class="signin-modal-head">
+          <h3>🎁 每日签到</h3>
+          <button class="signin-close">×</button>
         </div>
-        <div style="display:flex;gap:14px;align-items:center;background:#0f1024;padding:14px;border-radius:6px;margin-bottom:14px;">
-          <div style="font-size:38px;">💎</div>
-          <div style="flex:1;">
-            <div style="color:#9ab;font-size:11px;line-height:1.4;">当前绿宝石</div>
-            <div style="color:#ffd23f;font-size:24px;font-weight:bold;line-height:1.2;">${d.emeralds}</div>
+        <div class="signin-stat-row">
+          <div class="signin-stat-icon">💎</div>
+          <div class="signin-stat-main">
+            <div class="signin-stat-label">当前绿宝石</div>
+            <div class="signin-stat-value">${d.emeralds}</div>
           </div>
-          <div style="text-align:right;">
-            <div style="color:#9ab;font-size:11px;line-height:1.4;">连续 / 总</div>
-            <div style="color:#7dd87e;font-size:18px;font-weight:bold;line-height:1.2;">🔥 ${d.current_streak} <span style="color:#9ab;font-size:13px;font-weight:normal;">/ ${d.total_days} 天</span></div>
+          <div class="signin-stat-side">
+            <div class="signin-stat-label">连续 / 总</div>
+            <div class="signin-stat-streak">🔥 ${d.current_streak} <span class="signin-stat-streak-sub">/ ${d.total_days} 天</span></div>
           </div>
         </div>
-        <div style="margin-bottom:14px;">
-          <div style="color:#9ab;font-size:12px;margin-bottom:6px;">最近 7 天</div>
+        <div class="signin-week-wrap">
+          <div class="signin-week-label">最近 7 天</div>
           <div class="signin-week">${renderRecentDays(d)}</div>
         </div>
-        <div style="color:#9ab;font-size:11px;line-height:1.6;margin-bottom:14px;background:#0a0a1e;padding:8px;border-radius:4px;">
+        <div class="signin-rules">
           奖励规则: 7 天一个循环<br>
           第 1 天 +1 💎 · 第 2 天 +2 · ... · 第 7 天 +7 💎<br>
           第 8 天重新从 +1 开始 (一周循环往复)
@@ -1556,7 +1555,7 @@
         <button class="btn btn-primary btn-block" id="signinBtn" ${d.signed_today ? 'disabled' : ''}>
           ${d.signed_today ? '✓ 今日已签, 明天再来' : '🎁 签到领绿宝石'}
         </button>
-        <div id="signinMsg" style="min-height:18px;font-size:12px;margin-top:8px;text-align:center;"></div>
+        <div id="signinMsg" class="signin-msg"></div>
       </div>
     `;
     document.body.appendChild(backdrop);
@@ -1569,16 +1568,16 @@
       btn.onclick = async () => {
         btn.disabled = true;
         const msg = document.getElementById('signinMsg');
-        msg.style.color = '#fc6';
+        msg.className = 'signin-msg signin-msg-loading';
         msg.textContent = '签到中…';
         try {
           const r = await fetch('/api/init?action=signin', { method: 'POST', credentials: 'same-origin', headers: { 'Content-Type': 'application/json' }, body: '{}' });
           const rd = await r.json();
           if (!rd.ok) throw new Error(rd.error || '签到失败');
-          msg.style.color = '#7dd87e';
+          msg.className = 'signin-msg signin-msg-ok';
           msg.textContent = rd.message + (rd.bonus ? ' (连签奖励!)' : '');
           // 更新 modal 数字
-          const emeraldEl = backdrop.querySelector('[style*="color:#ffd23f"]');
+          const emeraldEl = backdrop.querySelector('.signin-stat-value');
           if (emeraldEl) emeraldEl.textContent = rd.emeralds;
           // 更新 nav 角标 (不用刷页)
           const navE = document.getElementById('navEmeraldNum');
@@ -1592,7 +1591,7 @@
           // 全屏闪光特效
           showSigninFlash(rd.today_emeralds);
         } catch (e) {
-          msg.style.color = '#f99';
+          msg.className = 'signin-msg signin-msg-err';
           msg.textContent = '✗ ' + e.message;
           btn.disabled = false;
         }
@@ -1602,16 +1601,8 @@
 
   function showSigninFlash(n) {
     const flash = document.createElement('div');
-    flash.style.cssText = 'position:fixed;inset:0;z-index:999999;pointer-events:none;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.5);animation:signin-fade 1.4s forwards;';
-    flash.innerHTML = `<div style="text-align:center;color:#ffd23f;font-size:60px;font-weight:bold;text-shadow:0 0 30px #ffd23f;">
-      +${n} 💎
-    </div>
-    <style>@keyframes signin-fade {
-      0% { opacity:0; transform:scale(.6); }
-      20% { opacity:1; transform:scale(1.1); }
-      40% { opacity:1; transform:scale(1); }
-      100% { opacity:0; transform:scale(1); }
-    }</style>`;
+    flash.className = 'signin-flash';
+    flash.innerHTML = `<div class="signin-flash-text">+${n} 💎</div>`;
     document.body.appendChild(flash);
     setTimeout(() => flash.remove(), 1500);
   }
@@ -1714,17 +1705,17 @@
       if (res.ok && data.ok && data.player) {
         const p = data.player;
         const adminLink = p.linked_admin_id
-          ? `<a href="admin.html" class="nav-logout-link" style="color:#a6a;font-weight:700;">🛡️ 管理后台</a>`
+          ? `<a href="admin.html" class="nav-logout-link nav-admin-link">🛡️ 管理后台</a>`
           : '';
         navUserSlot.innerHTML = `
-          <span class="nav-emerald" title="绿宝石余额" style="background:rgba(255,210,63,.15);border:1px solid #ffd23f;border-radius:12px;padding:2px 8px;font-size:12px;color:#ffd23f;font-weight:600;display:inline-flex;align-items:center;gap:3px;">
+          <span class="nav-emerald" title="绿宝石余额">
             💎 <span id="navEmeraldNum">${p.emeralds || 0}</span>
           </span>
-          <a href="#" id="navSigninBtn" class="nav-logout-link" title="每日签到领绿宝石" style="color:#fc6;font-weight:700;">🎁 签到</a>
-          <a href="profile.html" class="nav-user-name" style="text-decoration:none;color:inherit;">${escapeHtml(p.avatar_emoji || '👤')} ${escapeHtml(p.username)}</a>
+          <a href="#" id="navSigninBtn" class="nav-logout-link nav-signin-link" title="每日签到领绿宝石">🎁 签到</a>
+          <a href="profile.html" class="nav-user-name nav-profile-link">${escapeHtml(p.avatar_emoji || '👤')} ${escapeHtml(p.username)}</a>
           ${adminLink}
-          <a href="dm.html" class="nav-logout-link" style="color:var(--c-emerald);position:relative;">📨 私信<span id="dmBadge" style="display:none;position:absolute;top:-4px;right:-8px;background:#f33;color:#fff;font-size:10px;font-weight:700;padding:1px 5px;border-radius:9px;line-height:1.2;min-width:16px;text-align:center;">0</span></a>
-          <a href="#notice" class="nav-logout-link" id="navAnn" style="color:#fc6;position:relative;display:none;">📢<span id="annBadge" style="display:none;position:absolute;top:-4px;right:-8px;background:#f93;color:#fff;font-size:9px;font-weight:700;padding:1px 4px;border-radius:9px;line-height:1.2;">新</span></a>
+          <a href="dm.html" class="nav-logout-link nav-dm-link">📨 私信<span id="dmBadge" class="nav-badge nav-badge-dm">0</span></a>
+          <a href="#notice" class="nav-logout-link nav-ann-link" id="navAnn">📢<span id="annBadge" class="nav-badge nav-badge-ann">新</span></a>
           <a href="#" id="navLogout" class="nav-logout-link">登出</a>
         `;
         prefillContactForm(p);

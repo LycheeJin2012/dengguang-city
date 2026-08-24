@@ -40,6 +40,520 @@
   --font-cn: 'Noto Sans SC', system-ui, -apple-system, sans-serif;
 }
 
+/* ============================================
+   组件层 (Component Layer · 共享一套)
+   全站统一样式入口。所有页面（包括 admin/hotel/profile/dm）
+   都可以直接用这里定义的 .btn / .card / .tag / .modal 等。
+   ============================================ */
+
+/* ---------- 按钮 ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 24px;
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  letter-spacing: 1px;
+  color: #fff;
+  background: var(--c-grass);
+  border: 3px solid var(--c-black);
+  box-shadow: 4px 4px 0 var(--c-black);
+  cursor: pointer;
+  transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+  text-align: center;
+  user-select: none;
+}
+.btn:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--c-black);
+  background: var(--c-grass-light);
+}
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--c-black);
+}
+.btn-primary { background: var(--c-grass); }
+.btn-primary:hover { background: var(--c-grass-light); }
+.btn-ghost {
+  background: var(--c-paper);
+  color: var(--c-dark);
+  box-shadow: 4px 4px 0 var(--c-stone-dark);
+  border-color: var(--c-black);
+}
+.btn-ghost:hover { background: var(--c-gold); color: var(--c-dark); }
+.btn-danger {
+  background: var(--c-redstone);
+  color: #fff;
+}
+.btn-danger:hover { background: #d11; }
+.btn-sm { padding: 8px 14px; font-size: 10px; box-shadow: 3px 3px 0 var(--c-black); }
+.btn-sm:hover { box-shadow: 5px 5px 0 var(--c-black); }
+.btn-lg { padding: 16px 32px; font-size: 12px; box-shadow: 5px 5px 0 var(--c-black); }
+.btn-lg:hover { box-shadow: 7px 7px 0 var(--c-black); }
+.btn-block { width: 100%; justify-content: center; }
+.btn[disabled], .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+/* ---------- 卡片 ---------- */
+.card {
+  background: var(--c-paper);
+  border: 4px solid var(--c-black);
+  box-shadow: 4px 4px 0 var(--c-stone);
+  padding: 20px 22px;
+}
+.card-flat {
+  background: var(--c-paper);
+  border: 4px solid var(--c-black);
+  box-shadow: none;
+  padding: 20px 22px;
+}
+.card-pad { padding: 16px; }
+
+/* ---------- 标题区 (pane-head) ---------- */
+.pane-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  min-height: 56px;
+  background: var(--c-paper);
+  color: var(--c-dark);
+  border: 3px solid var(--c-black);
+  padding: 10px 20px;
+}
+.pane-head h2 {
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  color: var(--c-grass-dark);
+  letter-spacing: 1px;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.pane-head h2::before {
+  content: '';
+  display: inline-block;
+  width: 4px; height: 18px;
+  background: var(--c-grass);
+  border: 1px solid var(--c-black);
+}
+.pane-tools {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+/* ---------- 空状态 ---------- */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--c-bg-2);
+  border: 3px solid var(--c-black);
+  color: var(--c-stone-dark);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.empty-state p { margin: 0; }
+.empty-icon { font-size: 48px; opacity: 0.7; }
+
+/* ---------- 提示框 (pane-hint / hint) ---------- */
+.pane-hint, .hint {
+  background: var(--c-paper);
+  color: var(--c-stone-dark);
+  border: 3px solid var(--c-black);
+  padding: 12px 20px;
+  font-family: var(--font-cn);
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ---------- 标签 (tag / tag-*) ---------- */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  background: var(--c-paper);
+  color: var(--c-dark);
+  border: 2px solid var(--c-black);
+  line-height: 1.4;
+}
+.tag-success { background: var(--c-grass); color: #fff; }
+.tag-warn    { background: var(--c-gold); color: var(--c-dark); }
+.tag-danger  { background: var(--c-redstone); color: #fff; }
+.tag-super   { background: #a6a; color: #fff; }
+.tag-info    { background: var(--c-water); color: #fff; }
+
+/* ---------- Modal ---------- */
+.modal-mask {
+  position: fixed; inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+  animation: cmp-mask-in 0.18s ease-out;
+  overflow-y: auto;
+}
+@keyframes cmp-mask-in { from { opacity: 0; } to { opacity: 1; } }
+.modal {
+  background: var(--c-paper);
+  border: 4px solid var(--c-black);
+  box-shadow: 4px 4px 0 var(--c-stone-dark);
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  position: relative;
+  font-family: var(--font-cn);
+  color: var(--c-dark);
+  padding: 0;
+  animation: cmp-modal-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+@keyframes cmp-modal-in {
+  from { transform: translateY(20px) scale(0.96); opacity: 0; }
+  to   { transform: translateY(0) scale(1); opacity: 1; }
+}
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--c-grass);
+  color: #fff;
+  border-bottom: 3px solid var(--c-black);
+  padding: 14px 20px;
+}
+.modal-head h3 {
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin: 0;
+  color: #fff;
+}
+.modal-close {
+  font-family: var(--font-pixel);
+  font-size: 14px;
+  color: #fff;
+  width: 28px; height: 28px;
+  background: transparent;
+  border: 2px solid #fff;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+}
+.modal-close:hover { background: var(--c-redstone); border-color: var(--c-redstone); }
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+.modal-book { max-width: 560px; }
+
+/* ---------- 排版辅助类 (替换 index.html 内联 style) ---------- */
+.book-sub {
+  font-size: 12px;
+  color: var(--c-stone-dark);
+}
+.circuit-map-note {
+  font-size: 12px;
+  color: var(--c-stone-dark);
+  text-align: center;
+  margin: 0 0 8px;
+}
+.hotel-cta {
+  text-align: center;
+  margin: 28px 0 12px;
+}
+.hotel-hint {
+  margin-top: 14px;
+  font-size: 14px;
+  color: var(--c-stone-dark);
+}
+.modal-text-center { text-align: center; }
+.modal-form-row { margin-bottom: 12px; }
+.modal-form-row label { display: block; font-size: 13px; margin-bottom: 4px; color: var(--c-stone-dark); }
+.modal-form-row .form-hint { color: var(--c-stone-dark); font-size: 11px; }
+.modal-divider { margin-top: 14px; border-top: 1px solid var(--c-stone, #999); padding-top: 14px; }
+.modal-tiny { font-size: 11px; color: var(--c-stone-dark); }
+.modal-link-emerald { color: var(--c-emerald, #5fb14f); }
+.btn-row-2 { display: flex; gap: 10px; margin-top: 14px; }
+.btn-row-2 .btn { flex: 1; }
+.btn-full { width: 100%; margin-top: 8px; }
+
+/* ---------- 登录 modal 辅助类 ---------- */
+.modal-title-center { text-align: center; margin-bottom: 8px; }
+.modal-subtitle { text-align: center; color: var(--c-stone-dark); font-size: 13px; margin-bottom: 16px; }
+.btn-passkey {
+  background: linear-gradient(135deg, #5a2 0%, #2a5 100%);
+  color: #fff;
+  border-color: var(--c-black);
+  width: 100%;
+}
+.btn-passkey:hover {
+  background: linear-gradient(135deg, #6b3 0%, #3b6 100%);
+  color: #fff;
+}
+.passkey-hint { margin-top: 6px; }
+.login-admin-hint { margin-top: 14px; font-size: 12px; color: var(--c-stone-dark); }
+
+/* ---------- 留言墙 - 已回复/AI 标签 (替换 main.js 内联 style) ---------- */
+.msg-replied-tag {
+  display: inline-block;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: 1px;
+  padding: 2px 6px;
+  border: 2px solid var(--c-black);
+  line-height: 1.4;
+}
+.msg-replied-tag-ai {
+  background: #1a3a1a;
+  color: #9f9;
+  border-color: #6f6;
+}
+.msg-replied-tag-human {
+  background: var(--c-emerald);
+  color: #fff;
+  border-color: var(--c-grass-dark);
+}
+
+/* ---------- 公告卡片 (替换 main.js 内联 style) ---------- */
+.notice-cover-img {
+  width: 100%;
+  max-height: 180px;
+  object-fit: cover;
+  border-radius: 4px;
+  margin-bottom: 8px;
+  display: block;
+}
+.ann-meta {
+  font-size: 11px;
+  color: #888;
+  margin: 0 0 6px;
+  font-family: var(--font-cn);
+}
+.ann-meta-edited {
+  color: #a6a;
+}
+.ann-content-preview {
+  white-space: pre-wrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-family: var(--font-cn);
+  font-size: 14px;
+  color: var(--c-stone-dark);
+  margin: 0 0 8px;
+}
+.ann-view-modal { max-width: 640px; }
+.ann-view-cover-wrap { padding-bottom: 0; }
+.ann-view-cover {
+  width: 100%;
+  max-height: 240px;
+  object-fit: cover;
+  display: block;
+}
+.ann-view-meta {
+  margin: 0 0 12px;
+  font-size: 11px;
+  color: var(--c-stone-dark);
+  font-family: var(--font-cn);
+}
+.ann-view-content {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #1a3d12;
+  white-space: pre-wrap;
+  word-break: break-word;
+  border-top: 2px dashed var(--c-stone);
+  padding-top: 12px;
+  font-family: var(--font-cn);
+}
+
+/* ---------- 通行密钥 toast (替换 main.js 内联 style) ---------- */
+.passkey-toast-mask {
+  position: fixed; left: 0; right: 0; bottom: 0; top: auto;
+  z-index: 10000;
+  display: flex; justify-content: center;
+  pointer-events: none;
+  padding: 14px;
+}
+.passkey-toast {
+  pointer-events: auto;
+  background: linear-gradient(135deg, #2a4a2a 0%, #1a3a1a 100%);
+  border: 3px solid var(--c-emerald, #4a4);
+  border-radius: 10px;
+  padding: 14px 18px;
+  max-width: 480px;
+  width: 100%;
+  box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+  color: #dfd;
+  font-family: var(--font-cn);
+  line-height: 1.55;
+}
+.passkey-toast-head {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 8px;
+}
+.passkey-toast-icon { font-size: 26px; line-height: 1; }
+.passkey-toast-body { flex: 1; }
+.passkey-toast-title { color: #fff; font-size: 15px; }
+.passkey-toast-sub { font-size: 11px; color: #9c9; margin-top: 2px; }
+.passkey-toast-close {
+  background: none; border: none; color: #9c9;
+  font-size: 18px; cursor: pointer; padding: 0 4px; line-height: 1;
+}
+.passkey-toast-actions {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+}
+.passkey-toast-btn-add {
+  flex: 1; min-width: 120px;
+  background: linear-gradient(135deg, #4a4 0%, #2a2 100%);
+  color: #fff;
+  border: 2px solid var(--c-emerald, #6f6);
+  padding: 8px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: var(--font-cn);
+}
+.passkey-toast-btn-later {
+  background: transparent;
+  color: #9c9;
+  border: 2px solid #4a6;
+  border-radius: 6px;
+  padding: 8px 12px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: var(--font-cn);
+}
+.passkey-toast-msg {
+  margin-top: 8px; font-size: 12px; min-height: 16px; color: #9c9;
+}
+
+/* ---------- 签到 modal (替换 main.js 内联 style) ---------- */
+.signin-mask {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  z-index: 99999;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.signin-modal {
+  background: #1a1a2e;
+  border: 2px solid #6cf;
+  border-radius: 8px;
+  padding: 24px;
+  max-width: 440px;
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  color: #c8d6f0;
+  font-family: var(--font-cn);
+}
+.signin-modal-head {
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px;
+}
+.signin-modal-head h3 { margin: 0; color: #6cf; font-size: 18px; }
+.signin-close {
+  background: none; border: none; color: #9ab;
+  font-size: 20px; cursor: pointer; line-height: 1;
+}
+.signin-stat-row {
+  display: flex; gap: 14px; align-items: center;
+  background: #0f1024; padding: 14px; border-radius: 6px; margin-bottom: 14px;
+}
+.signin-stat-icon { font-size: 38px; }
+.signin-stat-main { flex: 1; }
+.signin-stat-label { color: #9ab; font-size: 11px; line-height: 1.4; }
+.signin-stat-value { color: #ffd23f; font-size: 24px; font-weight: bold; line-height: 1.2; }
+.signin-stat-side { text-align: right; }
+.signin-stat-streak { color: #7dd87e; font-size: 18px; font-weight: bold; line-height: 1.2; }
+.signin-stat-streak-sub { color: #9ab; font-size: 13px; font-weight: normal; }
+.signin-week-wrap { margin-bottom: 14px; }
+.signin-week-label { color: #9ab; font-size: 12px; margin-bottom: 6px; }
+.signin-rules {
+  color: #9ab; font-size: 11px; line-height: 1.6; margin-bottom: 14px;
+  background: #0a0a1e; padding: 8px; border-radius: 4px;
+}
+.signin-msg { min-height: 18px; font-size: 12px; margin-top: 8px; text-align: center; }
+.signin-msg-loading { color: #fc6; }
+.signin-msg-ok      { color: #7dd87e; }
+.signin-msg-err     { color: #f99; }
+
+/* ---------- 导航栏 - 用户态样式 (替换 main.js 内联 style) ---------- */
+.nav-emerald {
+  background: rgba(255, 210, 63, 0.15);
+  border: 1px solid #ffd23f;
+  border-radius: 12px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #ffd23f;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-family: var(--font-cn);
+}
+.nav-signin-link   { color: #fc6; font-weight: 700; }
+.nav-admin-link    { color: #a6a; font-weight: 700; }
+.nav-dm-link       { color: var(--c-emerald); position: relative; }
+.nav-ann-link      { color: #fc6; position: relative; display: none; }
+.nav-profile-link  { text-decoration: none; color: inherit; }
+.nav-badge {
+  display: none;
+  position: absolute;
+  top: -4px; right: -8px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 9px;
+  line-height: 1.2;
+  min-width: 16px;
+  text-align: center;
+  font-family: var(--font-cn);
+}
+.nav-badge-dm   { background: #f33; color: #fff; }
+.nav-badge-ann  { background: #f93; color: #fff; font-size: 9px; padding: 1px 4px; }
+
+/* 签到徽章 (替换 main.js 内联 style) */
+.signin-badge-done { color: #7dd87e; }
+
+/* 签到 flash 全屏特效 */
+.signin-flash {
+  position: fixed; inset: 0; z-index: 999999;
+  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0,0,0,0.5);
+  animation: signin-fade 1.4s forwards;
+}
+.signin-flash-text {
+  text-align: center; color: #ffd23f;
+  font-size: 60px; font-weight: bold;
+  text-shadow: 0 0 30px #ffd23f;
+  font-family: var(--font-pixel);
+}
+@keyframes signin-fade {
+  0%   { opacity: 0; transform: scale(0.6); }
+  20%  { opacity: 1; transform: scale(1.2); }
+  100% { opacity: 0; transform: scale(1); }
+}
+
 /* ---------- 1. Reset ---------- */
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }

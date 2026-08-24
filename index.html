@@ -259,7 +259,7 @@
           <div class="book-room-summary">
             <div>
               <b>🏎️ 灯光市国际赛车场（拟建）</b><br/>
-              <span style="font-size:12px;color:var(--c-stone-dark)">规格与费用待公告</span>
+              <span class="book-sub">规格与费用待公告</span>
             </div>
             <div class="summary-price">费用待公告</div>
           </div>
@@ -309,7 +309,7 @@
       <!-- 赛道线路图（参考赛车场全俯视图，渲染为平面示意） -->
       <div class="circuit-map">
         <h3 class="circuit-map-title">—— TRACK MAP / 赛道线路图 ——</h3>
-        <p class="circuit-map-note" style="font-size:12px;color:var(--c-stone-dark);text-align:center;margin:0 0 8px;">参考赛车场全俯视图渲染（平面示意 · 尺寸与比例以市政厅最终公告为准）</p>
+        <p class="circuit-map-note">参考赛车场全俯视图渲染（平面示意 · 尺寸与比例以市政厅最终公告为准）</p>
         <div class="circuit-svg-wrap">
           <svg viewBox="0 0 800 460" xmlns="http://www.w3.org/2000/svg" class="circuit-svg" role="img" aria-label="灯光市国际赛车场平面俯视图">
             <!-- 背景：草地（俯视平面） -->
@@ -471,7 +471,7 @@
           <div class="book-room-summary">
             <div>
               <b>🏎️ 灯光市国际赛车场（拟建）</b><br/>
-              <span style="font-size:12px;color:var(--c-stone-dark)">规格与费用待公告</span>
+              <span class="book-sub">规格与费用待公告</span>
             </div>
             <div class="summary-price">费用待公告</div>
           </div>
@@ -559,7 +559,7 @@
           <div class="book-room-summary">
             <div>
               <b id="licenseGradeLabel">B 级</b><br/>
-              <span style="font-size:12px;color:var(--c-stone-dark)" id="licenseTypeLabel">笔试</span>
+              <span class="book-sub" id="licenseTypeLabel">笔试</span>
             </div>
             <div class="summary-price">免费</div>
           </div>
@@ -602,9 +602,9 @@
       <p class="hotel-intro">
         树上酒店（筹建）。选址、规模、定价、运营方由市民大会与合作社讨论后公布。
       </p>
-      <div class="hotel-cta" style="text-align:center;margin:28px 0 12px;">
-        <a href="hotel.html" class="btn btn-primary btn-large">🏨 进入酒店预订页</a>
-        <p class="hotel-hint" style="margin-top:14px;font-size:14px;color:var(--c-stone-dark);">
+      <div class="hotel-cta">
+        <a href="hotel.html" class="btn btn-primary btn-lg">🏨 进入酒店预订页</a>
+        <p class="hotel-hint">
           房型、状态、筛选器、预订都在子页
         </p>
       </div>
@@ -824,13 +824,13 @@
   <div class="modal-mask" id="loginMask" style="display:none">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
       <button class="modal-close" id="loginClose" aria-label="关闭">×</button>
-      <h3 id="loginTitle" style="text-align:center;margin-bottom:8px">玩家登录</h3>
-      <p style="text-align:center;color:var(--c-text-dim);font-size:13px;margin-bottom:16px">
+      <h3 id="loginTitle" class="modal-text-center modal-title-center">玩家登录</h3>
+      <p class="modal-text-center modal-subtitle">
         登录后可发留言、订酒店、报名赛车
       </p>
       <form id="loginForm" autocomplete="on" onsubmit="return false;">
         <div class="form-row">
-          <label>用户名 / 游戏ID <small style="color:var(--c-text-dim)">(2-32 字符)</small></label>
+          <label>用户名 / 游戏ID <small class="modal-tiny">(2-32 字符)</small></label>
           <input type="text" id="loginUsername" name="username" autocomplete="username" required minlength="2" maxlength="32" />
         </div>
         <div class="form-row" id="loginEmailRow" style="display:none">
@@ -838,24 +838,24 @@
           <input type="email" id="loginEmail" name="email" autocomplete="email" />
         </div>
         <div class="form-row">
-          <label>密码 <small style="color:var(--c-text-dim)">(至少 8 位)</small></label>
+          <label>密码 <small class="modal-tiny">(至少 8 位)</small></label>
           <input type="password" id="loginPassword" name="password" autocomplete="current-password" required minlength="8" maxlength="128" />
         </div>
         <div id="loginMsg" class="form-msg" aria-live="polite"></div>
-        <div style="display:flex;gap:10px;margin-top:14px">
-          <button type="button" id="loginModeLogin" class="btn btn-ghost" style="flex:1">去登录</button>
-          <button type="button" id="loginModeRegister" class="btn btn-ghost" style="flex:1">去注册</button>
+        <div class="btn-row-2">
+          <button type="button" id="loginModeLogin" class="btn btn-ghost">去登录</button>
+          <button type="button" id="loginModeRegister" class="btn btn-ghost">去注册</button>
         </div>
-        <button type="submit" id="loginSubmit" class="btn btn-primary" style="width:100%;margin-top:8px">登录</button>
+        <button type="submit" id="loginSubmit" class="btn btn-primary btn-full">登录</button>
       </form>
-      <div style="margin-top:14px;border-top:1px solid var(--c-border);padding-top:14px">
-        <button type="button" id="passkeyLoginBtn" class="btn btn-secondary" style="width:100%;background:linear-gradient(135deg,#5a2,#2a5);color:#fff">🔑 用通行密钥登录</button>
-        <p style="margin-top:6px;font-size:11px;color:var(--c-text-dim);text-align:center">
+      <div class="modal-divider">
+        <button type="button" id="passkeyLoginBtn" class="btn btn-passkey btn-full">🔑 用通行密钥登录</button>
+        <p class="modal-tiny modal-text-center passkey-hint">
           通行密钥 = Touch ID / Face ID / Windows Hello，无需密码
         </p>
       </div>
-      <p style="text-align:center;margin-top:14px;font-size:12px;color:var(--c-text-dim)">
-        管理员请去 <a href="admin.html" style="color:var(--c-emerald)">/admin.html</a> 登录
+      <p class="modal-text-center modal-tiny login-admin-hint">
+        管理员请去 <a href="admin.html" class="modal-link-emerald">/admin.html</a> 登录
       </p>
     </div>
   </div>
@@ -863,7 +863,7 @@
   <script>
     // v19: 给 <script src="js/main.js"> 加 cache-bust 参数, 避免 CF 边缘 cache 卡住老版
     (function() {
-      var v = '20260818-v22';
+      var v = '20260824-ui-refactor';
       var s = document.createElement('script');
       s.src = 'js/main.js?v=' + v;
       s.defer = true;
