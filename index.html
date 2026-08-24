@@ -586,11 +586,12 @@
       <p class="hotel-intro">
         树上酒店（筹建）。选址、规模、定价、运营方由市民大会与合作社讨论后公布。
       </p>
+      <div class="room-grid room-grid-home" id="homeRoomGrid">
+        <!-- v25.46: loadHotelRooms 拉真实房型, 取代之前的 CTA 占位 -->
+        <div class="empty-state"><div class="empty-icon">⏳</div><p>正在加载房型...</p></div>
+      </div>
       <div class="hotel-cta">
-        <a href="hotel.html" class="btn btn-primary btn-lg">🏨 进入酒店预订页</a>
-        <p class="hotel-hint">
-          房型、状态、筛选器、预订都在子页
-        </p>
+        <a href="hotel.html" class="btn btn-primary btn-lg">🏨 进入酒店预订页（看全部 + 筛选 + 预订）</a>
       </div>
     </div>
   </section>
@@ -847,7 +848,7 @@
   <script>
     // v19: 给 <script src="js/main.js"> 加 cache-bust 参数, 避免 CF 边缘 cache 卡住老版
     (function() {
-      var v = '20260824-license';
+      var v = '20260824-home-hotel';
       var s = document.createElement('script');
       s.src = 'js/main.js?v=' + v;
       s.defer = true;

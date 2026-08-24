@@ -968,7 +968,8 @@
   const ROOM_STATUS_M = (active) => active ? '' : '（草拟）';
 
   async function loadHotelRooms() {
-    const roomGrid = document.getElementById('roomGrid');
+    // v25.46: 修正 — 用 homeRoomGrid (之前用 roomGrid, 公共站没这个 id, 是 no-op)
+    const roomGrid = document.getElementById('homeRoomGrid');
     if (roomGrid) roomGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>正在加载房型...</p></div>';
     try {
       const hRes = await fetch('/api/init?action=hotels-manage', { credentials: 'include' });
@@ -1017,7 +1018,8 @@
   }
 
   function renderHotelRooms() {
-    const roomGrid = document.getElementById('roomGrid');
+    // v25.46: 修正 — 用 homeRoomGrid (之前 roomGrid 不存在, 是 no-op)
+    const roomGrid = document.getElementById('homeRoomGrid');
     if (!roomGrid) return;
     if (ROOMS.length === 0) {
       roomGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">🏨</div><p>酒店正在筹建中, 上线后会在这里显示。</p></div>';
