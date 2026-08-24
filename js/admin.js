@@ -2586,6 +2586,7 @@ boot();
         });
         list.insertBefore(div5.firstChild, list.firstChild);
         var form5 = list.firstChild;
+        _attachFileUpload(form5);  // v25.45: 立即挂文件上传
         form5.querySelector('[data-act="cancel"]').onclick = function(){ form5.remove(); };
         form5.querySelector('[data-act="save"]').onclick = async function() {
           var v = _formValues(form5);
