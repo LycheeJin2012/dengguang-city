@@ -492,7 +492,7 @@
     const visible = GALLERY.map((g, gi) => ({ g, gi })).filter(({ g }) => galFilter === 'all' || g.cat === galFilter);
     grid.innerHTML = visible.map(({ g, gi }) => `
       <article class="gallery-item" data-num="${g.num}" data-gi="${gi}" tabindex="0" role="button" aria-label="放大 ${g.label}">
-        <img class="gallery-thumb" src="${g.file}" alt="${g.label}" loading="lazy" />
+        <img class="gallery-thumb" src="${g.file}" alt="${g.label}" loading="lazy" onerror="this.style.opacity='.25'" />
         <div class="gallery-meta">
           <span class="gallery-label">${g.label}</span>
           <span class="gallery-num">#${g.num}</span>
@@ -539,7 +539,7 @@
     ];
     sceneGallery.innerHTML = picks.map(g => `
       <article class="scene-card" data-num="${g.num}" data-file="${g.file}" data-label="${g.label}" tabindex="0">
-        <img class="scene-thumb" src="${g.file}" alt="${g.label}" loading="lazy" />
+        <img class="scene-thumb" src="${g.file}" alt="${g.label}" loading="lazy" onerror="this.style.opacity='.25'" />
         <div class="scene-meta">
           <span class="scene-label">${g.label}</span>
           <span class="scene-num">#${g.num}</span>
@@ -609,7 +609,7 @@
   if (kartGrid) {
     kartGrid.innerHTML = KART_BANNER.map(k => `
       <div class="kb-item" data-num="${k.num}" tabindex="0" role="button" aria-label="放大 ${k.label}">
-        <img class="kb-img" src="${k.file}" alt="${k.label}" loading="lazy" />
+        <img class="kb-img" src="${k.file}" alt="${k.label}" loading="lazy" onerror="this.style.opacity='.25'" />
         <div class="kb-cap">${k.label}</div>
       </div>
     `).join('');
