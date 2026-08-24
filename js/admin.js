@@ -1045,7 +1045,7 @@ async function renderAdminList(){
     const me=window._me;
     if(!me)return;
     const box=$('#adminList');
-    if(!list.length){box.innerHTML='<p class="empty-state">暂无管理员</p>';return;}
+    if(!list.length){box.innerHTML='';const e=document.getElementById('adminListEmpty');if(e)e.style.display='';return;}
     box.innerHTML=list.map(a=>{
       const isMe=a.username===me.username;
       const canDel=me.role==='super'&&!isMe;
@@ -1075,6 +1075,7 @@ async function renderAdminList(){
       el.querySelector('[data-act="del"]')?.addEventListener('click',()=>adminDel(id));
       el.querySelector('[data-act="link"]')?.addEventListener('click',()=>adminLink(id));
     });
+    const ae=document.getElementById('adminListEmpty');if(ae)ae.style.display='none';
   }catch(e){if(String(e).indexOf('403')>0){$('#adminList').innerHTML='<p class="empty-state">仅 super 可查看</p>';}}
 }
 async function adminReset(id){
@@ -1674,7 +1675,11 @@ $$('.admin-tabs .tab').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const t=btn.dataset.tab;
     $$('.admin-tabs .tab').forEach(b=>b.classList.toggle('active',b===btn));
-    $$('.tab-pane').forEach(p=>p.classList.toggle('active',p.id==='pane-'+t));
+    $$('.tab-pane').forEach(p=>{
+      const isActive = p.id==='pane-'+t;
+      p.classList.toggle('active',isActive);
+      p.style.display = isActive ? '' : 'none';
+    });
   });
 });
 
@@ -1766,8 +1771,9 @@ if(btnLogout){
 async function renderDms(query) {
   if (!window._me || window._me.role !== 'super') return;
   const list = document.getElementById('dmList');
+  const empty = document.getElementById('dmEmpty');
   if (!list) return;
-  list.innerHTML = '<p class="empty-state">载入中…</p>';
+  list.innerHTML = ''; empty && (empty.style.display = 'none');
   try {
     // 用 admin-dm-conversations 端点: 服务端已按 (from,to) pair 聚合, 每对只 1 条最新 + 未读数
     const r = await fetch('/api/init?action=admin-dm-conversations', {
@@ -1779,7 +1785,8 @@ async function renderDms(query) {
     if (!r.ok || d.error) throw new Error(d.error || '加载失败');
     const convs = d.conversations || [];
     if (convs.length === 0) {
-      list.innerHTML = '<p class="empty-state">暂无 DM 记录</p>';
+      list.innerHTML = '';
+      if (empty) { empty.style.display = ''; } else { list.innerHTML = '<p class="empty-state">暂无 DM 记录</p>'; }
       return;
     }
     list.innerHTML = convs.map(p => {
@@ -1855,7 +1862,7 @@ async function openDmThread(pid1, pid2) {
 
     mb.innerHTML = `
       <div style="max-height:400px;overflow-y:auto;background:var(--c-bg-2);padding:8px;margin-bottom:12px">
-        ${msgs.length===0?'<p style="color:#888;text-align:center;padding:20px">（暂无消息）</p>':''}
+        ${msgs.length===0?'<p style="color:var(--c-stone, #7a6a5a);text-align:center;padding:20px;font-size:13px">（暂无消息）</p>':''}
         ${msgs.map(m => {
           const isBot = m.from_username === '灯灯客服';
           const isAdmin = m.from_username === '灯灯客服' && m.content && m.content.length > 0;
@@ -1968,7 +1975,7 @@ async function renderDmAiStruggle() {
     if (!r.ok || d.error) throw new Error(d.error || '加载失败');
     const ss = d.struggles || [];
     if (ss.length === 0) {
-      list.innerHTML = '<p class="empty-state">🎉 AI 没有转人工的对话</p>';
+      list.innerHTML = '<p class="empty-state" style="background:none;border:none;padding:20px;text-align:center">🎉 AI 没有转人工的对话</p>';
       return;
     }
     list.innerHTML = '<p style="background:#fff3cd;border:2px solid #e8b840;padding:8px;margin-bottom:12px;font-size:12px">⚠️ 以下是 AI 客服给出"转人工"建议的对话，玩家可能需要人工协助。点击查看完整对话：</p>' + ss.map(s => {

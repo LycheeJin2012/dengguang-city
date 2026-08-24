@@ -147,6 +147,10 @@
       <div id="adminList" class="admin-list">
         <!-- JS 渲染 -->
       </div>
+      <div id="adminListEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">🛡️</div>
+        <p>暂无管理员</p>
+      </div>
     </section>
 
     <!-- Tab: 玩家管理 -->
@@ -350,6 +354,22 @@
       <div id="annEmpty" class="empty-state" style="display:none">
         <div class="empty-icon">📢</div>
         <p>暂无公告, 点右上"+ 发布新公告"创建第一条</p>
+      </div>
+    </section>
+
+    <!-- Tab: 私信监管 (仅 super) -->
+    <section class="tab-pane" id="pane-dms">
+      <div class="pane-head">
+        <h2>💬 私信监管</h2>
+        <div class="pane-tools">
+          <span class="tag tag-super">仅 SUPER</span>
+        </div>
+      </div>
+      <p class="hint">监管所有玩家私信对话，可以灯灯客服身份代为回复，或查看 AI 客服"转人工"建议的对话。</p>
+      <div id="dmList" class="msg-list"></div>
+      <div id="dmEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">💬</div>
+        <p>暂无私信记录</p>
       </div>
     </section>
 
