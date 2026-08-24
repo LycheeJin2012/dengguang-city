@@ -480,6 +480,19 @@ body.admin-body {
 .empty-state p { margin: 0; }
 .empty-icon { font-size: 48px; opacity: 0.7; }
 
+/* v25.37: pane 内提示信息 (公告管理, 私信监管, 首页图集 的说明文字) */
+.pane-hint, .hint {
+  background: var(--c-paper, #fff8dc);
+  color: var(--c-stone-dark, #5a4a38);
+  border: 3px solid var(--c-black, #000);
+  border-top: none;
+  padding: 12px 20px;
+  font-family: var(--font-cn);
+  font-size: 14px;
+  line-height: 1.7;
+  margin: 0;
+}
+
 /* ============================================
    管理员列表
    ============================================ */
