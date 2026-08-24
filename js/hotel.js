@@ -24,16 +24,17 @@
       const hRes = await fetch('/api/init?action=hotels-manage', { credentials: 'include' });
       const hData = await hRes.json();
       if (!hRes.ok || !hData.ok) throw new Error(hData.error || '加载酒店失败');
-      const hotels = (hData.items || []).filter(h => h.is_active);
+      // v25.41: 公共页显示所有酒店, is_active=0 标"草拟"但不隐藏
+      const hotels = hData.items || [];
       if (hotels.length === 0) {
         if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🏨</div><p>酒店正在筹建中, 上线后会在这里显示。</p></div>';
         if (count) count.textContent = '共 0 间 / 总 0 间';
         return;
       }
-      // 2) 拉所有房型 (并发)
+      // 2) 拉所有房型 (并发, 显示所有, is_active 标 status)
       const roomLists = await Promise.all(hotels.map(h =>
         fetch('/api/init?action=hotel-rooms-manage&hotel_id=' + h.id, { credentials: 'include' })
-          .then(r => r.json().then(d => ({ hotel: h, items: (d.items || []).filter(x => x.is_active) })))
+          .then(r => r.json().then(d => ({ hotel: h, items: d.items || [] })))
           .catch(() => ({ hotel: h, items: [] }))
       ));
       // 3) 合并成统一 ROOMS 数组
@@ -41,13 +42,15 @@
       let idx = 0;
       for (const { hotel, items } of roomLists) {
         for (const r of items) {
+          // v25.41: status 取房型 is_active, 房型未激活标"草拟"
+          const status = r.is_active ? '开放' : '草拟';
           ROOMS.push({
             id: r.id,
             hotelId: hotel.id,
             hotelName: hotel.name,
             name: r.name,
             icon: ROOM_ICON(r.capacity || 1),
-            status: '开放',
+            status,
             bed: r.beds || '床型待公告',
             guests: r.capacity || 1,
             view: '景观',
