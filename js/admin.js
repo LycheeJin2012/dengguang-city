@@ -2693,6 +2693,11 @@ boot();
     }
   }, 100);
   setTimeout(function() { clearInterval(_superCheckInterval); }, 5000);
+
+  // v25.30: 暴露 render 函数供外层 tab 切换调用
+  window.renderHotelManage = renderHotelManage;
+  window.renderTrackManage = renderTrackManage;
+  window.renderLicenseManage = renderLicenseManage;
 })();
 
 
