@@ -709,6 +709,36 @@
     }
   });
 
+  /* ---------- 11.5 v25.42: 赛车场规格 (从后端 race-tracks-manage 拉) ---------- */
+  async function loadKartSpecs() {
+    const specEls = document.querySelectorAll('#kartSpecs [data-spec]');
+    if (!specEls.length) return;
+    try {
+      const res = await fetch('/api/init?action=race-tracks-manage', { credentials: 'include' });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error || '加载失败');
+      const tracks = (data.items || []).filter(t => t.is_active);
+      if (tracks.length === 0) {
+        specEls.forEach(el => { el.textContent = '暂无数据'; });
+        return;
+      }
+      // 字段映射: DB 字段 → UI 显示
+      const set = (key, val) => {
+        const el = document.querySelector(`#kartSpecs [data-spec="${key}"]`);
+        if (el) el.textContent = val;
+      };
+      const t = tracks[0];
+      set('length', t.length_km ? t.length_km + ' km' : '—');
+      set('lanes', '双车道');
+      set('curves', '发夹弯 + 弯道区');
+      set('tunnel', '含隧道');
+      set('surface', t.name && t.name.includes('冰') ? '红石冰道' : (t.name || '—'));
+      set('record', '待刷新');
+    } catch (e) {
+      specEls.forEach(el => { el.textContent = '加载失败'; });
+    }
+  }
+
   /* ---------- 12. 国际赛车场·试车报名 ---------- */
   const circuitMask   = document.getElementById('circuitMask');
   const circuitForm   = document.getElementById('circuitForm');
@@ -896,47 +926,69 @@
     });
   }
 
-  /* ---------- 13. 树上酒店 + 预订（草拟房型，待市政厅最终定价） ---------- */
-  const ROOMS = [
-    {
-      id: 'standard',
-      name: '树上标间（草拟）',
-      icon: '🛏️',
-      price: null,
-      bed: '床型待公告',
-      guests: '入住人数待公告',
-      features: ['家具配置待公告', '窗外景观待公告'],
-      desc: '房型草案。床型、家具、配置由市政厅与合作社讨论后定稿。',
-      thumbClass: 't-standard'
-    },
-    {
-      id: 'queen',
-      name: '树上大床房（草拟）',
-      icon: '🛌',
-      price: null,
-      bed: '床型待公告',
-      guests: '入住人数待公告',
-      features: ['家具配置待公告', '景观待公告'],
-      desc: '房型草案。床型、家具、配置由市政厅与合作社讨论后定稿。',
-      thumbClass: 't-queen'
-    },
-    {
-      id: 'luxury',
-      name: '树上豪华房（草拟）',
-      icon: '🏨',
-      price: null,
-      bed: '床型待公告',
-      guests: '入住人数待公告',
-      features: ['家具配置待公告', '景观待公告'],
-      desc: '房型草案。床型、家具、配置由市政厅与合作社讨论后定稿。',
-      thumbClass: 't-luxury',
-      featured: true
-    }
-  ];
+  /* ---------- 13. 树上酒店 + 预订 (v25.42: 从后端拉真实数据) ---------- */
+  const ROOMS = []; // 全局房型, 启动时从后端拉
+  const ROOM_ICON_M = (cap) => cap >= 4 ? '🏨' : (cap >= 2 ? '🛌' : '🛏️');
+  const ROOM_THUMB_M = (cap) => cap >= 4 ? 't-luxury' : (cap >= 2 ? 't-queen' : 't-standard');
+  // 房型 status 文案
+  const ROOM_STATUS_M = (active) => active ? '' : '（草拟）';
 
-  // 渲染房型卡
-  const roomGrid = document.getElementById('roomGrid');
-  if (roomGrid) {
+  async function loadHotelRooms() {
+    const roomGrid = document.getElementById('roomGrid');
+    if (roomGrid) roomGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>正在加载房型...</p></div>';
+    try {
+      const hRes = await fetch('/api/init?action=hotels-manage', { credentials: 'include' });
+      const hData = await hRes.json();
+      if (!hRes.ok || !hData.ok) throw new Error(hData.error || '加载失败');
+      const hotels = hData.items || [];
+      // 拉每个酒店的房型
+      const roomLists = await Promise.all(hotels.map(h =>
+        fetch('/api/init?action=hotel-rooms-manage&hotel_id=' + h.id, { credentials: 'include' })
+          .then(r => r.json().then(d => ({ hotel: h, items: d.items || [] })))
+          .catch(() => ({ hotel: h, items: [] }))
+      ));
+      // 合并成统一 ROOMS 数组
+      ROOMS.length = 0;
+      const all = [];
+      for (const { items } of roomLists) {
+        for (const r of items) {
+          all.push({
+            id: r.id,
+            dbId: r.id,
+            name: r.name + ROOM_STATUS_M(r.is_active),
+            icon: ROOM_ICON_M(r.capacity || 1),
+            price: r.price_per_night,
+            bed: r.beds || '床型待公告',
+            guests: (r.capacity || 1) + '+ 人',
+            features: [
+              r.breakfast_included ? '含早餐' : null,
+              r.description || null
+            ].filter(Boolean),
+            desc: r.description || '房型介绍待公告',
+            thumbClass: ROOM_THUMB_M(r.capacity || 1),
+            featured: r.sort_order >= 99
+          });
+        }
+      }
+      // 排序: 便宜的在前
+      all.sort((a, b) => (a.price || 0) - (b.price || 0));
+      // 标记最贵的为推荐
+      if (all.length) all[all.length - 1].featured = true;
+      // 复制到 ROOMS 供 openBookModal 用
+      ROOMS.push(...all);
+      renderHotelRooms();
+    } catch (e) {
+      if (roomGrid) roomGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><p>加载失败: ' + (e.message || '未知错误') + '</p></div>';
+    }
+  }
+
+  function renderHotelRooms() {
+    const roomGrid = document.getElementById('roomGrid');
+    if (!roomGrid) return;
+    if (ROOMS.length === 0) {
+      roomGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">🏨</div><p>酒店正在筹建中, 上线后会在这里显示。</p></div>';
+      return;
+    }
     roomGrid.innerHTML = ROOMS.map(r => {
       const features = r.features.map(f => `<li>${f}</li>`).join('');
       const priceTag = r.price == null
@@ -1788,6 +1840,12 @@
   if (_unreadTimer) clearInterval(_unreadTimer);
   _unreadTimer = setInterval(pollUnread, 30000);
   pollUnread(); // 立即拉一次
+
+  /* ---------- v25.42: 启动时拉后端数据覆盖 hardcoded 草拟 ---------- */
+  // 1. 酒店房型
+  loadHotelRooms();
+  // 2. 赛车场规格
+  loadKartSpecs();
 })();
-console.log("v17.2 ready");
+console.log("v25.42 ready");
 // v17.2 push 1786962036
