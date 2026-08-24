@@ -184,6 +184,7 @@ const SCHEMA = [
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
+    image_url TEXT,
     created_by INTEGER,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT,
@@ -293,6 +294,8 @@ const MIGRATIONS = [
   `ALTER TABLE messages ADD COLUMN previous_reply TEXT`,
   // v17.8: announcements 兼容迁移
   `ALTER TABLE announcements ADD COLUMN updated_at TEXT`,
+  // v25.33: 公告封面图
+  `ALTER TABLE announcements ADD COLUMN image_url TEXT`,
   // v17.8: direct_messages 加 replied_by_admin_id (DM 回复人审计)
   `ALTER TABLE direct_messages ADD COLUMN replied_by_admin_id INTEGER`,
   // v17.8: admins 加 linked_player_id (管理员/玩家账号绑定)
@@ -557,14 +560,18 @@ export async function onRequestPost(context) {
     const _b = await request.json().catch(() => ({}));
     const title = stripHtml((_b.title || '').toString()).trim();
     const content = stripHtml((_b.content || '').toString()).trim();
+    const image_url = (_b.image_url || '').toString().trim();
     if (title.length < 2 || title.length > 80) return err(400, '标题 2-80 字');
     if (content.length < 2 || content.length > 2000) return err(400, '内容 2-2000 字');
+    if (image_url && !/^https?:\/\//i.test(image_url) && !/^data:image\//i.test(image_url)) {
+      return err(400, '封面图必须是 https:// 或 data:image/ 开头');
+    }
 
     if (_action === 'announcement-create') {
       try {
         const r = await env.DB.prepare(
-          "INSERT INTO announcements (title, content, created_by) VALUES (?, ?, ?)"
-        ).bind(title, content, _me.id).run();
+          "INSERT INTO announcements (title, content, image_url, created_by) VALUES (?, ?, ?, ?)"
+        ).bind(title, content, image_url || null, _me.id).run();
         return ok({ id: r.meta.last_row_id, ok: true });
       } catch (e) { return err(500, '发布失败: ' + e.message); }
     }
@@ -574,8 +581,8 @@ export async function onRequestPost(context) {
       if (!id) return err(400, 'id 必填');
       try {
         await env.DB.prepare(
-          "UPDATE announcements SET title = ?, content = ?, updated_at = datetime('now') WHERE id = ?"
-        ).bind(title, content, id).run();
+          "UPDATE announcements SET title = ?, content = ?, image_url = ?, updated_at = datetime('now') WHERE id = ?"
+        ).bind(title, content, image_url || null, id).run();
         return ok({ id, ok: true });
       } catch (e) { return err(500, '更新失败: ' + e.message); }
     }

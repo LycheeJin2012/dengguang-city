@@ -1,0 +1,272 @@
+version: 1
+plan:
+  name: "灯光市管理后台 UI 全面审计"
+  max_concurrency: 6
+  max_consecutive_failures: 2
+  max_cycles: 1
+  auto_reject_retries: 1
+  verifier_config:
+    default_verifiers: []
+    audit_sample_rate: 0.0
+tasks:
+  - id: hotel-tab
+    title: "审计酒店管理 tab（报名+管理 sub-tab）"
+    prompt: |
+      你是审计员，负责检查灯光市管理后台 admin-new.html 的「酒店预订」tab。
+      目标 URL：https://dengguang-city.pages.dev/admin-new?v=20260824-v2532
+
+      **任务**：
+      1. 打开浏览器，登录（如果需要）
+      2. 点击「🏨 酒店预订」tab
+      3. 检查 **报名 sub-tab**（hotel-signup）：
+         - 表单字段是否完整（酒店名、描述、图片URL、房型等）
+         - 图片上传：是否有文件选择按钮，是否支持点击选文件上传（而非只能手动粘贴URL）
+         - 表单 UI 是否整齐（label对齐、按钮样式）
+         - 空状态文案是否清晰
+      4. 切换到 **管理 sub-tab**（hotel-manage）：
+         - 酒店列表是否正常显示（树屋酒店 + 3个房型）
+         - 每条酒店是否有「编辑」按钮
+         - 点击「编辑」，检查编辑表单：
+           - 图片上传是否有文件选择按钮
+           - 表单字段是否完整
+         - 点击「+ 新建酒店」，检查新建表单：
+           - 图片上传是否有文件选择按钮
+           - 表单字段是否完整
+         - 点击某个酒店的「查看房型」或「添加房型」，检查房型表单：
+           - 图片上传是否有文件选择按钮
+           - 字段是否完整
+      5. **UI 一致性检查**：
+         - 各 pane 背景色是否统一
+         - 按钮样式是否一致
+         - 空状态文案格式是否一致
+      6. **性能问题**：
+         - 图片是否 lazy load
+         - 页面加载时是否有明显卡顿
+
+      **输出格式**（直接写，不要加前缀）：
+      ## 酒店预订 tab 审计结果
+      ### 报名 sub-tab
+      - [OK/问题] 表单字段：...
+      - [OK/问题] 图片上传：是否支持文件选择，button 文案，_attachFileUpload 是否生效
+      - [OK/问题] UI 一致性：...
+      ### 管理 sub-tab
+      - [OK/问题] 酒店列表显示：...
+      - [OK/问题] 编辑表单（图片上传、字段）
+      - [OK/问题] 新建酒店表单
+      - [OK/问题] 房型表单
+      ### UI 一致性问题
+      - 列出所有发现的不一致
+      ### 性能问题
+      - 列出发现
+      ### 严重程度评级
+      - 🔴 严重（影响核心功能）:
+      - 🟡 中等（体验问题）:
+      - 🟢 轻微（美观）:
+    assigned_to: worker
+    verify_skip_reason: "代码审计任务，worker 读源码后直接输出结论，无需额外验证"
+    max_retries: 1
+
+  - id: announcement-tab
+    title: "审计公告管理 tab"
+    prompt: |
+      你是审计员，负责检查灯光市管理后台 admin-new.html 的「📢 公告管理」tab。
+      目标 URL：https://dengguang-city.pages.dev/admin-new?v=20260824-v2532
+
+      **任务**：
+      1. 打开浏览器，登录（如果需要）
+      2. 点击「📢 公告管理」tab
+      3. 检查公告列表：
+         - 列表是否正常显示
+         - 列表项是否有封面图（如果有的话）
+         - 列表 UI 是否整齐
+      4. 点击「+ 发布新公告」或新建按钮：
+         - 检查新建表单字段（标题、内容、封面图、时间等）
+         - **重点**：封面图上传是否有文件选择按钮（而非只能粘贴URL）
+         - 表单 UI 是否整齐
+      5. 点击某条公告的编辑：
+         - 编辑表单是否完整
+         - 封面图上传是否支持文件选择
+      6. **UI 一致性**：背景色、按钮样式、空状态文案是否和其他 pane 统一
+
+      **输出格式**：
+      ## 公告管理 tab 审计结果
+      ### 列表
+      - [OK/问题] ...
+      ### 新建公告表单
+      - [OK/问题] 字段完整性：...
+      - [OK/问题] 封面图上传：是否有文件选择按钮，按钮文案，_attachFileUpload 是否生效
+      - [OK/问题] UI 整洁度：...
+      ### 编辑公告表单
+      - [OK/问题] ...
+      ### UI 一致性
+      - 列出发现的不一致
+      ### 严重程度评级
+      - 🔴 严重:
+      - 🟡 中等:
+      - 🟢 轻微:
+    assigned_to: worker
+    verify_skip_reason: "代码审计任务，worker 读源码后直接输出结论，无需额外验证"
+    max_retries: 1
+
+  - id: gallery-tab
+    title: "审计首页图集 tab"
+    prompt: |
+      你是审计员，负责检查灯光市管理后台 admin-new.html 的「🖼️ 首页图集」tab。
+      目标 URL：https://dengguang-city.pages.dev/admin-new?v=20260824-v2532
+
+      **任务**：
+      1. 打开浏览器，登录（如果需要）
+      2. 点击「🖼️ 首页图集」tab
+      3. 检查图集列表：
+         - 是否有图片显示
+         - 图片是否有 lazy load
+         - 列表 UI 是否整齐
+      4. 点击「+ 添加图片」：
+         - 检查表单字段（分类、城市风貌/实景图集、图片URL）
+         - **重点**：图片上传是否有文件选择按钮（dedicated gallery upload handler）
+         - 确认：点击选择文件后，base64 是否填入 textarea/URL 字段
+         - 表单 UI 是否整齐
+      5. 检查 gallery 的 delegated file upload handler：
+         - 从 admin.js 源码找 delegated upload IIFE（大约在 L2727附近）
+         - 确认 MAX_FILE_SIZE 是否为 3MB
+         - 确认 _fileReading 标志是否使用
+         - 确认 textarea 支持是否在 querySelector 里
+      6. **UI 一致性**
+
+      **输出格式**：
+      ## 首页图集 tab 审计结果
+      ### 列表
+      - [OK/问题] ...
+      ### 添加图片表单
+      - [OK/问题] 字段：...
+      - [OK/问题] 图片上传：是否有文件选择按钮，是否能选文件后 base64 填入
+      - [OK/问题] delegated upload handler 检查（3MB、_fileReading、textarea支持）
+      - [OK/问题] UI 整洁度
+      ### UI 一致性
+      ### 严重程度评级
+      - 🔴 严重:
+      - 🟡 中等:
+      - 🟢 轻微:
+    assigned_to: worker
+    verify_skip_reason: "代码审计任务，worker 读源码后直接输出结论，无需额外验证"
+    max_retries: 1
+
+  - id: license-tab
+    title: "审计驾照考试 tab（报名+管理 sub-tab）"
+    prompt: |
+      你是审计员，负责检查灯光市管理后台 admin-new.html 的「🚗 驾照考试」tab。
+      目标 URL：https://dengguang-city.pages.dev/admin-new?v=20260824-v2532
+
+      **任务**：
+      1. 打开浏览器，登录（如果需要）
+      2. 点击「🚗 驾照考试」tab
+      3. 检查 **报名 sub-tab**（license-signup）：
+         - 表单字段是否完整
+         - 图片上传是否有文件选择按钮（驾照要求页面可能没有图片，但如果有就要检查）
+         - UI 整洁度
+      4. 切换到 **管理 sub-tab**（license-manage）：
+         - 要求列表是否正常显示
+         - 点击「+ 新增」或新建按钮，检查表单：
+           - 字段是否完整（B/A/S 级要求等）
+           - 是否有图片上传字段
+         - 点击某条要求的编辑
+      5. **UI 一致性检查**
+
+      **输出格式**：
+      ## 驾照考试 tab 审计结果
+      ### 报名 sub-tab
+      - [OK/问题] ...
+      ### 管理 sub-tab
+      - [OK/问题] 列表：...
+      - [OK/问题] 新建表单：字段、图片上传
+      - [OK/问题] 编辑表单
+      ### UI 一致性
+      ### 严重程度评级
+    assigned_to: worker
+    verify_skip_reason: "代码审计任务，worker 读源码后直接输出结论，无需额外验证"
+    max_retries: 1
+
+  - id: racing-tabs
+    title: "审计赛道报名+国际赛车场+市民留言+私信监管 tab"
+    prompt: |
+      你是审计员，负责检查灯光市管理后台 admin-new.html 的以下 tabs：
+      - 「🏁 赛道报名」
+      - 「🏎️ 国际赛车场」
+      - 「📬 市民留言」（已读/未读筛选、回复编辑功能）
+      - 「💬 私信监管」
+
+      目标 URL：https://dengguang-city.pages.dev/admin-new?v=20260824-v2532
+
+      **任务**（每个 tab 各占一段）：
+      1. 打开浏览器，登录（如果需要）
+      2. 依次检查每个 tab：
+         - 列表是否正常显示
+         - 表单是否有图片上传（赛道报名可能有赛车场图片）
+         - UI 整洁度
+         - 空状态文案是否一致
+      3. 重点检查：
+         - 赛道管理 sub-tab 是否有赛车场图片上传（如果有，检查是否支持文件选择）
+         - 私信监管：私信列表显示是否正常，DM 功能是否完整
+
+      **输出格式**：
+      ## 赛道/国际赛车场/留言/私信 审计结果
+      ### 🏁 赛道报名
+      - 列表：[OK/问题]
+      - 表单：[OK/问题]（有无图片上传）
+      ### 🏎️ 国际赛车场
+      - 列表：[OK/问题]
+      - 表单：[OK/问题]
+      ### 📬 市民留言
+      - 功能：[OK/问题]（筛选、回复编辑）
+      ### 💬 私信监管
+      - 功能：[OK/问题]
+      ### UI 一致性
+      ### 严重程度评级
+    assigned_to: worker
+    verify_skip_reason: "代码审计任务，worker 读源码后直接输出结论，无需额外验证"
+    max_retries: 1
+
+  - id: player-admin-dm-tabs
+    title: "审计玩家管理+管理员账号+修改密码+DM页面"
+    prompt: |
+      你是审计员，负责检查灯光市管理后台 admin-new.html 的以下 tabs：
+      - 「👥 玩家管理」
+      - 「🛡️ 管理员账号」
+      - 「🔑 修改我的密码」
+
+      以及前台页面：
+      - dm.html（私信页面）：https://dengguang-city.pages.dev/dm.html
+      - profile.html（玩家资料页）：https://dengguang-city.pages.dev/profile.html
+
+      **任务**：
+      1. admin-new.html：
+         - 👥 玩家管理：列表是否正常，重置密码功能是否正常
+         - 🛡️ 管理员账号：账号列表是否正常，super/admin 角色显示是否正确
+         - 🔑 修改我的密码：表单是否可用
+      2. dm.html：
+         - 页面是否正常加载
+         - 私信列表、发送功能是否正常
+         - UI 是否整洁
+      3. profile.html：
+         - 页面是否正常加载
+         - 玩家资料显示是否正常
+         - 头像上传是否有文件选择按钮（如果支持上传）
+      4. UI 一致性检查（整体）
+
+      **输出格式**：
+      ## 玩家管理/管理员/修改密码/DM/Profile 审计结果
+      ### 👥 玩家管理
+      - [OK/问题]
+      ### 🛡️ 管理员账号
+      - [OK/问题]
+      ### 🔑 修改我的密码
+      - [OK/问题]
+      ### dm.html
+      - [OK/问题]
+      ### profile.html
+      - [OK/问题]（头像上传）
+      ### UI 一致性
+      ### 严重程度评级
+    assigned_to: worker
+    verify_skip_reason: "代码审计任务，worker 读源码后直接输出结论，无需额外验证"
+    max_retries: 1

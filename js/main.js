@@ -372,8 +372,12 @@
       grid.innerHTML = anns.map((a, i) => {
         const isLatest = i === 0;
         const tag = isLatest ? '<span class="notice-tag" style="background:#a6a;color:#fff;">最新</span>' : '<span class="notice-tag tag-blue">公告</span>';
+        const coverImg = a.image_url
+          ? `<img src="${escHtml(a.image_url)}" alt="公告配图" loading="lazy" style="width:100%;max-height:180px;object-fit:cover;border-radius:4px;margin-bottom:8px;display:block;" onerror="this.style.opacity=0" />`
+          : '';
         return `<article class="notice-card">
           <div class="notice-body">
+            ${coverImg}
             ${tag}
             <h3>${escHtml(a.title)}</h3>
             <p style="font-size:11px;color:#888;margin:0 0 6px;">📅 ${relativeTime(a.created_at)}${a.updated_at ? ' · <span style="color:#a6a">已编辑</span>' : ''} · ✍️ ${escHtml(a.admin_username || '市政厅')}</p>
@@ -404,7 +408,11 @@
     const bd = document.createElement('div');
     bd.id = 'annViewModal';
     bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+    const coverImg = ann.image_url
+      ? `<img src="${escHtml(ann.image_url)}" alt="公告配图" loading="lazy" style="width:100%;max-height:240px;object-fit:cover;border-radius:4px;margin-bottom:12px;display:block;" onerror="this.style.opacity=0" />`
+      : '';
     bd.innerHTML = `<div style="background:#fffbe8;border:4px solid #2d2d2d;border-radius:4px;padding:24px;max-width:640px;width:100%;max-height:85vh;overflow:auto;box-shadow:8px 8px 0 rgba(0,0,0,.25);">
+      ${coverImg}
       <div style="display:flex;align-items:flex-start;gap:10px;margin-bottom:12px;">
         <span style="font-size:24px;">📢</span>
         <div style="flex:1;">
