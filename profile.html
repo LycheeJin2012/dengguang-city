@@ -5,132 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>玩家主页 · 灯光市</title>
 <link rel="preload" href="css/style.css" as="style" />
+<link rel="preload" href="css/subpages.css" as="style" />
 <link rel="preload" href="js/profile.js" as="script" />
 <link rel="stylesheet" href="css/style.css">
-<style>
-  body { background: var(--c-bg-2, #e8e0c8); }
-  .profile-wrap {
-    max-width: 720px; margin: 24px auto; padding: 0 16px;
-  }
-  .profile-card {
-    background: var(--c-bg-1, #f0e8d0);
-    border: 4px solid var(--c-stone-dark, #4a3a2a);
-    box-shadow: 6px 6px 0 var(--c-stone-dark, #4a3a2a);
-    overflow: hidden;
-  }
-  .profile-banner {
-    height: 96px;
-    background: linear-gradient(135deg, var(--c-emerald, #5fa856) 0%, var(--c-gold, #e8b840) 100%);
-    position: relative;
-  }
-  .profile-avatar {
-    width: 96px; height: 96px;
-    background: var(--c-bg-1, #f0e8d0);
-    border: 4px solid var(--c-stone-dark, #4a3a2a);
-    box-shadow: 3px 3px 0 var(--c-stone-dark, #4a3a2a);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 56px;
-    margin: -50px 0 0 24px;
-    position: relative;
-  }
-  .profile-body { padding: 12px 24px 24px; }
-  .profile-name {
-    font-size: 24px; font-weight: 700; color: var(--c-stone-dark, #4a3a2a);
-    margin: 8px 0 4px;
-  }
-  .profile-meta {
-    font-size: 12px; color: var(--c-stone, #7a6a5a);
-    margin-bottom: 16px;
-  }
-  .profile-bio {
-    background: var(--c-bg-2, #e8e0c8);
-    border: 2px dashed var(--c-stone, #7a6a5a);
-    padding: 12px 14px;
-    font-size: 14px; line-height: 1.7;
-    color: var(--c-stone-dark, #4a3a2a);
-    min-height: 50px;
-    white-space: pre-wrap; word-break: break-word;
-  }
-  .profile-bio.empty { color: var(--c-stone, #7a6a5a); font-style: italic; }
-  .profile-stats {
-    display: flex; gap: 16px; margin-top: 16px;
-    flex-wrap: wrap;
-  }
-  .profile-stat {
-    background: var(--c-bg-2, #e8e0c8);
-    border: 2px solid var(--c-stone, #7a6a5a);
-    padding: 8px 14px;
-    text-align: center; flex: 1; min-width: 100px;
-  }
-  .profile-stat .num { font-size: 20px; font-weight: 700; color: var(--c-emerald, #5fa856); }
-  .profile-stat .lbl { font-size: 11px; color: var(--c-stone, #7a6a5a); letter-spacing: 1px; }
-  .profile-actions {
-    margin-top: 20px;
-    display: flex; gap: 8px; flex-wrap: wrap;
-  }
-  .profile-actions button, .profile-actions a {
-    flex: 1; min-width: 120px;
-    padding: 10px 16px;
-    font-size: 13px; font-weight: 700;
-    border: 3px solid var(--c-stone-dark, #4a3a2a);
-    box-shadow: 3px 3px 0 var(--c-stone-dark, #4a3a2a);
-    background: var(--c-emerald, #5fa856); color: white;
-    cursor: pointer; text-decoration: none;
-    text-align: center; letter-spacing: 1px;
-  }
-  .profile-actions .btn-gold { background: var(--c-gold, #e8b840); color: var(--c-stone-dark, #4a3a2a); }
-  .profile-actions button:hover, .profile-actions a:hover { filter: brightness(0.95); }
-  .profile-login-hint {
-    text-align: center; padding: 40px 20px; color: var(--c-stone, #7a6a5a);
-    background: var(--c-bg-1, #f0e8d0); border: 4px solid var(--c-stone-dark, #4a3a2a);
-    box-shadow: 4px 4px 0 var(--c-stone-dark, #4a3a2a);
-  }
-  .modal-mask {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55); z-index: 9999;
-    display: flex; align-items: center; justify-content: center;
-    padding: 16px;
-  }
-  .modal {
-    background: var(--c-bg-1, #f0e8d0);
-    border: 4px solid var(--c-stone-dark, #4a3a2a);
-    box-shadow: 6px 6px 0 var(--c-stone-dark, #4a3a2a);
-    max-width: 480px; width: 100%;
-    position: relative;
-  }
-  .modal-head {
-    padding: 12px 16px;
-    background: var(--c-emerald, #5fa856); color: white;
-    font-weight: 700; font-size: 14px; letter-spacing: 1px;
-    display: flex; justify-content: space-between; align-items: center;
-  }
-  .modal-close {
-    background: none; border: none; color: white; font-size: 20px; cursor: pointer; line-height: 1;
-  }
-  .modal-body { padding: 16px; }
-  .modal-body label {
-    display: block; font-size: 12px; font-weight: 700; color: var(--c-stone-dark, #4a3a2a);
-    margin: 0 0 6px; letter-spacing: 1px;
-  }
-  .modal-body input, .modal-body textarea {
-    width: 100%; box-sizing: border-box;
-    font-family: inherit; font-size: 14px; padding: 8px;
-    border: 3px solid var(--c-stone-dark, #4a3a2a); background: white;
-    color: var(--c-stone-dark, #4a3a2a);
-  }
-  .modal-body input:focus, .modal-body textarea:focus { outline: 2px solid var(--c-emerald, #5fa856); }
-  .modal-body .hint { font-size: 11px; color: var(--c-stone, #7a6a5a); margin-top: 4px; }
-  .modal-actions { display: flex; gap: 8px; margin-top: 14px; }
-  .modal-actions button {
-    flex: 1; padding: 10px;
-    font-size: 13px; font-weight: 700;
-    border: 3px solid var(--c-stone-dark, #4a3a2a);
-    box-shadow: 2px 2px 0 var(--c-stone-dark, #4a3a2a);
-    background: var(--c-emerald, #5fa856); color: white;
-    cursor: pointer; letter-spacing: 1px;
-  }
-  .modal-actions .btn-cancel { background: var(--c-stone, #7a6a5a); }
-</style>
+<link rel="stylesheet" href="css/subpages.css">
 </head>
 <body>
 
@@ -150,8 +28,8 @@
   </div>
 </header>
 
-<div style="max-width:720px;margin:18px auto 0;padding:0 16px;">
-  <a href="index.html" style="color:var(--c-emerald);text-decoration:none;font-size:13px;">← 返回首页</a>
+<div class="page-back-row">
+  <a href="index.html">← 返回首页</a>
 </div>
 
 <div class="profile-wrap" id="app">
@@ -159,24 +37,22 @@
     <div class="profile-banner"></div>
     <div class="profile-avatar" id="pAvatar">👤</div>
     <div class="profile-body" id="pBody">
-      <div style="padding:20px;text-align:center;color:var(--c-stone);">载入中…</div>
+      <div class="profile-loading">载入中…</div>
     </div>
   </div>
 
   <!-- 账号安全 / 通行密钥管理（仅本人可见） -->
-  <div class="profile-card" id="passkeyCard" style="margin-top:16px;display:none">
-    <div style="padding:16px 24px;background:var(--c-emerald,#5fa856);color:#fff;font-weight:700;font-size:14px;letter-spacing:1px">
-      🔑 账号安全 · 通行密钥 (Passkey)
-    </div>
-    <div style="padding:18px 24px">
-      <p style="font-size:13px;color:var(--c-stone-dark,#4a3a2a);line-height:1.6;margin-bottom:12px">
+  <div class="profile-card passkey-card" id="passkeyCard" style="display:none">
+    <div class="passkey-head">🔑 账号安全 · 通行密钥 (Passkey)</div>
+    <div class="passkey-body">
+      <p class="passkey-desc">
         通行密钥用 Touch ID / Face ID / Windows Hello 登录，<b>无需输密码</b>，抗钓鱼。
       </p>
-      <div id="passkeyList" style="margin-bottom:12px"></div>
-      <button id="addPasskeyBtn" type="button" style="background:linear-gradient(135deg,#5a2,#2a5);color:#fff;border:3px solid var(--c-stone-dark,#4a3a2a);padding:8px 16px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:3px 3px 0 var(--c-stone-dark,#4a3a2a)">
+      <div id="passkeyList" class="passkey-list"></div>
+      <button id="addPasskeyBtn" type="button" class="passkey-add-btn">
         ➕ 添加通行密钥
       </button>
-      <p id="passkeyMsg" style="margin-top:8px;font-size:12px;color:var(--c-stone)"></p>
+      <p id="passkeyMsg" class="passkey-msg muted"></p>
     </div>
   </div>
 </div>

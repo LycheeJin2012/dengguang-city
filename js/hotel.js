@@ -70,7 +70,7 @@
     const list = applyFilters();
     $('#hotelCount').textContent = `共 ${list.length} 间 / 总 ${ROOMS.length} 间`;
     if (list.length === 0) {
-      grid.innerHTML = '<div class="hotel-empty">没有符合条件的房型，试试调整筛选条件。</div>';
+      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>没有符合条件的房型，试试调整筛选条件。</p></div>';
       return;
     }
     grid.innerHTML = list.map(r => `
@@ -171,8 +171,8 @@
     bookTitle.textContent = `预订 · ${r.name}`;
     bookSummary.innerHTML = `
       <div>
-        <b>${r.icon} ${r.name}</b><br/>
-        <span style="font-size:12px;color:var(--c-stone-dark)">${r.bed} · ${r.guests}+ 人</span>
+        <b>${r.icon} ${r.name}</b>
+        <span class="book-room-meta">${r.bed} · ${r.guests}+ 人</span>
       </div>
     `;
     const today = new Date();
@@ -257,9 +257,12 @@
         const data = await res.json();
         if (res.ok && data.ok) {
           submitBtn.textContent = '✓ 已提交（跨设备同步, 管理员会确认）';
-          submitBtn.style.background = 'var(--c-emerald)';
+          submitBtn.classList.add('btn-success');
           bookForm.reset();
-          setTimeout(() => closeBookModal(), 1500);
+          setTimeout(() => {
+            submitBtn.classList.remove('btn-success');
+            closeBookModal();
+          }, 1500);
         } else if (res.status === 401) {
           bookMsg.textContent = '请先登录玩家账号再预订';
           submitBtn.textContent = origText;

@@ -9,21 +9,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="preload" href="css/style.css" as="style" />
+  <link rel="preload" href="css/subpages.css" as="style" />
   <link rel="preload" href="js/hotel.js" as="script" />
   <link rel="stylesheet" href="css/style.css" />
-  <style>
-    /* hotel 子页专用 */
-    .hotel-toolbar { display:flex; flex-wrap:wrap; gap:12px; align-items:center; justify-content:space-between; margin:18px 0 24px; padding:16px 20px; background:var(--c-paper); border:3px solid var(--c-black); box-shadow:5px 5px 0 var(--c-stone); }
-    .hotel-filters { display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
-    .hotel-filters label { font-size:13px; color:var(--c-stone-dark); margin-right:4px; }
-    .hotel-filters select, .hotel-filters input[type="number"] { font-family:var(--font-cn); font-size:14px; padding:6px 10px; border:2px solid var(--c-black); background:var(--c-paper); }
-    .hotel-filters .filter-reset { font-family:var(--font-cn); font-size:13px; padding:6px 12px; background:var(--c-grass-dark); color:var(--c-paper); border:2px solid var(--c-black); cursor:pointer; box-shadow:2px 2px 0 var(--c-black); }
-    .hotel-filters .filter-reset:hover { transform:translate(-1px,-1px); box-shadow:3px 3px 0 var(--c-black); }
-    .hotel-count { font-family:var(--font-cn); font-size:14px; color:var(--c-stone-dark); }
-    .hotel-empty { text-align:center; padding:40px; color:var(--c-stone-dark); font-size:15px; }
-    .room-card .room-status { display:inline-block; font-size:12px; padding:2px 8px; background:var(--c-stone); color:var(--c-paper); border-radius:0; margin-left:8px; }
-    .room-card .room-status.draft { background:var(--c-gold); color:var(--c-black); }
-  </style>
+  <link rel="stylesheet" href="css/subpages.css" />
 </head>
 <body>
   <header class="top-strip">

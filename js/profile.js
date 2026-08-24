@@ -28,13 +28,13 @@
   if (navUserSlot) {
     if (me) {
       const adminLink = isCombined
-        ? `<a href="admin.html" class="nav-logout-link" style="color:#a6a;font-weight:700;">🛡️ 管理后台</a>`
+        ? `<a href="admin.html" class="nav-logout-link nav-admin-link">🛡️ 管理后台</a>`
         : '';
       navUserSlot.innerHTML = `
         <span class="nav-user-name">👤 ${escapeHtml(me.username)}</span>
         ${adminLink}
-        <a href="dm.html" class="nav-logout-link" style="color:var(--c-emerald);">📨 私信</a>
-        <a href="profile.html" class="nav-logout-link" style="color:var(--c-emerald);">我的主页</a>
+        <a href="dm.html" class="nav-logout-link">📨 私信</a>
+        <a href="profile.html" class="nav-logout-link">我的主页</a>
         <a href="#" id="navLogout" class="nav-logout-link">登出</a>
       `;
       const lo = document.getElementById('navLogout');
@@ -72,10 +72,10 @@
     } else {
       pBody.innerHTML = `
         <div class="profile-login-hint">
-          <div style="font-size:48px;margin-bottom:12px;">👤</div>
-          <h2 style="color:var(--c-stone-dark);margin:0 0 8px;">请先登录查看个人主页</h2>
-          <p style="font-size:13px;">登录后自动跳转到你的个人主页</p>
-          <a href="index.html" class="btn btn-primary" style="display:inline-block;margin-top:12px;text-decoration:none;background:var(--c-emerald);color:white;padding:8px 20px;border:3px solid var(--c-stone-dark);box-shadow:2px 2px 0 var(--c-stone-dark);">返回首页</a>
+          <div class="big-icon">👤</div>
+          <h2>请先登录查看个人主页</h2>
+          <p>登录后自动跳转到你的个人主页</p>
+          <a href="index.html" class="btn btn-primary" style="margin-top:12px;">返回首页</a>
         </div>
       `;
       return;
@@ -105,16 +105,16 @@
   const created = (profile.created_at || '').slice(0, 10);
   const actionsHtml = isSelf
     ? `<div class="profile-actions">
-         <button id="btnEdit" class="btn-gold">✏️ 编辑我的主页</button>
-         <button id="btnChangePw" class="btn-gold">🔑 修改密码</button>
+         <button id="btnEdit" class="btn btn-primary">✏️ 编辑我的主页</button>
+         <button id="btnChangePw" class="btn btn-primary">🔑 修改密码</button>
        </div>`
     : (me
         ? `<div class="profile-actions">
-             <a href="dm.html?peer=${encodeURIComponent(profile.username)}">📨 发私信</a>
-             <a href="dm.html" class="btn-gold">📨 我的私信</a>
+             <a href="dm.html?peer=${encodeURIComponent(profile.username)}" class="btn btn-primary">📨 发私信</a>
+             <a href="dm.html" class="btn btn-ghost">📨 我的私信</a>
            </div>`
         : `<div class="profile-actions">
-             <a href="index.html">登录后发私信</a>
+             <a href="index.html" class="btn btn-ghost">登录后发私信</a>
            </div>`);
 
   pBody.innerHTML = `
@@ -148,19 +148,19 @@
     mask.innerHTML = `
       <div class="modal">
         <div class="modal-head">
-          <span>✏️ 编辑个人主页</span>
+          <h3>✏️ 编辑个人主页</h3>
           <button class="modal-close" id="mClose">×</button>
         </div>
         <div class="modal-body">
           <label>头像（一个 emoji）</label>
           <input type="text" id="mAvatar" maxlength="4" value="${escapeHtml(profile.avatar_emoji || '👤')}">
           <div class="hint">提示：1-4 个字符，建议是 emoji（如 🏎️ 🐱 🎮）</div>
-          <label style="margin-top:14px;">个人简介</label>
+          <label>个人简介</label>
           <textarea id="mBio" rows="5" maxlength="500" placeholder="介绍一下自己…">${escapeHtml(profile.bio || '')}</textarea>
           <div class="hint">最多 500 字。市政厅不对内容做审核，请文明发言。</div>
           <div class="modal-actions">
-            <button class="btn-cancel" id="mCancel">取消</button>
-            <button id="mSave">保存</button>
+            <button class="btn btn-ghost" id="mCancel">取消</button>
+            <button class="btn btn-primary" id="mSave">保存</button>
           </div>
         </div>
       </div>
@@ -205,23 +205,23 @@
     mask.id = 'changePwBackdrop';
     mask.className = 'modal-mask';
     mask.innerHTML = `
-      <div class="modal" style="max-width:380px;">
+      <div class="modal modal-sm">
         <div class="modal-head">
-          <span>🔑 修改我的密码</span>
+          <h3>🔑 修改我的密码</h3>
           <button class="modal-close" id="cpClose">×</button>
         </div>
         <div class="modal-body">
           <label>当前密码</label>
           <input type="password" id="cpOld" autocomplete="current-password" placeholder="至少 8 位">
-          <label style="margin-top:10px;">新密码</label>
+          <label>新密码</label>
           <input type="password" id="cpNew" autocomplete="new-password" placeholder="至少 8 位">
-          <label style="margin-top:10px;">再输一次新密码</label>
+          <label>再输一次新密码</label>
           <input type="password" id="cpNew2" autocomplete="new-password" placeholder="再输一次">
-          <div class="hint" style="margin-top:8px;font-size:12px;color:var(--c-stone);">注: 合并账号时, 玩家密码与管理员密码<strong>互不影响</strong>。改这里只改玩家。</div>
-          <div id="cpMsg" style="margin-top:10px;font-size:13px;"></div>
+          <div class="hint">注: 合并账号时, 玩家密码与管理员密码<strong>互不影响</strong>。改这里只改玩家。</div>
+          <div id="cpMsg" class="modal-msg-inline"></div>
           <div class="modal-actions">
-            <button class="btn-cancel" id="cpCancel">取消</button>
-            <button id="cpSave">保存</button>
+            <button class="btn btn-ghost" id="cpCancel">取消</button>
+            <button class="btn btn-primary" id="cpSave">保存</button>
           </div>
         </div>
       </div>
@@ -237,9 +237,10 @@
       const newPw2 = document.getElementById('cpNew2').value;
       const msgEl = document.getElementById('cpMsg');
       msgEl.textContent = '';
-      if (!oldPw || !newPw || !newPw2) { msgEl.textContent = '所有字段必填'; msgEl.style.color = '#c33'; return; }
-      if (newPw.length < 8) { msgEl.textContent = '新密码至少 8 位'; msgEl.style.color = '#c33'; return; }
-      if (newPw !== newPw2) { msgEl.textContent = '两次新密码不一致'; msgEl.style.color = '#c33'; return; }
+      msgEl.className = 'modal-msg-inline';
+      if (!oldPw || !newPw || !newPw2) { msgEl.textContent = '所有字段必填'; msgEl.classList.add('error'); return; }
+      if (newPw.length < 8) { msgEl.textContent = '新密码至少 8 位'; msgEl.classList.add('error'); return; }
+      if (newPw !== newPw2) { msgEl.textContent = '两次新密码不一致'; msgEl.classList.add('error'); return; }
       saveBtn.disabled = true; saveBtn.textContent = '保存中…';
       try {
         const r = await fetch('/api/init?action=player-change-password', {
@@ -250,11 +251,11 @@
         const d = await r.json();
         if (!r.ok || !d.ok) throw new Error(d.error || '保存失败');
         msgEl.textContent = '✓ 密码已更新';
-        msgEl.style.color = 'var(--c-emerald)';
+        msgEl.classList.add('success');
         setTimeout(() => mask.remove(), 1200);
       } catch (e) {
         msgEl.textContent = '✗ ' + e.message;
-        msgEl.style.color = '#c33';
+        msgEl.classList.add('error');
       } finally {
         saveBtn.disabled = false; saveBtn.textContent = '保存';
       }
@@ -295,21 +296,20 @@
         if (!r.ok || d.error) throw new Error(d.error || '获取失败');
         const ks = d.passkeys || [];
         if (ks.length === 0) {
-          passkeyList.innerHTML = '<p style="color:var(--c-stone);font-size:13px;font-style:italic">还没有通行密钥。点击下方按钮添加。</p>';
+          passkeyList.innerHTML = '<p class="passkey-empty">还没有通行密钥。点击下方按钮添加。</p>';
           return;
         }
         passkeyList.innerHTML = ks.map(k => {
-          const aaguid = (k.aaguid || '').slice(0, 16) + '…';
           const lastUsed = k.last_used_at ? '上次使用: ' + k.last_used_at : '尚未使用';
-          return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--c-bg-2,#e8e0c8);border:2px solid var(--c-stone,#7a6a5a);margin-bottom:6px">
-            <div style="flex:1;min-width:0;">
-              <div style="font-size:14px;font-weight:700;color:var(--c-stone-dark,#4a3a2a)">🔑 ${escapeHtml(k.name)}</div>
-              <div style="font-size:11px;color:var(--c-stone)">注册于 ${k.created_at} · ${lastUsed}</div>
-              <div style="font-size:10px;color:var(--c-stone);font-family:monospace">cred_id: ${escapeHtml((k.credential_id || '').slice(0, 16))}…</div>
+          return `<div class="passkey-item">
+            <div class="passkey-item-info">
+              <div class="passkey-item-name">🔑 ${escapeHtml(k.name)}</div>
+              <div class="passkey-item-detail">注册于 ${k.created_at} · ${lastUsed}</div>
+              <div class="passkey-item-cred">cred_id: ${escapeHtml((k.credential_id || '').slice(0, 16))}…</div>
             </div>
-            <div style="display:flex;gap:4px;flex-shrink:0;">
-              <button type="button" data-pkcred="${escapeHtml(k.credential_id || '')}" class="pk-test-btn" style="background:var(--c-emerald);color:#fff;border:2px solid var(--c-stone-dark);padding:6px 10px;font-size:12px;cursor:pointer">🧪 测试</button>
-              <button type="button" data-pkid="${k.id}" class="pk-del-btn" style="background:#a33;color:#fff;border:2px solid var(--c-stone-dark);padding:6px 10px;font-size:12px;cursor:pointer">🗑</button>
+            <div class="passkey-item-actions">
+              <button type="button" data-pkcred="${escapeHtml(k.credential_id || '')}" class="pk-test-btn">🧪 测试</button>
+              <button type="button" data-pkid="${k.id}" class="pk-del-btn">🗑</button>
             </div>
           </div>`;
         }).join('');
@@ -324,13 +324,11 @@
               });
               const d2 = await r2.json();
               if (!r2.ok || d2.error) throw new Error(d2.error || '删除失败');
-              passkeyMsg.textContent = '✓ 已删除';
-              passkeyMsg.style.color = 'var(--c-emerald)';
-              setTimeout(() => passkeyMsg.textContent = '', 2000);
+              setPasskeyMsg('✓ 已删除', 'success');
+              setTimeout(() => setPasskeyMsg('', 'muted'), 2000);
               loadPasskeys();
             } catch (e) {
-              passkeyMsg.textContent = '✗ ' + e.message;
-              passkeyMsg.style.color = 'var(--c-red, #c33)';
+              setPasskeyMsg('✗ ' + e.message, 'error');
             }
           };
         });
@@ -338,11 +336,10 @@
         passkeyList.querySelectorAll('.pk-test-btn').forEach(btn => {
           btn.onclick = async () => {
             const credId = btn.dataset.pkcred;
-            if (!credId) { passkeyMsg.textContent = '✗ 该密钥无 credential_id'; return; }
+            if (!credId) { setPasskeyMsg('✗ 该密钥无 credential_id', 'error'); return; }
             const orig = btn.textContent;
             btn.disabled = true; btn.textContent = '⏳ 验证中…';
-            passkeyMsg.textContent = '正在验证通行密钥, 请触摸指纹/Face ID...';
-            passkeyMsg.style.color = 'var(--c-stone)';
+            setPasskeyMsg('正在验证通行密钥, 请触摸指纹/Face ID...', 'muted');
             try {
               const r1 = await fetch('/api/init?action=passkey-test-start', {
                 method: 'POST', credentials: 'include',
@@ -378,22 +375,24 @@
               });
               const d2 = await r2.json();
               if (!r2.ok || !d2.ok) throw new Error(d2.error || '验证失败');
-              passkeyMsg.textContent = '✓ 通行密钥有效! ' + (d2.message || '');
-              passkeyMsg.style.color = 'var(--c-emerald)';
-              setTimeout(() => passkeyMsg.textContent = '', 4000);
+              setPasskeyMsg('✓ 通行密钥有效! ' + (d2.message || ''), 'success');
+              setTimeout(() => setPasskeyMsg('', 'muted'), 4000);
               loadPasskeys();
             } catch (e) {
-              passkeyMsg.textContent = '✗ ' + e.message;
-              passkeyMsg.style.color = 'var(--c-red, #c33)';
-              setTimeout(() => passkeyMsg.textContent = '', 5000);
+              setPasskeyMsg('✗ ' + e.message, 'error');
+              setTimeout(() => setPasskeyMsg('', 'muted'), 5000);
             } finally {
               btn.disabled = false; btn.textContent = orig;
             }
           };
         });
       } catch (e) {
-        passkeyList.innerHTML = '<p style="color:#c33">✗ 加载失败: ' + escapeHtml(e.message) + '</p>';
+        passkeyList.innerHTML = '<p class="passkey-msg error">✗ 加载失败: ' + escapeHtml(e.message) + '</p>';
       }
+    }
+    function setPasskeyMsg(text, kind) {
+      passkeyMsg.textContent = text;
+      passkeyMsg.className = 'passkey-msg ' + (kind || 'muted');
     }
     loadPasskeys();
 
@@ -404,7 +403,7 @@
       addBtn.disabled = true;
       const orig = addBtn.textContent;
       addBtn.textContent = '⏳ 请触摸指纹/Face ID...';
-      passkeyMsg.textContent = '';
+      setPasskeyMsg('', 'muted');
       try {
         const r1 = await fetch('/api/init?action=passkey-register-start', {
           method: 'POST', credentials: 'include',
@@ -438,14 +437,12 @@
         });
         const d2 = await r2.json();
         if (!r2.ok || d2.error) throw new Error(d2.error || '保存失败');
-        passkeyMsg.textContent = '✓ 通行密钥已添加！';
-        passkeyMsg.style.color = 'var(--c-emerald)';
-        setTimeout(() => passkeyMsg.textContent = '', 3000);
+        setPasskeyMsg('✓ 通行密钥已添加！', 'success');
+        setTimeout(() => setPasskeyMsg('', 'muted'), 3000);
         loadPasskeys();
       } catch (e) {
-        passkeyMsg.textContent = '✗ ' + e.message;
-        passkeyMsg.style.color = 'var(--c-red, #c33)';
-        setTimeout(() => passkeyMsg.textContent = '', 5000);
+        setPasskeyMsg('✗ ' + e.message, 'error');
+        setTimeout(() => setPasskeyMsg('', 'muted'), 5000);
       } finally {
         addBtn.disabled = false;
         addBtn.textContent = orig;
