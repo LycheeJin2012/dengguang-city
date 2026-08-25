@@ -1309,7 +1309,16 @@ async function showMergePlayerModal(adminId) {
   render('');
 }
 
-async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
+async function safeRender(fn){
+  try { await fn(); }
+  catch (e) {
+    console.error('[safeRender] ' + (fn.name || 'render') + ' 失败:', e);
+    // v25.55: render 失败时把错误显示在 tab 内容区, 不再静默空白
+    const _names = { renderMessages: 'msgList', renderPlayers: 'playerList', renderBookings: 'bookList', renderLicense: 'licenseList', renderKarts: 'kartList', renderCircuits: 'circuitList', renderAdminList: 'adminList', renderAnnouncements: 'annList', renderGallery: 'galGrid' };
+    const _el = document.getElementById(_names[fn.name] || '');
+    if (_el) _el.innerHTML = '<div class="empty-state" style="color:#c44"><div class="empty-icon">⚠️</div><p>加载失败: ' + (e.message || e) + '</p><p style="font-size:12px">打开浏览器 Console (F12) 看详细错误</p></div>';
+  }
+}
   // ============================================================
   // Super 管理员 - 公告管理 (v17.8)
   // ============================================================
