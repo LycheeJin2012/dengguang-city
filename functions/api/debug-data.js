@@ -8,8 +8,9 @@ export async function onRequestGet(context) {
   const tables = [
     'players', 'admins', 'messages', 'message_comments',
     'hotels', 'hotel_rooms', 'race_tracks', 'license_requirements',
-    'kart_signups', 'circuit_signups', 'license_signups', 'hotel_bookings',
-    'announcements', 'gallery_items', 'direct_messages'
+    'kart_signups', 'circuit_signups', 'license_signups', 'bookings',
+    'announcements', 'gallery_items', 'direct_messages', 'webauthn_challenges',
+    'passkeys', 'daily_signin'
   ];
   const out = {};
   for (const t of tables) {
