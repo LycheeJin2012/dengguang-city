@@ -1116,7 +1116,7 @@ async function renderAdminList(){
     const me=window._me;
     if(!me)return;
     const box=$('#adminList');
-    if(!list.length){box.innerHTML='';const e=document.getElementById('adminListEmpty');if(e)e.style.display='';return;}
+    if(!list.length){box.innerHTML='';const e=document.getElementById('adminListEmpty');if(e)e.style.display='flex';return;}
     box.innerHTML=list.map(a=>{
       const isMe=a.username===me.username;
       const canDel=me.role==='super'&&!isMe;
@@ -1383,7 +1383,7 @@ document.addEventListener('click', (e) => {
       const anns = d.announcements || [];
       if (anns.length === 0) {
         list.innerHTML = '';
-        empty.style.display = '';
+        empty.style.display = 'flex';
         return;
       }
       list.innerHTML = anns.map(a => `
@@ -1536,7 +1536,7 @@ document.addEventListener('click', (e) => {
       const list = _galFilter ? _galAll.filter(x => x.cat === _galFilter) : _galAll;
       if (list.length === 0) {
         grid.innerHTML = '';
-        empty.style.display = '';
+        empty.style.display = 'flex';
         return;
       }
       grid.innerHTML = list.map(it => `
