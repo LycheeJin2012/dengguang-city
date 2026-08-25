@@ -4,6 +4,10 @@
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
   Expires: 0
+# v25.51: 公开 manage API (GET) 用函数返回的 Cache-Control: public, max-age=60 缓存
+# 必须放在 / 规则之前, 否则被 / 的 no-cache 覆盖
+/api/*
+  Cache-Control: public, max-age=60
 /
   Cache-Control: no-cache, no-store, must-revalidate
   Pragma: no-cache
