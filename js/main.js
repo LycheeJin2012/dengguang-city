@@ -359,16 +359,22 @@
     if (diff < 604800) return Math.floor(diff / 86400) + ' 天前';
     return d.toLocaleDateString('zh-CN');
   }
-  // v25.52: 共享 homepage-bundle fetch (4 个 load 函数复用 1 个 HTTP 请求, 减少 4-5 fetch 串行)
+  // v25.52: 共享 homepage-bundle fetch (4 个 load 函数复用 1 个 HTTP 请求)
+  // v25.66: 加 30s in-memory cache, 避免重复访问时再 fetch
   let _homepageBundle = null;
+  let _homepageBundleTs = 0;
+  const _BUNDLE_TTL = 30_000;
   let _homepageBundlePending = null;
-  async function _ensureBundle() {
-    if (_homepageBundle) return _homepageBundle;
-    if (_homepageBundlePending) return _homepageBundlePending;
+  async function _ensureBundle(force) {
+    if (!force && _homepageBundle && Date.now() - _homepageBundleTs < _BUNDLE_TTL) {
+      return _homepageBundle;
+    }
+    if (!force && _homepageBundlePending) return _homepageBundlePending;
+    if (force) _homepageBundlePending = null;
     _homepageBundlePending = fetch('/api/init?action=homepage-bundle', { credentials: 'omit' })
       .then(r => r.json())
-      .then(d => { _homepageBundle = (d && d.bundle) || {}; return _homepageBundle; })
-      .catch(() => { _homepageBundle = {}; return _homepageBundle; });
+      .then(d => { _homepageBundle = (d && d.bundle) || {}; _homepageBundleTs = Date.now(); return _homepageBundle; })
+      .catch(() => { _homepageBundle = {}; _homepageBundleTs = Date.now(); return _homepageBundle; });
     return _homepageBundlePending;
   }
 
