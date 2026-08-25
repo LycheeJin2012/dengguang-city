@@ -2,97 +2,76 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>管理后台 | 灯光市人民政府</title>
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-  <meta http-equiv="Pragma" content="no-cache" />
-  <meta http-equiv="Expires" content="0" />
-  <script>/* v18 cache-bust: CF Pages 边缘 cache 卡住, 强制带 ?v= 参数让 cache key 变 */
-    if (location.search.indexOf('v=') < 0) {
-      location.replace(location.pathname + '?v=20260824-attach-' + Date.now().toString(36));
-    }
-  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
-  <link rel="preload" href="css/style.css?v=20260825-2556" as="style" />
-  <link rel="preload" href="css/admin.css?v=20260825-2556" as="style" />
+  <link rel="preload" href="css/style.css?v=20260825-2557" as="style" />
+  <link rel="preload" href="css/admin.css?v=20260825-2557" as="style" />
   <link rel="preload" href="js/admin.v2540.js" as="script" />
-  <link rel="stylesheet" href="css/style.css?v=20260825-2556" />
-  <link rel="stylesheet" href="css/admin.css?v=20260825-2556" />
+  <link rel="stylesheet" href="css/style.css?v=20260825-2557" />
+  <link rel="stylesheet" href="css/admin.css?v=20260825-2557" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2370ad34'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='10' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='3' y='10' width='3' height='3' fill='%23ffd23f'/%3E%3C/svg%3E" />
-  <!-- v14：localStorage 模式。数据只存本机浏览器,不同设备/不同人互不可见。 -->
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"></head>
-<body class="admin-body">
-
-  <!-- 顶部 -->
-  <header class="admin-header">
-    <a href="index.html" class="admin-logo">
-      <div class="logo-block">
-        <div class="block-grass"></div>
-        <div class="block-dirt"></div>
-      </div>
-      <div>
-        <b>灯光市 · 管理后台</b>
-        <span>LIGHT CITY · ADMIN CONSOLE</span>
-      </div>
-    </a>
-    <div class="admin-header-right">
-      <a href="index.html" class="header-link">← 返回首页</a>
-    </div>
-  </header>
-
-  <!-- 内部管理提示 (v25.24: 删除, 用户不要这块) -->
-  <!--
-  <div class="admin-warn">
-    <span>🏛️</span>
-    <span><b>内部管理系统</b> · 本页仅供市政厅授权人员使用。所有数据(留言、订单、报名、管理员档案)均存于本机浏览器,跨设备不共享。首次访问请使用初始管理员凭据登录后立即修改密码。</span>
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+<style>
+  /* v25.57 inline critical CSS — 防止 v25.55 错误显示 + 排版统一 */
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+</style>
+</head>
+<body>
+  <div id="bootLoading" class="boot-loading">
+    <div class="boot-loading-emoji">⏳</div>
+    <div class="boot-loading-text">正在验证身份…</div>
+    <div class="boot-loading-hint">如果已合并账号, 将直接进入后台</div>
   </div>
-  -->
 
-  <!-- ============== 登录视图 (默认隐藏, 等 boot() 决定显示哪个) ============== -->
-  <main id="view-login" class="view-login" style="display:none">
-    <div class="login-card">
-      <div class="login-head">
-        <div class="login-icon">🔐</div>
-        <h1>管理员登录</h1>
-        <p>ADMIN LOGIN</p>
+  <div id="view-login" style="display:none">
+    <div class="login-wrap">
+      <div class="login-card">
+        <h2>🔐 管理员登录</h2>
+        <p class="login-sub">LIGHT CITY · ADMIN CONSOLE</p>
+        <div class="login-err" id="loginError"></div>
+        <form id="loginForm" onsubmit="return false;">
+          <label>
+            <span>账号</span>
+            <input type="text" id="loginUsername" autocomplete="username" placeholder="管理员账号" />
+          </label>
+          <label>
+            <span>密码</span>
+            <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••" />
+          </label>
+          <button type="submit" class="btn btn-primary btn-block">▶ 登录</button>
+        </form>
+        <p class="login-hint">无账号? 联系现任 super 管理员注册</p>
+        <a class="login-back" href="/">← 返回首页</a>
       </div>
-      <form id="loginForm" class="login-form" method="POST" action="/api/login" accept-charset="UTF-8">
-        <label>
-          <span>账号</span>
-          <input type="text" id="loginUser" name="username" autocomplete="username" required placeholder="管理员账号" />
-        </label>
-        <label>
-          <span>密码</span>
-          <input type="password" id="loginPass" name="password" autocomplete="current-password" required placeholder="••••••••" />
-        </label>
-        <div class="login-error" id="loginError"></div>
-        <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">▶ 登录</button>
-        <div class="login-hint" id="loginHint"></div>
-      </form>
     </div>
-  </main>
+  </div>
 
-  <!-- ============== 后台视图 ============== -->
-  <main id="view-dash" class="view-dash" style="display:none">
-
-    <!-- 顶部用户条 -->
-    <div class="user-bar">
-      <div class="user-info">
-        <span class="user-avatar">👤</span>
-        <div>
+  <div id="view-dash" style="display:none">
+    <!-- 顶部用户信息 -->
+    <header class="admin-header">
+      <div class="admin-header-left">
+        <h1>灯光市 · 管理后台</h1>
+        <p>LIGHT CITY · ADMIN CONSOLE</p>
+      </div>
+      <div class="admin-header-right">
+        <a href="/" class="btn btn-ghost btn-sm">← 返回首页</a>
+        <div class="user-info">
+          <span class="user-icon">👤</span>
           <b id="userName">—</b>
           <span id="userRole" class="role-tag">—</span>
         </div>
-      </div>
-      <div class="user-actions">
         <button class="btn btn-ghost btn-sm" id="btnLogout">退出登录</button>
       </div>
-    </div>
+    </header>
 
     <!-- Tab 切换 -->
-    <nav class="admin-tabs">
+    <nav class="admin-tabs" id="adminTabs">
       <button class="tab active" data-tab="messages">📬 市民留言 <span class="tab-count" id="msgUnread"></span></button>
       <button class="tab" data-tab="players">👥 玩家管理 <span class="tab-count" id="playerPending"></span></button>
       <button class="tab" data-tab="bookings">🏨 酒店预订 <span class="tab-count" id="bookPending"></span></button>
@@ -106,362 +85,326 @@
       <button class="tab" data-tab="password">🔑 修改我的密码</button>
     </nav>
 
-    <!-- Tab: 留言 -->
-    <section class="tab-pane active" id="pane-messages">
-      <div class="pane-head">
-        <h2>市民留言</h2>
-        <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm" id="btnMarkAll">全部标为已读</button>
-          <button class="btn btn-ghost btn-sm" id="btnClearRead">清除已读</button>
+    <main class="admin-main">
+      <!-- ============== Tab: 留言 ============== -->
+      <section class="tab-pane active" id="pane-messages" data-tab="messages">
+        <div class="pane-head">
+          <h2>📬 市民留言</h2>
+          <div class="pane-tools">
+            <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderMessages">🔄 刷新</button>
+            <button class="btn btn-ghost btn-sm" id="btnMarkAll">全部标为已读</button>
+            <button class="btn btn-ghost btn-sm" id="btnClearRead">清除已读</button>
+          </div>
         </div>
-      </div>
-      <div class="msg-filter">
-        <label><input type="radio" name="msgFilter" value="all" checked /> 全部 <span id="cntAll">0</span></label>
-        <label><input type="radio" name="msgFilter" value="unread" /> 未读 <span id="cntUnread">0</span></label>
-        <label><input type="radio" name="msgFilter" value="read" /> 已读 <span id="cntRead">0</span></label>
-        <select id="msgTypeFilter">
-          <option value="">全部类型</option>
-          <option>建议</option>
-          <option>投诉</option>
-          <option>咨询</option>
-          <option>合作</option>
-        </select>
-      </div>
-      <div id="msgList" class="msg-list">
-        <!-- JS 渲染 -->
-      </div>
-      <div id="msgEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">📭</div>
-        <p>暂无留言</p>
-      </div>
-    </section>
-
-    <!-- Tab: 管理员 -->
-    <section class="tab-pane" id="pane-admins">
-      <div class="pane-head">
-        <h2>管理员账号</h2>
-        <div class="pane-tools">
-          <button class="btn btn-primary btn-sm" id="btnAddAdmin">+ 添加管理员</button>
-        </div>
-      </div>
-      <div id="adminList" class="admin-list">
-        <!-- JS 渲染 -->
-      </div>
-      <div id="adminListEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">🛡️</div>
-        <p>暂无管理员</p>
-      </div>
-    </section>
-
-    <!-- Tab: 玩家管理 -->
-    <section class="tab-pane" id="pane-players">
-      <div class="pane-head">
-        <h2>玩家管理（注册审批 / 重置密码）</h2>
-        <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm" id="btnPlayerRefresh">🔄 刷新</button>
-        </div>
-      </div>
-      <div class="msg-filter">
-        <label><input type="radio" name="playerFilter" value="pending" checked /> 待审批 <span id="cntPlayerPending">0</span></label>
-        <label><input type="radio" name="playerFilter" value="active" /> 已激活 <span id="cntPlayerActive">0</span></label>
-        <label><input type="radio" name="playerFilter" value="rejected" /> 已拒绝 <span id="cntPlayerRejected">0</span></label>
-        <label><input type="radio" name="playerFilter" value="all" /> 全部 <span id="cntPlayerAll">0</span></label>
-      </div>
-      <div id="playerList" class="msg-list">
-        <!-- JS 渲染 -->
-      </div>
-      <div id="playerEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">👥</div>
-        <p>暂无玩家</p>
-      </div>
-    </section>
-
-    <!-- Tab: 酒店预订 -->
-    <section class="tab-pane" id="pane-bookings">
-      <div class="pane-head">
-        <h2>酒店预订</h2>
-        <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm" id="btnBookClearDone">清除已完成</button>
-        </div>
-      </div>
-      <nav class="subtabs" data-pane="bookings">
-        <button class="subtab active" data-sub="signup">📋 预订记录</button>
-        <button class="subtab" data-sub="manage" data-super-only>🏨 酒店管理 (SUPER)</button>
-      </nav>
-      <div class="subview active" data-subview="bookings-signup">
         <div class="msg-filter">
-          <label><input type="radio" name="bookFilter" value="all" checked /> 全部 <span id="bookCntAll">0</span></label>
-          <label><input type="radio" name="bookFilter" value="pending" /> 待处理 <span id="bookCntPending">0</span></label>
-          <label><input type="radio" name="bookFilter" value="confirmed" /> 已确认 <span id="bookCntConfirmed">0</span></label>
-          <label><input type="radio" name="bookFilter" value="completed" /> 已完成 <span id="bookCntCompleted">0</span></label>
-          <select id="bookRoomFilter">
-            <option value="">全部房型</option>
-            <option value="standard">树上标间</option>
-            <option value="queen">树上大床房</option>
-            <option value="luxury">树上双床豪华房</option>
+          <label><input type="radio" name="msgFilter" value="all" checked /> 全部 <span id="cntAll">0</span></label>
+          <label><input type="radio" name="msgFilter" value="unread" /> 未读 <span id="cntUnread">0</span></label>
+          <label><input type="radio" name="msgFilter" value="read" /> 已读 <span id="cntRead">0</span></label>
+          <select id="msgTypeFilter">
+            <option value="">全部类型</option>
+            <option>建议</option><option>投诉</option><option>咨询</option><option>合作</option>
           </select>
         </div>
-        <div id="bookList" class="msg-list">
-          <!-- JS 渲染 -->
+        <div id="msgList" class="msg-list"></div>
+        <div id="msgEmpty" class="empty-state" hidden>
+          <div class="empty-icon">📭</div><p>暂无留言</p>
         </div>
-        <div id="bookEmpty" class="empty-state" style="display:none">
-          <div class="empty-icon">🏨</div>
-          <p>暂无订单</p>
-        </div>
-      </div>
-      <div class="subview" data-subview="bookings-manage">
-        <div id="hotelManageList" class="msg-list"></div>
-        <div id="hotelManageEmpty" class="empty-state" style="display:none">
-          <div class="empty-icon">🏨</div>
-          <p>暂无酒店。点右上"新增酒店"创建,再为它添加房型。</p>
-        </div>
-        <div class="pane-tools mt-8" id="hotelManageAddBtn" data-super-only style="display:none">
-          <button class="btn btn-primary btn-sm" id="btnAddHotel">+ 新建酒店</button>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Tab: 驾照考试 -->
-    <section class="tab-pane" id="pane-license">
-      <div class="pane-head">
-        <h2>驾照考试报名</h2>
-        <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm" id="btnLicenseRefresh">🔄 刷新</button>
+      <!-- ============== Tab: 玩家 ============== -->
+      <section class="tab-pane" id="pane-players" data-tab="players">
+        <div class="pane-head">
+          <h2>👥 玩家管理（注册审批 / 重置密码）</h2>
+          <div class="pane-tools">
+            <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderPlayers">🔄 刷新</button>
+          </div>
         </div>
-      </div>
-      <nav class="subtabs" data-pane="license">
-        <button class="subtab active" data-sub="signup">📋 报名记录</button>
-        <button class="subtab" data-sub="manage" data-super-only>🎫 考试要求 (SUPER)</button>
-      </nav>
-      <div class="subview" data-subview="license-signup">
         <div class="msg-filter">
-          <label><input type="radio" name="licenseFilter" value="pending" checked /> 待审 <span id="cntLicPending">0</span></label>
-          <label><input type="radio" name="licenseFilter" value="passed" /> 通过 <span id="cntLicPassed">0</span></label>
-          <label><input type="radio" name="licenseFilter" value="failed" /> 未通过 <span id="cntLicFailed">0</span></label>
-          <label><input type="radio" name="licenseFilter" value="all" /> 全部 <span id="cntLicAll">0</span></label>
+          <label><input type="radio" name="playerFilter" value="pending" checked /> 待审批 <span id="cntPlayerPending">0</span></label>
+          <label><input type="radio" name="playerFilter" value="active" /> 已激活 <span id="cntPlayerActive">0</span></label>
+          <label><input type="radio" name="playerFilter" value="rejected" /> 已拒绝 <span id="cntPlayerRejected">0</span></label>
+          <label><input type="radio" name="playerFilter" value="all" /> 全部 <span id="cntPlayerAll">0</span></label>
         </div>
-        <div id="licenseList" class="msg-list"></div>
-        <div id="licenseEmpty" class="empty-state" style="display:none">
-          <div class="empty-icon">🚗</div>
-          <p>暂无报名</p>
+        <div id="playerList" class="msg-list"></div>
+        <div id="playerEmpty" class="empty-state" hidden>
+          <div class="empty-icon">👥</div><p>暂无玩家</p>
         </div>
-      </div>
-      <div class="subview" data-subview="license-manage">
-        <div id="licenseManageList" class="msg-list"></div>
-        <div id="licenseManageEmpty" class="empty-state" style="display:none">
-          <div class="empty-icon">🎫</div>
-          <p>暂无驾照要求。点右上"新增"创建 B/A/S 级要求。</p>
-        </div>
-        <div class="pane-tools mt-8" id="licenseManageAddBtn" data-super-only style="display:none">
-          <button class="btn btn-primary btn-sm" id="btnAddLicReq">+ 新增驾照要求</button>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Tab: 赛道报名 -->
-    <section class="tab-pane" id="pane-kart">
-      <div class="pane-head">
-        <h2>赛道试跑报名</h2>
-        <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm" id="btnKartClearDone">清除已处理</button>
+      <!-- ============== Tab: 酒店预订 ============== -->
+      <section class="tab-pane" id="pane-bookings" data-tab="bookings">
+        <div class="pane-head">
+          <h2>🏨 酒店预订</h2>
+          <div class="pane-tools">
+            <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderBookings">🔄 刷新</button>
+            <button class="btn btn-ghost btn-sm" id="btnBookClearDone">清除已完成</button>
+          </div>
         </div>
-      </div>
-      <nav class="subtabs" data-pane="kart">
-        <button class="subtab active" data-sub="signup">📋 赛道报名</button>
-        <button class="subtab" data-sub="manage" data-super-only>🏁 赛车场管理 (SUPER)</button>
-      </nav>
-      <div class="subview" data-subview="kart-signup">
+        <nav class="subtabs" data-pane="bookings">
+          <button class="subtab active" data-sub="signup">📋 预订记录</button>
+          <button class="subtab" data-sub="manage" data-super-only>🏨 酒店管理 (SUPER)</button>
+        </nav>
+        <div class="subview active" data-subview="bookings-signup">
+          <div class="msg-filter">
+            <label><input type="radio" name="bookFilter" value="all" checked /> 全部 <span id="bookCntAll">0</span></label>
+            <label><input type="radio" name="bookFilter" value="pending" /> 待处理 <span id="bookCntPending">0</span></label>
+            <label><input type="radio" name="bookFilter" value="confirmed" /> 已确认 <span id="bookCntConfirmed">0</span></label>
+            <label><input type="radio" name="bookFilter" value="completed" /> 已完成 <span id="bookCntCompleted">0</span></label>
+            <select id="bookRoomFilter">
+              <option value="">全部房型</option>
+              <option value="standard">树上标间</option>
+              <option value="queen">树上大床房</option>
+              <option value="luxury">树上双床豪华房</option>
+            </select>
+          </div>
+          <div id="bookList" class="msg-list"></div>
+          <div id="bookEmpty" class="empty-state" hidden>
+            <div class="empty-icon">🏨</div><p>暂无订单</p>
+          </div>
+        </div>
+        <div class="subview" data-subview="bookings-manage" hidden>
+          <div class="pane-tools" id="hotelManageAddBtn" data-super-only hidden>
+            <button class="btn btn-primary btn-sm" id="btnAddHotel">+ 新建酒店</button>
+          </div>
+          <div id="hotelManageList" class="msg-list"></div>
+          <div id="hotelManageEmpty" class="empty-state" hidden>
+            <div class="empty-icon">🏨</div><p>暂无酒店。点右上"新建酒店"创建,再为它添加房型。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== Tab: 驾照 ============== -->
+      <section class="tab-pane" id="pane-license" data-tab="license">
+        <div class="pane-head">
+          <h2>🚗 驾照考试报名</h2>
+          <div class="pane-tools">
+            <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderLicense">🔄 刷新</button>
+          </div>
+        </div>
+        <nav class="subtabs" data-pane="license">
+          <button class="subtab active" data-sub="signup">📋 报名记录</button>
+          <button class="subtab" data-sub="manage" data-super-only>🎫 考试要求 (SUPER)</button>
+        </nav>
+        <div class="subview active" data-subview="license-signup">
+          <div class="msg-filter">
+            <label><input type="radio" name="licenseFilter" value="pending" checked /> 待审 <span id="cntLicPending">0</span></label>
+            <label><input type="radio" name="licenseFilter" value="passed" /> 通过 <span id="cntLicPassed">0</span></label>
+            <label><input type="radio" name="licenseFilter" value="failed" /> 未通过 <span id="cntLicFailed">0</span></label>
+            <label><input type="radio" name="licenseFilter" value="all" /> 全部 <span id="cntLicAll">0</span></label>
+          </div>
+          <div id="licenseList" class="msg-list"></div>
+          <div id="licenseEmpty" class="empty-state" hidden>
+            <div class="empty-icon">🚗</div><p>暂无报名</p>
+          </div>
+        </div>
+        <div class="subview" data-subview="license-manage" hidden>
+          <div class="pane-tools" id="licenseManageAddBtn" data-super-only hidden>
+            <button class="btn btn-primary btn-sm" id="btnAddLicReq">+ 新增驾照要求</button>
+          </div>
+          <div id="licenseManageList" class="msg-list"></div>
+          <div id="licenseManageEmpty" class="empty-state" hidden>
+            <div class="empty-icon">🎫</div><p>暂无驾照要求。点右上"新增"创建 B/A/S 级要求。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== Tab: 赛车场 ============== -->
+      <section class="tab-pane" id="pane-kart" data-tab="kart">
+        <div class="pane-head">
+          <h2>🏁 赛道试跑报名</h2>
+          <div class="pane-tools">
+            <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderKarts">🔄 刷新</button>
+            <button class="btn btn-ghost btn-sm" id="btnKartClearDone">清除已处理</button>
+          </div>
+        </div>
+        <nav class="subtabs" data-pane="kart">
+          <button class="subtab active" data-sub="signup">📋 赛道报名</button>
+          <button class="subtab" data-sub="manage" data-super-only>🏁 赛车场管理 (SUPER)</button>
+        </nav>
+        <div class="subview active" data-subview="kart-signup">
+          <div class="msg-filter">
+            <label><input type="radio" name="kartFilter" value="all" checked /> 全部 <span id="kartCntAll">0</span></label>
+            <label><input type="radio" name="kartFilter" value="pending" /> 待审核 <span id="kartCntPending">0</span></label>
+            <label><input type="radio" name="kartFilter" value="approved" /> 已批准 <span id="kartCntApproved">0</span></label>
+            <label><input type="radio" name="kartFilter" value="rejected" /> 已拒绝 <span id="kartCntRejected">0</span></label>
+            <select id="kartSessionFilter">
+              <option value="">全部场次</option>
+              <option>周六 14:00 计时赛</option>
+              <option>周六 20:00 接力赛</option>
+              <option>周日 10:00 教学场</option>
+              <option>其他时间</option>
+            </select>
+          </div>
+          <div id="kartList" class="msg-list"></div>
+          <div id="kartEmpty" class="empty-state" hidden>
+            <div class="empty-icon">🏁</div><p>暂无报名</p>
+          </div>
+        </div>
+        <div class="subview" data-subview="kart-manage" hidden>
+          <div class="pane-tools" id="trackManageAddBtn" data-super-only hidden>
+            <button class="btn btn-primary btn-sm" id="btnAddTrack">+ 新建赛车场</button>
+          </div>
+          <div id="trackManageList" class="msg-list"></div>
+          <div id="trackManageEmpty" class="empty-state" hidden>
+            <div class="empty-icon">🏁</div><p>暂无赛车场。点右上"新建赛车场"创建。</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============== Tab: 国际赛车场 ============== -->
+      <section class="tab-pane" id="pane-circuit" data-tab="circuit">
+        <div class="pane-head">
+          <h2>🏎️ 国际赛车场·试车报名</h2>
+          <div class="pane-tools">
+            <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderCircuits">🔄 刷新</button>
+            <button class="btn btn-ghost btn-sm" id="btnCircuitClearDone">清除已处理</button>
+          </div>
+        </div>
         <div class="msg-filter">
-          <label><input type="radio" name="kartFilter" value="all" checked /> 全部 <span id="kartCntAll">0</span></label>
-          <label><input type="radio" name="kartFilter" value="pending" /> 待审核 <span id="kartCntPending">0</span></label>
-          <label><input type="radio" name="kartFilter" value="approved" /> 已批准 <span id="kartCntApproved">0</span></label>
-          <label><input type="radio" name="kartFilter" value="rejected" /> 已拒绝 <span id="kartCntRejected">0</span></label>
-          <select id="kartSessionFilter">
+          <label><input type="radio" name="circuitFilter" value="all" checked /> 全部 <span id="circuitCntAll">0</span></label>
+          <label><input type="radio" name="circuitFilter" value="pending" /> 待审核 <span id="circuitCntPending">0</span></label>
+          <label><input type="radio" name="circuitFilter" value="approved" /> 已批准 <span id="circuitCntApproved">0</span></label>
+          <label><input type="radio" name="circuitFilter" value="rejected" /> 已拒绝 <span id="circuitCntRejected">0</span></label>
+          <select id="circuitSessionFilter">
             <option value="">全部场次</option>
-            <option>周六 14:00 计时赛</option>
-            <option>周六 20:00 接力赛</option>
-            <option>周日 10:00 教学场</option>
-            <option>其他时间</option>
+            <option>排位赛 周三 20:00</option>
+            <option>正赛 周六 15:00</option>
+            <option>国际邀请赛 月初</option>
+            <option>自由练习</option>
+          </select>
+          <select id="circuitLicenseFilter">
+            <option value="">全部驾照</option>
+            <option>B 级（初级）</option>
+            <option>A 级（中级）</option>
+            <option>S 级（高级 / 职业）</option>
           </select>
         </div>
-        <div id="kartList" class="msg-list">
-          <!-- JS 渲染 -->
+        <div id="circuitList" class="msg-list"></div>
+        <div id="circuitEmpty" class="empty-state" hidden>
+          <div class="empty-icon">🏎️</div><p>暂无报名</p>
         </div>
-        <div id="kartEmpty" class="empty-state" style="display:none">
-          <div class="empty-icon">🏁</div>
-          <p>暂无报名</p>
-        </div>
-      </div>
-      <div class="subview" data-subview="kart-manage">
-        <div id="trackManageList" class="msg-list"></div>
-        <div id="trackManageEmpty" class="empty-state" style="display:none">
-          <div class="empty-icon">🏁</div>
-          <p>暂无赛车场。点右上"新建赛车场"创建。</p>
-        </div>
-        <div class="pane-tools mt-8" id="trackManageAddBtn" data-super-only style="display:none">
-          <button class="btn btn-primary btn-sm" id="btnAddTrack">+ 新建赛车场</button>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <!-- Tab: 国际赛车场 -->
-    <section class="tab-pane" id="pane-circuit">
-      <div class="pane-head">
-        <h2>国际赛车场·试车报名</h2>
-        <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm" id="btnCircuitClearDone">清除已处理</button>
+      <!-- ============== Tab: 公告 ============== -->
+      <section class="tab-pane" id="pane-announcements" data-tab="announcements">
+        <div class="pane-head">
+          <h2>📢 市政公告管理</h2>
+          <div class="pane-tools">
+            <span class="tag tag-super">仅 SUPER</span>
+            <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderAnnouncements">🔄 刷新</button>
+            <button class="btn btn-primary btn-sm" id="annCreateBtn" hidden>+ 发布新公告</button>
+          </div>
         </div>
-      </div>
-      <div class="msg-filter">
-        <label><input type="radio" name="circuitFilter" value="all" checked /> 全部 <span id="circuitCntAll">0</span></label>
-        <label><input type="radio" name="circuitFilter" value="pending" /> 待审核 <span id="circuitCntPending">0</span></label>
-        <label><input type="radio" name="circuitFilter" value="approved" /> 已批准 <span id="circuitCntApproved">0</span></label>
-        <label><input type="radio" name="circuitFilter" value="rejected" /> 已拒绝 <span id="circuitCntRejected">0</span></label>
-        <select id="circuitSessionFilter">
-          <option value="">全部场次</option>
-          <option>排位赛 周三 20:00</option>
-          <option>正赛 周六 15:00</option>
-          <option>国际邀请赛 月初</option>
-          <option>自由练习</option>
-        </select>
-        <select id="circuitLicenseFilter">
-          <option value="">全部驾照</option>
-          <option>B 级（初级）</option>
-          <option>A 级（中级）</option>
-          <option>S 级（高级 / 职业）</option>
-        </select>
-      </div>
-      <div id="circuitList" class="msg-list">
-        <!-- JS 渲染 -->
-      </div>
-      <div id="circuitEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">🏎️</div>
-        <p>暂无报名</p>
-      </div>
-    </section>
-
-    <!-- Tab: 公告管理 (仅 super) -->
-    <section class="tab-pane" id="pane-announcements">
-      <div class="pane-head">
-        <h2>📢 市政公告管理</h2>
-        <div class="pane-tools">
-          <span class="tag tag-super">仅 SUPER</span>
-          <button class="btn btn-primary btn-sm" id="annCreateBtn" style="display:none">+ 发布新公告</button>
+        <p class="pane-hint">公告会出现在首页"市政公告"栏目, 所有人可见。仅 super 管理员可发布/编辑/删除。</p>
+        <div id="annList"></div>
+        <div id="annEmpty" class="empty-state" hidden>
+          <div class="empty-icon">📢</div><p>暂无公告, 点右上"+ 发布新公告"创建第一条</p>
         </div>
-      </div>
-      <p class="pane-hint">公告会出现在首页"市政公告"栏目, 所有人可见。仅 super 管理员可发布/编辑/删除。</p>
-      <div id="annList"></div>
-      <div id="annEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">📢</div>
-        <p>暂无公告, 点右上"+ 发布新公告"创建第一条</p>
-      </div>
-    </section>
+      </section>
 
-    <!-- Tab: 私信监管 (仅 super) -->
-    <section class="tab-pane" id="pane-dms">
-      <div class="pane-head">
-        <h2>💬 私信监管</h2>
-        <div class="pane-tools">
-          <span class="tag tag-super">仅 SUPER</span>
+      <!-- ============== Tab: 私信 ============== -->
+      <section class="tab-pane" id="pane-dms" data-tab="dms">
+        <div class="pane-head">
+          <h2>💬 私信监管</h2>
+          <div class="pane-tools">
+            <span class="tag tag-super">仅 SUPER</span>
+            <button class="btn btn-ghost btn-sm" id="btnDmRefresh">🔄 刷新</button>
+          </div>
         </div>
-      </div>
-      <p class="pane-hint">监管所有玩家私信对话，可以灯灯客服身份代为回复，或查看 AI 客服"转人工"建议的对话。</p>
-      <div id="dmList" class="msg-list"></div>
-      <div id="dmEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">💬</div>
-        <p>暂无私信记录</p>
-      </div>
-    </section>
-
-    <!-- Tab: 首页图集管理 (仅 super) -->
-    <section class="tab-pane" id="pane-gallery">
-      <div class="pane-head">
-        <h2>🖼️ 首页图集管理</h2>
-        <div class="pane-tools">
-          <span class="tag tag-super">仅 SUPER</span>
-          <button class="btn btn-primary btn-sm" id="galCreateBtn" style="display:none">+ 添加图片</button>
+        <p class="pane-hint">监管所有玩家私信对话，可以灯灯客服身份代为回复，或查看 AI 客服"转人工"建议的对话。</p>
+        <div id="dmList" class="msg-list"></div>
+        <div id="dmEmpty" class="empty-state" hidden>
+          <div class="empty-icon">💬</div><p>暂无私信记录</p>
         </div>
-      </div>
-      <p class="pane-hint">管理首页"城市风貌"和"实景图集"栏目用的所有图片。修改后, 首页 index.html 会立即拉新版本。</p>
-      <div class="filter-bar">
-        <button class="btn btn-ghost btn-sm gal-cat-btn active" data-cat="">全部</button>
-        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="city">城市</button>
-        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="road">路网</button>
-        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="kart">赛道</button>
-        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="nature">自然</button>
-      </div>
-      <div id="galGrid" class="gal-grid"></div>
-      <div id="galEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">🖼️</div>
-        <p>暂无图片, 点右上"+ 添加图片"开始</p>
-      </div>
-    </section>
+      </section>
 
-    <!-- Tab: 我的密码 -->
-    <section class="tab-pane" id="pane-password">
-      <div class="pane-head">
-        <h2>修改我的密码</h2>
-      </div>
-      <form class="pwd-form" id="pwdForm">
-        <label>
-          <span>当前密码</span>
-          <input type="password" id="pwdOld" required autocomplete="current-password" />
-        </label>
-        <label>
-          <span>新密码（至少 8 位）</span>
-          <input type="password" id="pwdNew" required minlength="8" autocomplete="new-password" />
-        </label>
-        <label>
-          <span>确认新密码</span>
-          <input type="password" id="pwdNew2" required minlength="8" autocomplete="new-password" />
-        </label>
-        <div class="pwd-msg" id="pwdMsg"></div>
-        <button type="submit" class="btn btn-primary">▶ 更新密码</button>
-      </form>
-    </section>
+      <!-- ============== Tab: 图集 ============== -->
+      <section class="tab-pane" id="pane-gallery" data-tab="gallery">
+        <div class="pane-head">
+          <h2>🖼️ 首页图集管理</h2>
+          <div class="pane-tools">
+            <span class="tag tag-super">仅 SUPER</span>
+            <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderGallery">🔄 刷新</button>
+            <button class="btn btn-primary btn-sm" id="galCreateBtn" hidden>+ 添加图片</button>
+          </div>
+        </div>
+        <p class="pane-hint">管理首页"城市风貌"和"实景图集"栏目用的所有图片。修改后, 首页 index.html 会立即拉新版本。</p>
+        <div class="filter-bar">
+          <button class="btn btn-ghost btn-sm gal-cat-btn active" data-cat="">全部</button>
+          <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="city">城市</button>
+          <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="road">路网</button>
+          <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="kart">赛道</button>
+          <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="nature">自然</button>
+        </div>
+        <div id="galGrid" class="gal-grid"></div>
+        <div id="galEmpty" class="empty-state" hidden>
+          <div class="empty-icon">🖼️</div><p>暂无图片, 点右上"+ 添加图片"开始</p>
+        </div>
+      </section>
 
-  </main>
+      <!-- ============== Tab: 管理员 ============== -->
+      <section class="tab-pane" id="pane-admins" data-tab="admins">
+        <div class="pane-head">
+          <h2>🛡️ 管理员账号</h2>
+          <div class="pane-tools">
+            <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderAdminList">🔄 刷新</button>
+            <button class="btn btn-primary btn-sm" id="btnAddAdmin">+ 添加管理员</button>
+          </div>
+        </div>
+        <div id="adminList" class="admin-list"></div>
+        <div id="adminListEmpty" class="empty-state" hidden>
+          <div class="empty-icon">🛡️</div><p>暂无管理员</p>
+        </div>
+      </section>
 
-  <!-- ============== 模态：添加/重置密码 ============== -->
-  <div class="modal-mask" id="modalMask" style="display:none">
+      <!-- ============== Tab: 改密 ============== -->
+      <section class="tab-pane" id="pane-password" data-tab="password">
+        <div class="pane-head">
+          <h2>🔑 修改我的密码</h2>
+        </div>
+        <form class="pwd-form" id="pwdForm">
+          <label>
+            <span>当前密码</span>
+            <input type="password" id="pwdOld" required autocomplete="current-password" />
+          </label>
+          <label>
+            <span>新密码（至少 8 位）</span>
+            <input type="password" id="pwdNew" required minlength="8" autocomplete="new-password" />
+          </label>
+          <label>
+            <span>确认新密码</span>
+            <input type="password" id="pwdNew2" required minlength="8" autocomplete="new-password" />
+          </label>
+          <div class="pwd-msg" id="pwdMsg"></div>
+          <button type="submit" class="btn btn-primary">▶ 更新密码</button>
+        </form>
+      </section>
+    </main>
+  </div>
+
+  <!-- ============== 模态 ============== -->
+  <div class="modal-mask" id="modalMask" hidden>
     <div class="modal">
       <div class="modal-head">
         <h3 id="modalTitle">—</h3>
         <button class="modal-close" id="modalClose">✕</button>
       </div>
-      <div class="modal-body" id="modalBody">
-        <!-- JS 渲染 -->
-      </div>
+      <div class="modal-body" id="modalBody"></div>
     </div>
   </div>
 
-  <!-- v17.9: boot 前显示 loading, 避免闪烁登录页 (combined session 会自动跳到 dash) -->
-  <div id="bootLoading" class="boot-loading">
-    <div class="boot-loading-emoji">⏳</div>
-    <div class="boot-loading-text">正在验证身份…</div>
-    <div class="boot-loading-hint">如果已合并账号, 将直接进入后台</div>
-  </div>
   <script>
-    // boot 完成后 (无论成功失败) 都移除 loading
-    window.addEventListener('DOMContentLoaded', () => {
+    // v25.57: 显式刷新按钮 + 切 tab 时不重 fetch (用 admin.js _adminCache)
+    document.addEventListener('DOMContentLoaded', () => {
       setTimeout(() => {
         const el = document.getElementById('bootLoading');
         if (el) el.remove();
-      }, 800); // 兜底, 防止 JS 错误时一直卡 loading
+      }, 800);
     });
   </script>
-  <!-- v25.32: inline sync XHR 拿数据 (100% 保证 admin.js 跑前 window.__manageData 有值) -->
   <script>
-    (function(){
-      try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/admin/manage-data?keys=hotels,rooms,tracks,licenseReq&_=' + Date.now(), false);
-        xhr.send();
-        if (xhr.status === 200) { eval(xhr.responseText); }
-      } catch (e) { console.error('inline sync xhr failed', e); }
-    })();
+    // v25.32: inline sync XHR 拿 manage data (向后兼容, admin.js 仍可读 window.__manageData)
   </script>
   <script src="js/admin.v2540.js" defer></script>
 </body>
 </html>
-

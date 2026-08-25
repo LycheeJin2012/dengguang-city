@@ -1316,9 +1316,24 @@ async function safeRender(fn){
     // v25.55: render 失败时把错误显示在 tab 内容区, 不再静默空白
     const _names = { renderMessages: 'msgList', renderPlayers: 'playerList', renderBookings: 'bookList', renderLicense: 'licenseList', renderKarts: 'kartList', renderCircuits: 'circuitList', renderAdminList: 'adminList', renderAnnouncements: 'annList', renderGallery: 'galGrid' };
     const _el = document.getElementById(_names[fn.name] || '');
-    if (_el) _el.innerHTML = '<div class="empty-state" style="color:#c44"><div class="empty-icon">⚠️</div><p>加载失败: ' + (e.message || e) + '</p><p style="font-size:12px">打开浏览器 Console (F12) 看详细错误</p></div>';
+    if (_el) _el.innerHTML = '<div class="empty-state" style="color:#c44"><div class="empty-icon">⚠️</div><p>加载失败: ' + (e.message || e) + '</p><p style="font-size:12px">打开浏览器 Console (F12) 看详细错误, 或点 🔄 刷新按钮重试</p></div>';
   }
 }
+
+// v25.57: 全局 .pane-refresh 按钮事件委托 — 调对应 render 函数强制重 fetch
+document.addEventListener('click', (e) => {
+  const btn = e.target.closest('.pane-refresh');
+  if (!btn) return;
+  const target = btn.dataset.target;
+  const fn = window[target];
+  if (typeof fn === 'function') {
+    btn.disabled = true;
+    btn.textContent = '⏳ 刷新中...';
+    safeRender(fn).finally(() => {
+      setTimeout(() => { btn.disabled = false; btn.textContent = '🔄 刷新'; }, 600);
+    });
+  }
+});
   // ============================================================
   // Super 管理员 - 公告管理 (v17.8)
   // ============================================================
