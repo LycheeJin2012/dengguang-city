@@ -411,7 +411,7 @@ async function renderMessages(){
     if(filter==='unread')list=list.filter(m=>m.status==='new');
     if(filter==='read')list=list.filter(m=>m.status!=='new');
     const box=$('#msgList'),empty=$('#msgEmpty');
-    if(!list.length){box.innerHTML='';empty.style.display='';return;}
+    if(!list.length){box.innerHTML='';empty.style.display = 'flex';return;}
     empty.style.display='none';
     box.innerHTML=list.map(m=>{
       const hasReply=m.admin_reply&&m.admin_reply.length>0;
@@ -586,7 +586,7 @@ async function renderPlayers(){
     let shown=list;
     if(filter!=='all')shown=shown.filter(p=>p.status===filter);
     const box=$('#playerList'),empty=$('#playerEmpty');
-    if(!shown.length){box.innerHTML='';empty.style.display='';return;}
+    if(!shown.length){box.innerHTML='';empty.style.display = 'flex';return;}
     empty.style.display='none';
     // 按 status 排序: pending 在前 (待处理优先), 然后 active, 然后 rejected
     const _ord={pending:0,active:1,rejected:2};
@@ -745,7 +745,7 @@ async function renderBookings(){
     $('#bookCntConfirmed').textContent=cC;$('#bookCntCompleted').textContent=cD;
     $('#bookPending').textContent=cP>0?`(${cP})`:'';
     const box=$('#bookList'),empty=$('#bookEmpty');
-    if(!list.length){box.innerHTML='';empty.style.display='';return;}
+    if(!list.length){box.innerHTML='';empty.style.display = 'flex';return;}
     empty.style.display='none';
     box.innerHTML=list.map(b=>{
       const opts=['pending','confirmed','checked_in','completed','cancelled']
@@ -882,7 +882,7 @@ async function renderLicense(){
     const filter=f?f.value:'pending';
     let shown=list;if(filter!=='all')shown=shown.filter(x=>x.status===filter);
     const box=$('#licenseList'),empty=$('#licenseEmpty');
-    if(!shown.length){box.innerHTML='';empty.style.display='';return;}
+    if(!shown.length){box.innerHTML='';empty.style.display = 'flex';return;}
     empty.style.display='none';
     box.innerHTML=shown.map(x=>`<article class="msg-item" data-id="${x.id}">
       <div class="msg-head"><div class="msg-head-left">
@@ -927,7 +927,7 @@ async function renderKarts(){
     $('#kartCntRejected').textContent=list.filter(x=>x.status==='rejected').length;
     $('#kartPending').textContent=cP>0?`(${cP})`:'';
     const box=$('#kartList'),empty=$('#kartEmpty');
-    if(!list.length){box.innerHTML='';empty.style.display='';return;}
+    if(!list.length){box.innerHTML='';empty.style.display = 'flex';return;}
     empty.style.display='none';
     box.innerHTML=list.map(k=>{
       const opts=['pending','approved','rejected']
@@ -976,7 +976,7 @@ async function renderCircuits(){
     $('#circuitCntRejected').textContent=list.filter(x=>x.status==='rejected').length;
     $('#circuitPending').textContent=cP>0?`(${cP})`:'';
     const box=$('#circuitList'),empty=$('#circuitEmpty');
-    if(!list.length){box.innerHTML='';empty.style.display='';return;}
+    if(!list.length){box.innerHTML='';empty.style.display = 'flex';return;}
     empty.style.display='none';
     box.innerHTML=list.map(c=>{
       const opts=['pending','approved','rejected']
