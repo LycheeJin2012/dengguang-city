@@ -459,7 +459,7 @@ async function renderMessages(){
       el.querySelector('[data-act="toggle"]').onclick=()=>msgToggle(id);
       el.querySelector('[data-act="del"]').onclick=()=>msgDel(id);
     });
-  }catch(e){console.error(e);}
+  }catch(e){throw e;}
 }
 
 async function msgAction(id,status){
@@ -627,7 +627,7 @@ async function renderPlayers(){
     // 显示/隐藏 "代注册玩家" 按钮
     const btnCreate=document.getElementById('btnPlayerCreate');
     if(btnCreate)btnCreate.style.display=isSuper?'':'none';
-  }catch(e){console.error(e);}
+  }catch(e){throw e;}
 }
 
 // 超管代注册玩家
@@ -776,7 +776,7 @@ async function renderBookings(){
       const _eb = el.querySelector('[data-act="edit"]');
       if (_eb) _eb.onclick = () => _b && bookEdit(_b);
     });
-  }catch(e){console.error(e);}
+  }catch(e){throw e;}
 }
 async function bookStatus(id,s){
   try{await PATCH('/api/admin/bookings?id='+id+'&status='+s);renderBookings();}
@@ -903,7 +903,7 @@ async function renderLicense(){
       el.querySelector('[data-act="fail"]')?.addEventListener('click',()=>licAction(id,'fail'));
       el.querySelector('[data-act="del"]')?.addEventListener('click',()=>licDel(id));
     });
-  }catch(e){console.error(e);}
+  }catch(e){throw e;}
 }
 async function licAction(id,act){
   const note=prompt(act==='pass'?'评语（可空）：':'不通过原因：','')||'';
@@ -953,7 +953,7 @@ async function renderKarts(){
       el.querySelector('[data-act="del"]').onclick=()=>kartDel(id);
       el.querySelector('[data-act="edit"]')?.addEventListener('click', () => _k && kartCircuitEdit(_k, 'kart'));
     });
-  }catch(e){console.error(e);}
+  }catch(e){throw e;}
 }
 async function kartStatus(id,s){
   try{await PATCH('/api/admin/kart?id='+id,{status:s});renderKarts();}
@@ -1002,7 +1002,7 @@ async function renderCircuits(){
       el.querySelector('[data-act="del"]').onclick=()=>circuitDel(id);
       el.querySelector('[data-act="edit"]')?.addEventListener('click', () => _c && kartCircuitEdit(_c, 'circuit'));
     });
-  }catch(e){console.error(e);}
+  }catch(e){throw e;}
 }
 async function circuitStatus(id,s){
   try{await PATCH('/api/admin/circuit?id='+id,{status:s});renderCircuits();}
@@ -1730,7 +1730,7 @@ function renderDash(){
     r.className='role-tag role-'+a.role;
     const ba=$('#btnAddAdmin');
     if(ba)ba.style.display=a.role==='super'?'':'none';
-  }catch(e){console.error(e);}
+  }catch(e){throw e;}
   showView('dash');
   // v25.54: 9 个 render 并行 fetch (之前 await 串行 9 个 ~ 3-4.5s, 改 Promise.all 降到 ~0.5-1s)
   Promise.all([
