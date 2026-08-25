@@ -37,7 +37,7 @@
 
   --font-pixel: 'Press Start 2P', 'Noto Sans SC', monospace;
   --font-mc: 'VT323', 'Noto Sans SC', monospace;
-  --font-cn: 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+  --font-cn: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
 }
 
 /* ============================================
