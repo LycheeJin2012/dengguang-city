@@ -1484,7 +1484,7 @@ async function safeRender(fn){
     grid.innerHTML = '<p class="empty-state">载入中…</p>';
     empty.style.display = 'none';
     try {
-      const r = await fetch('/api/gallery?all=1', { credentials: 'same-origin' });
+      const r = await fetch('/api/gallery', { credentials: 'same-origin' });
       const d = await r.json();
       if (!r.ok || d.error) throw new Error(d.error || '加载失败');
       _galAll = d.items || [];
