@@ -420,12 +420,16 @@
       <div class="modal-body">
         <p class="ann-view-meta">📅 ${fmtDate(ann.created_at)}${ann.updated_at ? ' · 🕓 更新：' + fmtDate(ann.updated_at) : ''} · ✍️ ${escHtml(ann.admin_username || '市政厅')}</p>
         <div class="ann-view-content">${escHtml(ann.content)}</div>
+        <div class="modal-actions">
+          <button class="btn btn-primary" id="annViewCloseBtn">关闭</button>
+        </div>
       </div>
     </div>`;
     document.body.appendChild(bd);
     const close = () => bd.remove();
     bd.addEventListener('click', e => { if (e.target === bd) close(); });
     bd.querySelector('#annViewClose').onclick = close;
+    bd.querySelector('#annViewCloseBtn').onclick = close;
   }
   loadAnnouncements();
 
