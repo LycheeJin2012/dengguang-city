@@ -413,6 +413,26 @@ export async function onRequestGet(context) {
     });
   }
 
+  // v25.52: GET 公开 homepage-bundle (1 次拉 5 个表, 减少前端多 fetch 串行)
+  if (_a === 'homepage-bundle') {
+    const [_hotels, _rooms, _tracks, _licenseReqs, _announcements] = await Promise.all([
+      env.DB.prepare('SELECT * FROM hotels ORDER BY sort_order, id').all(),
+      env.DB.prepare('SELECT * FROM hotel_rooms ORDER BY sort_order, id').all(),
+      env.DB.prepare('SELECT * FROM race_tracks ORDER BY sort_order, id').all(),
+      env.DB.prepare('SELECT * FROM license_requirements ORDER BY sort_order, id').all(),
+      env.DB.prepare('SELECT id, title, content, image_url, created_at, updated_at, admin_username, is_pinned FROM announcements ORDER BY is_pinned DESC, created_at DESC LIMIT 5').all(),
+    ]);
+    return ok({
+      bundle: {
+        hotels: _hotels.results || [],
+        rooms: _rooms.results || [],
+        tracks: _tracks.results || [],
+        licenseReqs: _licenseReqs.results || [],
+        announcements: _announcements.results || [],
+      }
+    }, { headers: { 'Cache-Control': 'public, max-age=60' } });
+  }
+
   // v25: GET 公开拉列表 (前端 renderHotelManage / renderTrackManage 等)
   // hotels-manage / hotel-rooms-manage / race-tracks-manage / license-req-manage
   if (_a === 'hotels-manage' || _a === 'hotel-rooms-manage' || _a === 'race-tracks-manage' || _a === 'license-req-manage') {

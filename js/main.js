@@ -359,14 +359,25 @@
     if (diff < 604800) return Math.floor(diff / 86400) + ' 天前';
     return d.toLocaleDateString('zh-CN');
   }
+  // v25.52: 共享 homepage-bundle fetch (4 个 load 函数复用 1 个 HTTP 请求, 减少 4-5 fetch 串行)
+  let _homepageBundle = null;
+  let _homepageBundlePending = null;
+  async function _ensureBundle() {
+    if (_homepageBundle) return _homepageBundle;
+    if (_homepageBundlePending) return _homepageBundlePending;
+    _homepageBundlePending = fetch('/api/init?action=homepage-bundle', { credentials: 'omit' })
+      .then(r => r.json())
+      .then(d => { _homepageBundle = (d && d.bundle) || {}; return _homepageBundle; })
+      .catch(() => { _homepageBundle = {}; return _homepageBundle; });
+    return _homepageBundlePending;
+  }
+
   async function loadAnnouncements() {
     const grid = document.querySelector('#notice .notice-grid');
     if (!grid) return;
     try {
-      const r = await fetch('/api/announcements', { credentials: 'omit' });
-      if (!r.ok) return; // 后端未就绪时保留占位卡片
-      const d = await r.json();
-      const anns = (d && d.announcements) || [];
+      const bundle = await _ensureBundle();
+      const anns = bundle.announcements || [];
       if (anns.length === 0) return; // 保留占位 "暂无公告"
       // 渲染公告卡片
       grid.innerHTML = anns.map((a, i) => {
@@ -718,10 +729,8 @@
     const grid = document.getElementById('licenseGrid');
     if (!grid) return;
     try {
-      const res = await fetch('/api/init?action=license-req-manage', { credentials: 'include' });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || '加载失败');
-      const reqs = (data.items || []).filter(r => r.is_active);
+      const bundle = await _ensureBundle();
+      const reqs = (bundle.licenseReqs || []).filter(r => r.is_active);
       if (reqs.length === 0) {
         grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🚗</div><p>驾照考试暂未开放, 市政厅公告后启动。</p></div>';
         return;
@@ -755,10 +764,8 @@
     const priceEl = document.getElementById('circuitTrialPrice');
     if (!specEls.length && !mapImg && !priceEl) return;
     try {
-      const res = await fetch('/api/init?action=race-tracks-manage', { credentials: 'include' });
-      const data = await res.json();
-      if (!res.ok || !data.ok) throw new Error(data.error || '加载失败');
-      const tracks = (data.items || []).filter(t => t.is_active);
+      const bundle = await _ensureBundle();
+      const tracks = (bundle.tracks || []).filter(t => t.is_active);
       if (tracks.length === 0) {
         specEls.forEach(el => { el.textContent = '暂无数据'; });
         if (priceEl) priceEl.textContent = '试车价格待公告';
@@ -993,16 +1000,13 @@
     const roomGrid = document.getElementById('homeRoomGrid');
     if (roomGrid) roomGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>正在加载房型...</p></div>';
     try {
-      const hRes = await fetch('/api/init?action=hotels-manage', { credentials: 'include' });
-      const hData = await hRes.json();
-      if (!hRes.ok || !hData.ok) throw new Error(hData.error || '加载失败');
-      const hotels = hData.items || [];
-      // 拉每个酒店的房型
-      const roomLists = await Promise.all(hotels.map(h =>
-        fetch('/api/init?action=hotel-rooms-manage&hotel_id=' + h.id, { credentials: 'include' })
-          .then(r => r.json().then(d => ({ hotel: h, items: d.items || [] })))
-          .catch(() => ({ hotel: h, items: [] }))
-      ));
+      const bundle = await _ensureBundle();
+      const hotels = bundle.hotels || [];
+      // 拉每个酒店的房型 — v25.52: bundle 已包含全部 rooms, 不再循环 fetch
+      const roomLists = hotels.map(h => ({
+        hotel: h,
+        items: (bundle.rooms || []).filter(r => r.hotel_id === h.id),
+      }));
       // 合并成统一 ROOMS 数组
       ROOMS.length = 0;
       const all = [];
