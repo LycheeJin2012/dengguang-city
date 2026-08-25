@@ -431,7 +431,8 @@ export async function onRequestGet(context) {
       _params = [];
     }
     const _rows = await env.DB.prepare(_sql).bind(..._params).all();
-    return ok({ items: _rows.results || [] });
+    // v25.51: 公开 manage API 加 60s 边缘缓存, 减少 D1 命中
+    return ok({ items: _rows.results || [] }, { headers: { 'Cache-Control': 'public, max-age=60' } });
   }
 
   // v25: GET /api/init?action=players-list (admin 玩家管理 — 含 emeralds 字段)

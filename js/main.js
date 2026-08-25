@@ -1049,7 +1049,7 @@
     roomGrid.innerHTML = ROOMS.map(r => {
       const features = r.features.map(f => `<li>${f}</li>`).join('');
       const priceTag = r.price == null
-        ? '<span class="room-price-cur">📋</span><span class="room-price-num">价格待公告</span>'
+        ? '<span class="room-price-cur">📋</span><span class="room-price-num">价格待定</span>'
         : `<span class="room-price-cur">💎</span><span class="room-price-num">${r.price}</span><span class="room-price-unit">绿宝石/晚</span>`;
       return `
         <article class="room-card ${r.featured ? 'featured' : ''}" data-room="${r.id}">
@@ -1067,7 +1067,7 @@
               <div class="room-price">${priceTag}</div>
               <div class="room-guests">👥 ${r.guests}</div>
             </div>
-            <button class="btn btn-primary room-book-btn" data-room="${r.id}">▶ 意向登记</button>
+            <button class="btn btn-primary room-book-btn" data-room="${r.id}">📅 预订</button>
           </div>
         </article>
       `;
@@ -1095,8 +1095,8 @@
   const bookMsg       = document.getElementById('bookMsg');
   const bookSummary   = document.getElementById('bookSummary');
   const bookTotal     = document.getElementById('bookTotal');
-  // 早餐价格由市政厅与合作社共同议定,本处只记录意向(待公告)
-  const BFAST_PER_NIGHT_PER_PERSON = null;
+  // v25.51: 早餐价格由市政厅与合作社共同议定, 10 💎/早/晚/人
+  const BFAST_PER_NIGHT_PER_PERSON = 10;
   let bookRoom = null;
 
   function openBookModal(roomId) {
@@ -1151,19 +1151,14 @@
     const nights = Math.round((outD - inD) / 86400000);
     const persons = parseInt(bookGuests.value, 10) || 1;
     const wantBf = bookBreakfast && bookBreakfast.checked;
-    const price = bookRoom.price;
-    const bfCost = (wantBf && BFAST_PER_NIGHT_PER_PERSON != null)
-      ? nights * persons * BFAST_PER_NIGHT_PER_PERSON : null;
+    const price = bookRoom.price || 0;
+    const bfCost = wantBf ? nights * persons * BFAST_PER_NIGHT_PER_PERSON : 0;
     bookNights.textContent = `${nights} 晚 · ${persons} 人${wantBf ? ' · 含早餐' : ''}`;
-    if (price == null) {
-      bookTotal.textContent = '房费与早餐价格待市政厅公告';
-    } else {
-      const total = nights * price + (bfCost || 0);
-      let totalText = `💎 ${total} 绿宝石（房费 ${nights} 晚 × ${price}`;
-      if (bfCost) totalText += ` + 早餐 ${nights} 晚 × ${persons} 人 × ${BFAST_PER_NIGHT_PER_PERSON}`;
-      totalText += '）';
-      bookTotal.textContent = totalText;
-    }
+    const total = nights * price + bfCost;
+    let totalText = `💎 ${total} 绿宝石（房费 ${nights} 晚 × ${price}`;
+    if (bfCost) totalText += ` + 早餐 ${nights} 晚 × ${persons} 人 × ${BFAST_PER_NIGHT_PER_PERSON}`;
+    totalText += '）';
+    bookTotal.textContent = totalText;
   }
   bookIn.addEventListener('change', updateBookTotal);
   bookOut.addEventListener('change', updateBookTotal);

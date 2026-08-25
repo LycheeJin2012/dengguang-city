@@ -112,11 +112,11 @@
         <div class="room-foot">
           <div class="room-price">
             <span class="room-price-cur">💎</span>
-            <span class="room-price-num">${r.price ? r.price + ' / 晚' : '价格待公告'}</span>
+            <span class="room-price-num">${r.price ? r.price + ' / 晚' : '价格待定'}</span>
           </div>
           <div class="room-actions">
             <button type="button" class="btn btn-ghost btn-small" data-action="detail" data-id="${r.id}">详情</button>
-            <button type="button" class="btn btn-primary btn-small" data-action="book" data-id="${r.id}">▶ 意向登记</button>
+            <button type="button" class="btn btn-primary btn-small" data-action="book" data-id="${r.id}">📅 预订</button>
           </div>
         </div>
       </article>
@@ -144,12 +144,12 @@
         <p class="rd-line"><b>所属酒店：</b>${escapeHtml(r.hotelName)}</p>
         <p class="rd-line"><b>床型：</b>${escapeHtml(r.bed)}</p>
         <p class="rd-line"><b>适合：</b>${r.guests}+ 人</p>
-        <p class="rd-line"><b>价格：</b>${r.price ? '💎 ' + r.price + ' / 晚' : '待公告'}</p>
+        <p class="rd-line"><b>价格：</b>${r.price ? '💎 ' + r.price + ' / 晚' : '待定'}</p>
         <ul class="rd-features">
           ${r.features.map(f => `<li>${escapeHtml(f)}</li>`).join('')}
         </ul>
         <div class="rd-cta">
-          <button type="button" class="btn btn-primary" id="rdBook">▶ 意向登记</button>
+          <button type="button" class="btn btn-primary" id="rdBook">📅 预订</button>
         </div>
       </div>
     `;
@@ -230,12 +230,8 @@
     const wantBf = bookBreakfast && bookBreakfast.checked;
     if (bookNights) bookNights.textContent = `${nights} 晚 · ${persons} 人${wantBf ? ' · 含早餐' : ''}`;
     if (bookTotal) {
-      if (bookRoom.price) {
-        const total = bookRoom.price * nights;
-        bookTotal.textContent = `💎 ${total}（${nights} 晚 × ${bookRoom.price}）`;
-      } else {
-        bookTotal.textContent = '价格待市政厅公告';
-      }
+      const total = (bookRoom.price || 0) * nights;
+      bookTotal.textContent = `💎 ${total}（${nights} 晚 × ${bookRoom.price || 0}）`;
     }
   }
   if (bookIn) bookIn.addEventListener('change', updateBookTotal);
