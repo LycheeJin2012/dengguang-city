@@ -330,6 +330,15 @@ export async function onRequestGet(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
 
+  // v19: 自动 MIGRATIONS — 任何 GET 都会确保 schema/字段最新 (先于 action 路由, 避免 action 早返回跳过迁移)
+  // 走 SCHEMA 幂等 (CREATE TABLE IF NOT EXISTS) + MIGRATIONS try/catch 吞错
+  for (const sql of SCHEMA) {
+    try { await env.DB.prepare(sql).run(); } catch (e) {}
+  }
+  for (const sql of MIGRATIONS) {
+    try { await env.DB.prepare(sql).run(); } catch (e) {}
+  }
+
   // v18: GET /api/init?action=announcements-list 已拆到 functions/api/announcements.js
 
   // v19: GET /api/init?action=signin-status  (player 登录)
@@ -436,16 +445,6 @@ export async function onRequestGet(context) {
       "SELECT id, username, email, status, emeralds, created_at, last_login_at FROM players ORDER BY id"
     ).all();
     return ok({ items: _rows.results || [] });
-  }
-
-  // v19: 自动 MIGRATIONS — 任何 GET 都会确保 schema/字段最新
-  // (解决"用户没主动 POST /api/init" 导致 MIGRATIONS 没跑, 新字段缺失)
-  // 走 SCHEMA 幂等 (CREATE TABLE IF NOT EXISTS) + MIGRATIONS try/catch 吞错
-  for (const sql of SCHEMA) {
-    try { await env.DB.prepare(sql).run(); } catch (e) {}
-  }
-  for (const sql of MIGRATIONS) {
-    try { await env.DB.prepare(sql).run(); } catch (e) {}
   }
 
   const tables = await env.DB.prepare(
