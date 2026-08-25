@@ -241,6 +241,7 @@ const SCHEMA = [
     difficulty TEXT,
     description TEXT,
     image_url TEXT,
+    trial_price INTEGER NOT NULL DEFAULT 0,
     sort_order INTEGER NOT NULL DEFAULT 0,
     is_active INTEGER NOT NULL DEFAULT 1,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -296,6 +297,8 @@ const MIGRATIONS = [
   `ALTER TABLE announcements ADD COLUMN updated_at TEXT`,
   // v25.33: 公告封面图
   `ALTER TABLE announcements ADD COLUMN image_url TEXT`,
+  // v25.50: 赛车场试车价格（💎/次）
+  `ALTER TABLE race_tracks ADD COLUMN trial_price INTEGER NOT NULL DEFAULT 0`,
   // v17.8: direct_messages 加 replied_by_admin_id (DM 回复人审计)
   `ALTER TABLE direct_messages ADD COLUMN replied_by_admin_id INTEGER`,
   // v17.8: admins 加 linked_player_id (管理员/玩家账号绑定)
@@ -1492,7 +1495,7 @@ ${_hint ? '\n管理员提示：' + _hint : ''}
     const _allowedFields = {
       hotels: ['name', 'address', 'description', 'image_url', 'sort_order', 'is_active'],
       hotel_rooms: ['hotel_id', 'name', 'capacity', 'beds', 'breakfast_included', 'price_per_night', 'description', 'image_url', 'sort_order', 'is_active'],
-      race_tracks: ['name', 'length_km', 'laps', 'difficulty', 'description', 'image_url', 'sort_order', 'is_active'],
+      race_tracks: ['name', 'length_km', 'laps', 'difficulty', 'description', 'image_url', 'trial_price', 'sort_order', 'is_active'],
       license_requirements: ['exam_type', 'title', 'description', 'requirements', 'min_age', 'duration_minutes', 'sort_order', 'is_active'],
     }[_tbl];
 

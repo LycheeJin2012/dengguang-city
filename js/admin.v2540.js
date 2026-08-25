@@ -2274,6 +2274,8 @@ boot();
           {name: 'laps', label: '圈数', type: 'number', value: '8'},
           {name: 'difficulty', label: '难度 (简单/中等/困难)'},
           {name: 'description', label: '介绍', type: 'textarea'},
+          {name: 'image_url', label: '图片 URL (选填)'},
+          {name: 'trial_price', label: '试车价格 (💎/次)', type: 'number', value: '0'},
           {name: 'sort_order', label: '排序', type: 'number', value: '99'},
         ]
       });
@@ -2525,6 +2527,7 @@ boot();
             {name: 'difficulty', label: '难度', value: t.difficulty || ''},
             {name: 'description', label: '介绍', type: 'textarea', value: t.description || ''},
             {name: 'image_url', label: '图片 URL', value: t.image_url || ''},
+            {name: 'trial_price', label: '试车价格 (💎/次)', type: 'number', value: t.trial_price || 0},
             {name: 'sort_order', label: '排序', type: 'number', value: t.sort_order || 0},
             {name: 'is_active', label: '上架', type: 'number', value: t.is_active != null ? t.is_active : 1},
           ],
@@ -2537,6 +2540,7 @@ boot();
           var v = _formValues(form4);
           v.length_km = parseFloat(v.length_km);
           v.laps = parseInt(v.laps, 10);
+          v.trial_price = parseInt(v.trial_price, 10);
           v.sort_order = parseInt(v.sort_order, 10);
           v.is_active = parseInt(v.is_active, 10);
           try {
@@ -2696,6 +2700,7 @@ boot();
         '<div class="msg-head"><div class="msg-head-left"><b class="msg-name">🏁 ' + esc(t.name) + '</b></div>' +
         '<div class="msg-time">' + (t.length_km || '?') + ' km / ' + (t.laps || '?') + ' 圈</div></div>' +
         (t.image_url ? '<div style="margin:8px 0;"><img src="' + esc(t.image_url) + '" loading="lazy" onerror="this.style.opacity=\'0.25\'" style="max-width:240px;max-height:120px;" alt="赛道图片" /></div>' : '') +
+        (t.trial_price ? '<div class="msg-content" style="background:#fff8e0;">💎 试车价格: ' + esc(t.trial_price) + ' 💎/次</div>' : '') +
         (t.difficulty ? '<div class="msg-content">难度: ' + esc(t.difficulty) + '</div>' : '') +
         (t.description ? '<div class="msg-content" style="white-space:pre-wrap">' + esc(t.description) + '</div>' : '') +
         (_me ? '<div class="msg-actions book-actions">' +

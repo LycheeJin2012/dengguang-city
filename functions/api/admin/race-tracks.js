@@ -15,7 +15,7 @@ async function requireSuper(context) {
   return admin;
 }
 
-const ALLOWED = ['name', 'length_km', 'laps', 'difficulty', 'description', 'image_url', 'sort_order', 'is_active'];
+const ALLOWED = ['name', 'length_km', 'laps', 'difficulty', 'description', 'image_url', 'trial_price', 'sort_order', 'is_active'];
 
 export async function onRequestGet(context) {
   const { env } = context;

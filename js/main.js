@@ -748,9 +748,12 @@
   }
 
   /* ---------- 11.5 v25.42: 赛车场规格 (从后端 race-tracks-manage 拉) ---------- */
+  // v25.50: 扩展到同时更新赛道图 (circuitMapImg) + 试车价格 (circuitTrialPrice)
   async function loadKartSpecs() {
     const specEls = document.querySelectorAll('#kartSpecs [data-spec]');
-    if (!specEls.length) return;
+    const mapImg = document.getElementById('circuitMapImg');
+    const priceEl = document.getElementById('circuitTrialPrice');
+    if (!specEls.length && !mapImg && !priceEl) return;
     try {
       const res = await fetch('/api/init?action=race-tracks-manage', { credentials: 'include' });
       const data = await res.json();
@@ -758,6 +761,7 @@
       const tracks = (data.items || []).filter(t => t.is_active);
       if (tracks.length === 0) {
         specEls.forEach(el => { el.textContent = '暂无数据'; });
+        if (priceEl) priceEl.textContent = '试车价格待公告';
         return;
       }
       // 字段映射: DB 字段 → UI 显示
@@ -772,8 +776,21 @@
       set('tunnel', '含隧道');
       set('surface', t.name && t.name.includes('冰') ? '红石冰道' : (t.name || '—'));
       set('record', '待刷新');
+      // v25.50: 赛道图 (image_url 优先, 无则占位图)
+      if (mapImg && t.image_url) {
+        mapImg.src = t.image_url;
+      }
+      // v25.50: 试车价格
+      if (priceEl) {
+        if (t.trial_price && t.trial_price > 0) {
+          priceEl.textContent = `试车 ¥${t.trial_price} 💎/次`;
+        } else {
+          priceEl.textContent = '试车价格待公告';
+        }
+      }
     } catch (e) {
       specEls.forEach(el => { el.textContent = '加载失败'; });
+      if (priceEl) priceEl.textContent = '试车价格加载失败';
     }
   }
 
@@ -1889,5 +1906,5 @@
   // 3. 驾照要求 (v25.43)
   loadLicenseReqs();
 })();
-console.log("v25.43 ready");
+console.log("v25.50 ready");
 // v17.2 push 1786962036

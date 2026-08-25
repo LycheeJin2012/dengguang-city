@@ -310,151 +310,19 @@
       <div class="circuit-map">
         <h3 class="circuit-map-title">—— TRACK MAP / 赛道线路图 ——</h3>
         <p class="circuit-map-note">参考赛车场全俯视图渲染（平面示意 · 尺寸与比例以市政厅最终公告为准）</p>
-        <div class="circuit-svg-wrap">
-          <svg viewBox="0 0 800 460" xmlns="http://www.w3.org/2000/svg" class="circuit-svg" role="img" aria-label="灯光市国际赛车场平面俯视图">
-            <!-- 背景：草地（俯视平面） -->
-            <rect x="0" y="0" width="800" height="460" fill="#7cb02c" />
-            <!-- 草地网格纹理（俯视感） -->
-            <g opacity="0.20">
-              <line x1="0" y1="80" x2="800" y2="80" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
-              <line x1="0" y1="160" x2="800" y2="160" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
-              <line x1="0" y1="240" x2="800" y2="240" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
-              <line x1="0" y1="320" x2="800" y2="320" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
-              <line x1="0" y1="400" x2="800" y2="400" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
-              <line x1="160" y1="0" x2="160" y2="460" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
-              <line x1="320" y1="0" x2="320" y2="460" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
-              <line x1="480" y1="0" x2="480" y2="460" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
-              <line x1="640" y1="0" x2="640" y2="460" stroke="#5d7c15" stroke-width="0.5" stroke-dasharray="4 8" />
-            </g>
-
-            <!-- 外圈围墙（俯视边线） -->
-            <rect x="60" y="60" width="680" height="340" fill="none" stroke="#3a4a1a" stroke-width="2" stroke-dasharray="6 4" />
-
-            <!-- 主看台（顶） -->
-            <rect x="120" y="40" width="560" height="16" fill="#2d3a1c" />
-            <text x="400" y="52" fill="#ffaa00" font-family="monospace" font-size="11" text-anchor="middle" font-weight="bold">—— MAIN GRANDSTAND ——</text>
-
-            <!-- PIT LANE（底） -->
-            <rect x="120" y="404" width="560" height="16" fill="#2d3a1c" />
-            <text x="400" y="416" fill="#ffaa00" font-family="monospace" font-size="11" text-anchor="middle" font-weight="bold">—— PIT LANE ——</text>
-
-            <!-- 赛道路面（环状 - 平面俯视） -->
-            <!-- 外圈 + 内圈构成环状路面 -->
-            <path d="
-              M 200 120
-              L 600 120
-              Q 660 120 660 180
-              L 660 240
-              Q 660 280 620 280
-              L 200 280
-              Q 140 280 140 240
-              L 140 180
-              Q 140 120 200 120
-              Z
-            " fill="#1a1a1a" stroke="#3a3a3a" stroke-width="2" />
-            <!-- 中心绿色内场 -->
-            <path d="
-              M 220 140
-              L 580 140
-              Q 640 140 640 180
-              L 640 240
-              Q 640 260 620 260
-              L 200 260
-              Q 160 260 160 240
-              L 160 180
-              Q 160 140 220 140
-              Z
-            " fill="#7cb02c" stroke="#3a4a1a" stroke-width="0.5" />
-
-            <!-- 中央分隔线（双车道分界） -->
-            <rect x="220" y="198" width="380" height="4" fill="#ff2a2a" stroke="#fff" stroke-width="1" />
-
-            <!-- 起点/终点方格旗 -->
-            <g transform="translate(560, 120)">
-              <rect x="-22" y="-5" width="44" height="10" fill="#fff" />
-              <g>
-                <rect x="-22" y="-5" width="5" height="5" fill="#000" />
-                <rect x="-12" y="-5" width="5" height="5" fill="#000" />
-                <rect x="-2" y="-5" width="5" height="5" fill="#000" />
-                <rect x="8" y="-5" width="5" height="5" fill="#000" />
-                <rect x="18" y="-5" width="5" height="5" fill="#000" />
-                <rect x="-17" y="0" width="5" height="5" fill="#000" />
-                <rect x="-7" y="0" width="5" height="5" fill="#000" />
-                <rect x="3" y="0" width="5" height="5" fill="#000" />
-                <rect x="13" y="0" width="5" height="5" fill="#000" />
-              </g>
-            </g>
-            <text x="595" y="105" fill="#fff" font-family="monospace" font-size="11" text-anchor="middle" font-weight="bold">S/F</text>
-
-            <!-- 弯道编号 1-8 (沿外圈分布) -->
-            <g font-family="monospace" font-size="13" font-weight="bold" text-anchor="middle">
-              <circle cx="170" cy="120" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
-              <text x="170" y="124" fill="#000">1</text>
-              <circle cx="630" cy="120" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
-              <text x="630" y="124" fill="#000">2</text>
-              <circle cx="660" cy="200" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
-              <text x="660" y="204" fill="#000">3</text>
-              <circle cx="630" cy="280" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
-              <text x="630" y="284" fill="#000">4</text>
-              <circle cx="450" cy="280" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
-              <text x="450" y="284" fill="#000">5</text>
-              <circle cx="280" cy="280" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
-              <text x="280" y="284" fill="#000">6</text>
-              <circle cx="170" cy="280" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
-              <text x="170" y="284" fill="#000">7</text>
-              <circle cx="140" cy="200" r="11" fill="#ffaa00" stroke="#000" stroke-width="2" />
-              <text x="140" y="204" fill="#000">8</text>
-            </g>
-
-            <!-- DRS 加速区（虚线段 - 在长直道中部） -->
-            <rect x="200" y="195" width="60" height="10" fill="#ffd23f" stroke="#000" stroke-width="1" stroke-dasharray="4 3" />
-            <text x="230" y="186" fill="#000" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">DRS</text>
-            <rect x="500" y="195" width="60" height="10" fill="#ffd23f" stroke="#000" stroke-width="1" stroke-dasharray="4 3" />
-            <text x="530" y="186" fill="#000" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">DRS</text>
-
-            <!-- 隧道（深蓝） -->
-            <rect x="350" y="100" width="80" height="20" fill="#1d4e91" stroke="#3a7ad9" stroke-width="2" />
-            <text x="390" y="88" fill="#1d4e91" font-family="monospace" font-size="9" text-anchor="middle" font-weight="bold">TUNNEL</text>
-
-            <!-- 维修区入口 -->
-            <rect x="100" y="100" width="40" height="20" fill="#6e4a23" stroke="#000" stroke-width="1" />
-            <text x="120" y="88" fill="#6e4a23" font-family="monospace" font-size="8" text-anchor="middle" font-weight="bold">PIT</text>
-
-            <!-- 罗盘 -->
-            <g transform="translate(740, 50)">
-              <circle r="20" fill="#fff" stroke="#000" stroke-width="2" />
-              <text y="-6" text-anchor="middle" font-family="monospace" font-size="10" font-weight="bold" fill="#000">N</text>
-              <polygon points="0,-14 -4,2 4,2" fill="#ff2a2a" />
-              <polygon points="0,14 -4,-2 4,-2" fill="#000" />
-            </g>
-
-            <!-- 比例尺 -->
-            <g transform="translate(50, 432)">
-              <rect width="100" height="6" fill="#fff" stroke="#000" stroke-width="1" />
-              <rect width="50" height="6" fill="#000" />
-              <text x="0" y="-2" font-family="monospace" font-size="9" fill="#000">0</text>
-              <text x="50" y="-2" font-family="monospace" font-size="9" fill="#000" text-anchor="middle">200m</text>
-              <text x="100" y="-2" font-family="monospace" font-size="9" fill="#000" text-anchor="end">400m</text>
-            </g>
-
-            <!-- 图例 -->
-            <g transform="translate(700, 360)" font-family="monospace" font-size="10" fill="#000">
-              <circle cx="0" cy="0" r="6" fill="#ffaa00" stroke="#000" stroke-width="1" />
-              <text x="12" y="3">弯道编号 1-8</text>
-              <rect x="-6" y="13" width="12" height="6" fill="#ffd23f" stroke="#000" stroke-width="1" />
-              <text x="12" y="20">DRS 加速区</text>
-              <rect x="-6" y="30" width="12" height="6" fill="#1d4e91" />
-              <text x="12" y="36">隧道</text>
-            </g>
-      </div>
+        <div class="circuit-svg-wrap" id="circuitMapWrap">
+          <img id="circuitMapImg" class="circuit-svg circuit-map-img" alt="灯光市国际赛车场赛道图" loading="lazy"
+               src="assets/track-placeholder.svg"
+               onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 800 460%22><rect width=%22800%22 height=%22460%22 fill=%22%237cb02c%22/><text x=%22400%22 y=%22240%22 font-family=%22monospace%22 font-size=%2230%22 fill=%22%23ffffff%22 text-anchor=%22middle%22>赛道图加载失败</text></svg>';" />
+        </div>
 
       <!-- 赛道实景 + 规格（C2/C3/C4 删 2 图 + 删规格表） -->
       <!-- circuit-grid 整段已删 -->
 
       <div class="circuit-cta">
         <h3>🏆 赛事 & 试车</h3>
-        <p>比赛日程与驾照分级制度由市政厅与赛车协会协商后公布。试车意向登记请关注本栏更新。</p>
-        <button class="btn btn-primary btn-large" id="btnCircuitSignup">▶ 试车意向登记</button>
+        <p>比赛日程与驾照分级制度由市政厅与赛车协会协商后公布。</p>
+        <div class="circuit-trial-price" id="circuitTrialPrice" style="font-size:24px;font-weight:700;color:#2d5e1a;margin:12px 0;padding:10px 16px;background:#fff8e0;border:2px solid #c8a832;display:inline-block;">试车价格载入中...</div>
       </div>
     </div>
   </section>
