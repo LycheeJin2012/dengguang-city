@@ -142,35 +142,33 @@ function showAdminEnterModal(player, adminId) {
   mask.id = 'adminEnterBackdrop';
   mask.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;';
   mask.innerHTML = `
-    <div style="background:#1a1a2e;border:2px solid #6cf;border-radius:8px;padding:24px;max-width:420px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);">
-      <h3 style="margin:0 0 4px;color:#6cf;font-size:18px;">🛡️ 进入管理后台</h3>
-      <p style="color:#9ab;font-size:12px;margin:0 0 16px;line-height:1.5;">
-        当前已登录玩家 <b style="color:#fff">${esc(player.username)}</b>。<br>
-        进入管理需要 <b style="color:#fc6">二级验证</b>: 输入关联管理员的密码, 或用通行密钥。
+    <div style="position:relative;background:var(--c-cream,#f5e6c5);border:3px solid #000;box-shadow:6px 6px 0 #000;padding:24px;max-width:420px;width:100%;">
+      <h3 style="margin:0 0 4px;color:#000;font-size:18px;">🛡️ 进入管理后台</h3>
+      <p style="color:#333;font-size:12px;margin:0 0 16px;line-height:1.5;">
+        当前已登录玩家 <b style="color:#000">${esc(player.username)}</b>。<br>
+        进入管理需要 <b style="color:#000">二级验证</b>: 输入关联管理员的密码, 或用通行密钥。
       </p>
       <div id="adminEnterTabs" style="display:flex;gap:4px;margin-bottom:14px;">
         <button id="tabPw" class="enter-tab enter-tab-active" style="flex:1;">🔑 管理员密码</button>
         <button id="tabPk" class="enter-tab" style="flex:1;">🔐 通行密钥</button>
       </div>
       <div id="adminEnterPw">
-        <label style="color:#9ab;font-size:12px;display:block;margin-bottom:4px;">关联管理员密码</label>
-        <input type="password" id="adminEnterPwInput" placeholder="管理员密码 (至少 8 位)" style="width:100%;padding:8px;background:#0a0a1e;color:#fff;border:1px solid #446;font-size:14px;">
-        <div id="adminEnterMsg" style="min-height:18px;font-size:12px;margin-top:6px;"></div>
-        <div style="display:flex;gap:8px;margin-top:14px;">
-          <button class="btn btn-ghost btn-sm" id="adminEnterCancel" style="flex:1;">取消</button>
-          <button class="btn btn-primary btn-sm" id="adminEnterPwBtn" style="flex:2;">✓ 进入管理</button>
+        <label style="color:#000;font-size:12px;display:block;margin-bottom:4px;">关联管理员密码</label>
+        <input type="password" id="adminEnterPwInput" placeholder="管理员密码 (至少 8 位)" style="width:100%;padding:8px;background:var(--c-paper,#faf3e0);color:#000;border:2px solid #000;font-size:14px;">
+        <div id="adminEnterMsg" style="min-height:18px;font-size:12px;margin-top:6px;color:#000;"></div>
+        <div style="margin-top:14px;">
+          <button class="btn btn-primary btn-block" id="adminEnterPwBtn" style="width:100%;">✓ 进入管理</button>
         </div>
       </div>
       <div id="adminEnterPk" style="display:none;">
-        <p style="color:#9ab;font-size:12px;margin:0 0 10px;">使用你已注册的通行密钥验证身份</p>
-        <div id="adminEnterPkMsg" style="min-height:18px;font-size:12px;margin:6px 0;"></div>
-        <div style="display:flex;gap:8px;margin-top:14px;">
-          <button class="btn btn-ghost btn-sm" id="adminEnterCancel2" style="flex:1;">取消</button>
-          <button class="btn btn-primary btn-sm" id="adminEnterPkBtn" style="flex:2;">🔐 用通行密钥进入</button>
+        <p style="color:#000;font-size:12px;margin:0 0 10px;">使用你已注册的通行密钥验证身份</p>
+        <div id="adminEnterPkMsg" style="min-height:18px;font-size:12px;margin:6px 0;color:#000;"></div>
+        <div style="margin-top:14px;">
+          <button class="btn btn-primary btn-block" id="adminEnterPkBtn" style="width:100%;">🔐 用通行密钥进入</button>
         </div>
       </div>
-      <div style="margin-top:14px;padding-top:12px;border-top:1px solid #334;text-align:center;">
-        <a href="/" style="color:#9ab;font-size:12px;text-decoration:none;">← 返回首页 (玩家身份保持登录)</a>
+      <div style="margin-top:14px;padding-top:12px;border-top:2px solid #000;text-align:center;">
+        <a href="/" style="color:var(--c-water,#1e6fb8);font-size:12px;text-decoration:none;">← 返回首页 (玩家身份保持登录)</a>
       </div>
     </div>
   `;
@@ -190,10 +188,6 @@ function showAdminEnterModal(player, adminId) {
     document.getElementById('adminEnterPw').style.display = 'none';
   };
 
-  // 取消
-  const cancel = () => mask.remove();
-  document.getElementById('adminEnterCancel').onclick = cancel;
-  document.getElementById('adminEnterCancel2').onclick = cancel;
   // 阻止点背景关闭 (二级密码必填)
   mask.addEventListener('click', e => { if (e.target === mask) { /* noop */ } });
 
