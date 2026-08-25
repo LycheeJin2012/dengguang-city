@@ -420,7 +420,7 @@ export async function onRequestGet(context) {
       env.DB.prepare('SELECT * FROM hotel_rooms ORDER BY sort_order, id').all(),
       env.DB.prepare('SELECT * FROM race_tracks ORDER BY sort_order, id').all(),
       env.DB.prepare('SELECT * FROM license_requirements ORDER BY sort_order, id').all(),
-      env.DB.prepare('SELECT id, title, content, image_url, created_at, updated_at, admin_username, is_pinned FROM announcements ORDER BY is_pinned DESC, created_at DESC LIMIT 5').all(),
+      env.DB.prepare('SELECT id, title, content, image_url, created_at, updated_at, created_by FROM announcements ORDER BY created_at DESC LIMIT 5').all(),
     ]);
     return ok({
       bundle: {
