@@ -3292,32 +3292,34 @@ textarea { resize: vertical; min-height: 90px; }
   .footer-bottom .container { font-size: 11px; }
 }
 
-/* ---------- admin-new.html 二级密码 modal 的 tab 按钮 ---------- */
+/* ---------- admin-new.html 二级密码 modal 的 tab 按钮 (v25.56) ---------- */
 .enter-tab {
   flex: 1;
   padding: 8px 10px;
-  border: 2px solid #446;
-  background: #0f1024;
-  color: #c8d6f0;
+  border: 2px solid #000;
+  background: var(--c-paper, #faf3e0);
+  color: #000;
   font-family: inherit;
   font-size: 14px;
   cursor: pointer;
   border-radius: 4px;
   transition: all .15s;
+  box-shadow: 3px 3px 0 #000;
 }
 .enter-tab:hover {
-  background: #1a1f3a;
-  border-color: #6cf;
-  color: #fff;
+  background: #fff;
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 #000;
 }
 .enter-tab-active {
-  background: #2a7a3a;
-  border-color: #7dd87e;
-  color: #fff;
-  box-shadow: 0 0 0 2px rgba(125,216,126,.25) inset;
+  background: var(--c-paper, #faf3e0);
+  border-color: #000;
+  color: #000;
+  box-shadow: 3px 3px 0 #000, inset 0 -4px 0 var(--c-grass, #5a9a3a);
+  font-weight: 700;
 }
 .enter-tab-active:hover {
-  background: #2e8a40;
+  background: #fff;
 }
 
 /* ---------- 每日签到 (v19) ---------- */
