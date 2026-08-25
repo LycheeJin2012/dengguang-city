@@ -87,7 +87,19 @@ async function api(m,p,b){
   if(!r.ok)throw new Error(d.error||'HTTP '+r.status);
   return d||{};
 }
-const GET=(p)=>api('GET',p);
+// v25.64: GET 加 30s cache wrapper (P/POST/PATCH/DELETE 不缓存)
+const _adminCache = new Map();
+const _CACHE_TTL = 30_000;
+const GET=(p, force)=>{
+  if(force){
+    _adminCache.delete(p); // 强制 bypass
+  }
+  const hit = _adminCache.get(p);
+  if(!force && hit && Date.now()-hit.ts < _CACHE_TTL){
+    return Promise.resolve(hit.data);
+  }
+  return api('GET',p).then(d => { _adminCache.set(p, { data:d, ts:Date.now() }); return d; });
+};
 const POST=(p,b)=>api('POST',p,b);
 const PATCH=(p,b)=>api('PATCH',p,b);
 const DEL=(p)=>api('DELETE',p);
@@ -1320,13 +1332,27 @@ async function safeRender(fn){
   }
 }
 
-// v25.57: 全局 .pane-refresh 按钮事件委托 — 调对应 render 函数强制重 fetch
+// v25.64: 全局 .pane-refresh 按钮事件委托 — 调对应 render 函数强制重 fetch (bypass cache)
+const _RENDER_ENDPOINTS = {
+  renderMessages: '/api/admin/messages',
+  renderPlayers: '/api/admin/players',
+  renderBookings: '/api/admin/bookings',
+  renderLicense: '/api/admin/license',
+  renderKarts: '/api/admin/kart',
+  renderCircuits: '/api/admin/circuit',
+  renderAdminList: '/api/admin/admins',
+  renderAnnouncements: '/api/announcements',
+  renderGallery: '/api/gallery',
+  renderDms: null, // DM 走 init endpoint, 单独处理
+};
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('.pane-refresh');
   if (!btn) return;
   const target = btn.dataset.target;
   const fn = window[target];
   if (typeof fn === 'function') {
+    const endpoint = _RENDER_ENDPOINTS[target];
+    if (endpoint) GET(endpoint, true); // 先清 cache
     btn.disabled = true;
     btn.textContent = '⏳ 刷新中...';
     safeRender(fn).finally(() => {
