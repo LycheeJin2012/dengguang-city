@@ -23,7 +23,7 @@ function _fileToDataURLP(input) {
   return new Promise(function(resolve){ _fileToDataURL(input, resolve); });
 }
 function _attachFileUpload(form) {
-  // 给 data-f=image_url 的 input / textarea 加 file 选择 (带"二级菜单"上传按钮)
+  // 给 data-f=image_url 的 input / textarea 加文件上传入口 (点击按钮 → 系统文件选择器)
   var fields = [].slice.call(form.querySelectorAll('input[data-f="image_url"], textarea[data-f="image_url"]'));
   fields.forEach(function(inp){
     if (inp.dataset.fileAttached) return;
@@ -31,24 +31,20 @@ function _attachFileUpload(form) {
     inp.placeholder = '图片 URL（可粘贴 https:// 或 data:image/...）';
     var wrap = document.createElement('div');
     wrap.className = 'image-upload-wrap';
-    wrap.style.cssText = 'display:flex;gap:8px;align-items:center;margin-top:6px;flex-wrap:wrap;';
     var btn = document.createElement('button');
     btn.type = 'button';
-    btn.className = 'btn btn-ghost btn-sm';
-    btn.style.cssText = 'flex:0 0 auto;font-size:12px;';
-    btn.innerHTML = '📁 选择文件上传';
+    btn.className = 'image-upload-btn';
+    btn.innerHTML = '📁 上传照片';
     var file = document.createElement('input');
     file.type = 'file';
     file.accept = 'image/*';
     file.name = '_file_' + inp.dataset.f;
-    file.style.cssText = 'display:none;';
+    file.className = 'image-upload-file';
     var hint = document.createElement('span');
     hint.className = 'image-upload-hint';
-    hint.style.cssText = 'font-family:var(--font-cn);font-size:12px;color:var(--c-stone-dark);';
     hint.textContent = '（上限 3MB，自动转 base64）';
     var preview = document.createElement('img');
     preview.className = 'image-upload-preview';
-    preview.style.cssText = 'max-height:48px;max-width:80px;display:none;border:2px solid var(--c-black);object-fit:cover;';
     btn.addEventListener('click', function(){ file.click(); });
     file.addEventListener('change', function(){
       file._fileReading = true;
@@ -499,11 +495,11 @@ function showReplyModal(m){
   const fmtDate=s=>{try{return new Date(s*1000).toLocaleString('zh-CN',{hour12:false});}catch(_){return String(s||'');}};
   const context=m.content?`<div style="background:rgba(255,255,255,.06);border-left:3px solid #6cf;padding:8px 10px;border-radius:4px;margin-bottom:10px;font-size:13px;line-height:1.5;max-height:120px;overflow:auto;white-space:pre-wrap;">${esc(m.content)}</div>`:'';
   const contact=m.contact?`<div style="color:#aaa;font-size:12px;margin-bottom:8px;">📇 联系方式：${esc(m.contact)}</div>`:'';
-  const nameTag=m.name?`<div style="color:#6cf;font-size:13px;margin-bottom:6px;">👤 ${esc(m.name)} <span style="color:#888;">· ${fmtDate(m.created_at)}</span></div>`:'';
+  const nameTag=m.name?`<div style="color:#000;font-size:13px;margin-bottom:6px;">👤 ${esc(m.name)} <span style="color:#888;">· ${fmtDate(m.created_at)}</span></div>`:'';
 
   bd.innerHTML=`
-    <div style="background:#1a1a2e;border:2px solid #6cf;border-radius:8px;padding:18px;max-width:560px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);">
-      <h3 style="margin:0 0 10px;color:#6cf;font-size:16px;">💬 回复留言 #${m.id}</h3>
+    <div style="background:var(--c-cream,#f5e6c5);border:3px solid #000;box-shadow:6px 6px 0 #000;">
+      <h3 style="margin:0 0 10px;color:#000;font-size:16px;">💬 回复留言 #${m.id}</h3>
       ${nameTag}
       ${contact}
       ${context}
@@ -644,25 +640,25 @@ function showCreatePlayerModal(){
   bd.id='createPlayerBackdrop';
   bd.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
   bd.innerHTML=`
-    <div style="background:#1a1a2e;border:2px solid #6cf;border-radius:8px;padding:22px;max-width:480px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);">
-      <h3 style="margin:0 0 6px;color:#6cf;font-size:17px;">🆕 代注册玩家账号</h3>
+    <div style="background:var(--c-cream,#f5e6c5);border:3px solid #000;box-shadow:6px 6px 0 #000;">
+      <h3 style="margin:0 0 6px;color:#000;font-size:17px;">🆕 代注册玩家账号</h3>
       <p style="color:#aaa;font-size:12px;margin:0 0 14px;line-height:1.5">
         由 super 管理员直接创建账号，无需玩家本人注册和审批。账号立即激活可用。
       </p>
       <div style="display:grid;gap:10px;grid-template-columns:1fr">
-        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#9ab">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#333">
           <span>玩家用户名 <b style="color:#fff">*</b> <small>（2-32 字符，中文/字母/数字/下划线/连字符/点/空格，不含 @）</small></span>
           <input id="cpUser" type="text" placeholder="如：SIM_漫画家" style="padding:8px 10px;border:1px solid #444;background:#0f0f1a;color:#eee;border-radius:4px;font-family:inherit;font-size:14px">
         </label>
-        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#9ab">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#333">
           <span>邮箱 <b style="color:#fff">*</b></span>
           <input id="cpEmail" type="email" placeholder="player@example.com" style="padding:8px 10px;border:1px solid #444;background:#0f0f1a;color:#eee;border-radius:4px;font-family:inherit;font-size:14px">
         </label>
-        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#9ab">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#333">
           <span>游戏 ID <small>（可选）</small></span>
           <input id="cpGame" type="text" placeholder="Minecraft 游戏内 ID" style="padding:8px 10px;border:1px solid #444;background:#0f0f1a;color:#eee;border-radius:4px;font-family:inherit;font-size:14px">
         </label>
-        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#9ab">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#333">
           <span>初始密码 <b style="color:#fff">*</b> <small>（至少 8 位）</small></span>
           <input id="cpPass" type="text" placeholder="可填临时密码，玩家可自行修改" style="padding:8px 10px;border:1px solid #444;background:#0f0f1a;color:#eee;border-radius:4px;font-family:inherit;font-size:14px">
         </label>
@@ -800,8 +796,8 @@ function bookEdit(b) {
   bd.id = 'bookEditBackdrop';
   bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
   bd.innerHTML = `
-    <div style="background:#1a1a2e;border:2px solid #fc6;border-radius:8px;padding:18px;max-width:540px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;">
-      <h3 style="margin:0 0 12px;color:#fc6;font-size:16px;">✎ 编辑酒店预订 #${b.id}</h3>
+    <div style="border:3px solid #000;box-shadow:6px 6px 0 #000;max-height:90vh;overflow-y:auto;">
+      <h3 style="margin:0 0 12px;color:#000;font-size:16px;">✎ 编辑酒店预订 #${b.id}</h3>
       <label style="display:block;margin-bottom:8px;">
         <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">姓名</span>
         <input id="beName" value="${esc(b.name||'')}" style="width:100%;padding:6px 8px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:13px;box-sizing:border-box;" />
@@ -1027,7 +1023,7 @@ function kartCircuitEdit(it, kind) {
   const _statusOpts = (isK ? ['pending','approved','rejected'] : ['pending','confirmed','cancelled'])
     .map(s => `<option value="${s}" ${s===it.status?'selected':''}>${({pending:'待处理',approved:'已批准',rejected:'已拒绝',confirmed:'已确认',cancelled:'已取消'})[s]}</option>`).join('');
   bd.innerHTML = `
-    <div style="background:#1a1a2e;border:2px solid ${_color};border-radius:8px;padding:18px;max-width:540px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;">
+    <div style="background:var(--c-cream,#f5e6c5);border:3px solid #000;box-shadow:6px 6px 0 #000;max-height:90vh;overflow-y:auto;">
       <h3 style="margin:0 0 12px;color:${_color};font-size:16px;">✎ 编辑${_type} #${it.id}</h3>
       <div style="display:flex;gap:8px;margin-bottom:8px;">
         <label style="flex:1;display:block;">
@@ -1157,7 +1153,7 @@ function adminEdit(a) {
   bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
   const isMe = window._me && a.id === window._me.id;
   bd.innerHTML = `
-    <div style="background:#1a1a2e;border:2px solid #a6a;border-radius:8px;padding:18px;max-width:440px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);">
+    <div style="background:var(--c-cream,#f5e6c5);border:3px solid #000;box-shadow:6px 6px 0 #000;">
       <h3 style="margin:0 0 12px;color:#c8c;font-size:16px;">✎ 编辑管理员 #${a.id}</h3>
       <label style="display:block;margin-bottom:8px;">
         <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">用户名 (3-32 字符)</span>
@@ -1170,7 +1166,7 @@ function adminEdit(a) {
           <option value="super" ${a.role==='super'?'selected':''}>SUPER (超级管理员)</option>
         </select>
       </label>
-      ${isMe?'<p style="color:#a6a;font-size:11px;margin-bottom:8px;">⚠️ 自己的账号不能改用户名/角色, 用"修改密码"按钮改密码</p>':''}
+      ${isMe?'<p style="color:#a44;font-size:11px;margin-bottom:8px;">⚠️ 自己的账号不能改用户名/角色, 用"修改密码"按钮改密码</p>':''}
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px;">
         <button id="admCancel" type="button" style="background:#555;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-size:13px;">取消</button>
         <button id="admSave" type="button" style="background:#a6a;color:#fff;border:none;padding:8px 14px;border-radius:4px;cursor:pointer;font-weight:bold;font-size:13px;">💾 保存</button>
@@ -1531,8 +1527,8 @@ async function safeRender(fn){try{await fn();}catch(e){console.error(e);}}
     bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
     const _v = (k) => item ? esc(item[k] || '') : '';
     bd.innerHTML = `
-      <div style="background:#1a1a2e;border:2px solid #6cf;border-radius:8px;padding:18px;max-width:560px;width:100%;box-shadow:0 8px 32px rgba(0,0,0,.5);max-height:90vh;overflow-y:auto;">
-        <h3 style="margin:0 0 12px;color:#6cf;font-size:16px;">${isNew ? '🖼️ 添加首页图片' : '✎ 编辑图片 #' + item.id}</h3>
+      <div style="background:var(--c-cream,#f5e6c5);border:3px solid #000;box-shadow:6px 6px 0 #000;max-height:90vh;overflow-y:auto;">
+        <h3 style="margin:0 0 12px;color:#000;font-size:16px;">${isNew ? '🖼️ 添加首页图片' : '✎ 编辑图片 #' + item.id}</h3>
         <label style="display:block;margin-bottom:8px;">
           <span style="display:block;color:#aaa;font-size:12px;margin-bottom:4px;">编号 (1-999, 唯一, 控制显示顺序)</span>
           <input id="galNum" type="number" min="1" max="999" value="${_v('num')}" style="width:100%;padding:8px 10px;border-radius:4px;border:1px solid #555;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;box-sizing:border-box;" />

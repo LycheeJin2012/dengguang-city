@@ -1173,6 +1173,52 @@ body.admin-body {
   background: white;
 }
 /* ============================================
+   Image upload 统一组件 (v25.49)
+   ============================================ */
+.image-upload-wrap {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.image-upload-btn {
+  flex: 0 0 auto;
+  font-size: 12px;
+  padding: 6px 12px;
+  background: var(--c-paper);
+  color: var(--c-black);
+  border: 2px solid var(--c-black);
+  font-family: inherit;
+  cursor: pointer;
+  box-shadow: 3px 3px 0 var(--c-black);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+.image-upload-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0 var(--c-black);
+}
+.image-upload-btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--c-black);
+}
+.image-upload-file {
+  display: none;
+}
+.image-upload-hint {
+  font-family: var(--font-cn);
+  font-size: 12px;
+  color: var(--c-stone-dark);
+}
+.image-upload-preview {
+  max-height: 48px;
+  max-width: 80px;
+  display: none;
+  border: 2px solid var(--c-black);
+  object-fit: cover;
+}
+
+/* ============================================
    Modal (v17.6 居中 + 响应式)
    ============================================ */
 .modal-mask {
