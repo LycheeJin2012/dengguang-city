@@ -45,7 +45,6 @@
 }
 .tag-success { background: var(--c-grass); color: white; }
 .tag-warn    { background: var(--c-gold); color: var(--c-dark); }
-.tag-danger  { background: var(--c-redstone); color: white; }
 .tag-super   { background: var(--c-water); color: white; }
 
 /* ---------- 2. 返回链接 (子页通用) ---------- */
@@ -284,7 +283,6 @@
   margin-top: 14px;
 }
 .modal-actions button { flex: 1; padding: 10px; }
-.btn-cancel { background: var(--c-stone) !important; color: white !important; }
 .btn-success { background: var(--c-grass) !important; color: white !important; box-shadow: 4px 4px 0 var(--c-black) !important; }
 .modal-msg-inline { font-family: var(--font-cn); font-size: 13px; margin-top: 10px; }
 .modal-msg-inline.success { color: var(--c-grass); }
