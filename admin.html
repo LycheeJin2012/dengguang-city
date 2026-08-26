@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <title>跳转中...</title>
 <script>
-  // v32: 提取 _setActiveSubview helper, admin.js 切 tab + admin-manage sub-tab click 共用
-  try { window.location.replace('/admin-v32.html?v=v32final-' + Date.now().toString(36)); } catch (e) {}
-  try { window.location.href = '/admin-v32.html?v=v32final'; } catch (e) {}
-  setTimeout(function(){ window.location = '/admin-v32.html?v=v32final'; }, 100);
+  // v33: 替换 alert 为右上角 toast (一次性覆盖 admin 66 个 alert)
+  try { window.location.replace('/admin-v33.html?v=v33final-' + Date.now().toString(36)); } catch (e) {}
+  try { window.location.href = '/admin-v33.html?v=v33final'; } catch (e) {}
+  setTimeout(function(){ window.location = '/admin-v33.html?v=v33final'; }, 100);
 </script>
 </head>
 <body>
-<p>正在跳转... 如果没有自动跳转, <a href="/admin-v32.html?v=v32final">点此进入管理后台</a></p>
+<p>正在跳转... 如果没有自动跳转, <a href="/admin-v33.html?v=v33final">点此进入管理后台</a></p>
 </body>
 </html>

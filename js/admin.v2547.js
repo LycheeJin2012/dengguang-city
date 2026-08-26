@@ -9,6 +9,33 @@ const STATUS_LABEL={pending:'待审批',active:'已激活',rejected:'已拒绝'}
 const EXAM_LABEL={written:'B 级笔试',road:'A 级路考',upgrade:'S 级升级'};
 const EXAM_BADGE={pending:'待审',passed:'✓ 通过',failed:'✗ 未通过'};
 
+// v33: 替换原生 alert 为右上角 toast — 一次性覆盖 admin.js 57 + admin-manage 9 = 66 个 alert
+// 自动按消息内容判断类型: 失败/错误/无效 → 红; 成功/已 → 绿; 其他 → 灰
+function _toast(msg, type) {
+  type = type || (/失败|错误|无效|不能|未|拒绝|fail|error/i.test(String(msg)) ? 'error' : /成功|已|完成|ok/i.test(String(msg)) ? 'success' : 'info');
+  let c = document.getElementById('_toast-container');
+  if (!c) {
+    c = document.createElement('div');
+    c.id = '_toast-container';
+    c.style.cssText = 'position:fixed;top:80px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:90vw;';
+    document.body.appendChild(c);
+  }
+  const bg = type === 'error' ? '#c33' : type === 'success' ? '#3a3' : '#333';
+  const t = document.createElement('div');
+  t.style.cssText = 'background:' + bg + ';color:#fff;padding:12px 18px;border-radius:6px;font-size:14px;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,.3);max-width:340px;pointer-events:auto;opacity:0;transform:translateY(-8px);transition:opacity .2s ease,transform .2s ease;';
+  t.textContent = String(msg);
+  c.appendChild(t);
+  // 强制 reflow 后过渡
+  requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
+  setTimeout(() => {
+    t.style.opacity = '0';
+    t.style.transform = 'translateY(-8px)';
+    setTimeout(() => t.remove(), 250);
+  }, 3000);
+}
+window._toast = _toast;
+window.alert = _toast;
+
 // v25.37: 把 _fileToDataURL / _attachFileUpload 提到主 IIFE 顶层
 // (之前在嵌套 IIFE 里, showAnnModal 等顶层函数调不到)
 function _fileToDataURL(input, callback) {

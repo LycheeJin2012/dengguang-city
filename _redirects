@@ -1,16 +1,19 @@
-# v32: admin.html → admin-v32.html (302 + 新文件名 + timestamp, 绕开 user 浏览器 disk cache)
+# v33: admin.html → admin-v33.html (302 + 新文件名 + timestamp)
 # v30: 修切 tab handler 同步切 subview active class
-# v31: 重构 filter radio handler (7 个 if-else → map lookup), 删 4 临时文件
-# v32: 提取 _setActiveSubview helper, admin.js 切 tab + admin-manage sub-tab click 共用同一套 active 切换
-/admin          /admin-v32.html?v=v32final  302
-/admin.html     /admin-v32.html?v=v32final  302
-/admin-new      /admin-v32.html?v=v32final  302
-/admin-new.html /admin-v32.html?v=v32final  302
-/admin-v28      /admin-v32.html?v=v32final  302
-/admin-v28.html /admin-v32.html?v=v32final  302
-/admin-v29      /admin-v32.html?v=v32final  302
-/admin-v29.html /admin-v32.html?v=v32final  302
-/admin-v30      /admin-v32.html?v=v32final  302
-/admin-v30.html /admin-v32.html?v=v32final  302
-/admin-v31      /admin-v32.html?v=v32final  302
-/admin-v31.html /admin-v32.html?v=v32final  302
+# v31: 重构 filter radio handler (7 if-else → map lookup), 删 4 临时文件
+# v32: 提取 _setActiveSubview helper, admin.js 切 tab + admin-manage sub-tab click 共用
+# v33: 替换 alert 为右上角 toast (admin.js IIFE 内 window.alert = _toast, 一次覆盖 66 个 alert)
+/admin          /admin-v33.html?v=v33final  302
+/admin.html     /admin-v33.html?v=v33final  302
+/admin-new      /admin-v33.html?v=v33final  302
+/admin-new.html /admin-v33.html?v=v33final  302
+/admin-v28      /admin-v33.html?v=v33final  302
+/admin-v28.html /admin-v33.html?v=v33final  302
+/admin-v29      /admin-v33.html?v=v33final  302
+/admin-v29.html /admin-v33.html?v=v33final  302
+/admin-v30      /admin-v33.html?v=v33final  302
+/admin-v30.html /admin-v33.html?v=v33final  302
+/admin-v31      /admin-v33.html?v=v33final  302
+/admin-v31.html /admin-v33.html?v=v33final  302
+/admin-v32      /admin-v33.html?v=v33final  302
+/admin-v32.html /admin-v33.html?v=v33final  302
