@@ -251,7 +251,7 @@ function _setupCrudHandlers(listId, handlers){
 // ============================================================
 // sub-tab 切换 (切到 manage 子 tab 时调对应 render)
 // ============================================================
-document.addEventListener('click', function(e){
+document.addEventListener('click', async function(e){
   const tab = e.target.closest('.subtab');
   if (!tab) return;
   const nav = tab.closest('.subtabs');
@@ -263,9 +263,17 @@ document.addEventListener('click', function(e){
     sv.classList.toggle('active', sv.dataset.subview === pane+'-'+sub);
   });
   if (sub === 'manage') {
-    if (pane === 'bookings') renderHotelManage();
-    else if (pane === 'license') renderLicenseManage();
-    else if (pane === 'kart') renderTrackManage();
+    try {
+      if (pane === 'bookings') await renderHotelManage();
+      else if (pane === 'license') await renderLicenseManage();
+      else if (pane === 'kart') await renderTrackManage();
+    } catch (err) {
+      // 错误显式显示在 list 容器里
+      const listIds = { bookings: 'hotelManageList', license: 'licenseManageList', kart: 'trackManageList' };
+      const el = document.getElementById(listIds[pane]);
+      if (el) el.innerHTML = '<div class="empty-state" style="color:#c44"><div class="empty-icon">⚠️</div><p>加载失败: ' + (err.message || err) + '</p></div>';
+      console.error('[admin-manage] 加载失败:', err);
+    }
   }
 });
 
