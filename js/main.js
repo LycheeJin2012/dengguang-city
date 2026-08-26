@@ -809,11 +809,11 @@
       };
       const t = tracks[0];
       set('length', t.length_km ? t.length_km + ' km' : '—');
-      set('lanes', '双车道');
-      set('curves', '发夹弯 + 弯道区');
-      set('tunnel', '含隧道');
+      set('lanes', '—');
+      set('curves', '—');
+      set('tunnel', '—');
       set('surface', t.name && t.name.includes('冰') ? '红石冰道' : (t.name || '—'));
-      set('record', '待刷新');
+      set('record', '—');
       // v25.50: 赛道图 (image_url 优先, 无则占位图)
       if (mapImg && t.image_url) {
         mapImg.src = t.image_url;
