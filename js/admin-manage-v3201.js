@@ -1,8 +1,8 @@
-/* 灯光市 v29 · admin manage subview (合并 circuit → kart subview)
+/* 灯光市 v31 · admin manage subview (合并 circuit → kart subview)
  * v27/v28 重写: 3 个 manage subview 独立 fetch 独立端点
- * v29 增量: sub-tab handler 加 pane==='kart' && sub==='circuit' → renderCircuits() (admin.v2543.js 全局函数)
+ * v29 增量: sub-tab handler 加 pane==='kart' && sub==='circuit' → renderCircuits() (admin.v2545.js 全局函数)
+ * v31: sub-tab click handler 用 window._setActiveSubview 替代手写切 active class (admin.js 提供的 helper)
  * 挂 window.renderHotelManage / renderTrackManage / renderLicenseManage 给 sub-tab click handler
- * 挂 window.addHotelBtn / addTrackBtn / addLicReqBtn 给 + 按钮
  */
 (function () {
 'use strict';
@@ -202,10 +202,8 @@ document.addEventListener('click', async (e) => {
   if (!nav) return;
   const pane = nav.dataset.pane;
   const sub = tab.dataset.sub;
-  nav.querySelectorAll('.subtab').forEach((b) => b.classList.toggle('active', b === tab));
-  document.querySelectorAll('.subview[data-subview^="' + pane + '-"]').forEach((sv) => {
-    sv.classList.toggle('active', sv.dataset.subview === pane + '-' + sub);
-  });
+  // v31: 切 subview + sub-tab button active 走 admin.js 提供的 _setActiveSubview helper
+  if (window._setActiveSubview) window._setActiveSubview(pane, sub);
   if (sub === 'manage') {
     if (pane === 'bookings') await renderHotelManage();
     else if (pane === 'license') await renderLicenseManage();

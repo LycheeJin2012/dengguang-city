@@ -1801,6 +1801,19 @@ function renderDash(){
 }
 
 // tab 切换
+// v31: 提取 _setActiveSubview helper, 切 tab 跟切 sub-tab 共用同一套 active 切换逻辑
+window._setActiveSubview = function(pane, sub) {
+  // 移除所有 subview active class
+  document.querySelectorAll('.subview').forEach(sv => sv.classList.remove('active'));
+  // 切该 pane 的目标 subview active (CSS .subview.active { display: block })
+  document.querySelectorAll('.subview[data-subview^="' + pane + '-"]').forEach(sv => {
+    sv.classList.toggle('active', sv.dataset.subview === pane + '-' + sub);
+  });
+  // 同步切该 pane 的 sub-tab button active
+  const nav = document.querySelector('.subtabs[data-pane="' + pane + '"]');
+  if (nav) nav.querySelectorAll('.subtab').forEach(b => b.classList.toggle('active', b.dataset.sub === sub));
+};
+
 $$('.admin-tabs .tab').forEach(btn=>{
   btn.addEventListener('click',()=>{
     const t=btn.dataset.tab;
@@ -1810,18 +1823,9 @@ $$('.admin-tabs .tab').forEach(btn=>{
       p.classList.toggle('active',isActive);
       p.style.display = isActive ? '' : 'none';
     });
-    // 切换主 tab 时重置所有 sub-tabs 的 active 状态, 避免旧 pane 的 sub-tab 仍高亮
-    $$('.subtab').forEach(b=>b.classList.remove('active'));
-    // v29 修: 切到非 bookings tab 时 (license/kart), 默认 subview (license-signup/kart-signup) 没 active class
-    // → CSS `.subview { display: none }` 永远不显示, user 看到 subview 空白
-    // 修: 切 tab 时同步给该 pane 的所有 subview 切 active class (跟 sub-tab click handler 行为一致)
-    $$('.subview').forEach(sv => sv.classList.remove('active'));
-    $$('.subview[data-subview^="'+t+'-"]').forEach(sv => {
-      sv.classList.toggle('active', sv.dataset.subview === t + '-signup');
-    });
-    // 恢复各 pane 的默认 sub-tab active (报名记录, 即 data-sub="signup")
-    const _defaultSub = $$('.subtabs[data-pane="'+t+'"] .subtab[data-sub="signup"]');
-    if(_defaultSub.length) _defaultSub[0].classList.add('active');
+    // v29 修: 切到非 bookings tab 时, 默认 subview 没 active class → CSS .subview { display: none } 永远不显示
+    // v31: 抽到 _setActiveSubview helper, 跟 sub-tab click handler 共享
+    if (window._setActiveSubview) window._setActiveSubview(t, 'signup');
   });
 });
 

@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <title>跳转中...</title>
 <script>
-  // v31: 重构 filter radio handler (7 个 if-else → map lookup) + 删临时文件
-  try { window.location.replace('/admin-v31.html?v=v31final-' + Date.now().toString(36)); } catch (e) {}
-  try { window.location.href = '/admin-v31.html?v=v31final'; } catch (e) {}
-  setTimeout(function(){ window.location = '/admin-v31.html?v=v31final'; }, 100);
+  // v32: 提取 _setActiveSubview helper, admin.js 切 tab + admin-manage sub-tab click 共用
+  try { window.location.replace('/admin-v32.html?v=v32final-' + Date.now().toString(36)); } catch (e) {}
+  try { window.location.href = '/admin-v32.html?v=v32final'; } catch (e) {}
+  setTimeout(function(){ window.location = '/admin-v32.html?v=v32final'; }, 100);
 </script>
 </head>
 <body>
-<p>正在跳转... 如果没有自动跳转, <a href="/admin-v31.html?v=v31final">点此进入管理后台</a></p>
+<p>正在跳转... 如果没有自动跳转, <a href="/admin-v32.html?v=v32final">点此进入管理后台</a></p>
 </body>
 </html>
