@@ -458,17 +458,7 @@
       }, 800); // 兜底, 防止 JS 错误时一直卡 loading
     });
   </script>
-  <!-- v25.32: inline sync XHR 拿数据 (100% 保证 admin.js 跑前 window.__manageData 有值) -->
-  <script>
-    (function(){
-      try {
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', '/api/admin/manage-data?keys=hotels,rooms,tracks,licenseReq&_=' + Date.now(), false);
-        xhr.send();
-        if (xhr.status === 200) { eval(xhr.responseText); }
-      } catch (e) { console.error('inline sync xhr failed', e); }
-    })();
-  </script>
+  <!-- v26: 删 inline sync XHR — 后端改纯 JSON 后 eval 报 SyntaxError, 改用 admin-manage.v2569.js fetch 拉数据 -->
   <script src="js/admin.v2540.js" defer></script>
   <script src="js/admin-manage.v2569.js" defer></script>
 </body>
