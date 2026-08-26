@@ -1,6 +1,9 @@
-# v28: admin.html → admin-v28.html (用 302 + 新文件名 + timestamp, 绕开 user 浏览器 disk cache)
+# v29: admin.html → admin-v29.html (用 302 + 新文件名 + timestamp, 绕开 user 浏览器 disk cache)
 # 之前 v25.58 时代 admin-new.html 累积了 disk cache 问题, 改文件名强制 user 拿到新版本
-/admin          /admin-v28.html?v=v28final  302
-/admin.html     /admin-v28.html?v=v28final  302
-/admin-new      /admin-v28.html?v=v28final  302
-/admin-new.html /admin-v28.html?v=v28final  302
+# v29 增量: 合并国际赛车场 (circuit) tab 进赛道 (kart) tab 第 2 个 subview "国际试车"
+/admin          /admin-v29.html?v=v29final  302
+/admin.html     /admin-v29.html?v=v29final  302
+/admin-new      /admin-v29.html?v=v29final  302
+/admin-new.html /admin-v29.html?v=v29final  302
+/admin-v28      /admin-v29.html?v=v29final  302
+/admin-v28.html /admin-v29.html?v=v29final  302

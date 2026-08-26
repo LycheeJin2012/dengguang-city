@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet" />
   <link rel="preload" href="css/style.css?v=20260825-2556" as="style" />
   <link rel="preload" href="css/admin.css?v=20260825-2556" as="style" />
-  <link rel="preload" href="js/admin.v2542.js" as="script" />
+  <link rel="preload" href="js/admin.v2543.js" as="script" />
   <link rel="stylesheet" href="css/style.css?v=20260825-2556" />
   <link rel="stylesheet" href="css/admin.css?v=20260825-2556" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2370ad34'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='10' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='3' y='10' width='3' height='3' fill='%23ffd23f'/%3E%3C/svg%3E" />
@@ -97,8 +97,7 @@
       <button class="tab" data-tab="players">👥 玩家管理 <span class="tab-count" id="playerPending"></span></button>
       <button class="tab" data-tab="bookings">🏨 酒店预订 <span class="tab-count" id="bookPending"></span></button>
       <button class="tab" data-tab="license">🚗 驾照考试 <span class="tab-count" id="licensePending"></span></button>
-      <button class="tab" data-tab="kart">🏁 赛道报名 <span class="tab-count" id="kartPending"></span></button>
-      <button class="tab" data-tab="circuit">🏎️ 国际赛车场 <span class="tab-count" id="circuitPending"></span></button>
+      <button class="tab" data-tab="kart">🏁 赛道 / 国际试车 <span class="tab-count" id="kartPending"></span> <span class="tab-count" id="circuitPending"></span></button>
       <button class="tab" data-tab="announcements" id="tabAnnouncements">📢 公告管理</button>
       <button class="tab" data-tab="gallery" id="tabGallery">🖼️ 首页图集</button>
       <button class="tab" data-tab="dms" id="tabDms">💬 私信监管</button>
@@ -272,6 +271,7 @@
       </div>
       <nav class="subtabs" data-pane="kart">
         <button class="subtab active" data-sub="signup">📋 赛道报名</button>
+        <button class="subtab" data-sub="circuit">🏎️ 国际试车</button>
         <button class="subtab" data-sub="manage" data-super-only>🏁 赛车场管理 (SUPER)</button>
       </nav>
       <div class="subview" data-subview="kart-signup">
@@ -306,42 +306,34 @@
           <button class="btn btn-primary btn-sm" id="btnAddTrack">+ 新建赛车场</button>
         </div>
       </div>
-    </section>
-
-    <!-- Tab: 国际赛车场 -->
-    <section class="tab-pane" id="pane-circuit">
-      <div class="pane-head">
-        <h2>国际赛车场·试车报名</h2>
-        <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderCircuits">🔄 刷新</button>
-          <button class="btn btn-ghost btn-sm" id="btnCircuitClearDone">清除已处理</button>
+      <!-- v29: 国际赛车场合并进赛道 tab 第 2 个 subview (原 circuit tab 整段) -->
+      <div class="subview" data-subview="kart-circuit">
+        <div class="msg-filter">
+          <label><input type="radio" name="circuitFilter" value="all" checked /> 全部 <span id="circuitCntAll">0</span></label>
+          <label><input type="radio" name="circuitFilter" value="pending" /> 待审核 <span id="circuitCntPending">0</span></label>
+          <label><input type="radio" name="circuitFilter" value="approved" /> 已批准 <span id="circuitCntApproved">0</span></label>
+          <label><input type="radio" name="circuitFilter" value="rejected" /> 已拒绝 <span id="circuitCntRejected">0</span></label>
+          <select id="circuitSessionFilter">
+            <option value="">全部场次</option>
+            <option>排位赛 周三 20:00</option>
+            <option>正赛 周六 15:00</option>
+            <option>国际邀请赛 月初</option>
+            <option>自由练习</option>
+          </select>
+          <select id="circuitLicenseFilter">
+            <option value="">全部驾照</option>
+            <option>B 级（初级）</option>
+            <option>A 级（中级）</option>
+            <option>S 级（高级 / 职业）</option>
+          </select>
         </div>
-      </div>
-      <div class="msg-filter">
-        <label><input type="radio" name="circuitFilter" value="all" checked /> 全部 <span id="circuitCntAll">0</span></label>
-        <label><input type="radio" name="circuitFilter" value="pending" /> 待审核 <span id="circuitCntPending">0</span></label>
-        <label><input type="radio" name="circuitFilter" value="approved" /> 已批准 <span id="circuitCntApproved">0</span></label>
-        <label><input type="radio" name="circuitFilter" value="rejected" /> 已拒绝 <span id="circuitCntRejected">0</span></label>
-        <select id="circuitSessionFilter">
-          <option value="">全部场次</option>
-          <option>排位赛 周三 20:00</option>
-          <option>正赛 周六 15:00</option>
-          <option>国际邀请赛 月初</option>
-          <option>自由练习</option>
-        </select>
-        <select id="circuitLicenseFilter">
-          <option value="">全部驾照</option>
-          <option>B 级（初级）</option>
-          <option>A 级（中级）</option>
-          <option>S 级（高级 / 职业）</option>
-        </select>
-      </div>
-      <div id="circuitList" class="msg-list">
-        <!-- JS 渲染 -->
-      </div>
-      <div id="circuitEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">🏎️</div>
-        <p>暂无报名</p>
+        <div id="circuitList" class="msg-list">
+          <!-- JS 渲染 -->
+        </div>
+        <div id="circuitEmpty" class="empty-state" style="display:none">
+          <div class="empty-icon">🏎️</div>
+          <p>暂无报名</p>
+        </div>
       </div>
     </section>
 
@@ -459,8 +451,8 @@
     });
   </script>
   <!-- v27.01: 用新版本文件名 v2541 + v2701 绕过 CF 边缘 cache (确保 user 必拿到新版) -->
-  <script src="js/admin.v2542.js" defer></script>
-  <script src="js/admin-manage-v2801.js" defer></script>
+  <script src="js/admin.v2543.js" defer></script>
+  <script src="js/admin-manage-v2901.js" defer></script>
 </body>
 </html>
 
