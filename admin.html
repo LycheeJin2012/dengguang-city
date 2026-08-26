@@ -3,16 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <title>跳转中...</title>
-<meta http-equiv="refresh" content="0;url=/admin-new.html?v=20260818-redirect">
-<link rel="canonical" href="/admin-new.html?v=20260818-redirect">
 <script>
-  // 多重跳转保险
-  try { window.location.replace('/admin-new.html?v=20260818-redirect&t=' + Date.now()); } catch (e) {}
-  try { window.location.href = '/admin-new.html?v=20260818-redirect&t=' + Date.now(); } catch (e) {}
-  setTimeout(function(){ window.location = '/admin-new.html?v=20260818-redirect&t=' + Date.now(); }, 100);
+  // v27.04: 不带 ?v= 参数, 让 admin-new.html 顶部 cache-bust script 自动加 timestamp, 永远不命中 CF 边缘 cache
+  try { window.location.replace('/admin-new.html'); } catch (e) {}
+  try { window.location.href = '/admin-new.html'; } catch (e) {}
+  setTimeout(function(){ window.location = '/admin-new.html'; }, 100);
 </script>
 </head>
 <body>
-<p>正在跳转... 如果没有自动跳转, <a href="/admin-new.html?v=20260818-redirect">点此进入管理后台</a></p>
+<p>正在跳转... 如果没有自动跳转, <a href="/admin-new.html">点此进入管理后台</a></p>
 </body>
 </html>

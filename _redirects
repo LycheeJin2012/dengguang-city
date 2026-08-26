@@ -1,3 +1,4 @@
-# v18: admin.html → admin-new.html (CF Pages 边缘 cache 卡住老 admin.html)
-/admin       /admin-new.html?v=20260818  301
-/admin.html  /admin-new.html?v=20260818  301
+# v27.04: admin.html → admin-new.html (用 302 让 cache-bust script 加 timestamp, 永远不命中 CF 边缘 cache)
+# 之前 301 + 固定 ?v=20260818 导致 user 永远卡在 v25.58 老版本
+/admin       /admin-new.html  302
+/admin.html  /admin-new.html  302
