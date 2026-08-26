@@ -55,10 +55,10 @@ export async function onRequestPatch(context) {
     await env.DB.prepare('UPDATE messages SET status = ? WHERE id = ?').bind(status, id).run();
   }
   // 改 admin_reply（v16：支持 admin 回复玩家留言）
+  // v25.67: 删 2000 字符硬限制 (D1 TEXT 字段够长, admin 是 trusted user 不限字数)
   if (typeof reply === 'string') {
     const cleaned = stripHtml(reply);
     if (cleaned.length > 0) {
-      if (cleaned.length > 2000) return err(400, '回复内容不能超过 2000 字符');
 
       // v17.7: 历史追溯 — 读旧回复,如果被覆盖且类型不同(AI↔人工)就存到 previous_reply
       // 防御: previous_reply 列可能还没迁移完,旧版本下读不到列

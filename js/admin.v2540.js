@@ -517,7 +517,8 @@ function showReplyModal(m){
       ${context}
       ${m.admin_reply && m.admin_reply.startsWith('🤖')?'<div style="background:#1a2a1a;border-left:3px solid #6f6;padding:6px 10px;border-radius:4px;margin-bottom:8px;font-size:12px;color:#9f9;">🤖 AI 已自动回复，管理员可编辑覆盖</div>':''}
       <div style="position:relative;margin-bottom:8px;">
-        <textarea id="replyText" placeholder="输入回复内容…" style="width:100%;min-height:140px;padding:10px;border-radius:4px;border:1px solid #444;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;line-height:1.5;resize:vertical;box-sizing:border-box;">${esc(m.admin_reply||'')}</textarea>
+        <textarea id="replyText" placeholder="输入回复内容…(无字数限制)" style="width:100%;min-height:140px;padding:10px;border-radius:4px;border:1px solid #444;background:#0f0f1a;color:#eee;font-family:inherit;font-size:14px;line-height:1.5;resize:vertical;box-sizing:border-box;">${esc(m.admin_reply||'')}</textarea>
+        <div id="replyCount" style="position:absolute;bottom:6px;right:10px;font-size:11px;color:#888;pointer-events:none;background:rgba(15,15,26,0.7);padding:2px 6px;border-radius:3px;">${m.admin_reply ? m.admin_reply.length : 0} 字</div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;">
         <span style="flex:1;"></span>
@@ -534,6 +535,9 @@ function showReplyModal(m){
   document.body.appendChild(bd);
 
   const ta=bd.querySelector('#replyText');
+  const cnt=bd.querySelector('#replyCount');
+  // v25.67: 实时字数统计 (无限制, 只显示)
+  ta.addEventListener('input',()=>{ if(cnt) cnt.textContent = ta.value.length + ' 字'; });
   const close=()=>bd.remove();
   bd.addEventListener('click',e=>{if(e.target===bd)close();});
 
