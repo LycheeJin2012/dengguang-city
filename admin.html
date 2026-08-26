@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <title>跳转中...</title>
 <script>
-  // v33: 替换 alert 为右上角 toast (一次性覆盖 admin 66 个 alert)
-  try { window.location.replace('/admin-v33.html?v=v33final-' + Date.now().toString(36)); } catch (e) {}
-  try { window.location.href = '/admin-v33.html?v=v33final'; } catch (e) {}
-  setTimeout(function(){ window.location = '/admin-v33.html?v=v33final'; }, 100);
+  // v34: lazy load tab data (boot 只 render 默认 tab, 切到再 fetch)
+  try { window.location.replace('/admin-v34.html?v=v34final-' + Date.now().toString(36)); } catch (e) {}
+  try { window.location.href = '/admin-v34.html?v=v34final'; } catch (e) {}
+  setTimeout(function(){ window.location = '/admin-v34.html?v=v34final'; }, 100);
 </script>
 </head>
 <body>
-<p>正在跳转... 如果没有自动跳转, <a href="/admin-v33.html?v=v33final">点此进入管理后台</a></p>
+<p>正在跳转... 如果没有自动跳转, <a href="/admin-v34.html?v=v34final">点此进入管理后台</a></p>
 </body>
 </html>

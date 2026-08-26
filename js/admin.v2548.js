@@ -1781,6 +1781,26 @@ document.addEventListener('click', (e) => {
     });
   });
 
+// v34: lazy load — boot 只 render 默认 active tab, 切到再 fetch
+// 之前 boot Promise.all 9 个 render 同时拉所有数据 (~ 0.5-1s, 9 个 D1 query)
+// 改: boot 只 render 默认 tab (bookings), 切到 tab 时再 render (切到瞬时 fetch)
+// 节省 boot 时间和流量, user 切到 tab 才有 ~100ms 等待 (vs 之前 0.5-1s 整体延迟)
+const _TAB_RENDER = {
+  messages: renderMessages,
+  players: renderPlayers,
+  bookings: renderBookings,
+  license: renderLicense,
+  kart: renderKarts,  // kart tab 默认 kart-signup, renderKarts 渲染
+  announcements: renderAnnouncements,
+  gallery: renderGallery,
+  admins: renderAdminList,
+  dms: renderDms,  // super only, renderDms 内部检查 role
+};
+function _ensureTabRendered(tab) {
+  const fn = _TAB_RENDER[tab];
+  if (fn) safeRender(fn);
+}
+
 function renderDash(){
   try{
     const a=window._me;
@@ -1792,19 +1812,8 @@ function renderDash(){
     if(ba)ba.style.display=a.role==='super'?'':'none';
   }catch(e){throw e;}
   showView('dash');
-  // v25.54: 9 个 render 并行 fetch (之前 await 串行 9 个 ~ 3-4.5s, 改 Promise.all 降到 ~0.5-1s)
-  // v26: 3 个 manage subview render 搬到 admin-manage.v2569.js, 切 subview 时才加载
-  Promise.all([
-    safeRender(renderMessages),
-    safeRender(renderPlayers),
-    safeRender(renderBookings),
-    safeRender(renderLicense),
-    safeRender(renderKarts),
-    safeRender(renderCircuits),
-    safeRender(renderAdminList),
-    safeRender(renderAnnouncements),
-    safeRender(renderGallery),
-  ]);
+  // v34: 只 render 默认 active tab (HTML 默认 .tab-pane.active = bookings)
+  _ensureTabRendered('bookings');
   // 仅 super 可见 DM 监管 tab
   try {
     if (window._me && window._me.role === 'super') {
@@ -1853,6 +1862,8 @@ $$('.admin-tabs .tab').forEach(btn=>{
     // v29 修: 切到非 bookings tab 时, 默认 subview 没 active class → CSS .subview { display: none } 永远不显示
     // v31: 抽到 _setActiveSubview helper, 跟 sub-tab click handler 共享
     if (window._setActiveSubview) window._setActiveSubview(t, 'signup');
+    // v34: lazy load — 切到 tab 时 fetch 数据
+    _ensureTabRendered(t);
   });
 });
 
