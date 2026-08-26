@@ -458,9 +458,9 @@
       }, 800); // 兜底, 防止 JS 错误时一直卡 loading
     });
   </script>
-  <!-- v26: 删 inline sync XHR — 后端改纯 JSON 后 eval 报 SyntaxError, 改用 admin-manage.v2569.js fetch 拉数据 -->
-  <script src="js/admin.v2540.js" defer></script>
-  <script src="js/admin-manage.v2569.js" defer></script>
+  <!-- v27.01: 用新版本文件名 v2541 + v2701 绕过 CF 边缘 cache (确保 user 必拿到新版) -->
+  <script src="js/admin.v2541.js" defer></script>
+  <script src="js/admin-manage.v2701.js" defer></script>
 </body>
 </html>
 
