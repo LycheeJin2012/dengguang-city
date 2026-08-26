@@ -1,4 +1,6 @@
-# v27.04: admin.html → admin-new.html (用 302 让 cache-bust script 加 timestamp, 永远不命中 CF 边缘 cache)
-# 之前 301 + 固定 ?v=20260818 导致 user 永远卡在 v25.58 老版本
-/admin       /admin-new.html  302
-/admin.html  /admin-new.html  302
+# v28: admin.html → admin-v28.html (用 302 + 新文件名 + timestamp, 绕开 user 浏览器 disk cache)
+# 之前 v25.58 时代 admin-new.html 累积了 disk cache 问题, 改文件名强制 user 拿到新版本
+/admin          /admin-v28.html?v=v28final  302
+/admin.html     /admin-v28.html?v=v28final  302
+/admin-new      /admin-v28.html?v=v28final  302
+/admin-new.html /admin-v28.html?v=v28final  302

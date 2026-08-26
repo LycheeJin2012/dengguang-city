@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <title>跳转中...</title>
 <script>
-  // v27.04: 不带 ?v= 参数, 让 admin-new.html 顶部 cache-bust script 自动加 timestamp, 永远不命中 CF 边缘 cache
-  try { window.location.replace('/admin-new.html'); } catch (e) {}
-  try { window.location.href = '/admin-new.html'; } catch (e) {}
-  setTimeout(function(){ window.location = '/admin-new.html'; }, 100);
+  // v28: 跳到新文件名 admin-v28.html, 绕开 admin-new.html 老版本 disk cache
+  try { window.location.replace('/admin-v28.html?v=v28final-' + Date.now().toString(36)); } catch (e) {}
+  try { window.location.href = '/admin-v28.html?v=v28final'; } catch (e) {}
+  setTimeout(function(){ window.location = '/admin-v28.html?v=v28final'; }, 100);
 </script>
 </head>
 <body>
-<p>正在跳转... 如果没有自动跳转, <a href="/admin-new.html">点此进入管理后台</a></p>
+<p>正在跳转... 如果没有自动跳转, <a href="/admin-v28.html?v=v28final">点此进入管理后台</a></p>
 </body>
 </html>
