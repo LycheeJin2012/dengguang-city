@@ -894,8 +894,9 @@ async function renderLicense(){
     $('#cntLicPending').textContent=cP;$('#cntLicPassed').textContent=cPa;
     $('#cntLicFailed').textContent=cF;$('#cntLicAll').textContent=list.length;
     $('#licensePending').textContent=cP>0?`(${cP})`:'';
+    // v25.68: 默认 'all' (之前默认 'pending' 但 4 条都非 pending 列表空)
     const f=document.querySelector('input[name="licenseFilter"]:checked');
-    const filter=f?f.value:'pending';
+    const filter=f?f.value:'all';
     let shown=list;if(filter!=='all')shown=shown.filter(x=>x.status===filter);
     const box=$('#licenseList'),empty=$('#licenseEmpty');
     if(!shown.length){box.innerHTML='';empty.style.display = 'flex';return;}
@@ -1763,6 +1764,7 @@ function renderDash(){
   }catch(e){throw e;}
   showView('dash');
   // v25.54: 9 个 render 并行 fetch (之前 await 串行 9 个 ~ 3-4.5s, 改 Promise.all 降到 ~0.5-1s)
+  // v25.68: 加 3 个 subview render (酒店管理/考试要求/赛车场管理) - init 时预加载, 切 subview 不等待
   Promise.all([
     safeRender(renderMessages),
     safeRender(renderPlayers),
@@ -1773,6 +1775,9 @@ function renderDash(){
     safeRender(renderAdminList),
     safeRender(renderAnnouncements),
     safeRender(renderGallery),
+    safeRender(renderHotelManage),
+    safeRender(renderLicenseManage),
+    safeRender(renderTrackManage),
   ]);
   // 仅 super 可见 DM 监管 tab
   try {
@@ -1915,7 +1920,7 @@ async function renderDms(query) {
     const convs = d.conversations || [];
     if (convs.length === 0) {
       list.innerHTML = '';
-      if (empty) { empty.style.display = ''; } else { list.innerHTML = '<p class="empty-state">暂无 DM 记录</p>'; }
+      if (empty) { empty.style.display = 'flex'; } else { list.innerHTML = '<p class="empty-state">暂无 DM 记录</p>'; }
       return;
     }
     list.innerHTML = convs.map(p => {
@@ -2696,7 +2701,7 @@ boot();
     var rooms = (d && d.rooms) || [];
     if (hotels.length === 0) {
       list.innerHTML = '';
-      empty.style.display = '';
+      empty.style.display = 'flex';
       return;
     }
     empty.style.display = 'none';
@@ -2747,7 +2752,7 @@ boot();
     var tracks = (d && d.tracks) || [];
     if (tracks.length === 0) {
       list.innerHTML = '';
-      empty.style.display = '';
+      empty.style.display = 'flex';
       return;
     }
     empty.style.display = 'none';
@@ -2786,7 +2791,7 @@ boot();
     var reqs = (d && d.licenseReq) || [];
     if (reqs.length === 0) {
       list.innerHTML = '';
-      empty.style.display = '';
+      empty.style.display = 'flex';
       return;
     }
     empty.style.display = 'none';
