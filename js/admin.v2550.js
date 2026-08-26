@@ -19,7 +19,7 @@ const EXAM_BADGE={pending:'待审',passed:'✓ 通过',failed:'✗ 未通过'};
 function _fileToDataURL(input, callback) {
   var f = input.files && input.files[0];
   if (!f) return callback(null);
-  if (f.size > 3 * 1024 * 1024) { alert('文件太大 (上限 3MB)'); input.value = ''; return callback(null); }
+  if (f.size > 100 * 1024 * 1024) { alert('文件太大 (上限 100MB)'); input.value = ''; return callback(null); }
   var r = new FileReader();
   r.onload = function(ev) { callback(ev.target.result); };
   r.readAsDataURL(f);
@@ -1653,7 +1653,7 @@ document.addEventListener('click', (e) => {
       _fileInput.addEventListener('change', (e) => {
         const f = e.target.files && e.target.files[0];
         if (!f) return;
-        if (f.size > 3 * 1024 * 1024) { alert('文件太大 (上限 3MB)'); _fileInput.value = ''; return; }
+        if (f.size > 100 * 1024 * 1024) { alert('文件太大 (上限 100MB)'); _fileInput.value = ''; return; }
         const reader = new FileReader();
         e.target._fileReading = true;
         reader.onload = (ev) => {

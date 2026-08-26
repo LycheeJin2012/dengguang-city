@@ -264,15 +264,21 @@
       </div>
       ${me ? `
         <form class="pm-comment-form" data-mid="${mid}">
-          <textarea placeholder="说点什么..." rows="2" required maxlength="1000"></textarea>
-          <button type="submit" class="btn btn-primary btn-sm">💬 发表评论</button>
+          <textarea placeholder="说点什么... (最多 1000 字)" rows="2" required maxlength="1000" class="pm-comment-textarea"></textarea>
+          <div class="pm-comment-meta"><span class="pm-comment-count">0/1000</span> <button type="submit" class="btn btn-primary btn-sm">💬 发表评论</button></div>
         </form>
       ` : `<div class="pm-comment-empty"><a href="#" class="pm-login-link">登录</a> 后可以评论</div>`}
     `;
     box.querySelectorAll('.pm-comment-form').forEach(f => {
+      const ta = f.querySelector('textarea');
+      const count = f.querySelector('.pm-comment-count');
+      if (ta && count) {
+        const updateCount = () => { count.textContent = `${ta.value.length}/1000`; };
+        ta.addEventListener('input', updateCount);
+        updateCount();
+      }
       f.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const ta = f.querySelector('textarea');
         const text = ta.value.trim();
         if (!text) return;
         try {

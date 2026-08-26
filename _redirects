@@ -1,25 +1,28 @@
-# v35: admin.html → admin-v35.html (302 + 新文件名 + timestamp)
+# v36: admin.html → admin-v36.html (302 + 新文件名 + timestamp)
 # v30: 修切 tab handler 同步切 subview active class
 # v31: 重构 filter radio handler (7 if-else → map lookup)
 # v32: 提取 _setActiveSubview helper
 # v33: 替换 alert 为右上角 toast (admin.js 内部 _toast 函数)
 # v34: lazy load tab data (boot 只 render 默认 tab)
-# v35: 公共页 + admin 共用 js/toast.js, 删 admin.js 重复 30 行 _toast 函数
-/admin          /admin-v35.html?v=v35final  302
-/admin.html     /admin-v35.html?v=v35final  302
-/admin-new      /admin-v35.html?v=v35final  302
-/admin-new.html /admin-v35.html?v=v35final  302
-/admin-v28      /admin-v35.html?v=v35final  302
-/admin-v28.html /admin-v35.html?v=v35final  302
-/admin-v29      /admin-v35.html?v=v35final  302
-/admin-v29.html /admin-v35.html?v=v35final  302
-/admin-v30      /admin-v35.html?v=v35final  302
-/admin-v30.html /admin-v35.html?v=v35final  302
-/admin-v31      /admin-v35.html?v=v35final  302
-/admin-v31.html /admin-v35.html?v=v35final  302
-/admin-v32      /admin-v35.html?v=v35final  302
-/admin-v32.html /admin-v35.html?v=v35final  302
-/admin-v33      /admin-v35.html?v=v35final  302
-/admin-v33.html /admin-v35.html?v=v35final  302
-/admin-v34      /admin-v35.html?v=v35final  302
-/admin-v34.html /admin-v35.html?v=v35final  302
+# v35: 公共页 + admin 共用 js/toast.js
+# v36: 文件大小 3MB → 100MB, 市民留言回复加字数计数器
+/admin          /admin-v36.html?v=v36final  302
+/admin.html     /admin-v36.html?v=v36final  302
+/admin-new      /admin-v36.html?v=v36final  302
+/admin-new.html /admin-v36.html?v=v36final  302
+/admin-v28      /admin-v36.html?v=v36final  302
+/admin-v28.html /admin-v36.html?v=v36final  302
+/admin-v29      /admin-v36.html?v=v36final  302
+/admin-v29.html /admin-v36.html?v=v36final  302
+/admin-v30      /admin-v36.html?v=v36final  302
+/admin-v30.html /admin-v36.html?v=v36final  302
+/admin-v31      /admin-v36.html?v=v36final  302
+/admin-v31.html /admin-v36.html?v=v36final  302
+/admin-v32      /admin-v36.html?v=v36final  302
+/admin-v32.html /admin-v36.html?v=v36final  302
+/admin-v33      /admin-v36.html?v=v36final  302
+/admin-v33.html /admin-v36.html?v=v36final  302
+/admin-v34      /admin-v36.html?v=v36final  302
+/admin-v34.html /admin-v36.html?v=v36final  302
+/admin-v35      /admin-v36.html?v=v36final  302
+/admin-v35.html /admin-v36.html?v=v36final  302
