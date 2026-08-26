@@ -337,7 +337,14 @@
   if (document.getElementById('publicMessageBoard')) {
     loadPublicMessages();
     // 每 30 秒刷新一次（伪实时）
-    setInterval(loadPublicMessages, 30000);
+    // v37 修: 跳过 textarea/input 正在 focus 时, 避免用户输入到一半被重渲染中断
+    setInterval(() => {
+      const ae = document.activeElement;
+      if (ae && (ae.tagName === 'TEXTAREA' || (ae.tagName === 'INPUT' && ae.type !== 'radio' && ae.type !== 'checkbox'))) {
+        return; // user 正在输入, 跳过本次刷新
+      }
+      loadPublicMessages();
+    }, 30000);
   }
 
   /* ---------- 8. 公告卡加载 + 展开 (v17.8 接入后台) ---------- */
