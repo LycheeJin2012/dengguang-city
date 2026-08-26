@@ -37,8 +37,12 @@
 </div>
 
 <script>
-  // v25.43: cache-bust
+  // v35: 先加载 toast.js, 后加载 dm.js
   (function(){
+    var t = document.createElement('script');
+    t.src = 'js/toast.js?v=20260826-toast';
+    t.defer = true;
+    document.currentScript.parentNode.insertBefore(t, document.currentScript);
     var s = document.createElement('script');
     s.src = 'js/dm.js?v=20260824-dm';
     s.defer = true;

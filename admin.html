@@ -4,13 +4,13 @@
 <meta charset="UTF-8">
 <title>跳转中...</title>
 <script>
-  // v34: lazy load tab data (boot 只 render 默认 tab, 切到再 fetch)
-  try { window.location.replace('/admin-v34.html?v=v34final-' + Date.now().toString(36)); } catch (e) {}
-  try { window.location.href = '/admin-v34.html?v=v34final'; } catch (e) {}
-  setTimeout(function(){ window.location = '/admin-v34.html?v=v34final'; }, 100);
+  // v35: 公共页 + admin 共用 js/toast.js, 删 admin.js 重复 _toast 函数
+  try { window.location.replace('/admin-v35.html?v=v35final-' + Date.now().toString(36)); } catch (e) {}
+  try { window.location.href = '/admin-v35.html?v=v35final'; } catch (e) {}
+  setTimeout(function(){ window.location = '/admin-v35.html?v=v35final'; }, 100);
 </script>
 </head>
 <body>
-<p>正在跳转... 如果没有自动跳转, <a href="/admin-v34.html?v=v34final">点此进入管理后台</a></p>
+<p>正在跳转... 如果没有自动跳转, <a href="/admin-v35.html?v=v35final">点此进入管理后台</a></p>
 </body>
 </html>
