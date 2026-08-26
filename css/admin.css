@@ -10,12 +10,9 @@
 
 /* 按钮 (基础类 .btn 由 style.css 提供, 这里只补 admin 专用变体) */
 .btn-sm { padding: 8px 14px; font-size: 10px; }
-.btn-xs { padding: 4px 8px; font-size: 11px; }
 .btn-block { width: 100%; justify-content: center; padding: 14px; font-size: 12px; }
 .btn-danger { color: var(--c-redstone); }
 .btn-danger:hover { background: var(--c-redstone) !important; color: white !important; }
-.btn-soft-danger { background: #c33; color: white; }
-.btn-soft-danger:hover { background: #a22 !important; color: white !important; }
 
 /* 卡片 */
 .card {
@@ -24,12 +21,6 @@
   box-shadow: 4px 4px 0 var(--c-stone, #6a5a48);
   padding: 16px;
 }
-.card-flat {
-  background: var(--c-paper, #fff8dc);
-  border: 3px solid var(--c-black, #000);
-  padding: 16px;
-}
-.card-pad { padding: 16px; }
 
 /* 标签 (tag, 各种颜色变体) */
 .tag {
@@ -46,12 +37,7 @@
   height: 22px;
   line-height: 1;
 }
-.tag-success { background: #1a3a1a; color: #9f9; border-color: #6f6; }
-.tag-warn    { background: #fff3cd; color: var(--c-dark); border-color: #e8b840; }
-.tag-danger  { background: var(--c-redstone); color: white; }
 .tag-super   { background: var(--c-gold); color: var(--c-dark); }
-.tag-info    { background: var(--c-water); color: white; }
-.tag-purple  { background: #a6a; color: white; }
 
 /* 通用提示块 (用于表单/卡片里的说明) */
 .hint {
@@ -64,82 +50,17 @@
   line-height: 1.6;
   margin: 0;
 }
-.hint-warn { background: #fff3cd; border-color: #e8b840; }
-.hint-ai   { background: #1a2a1a; color: #9f9; border-left: 3px solid #6f6; }
 
 /* 表单横排: 用于 bookEdit/kartCircuitEdit 里两列并排 */
-.form-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-  flex-wrap: wrap;
-}
 .form-row > label { flex: 1; min-width: 0; }
-.form-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-  margin-top: 14px;
-  flex-wrap: wrap;
-}
-.form-field { display: block; margin-bottom: 8px; }
-.form-field-label {
-  display: block;
-  color: var(--c-stone-dark, #5a4a38);
-  font-size: 12px;
-  font-weight: 700;
-  margin-bottom: 4px;
-}
-.form-field-input {
-  width: 100%;
-  padding: 8px 10px;
-  border: 2px solid var(--c-stone, #6a5a48);
-  background: white;
-  color: var(--c-dark, #2a1f10);
-  font-family: inherit;
-  font-size: 14px;
-  box-sizing: border-box;
-}
-.form-field-input:focus { outline: 2px solid var(--c-grass, #5d7c15); outline-offset: 0; }
 
 /* 私信/玩家列表行 (替代 v2538 的内联 style) */
 .dm-pair { cursor: pointer; }
 .dm-pair.is-unread { border-left: 4px solid var(--c-emerald); }
-.dm-pair-head {
-  display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-  margin-bottom: 4px;
-}
 .dm-pair-head .grow { flex: 1; }
-.dm-pair-tail {
-  font-size: 11px;
-  color: var(--c-stone-dark);
-  margin-left: auto;
-}
-.dm-pair-preview {
-  color: var(--c-stone-dark);
-  font-size: 13px;
-  max-height: 60px;
-  overflow: hidden;
-}
 
 /* 玩家管理 - 用户卡 (替代内联 style) */
-.player-card-row {
-  display: flex; align-items: center; gap: 12px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  color: var(--c-stone-dark);
-  padding: 4px 0;
-}
 .player-card-row .grow { flex: 1; }
-.player-card-bio { font-size: 13px; color: var(--c-stone-dark); margin: 6px 0; }
-.player-card-meta {
-  color: var(--c-stone-dark);
-  font-size: 12px;
-  margin-left: 6px;
-}
-.player-card-gameid {
-  margin-left: 4px;
-}
 
 /* 公告/赛车/酒店 卡片 (ann-item 已有, 这里补图集/赛车卡) */
 .gal-item {
@@ -152,24 +73,10 @@
 }
 .gal-item.is-published { border-color: #5fa; }
 .gal-item.is-draft     { border-color: #aaa; }
-.gal-item-img {
-  aspect-ratio: 1/1;
-  background: #000;
-  overflow: hidden;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 .gal-item-img img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-}
-.gal-item-body { padding: 8px; font-size: 12px; line-height: 1.4; }
-.gal-item-title { font-weight: 700; color: #4a3a2a; margin-bottom: 2px; }
-.gal-item-meta  { color: #7a6a5a; }
-.gal-item-tools {
-  display: flex; gap: 4px; margin-top: 6px;
 }
 .gal-item-tools .btn { flex: 1; font-size: 11px; padding: 4px; }
 
@@ -183,54 +90,12 @@
 }
 .mp-row:hover { background: var(--c-bg-2); }
 .mp-row .grow { flex: 1; min-width: 0; }
-.mp-row-emoji { font-size: 24px; }
-.mp-row-name { font-weight: 700; color: var(--c-stone-dark); font-size: 14px; }
-.mp-row-meta { font-size: 11px; color: var(--c-stone); overflow: hidden; text-overflow: ellipsis; }
-.mp-row-act  { font-size: 11px; color: var(--c-emerald); }
-.mp-hint { margin: 0 0 12px; font-size: 13px; color: var(--c-stone); }
-.mp-search {
-  width: 100%;
-  padding: 8px 10px;
-  font-size: 14px;
-  border: 2px solid var(--c-stone);
-  background: var(--c-bg-2);
-  box-sizing: border-box;
-}
-.mp-list {
-  max-height: 380px;
-  overflow-y: auto;
-  border: 2px solid var(--c-stone);
-  background: var(--c-paper);
-}
-.mp-list-status { text-align: center; padding: 24px; color: var(--c-stone); }
-.mp-list-error  { color: #c33; }
 
-.dm-reply-count  { font-size: 11px; color: #888; margin-top: 4px; }
-.dm-reply-msg    { font-size: 12px; margin-top: 6px; color: #666; }
-.dm-reply-na     { color: #888; font-size: 12px; text-align: center; padding: 10px; }
-.dm-thread-loading { padding: 20px; text-align: center; color: #888; }
-.dm-struggle { border-left: 4px solid #e8b840 !important; }
-.dm-struggle-preview { color: #444; font-size: 13px; background: #fff8e0; padding: 6px 8px; border-radius: 4px; margin-top: 4px; }
 
 /* room 房型行 (renderHotelManage) */
-.room-row {
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  font-family: var(--font-pixel);
-  font-size: 11px;
-  padding: 4px 0;
-}
 .room-row .grow { flex: 1; }
-.room-row-price { color: var(--c-grass-dark); font-weight: 700; }
 
 /* 房间区容器 */
-.rooms-block {
-  margin: 8px 0;
-  padding: 8px;
-  background: var(--c-bg-2);
-  border: 1px solid var(--c-stone);
-}
 
 /* boot loading 遮罩 (admin-new.html) */
 .boot-loading {
@@ -448,8 +313,6 @@ body.admin-body {
   display: inline-block;
   letter-spacing: 1px;
 }
-.role-super { background: var(--c-gold); color: var(--c-dark); }
-.role-admin { background: var(--c-stone-light); color: var(--c-dark); }
 .me-tag {
   font-family: var(--font-pixel);
   font-size: 8px;
@@ -693,7 +556,6 @@ body.admin-body {
   line-height: 1;
 }
 .msg-read-tag { background: var(--c-stone-light); color: var(--c-stone-dark); border-color: var(--c-stone); }
-.msg-legacy-tag { background: var(--c-stone); color: var(--c-paper); border-color: var(--c-stone-dark); }
 .msg-replied-tag { background: #1a3a1a; color: #9f9; border-color: #6f6; }
 .msg-replied-tag.tag-pending       { background: #3a2a1a; color: #fc6; border-color: #c84; }
 .msg-replied-tag.tag-ai-overridden { background: #1a1a3a; color: #9cf; border-color: #66f; }
@@ -702,11 +564,6 @@ body.admin-body {
 .msg-player-tag { background: var(--c-water); }
 .gallery-num { background: var(--c-stone-light); color: var(--c-stone-dark); border-color: var(--c-stone); }
 
-.msg-contact {
-  font-family: var(--font-cn);
-  font-size: 13px;
-  color: var(--c-stone-dark);
-}
 .msg-content {
   font-family: var(--font-cn);
   font-size: 14px;
@@ -791,12 +648,6 @@ body.admin-body {
   margin-right: 8px;
   margin-bottom: 4px;
 }
-.admin-sub {
-  font-family: var(--font-cn);
-  font-size: 13px;
-  color: var(--c-stone-dark);
-  margin-top: 4px;
-}
 .admin-actions { display: flex; gap: 8px; flex-shrink: 0; }
 .admin-actions .btn { height: 32px; }
 
@@ -837,15 +688,6 @@ body.admin-body {
   padding: 10px 14px;
   margin: 0;
 }
-.book-extra {
-  font-family: var(--font-cn);
-  font-size: 14px;
-  color: var(--c-dark);
-  background: var(--c-bg);
-  border: 2px solid var(--c-stone);
-  padding: 8px 12px;
-  line-height: 1.7;
-}
 .book-extra b { color: var(--c-grass-dark); margin-right: 4px; }
 .type-book { background: var(--c-gold); color: var(--c-dark); }
 
@@ -860,11 +702,6 @@ body.admin-body {
   align-items: center;
   height: 22px;
 }
-.st-pending    { background: var(--c-redstone); }
-.st-confirmed  { background: var(--c-water); }
-.st-checkin    { background: var(--c-emerald); }
-.st-completed  { background: var(--c-stone-dark); }
-.st-cancelled  { background: var(--c-stone); }
 
 .book-actions {
   display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
@@ -977,17 +814,7 @@ body.admin-body {
   font-size: 15px;
   padding: 10px 12px;
 }
-.modal-msg {
-  font-family: var(--font-cn);
-  font-size: 14px;
-  color: var(--c-redstone);
-  min-height: 1.4em;
-}
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
-.ann-content-textarea { min-height: 160px; line-height: 1.5; resize: vertical; }
-.ann-count { display: block; color: var(--c-stone-dark); font-size: 12px; margin-top: 2px; text-align: right; font-family: var(--font-cn); }
-.list-error { color: #c33; padding: 20px; text-align: center; }
-.dm-empty-celebrate { background: none; border: none; padding: 20px; text-align: center; }
 
 /* ============================================
    响应式 (v17.6 全面适配)
