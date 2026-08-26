@@ -536,10 +536,14 @@ setupAddButton('btnAddLicReq', 'licenseManageList', {
   });
 })();
 
-// super 才看 [data-super-only] 元素
-if (isSuper()) {
-  document.querySelectorAll('[data-super-only]').forEach((el) => { el.style.display = ''; });
+// super 才看 [data-super-only] 元素 (v27.05: 暴露给 boot 调, 解决 _me 异步还没设的时序问题)
+function _showSuperOnly() {
+  if (isSuper()) {
+    document.querySelectorAll('[data-super-only]').forEach((el) => { el.style.display = ''; });
+  }
 }
+_showSuperOnly();
+window._adminManageSuperReady = _showSuperOnly;  // 让 admin.v2541.js boot 完后调
 
 // 挂到 window 供 safeRender 错误显示用
 window.renderHotelManage = renderHotelManage;
