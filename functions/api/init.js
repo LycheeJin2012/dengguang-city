@@ -414,13 +414,15 @@ export async function onRequestGet(context) {
   }
 
   // v25.52: GET 公开 homepage-bundle (1 次拉 5 个表, 减少前端多 fetch 串行)
+  // v37.5: 加 player_count 字段 (hero-stats 真实 player 数)
   if (_a === 'homepage-bundle') {
-    const [_hotels, _rooms, _tracks, _licenseReqs, _announcements] = await Promise.all([
+    const [_hotels, _rooms, _tracks, _licenseReqs, _announcements, _playerCount] = await Promise.all([
       env.DB.prepare('SELECT * FROM hotels ORDER BY sort_order, id').all(),
       env.DB.prepare('SELECT * FROM hotel_rooms ORDER BY sort_order, id').all(),
       env.DB.prepare('SELECT * FROM race_tracks ORDER BY sort_order, id').all(),
       env.DB.prepare('SELECT * FROM license_requirements ORDER BY sort_order, id').all(),
       env.DB.prepare('SELECT id, title, content, image_url, created_at, updated_at, created_by FROM announcements ORDER BY created_at DESC LIMIT 5').all(),
+      env.DB.prepare("SELECT COUNT(*) AS n FROM players WHERE status != 'pending' AND status != 'rejected'").all(),
     ]);
     return ok({
       bundle: {
@@ -429,6 +431,7 @@ export async function onRequestGet(context) {
         tracks: _tracks.results || [],
         licenseReqs: _licenseReqs.results || [],
         announcements: _announcements.results || [],
+        playerCount: (_playerCount.results && _playerCount.results[0] && _playerCount.results[0].n) || 0,
       }
     }, { headers: { 'Cache-Control': 'public, max-age=60' } });
   }

@@ -463,6 +463,18 @@
   }
   loadAnnouncements();
 
+  /* ---------- 8.5 hero-stats 注册市民数字 (v37.5: 真实 D1 count, 占位 '—' 改) ---------- */
+  async function updateHeroStats() {
+    const el = document.querySelector('[data-stat="players"] b');
+    if (!el) return;
+    try {
+      const bundle = await _ensureBundle();
+      const n = bundle.playerCount;
+      el.textContent = (typeof n === 'number' && n > 0) ? String(n) : '待公告';
+    } catch (e) { el.textContent = '待公告'; }
+  }
+  updateHeroStats();
+
   /* ---------- 9. 视差云朵加速（仅装饰） ---------- */
   const clouds = document.querySelectorAll('.cloud');
   window.addEventListener('scroll', () => {
