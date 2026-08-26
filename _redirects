@@ -1,10 +1,13 @@
-# v30: admin.html → admin-v30.html (302 + 新文件名 + timestamp, 绕开 user 浏览器 disk cache)
-# v29 → v30: 修切 tab handler 同步切 subview active class (之前 license/kart tab 切到时 subview 一直 display:none 空白)
-/admin          /admin-v30.html?v=v30final  302
-/admin.html     /admin-v30.html?v=v30final  302
-/admin-new      /admin-v30.html?v=v30final  302
-/admin-new.html /admin-v30.html?v=v30final  302
-/admin-v28      /admin-v30.html?v=v30final  302
-/admin-v28.html /admin-v30.html?v=v30final  302
-/admin-v29      /admin-v30.html?v=v30final  302
-/admin-v29.html /admin-v30.html?v=v30final  302
+# v31: admin.html → admin-v31.html (302 + 新文件名 + timestamp, 绕开 user 浏览器 disk cache)
+# v30: 修切 tab handler 同步切 subview active class
+# v31: 重构 filter radio handler (7 个 if-else → map lookup), 删 4 临时文件
+/admin          /admin-v31.html?v=v31final  302
+/admin.html     /admin-v31.html?v=v31final  302
+/admin-new      /admin-v31.html?v=v31final  302
+/admin-new.html /admin-v31.html?v=v31final  302
+/admin-v28      /admin-v31.html?v=v31final  302
+/admin-v28.html /admin-v31.html?v=v31final  302
+/admin-v29      /admin-v31.html?v=v31final  302
+/admin-v29.html /admin-v31.html?v=v31final  302
+/admin-v30      /admin-v31.html?v=v31final  302
+/admin-v30.html /admin-v31.html?v=v31final  302
