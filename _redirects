@@ -1,9 +1,10 @@
-# v29: admin.html → admin-v29.html (用 302 + 新文件名 + timestamp, 绕开 user 浏览器 disk cache)
-# 之前 v25.58 时代 admin-new.html 累积了 disk cache 问题, 改文件名强制 user 拿到新版本
-# v29 增量: 合并国际赛车场 (circuit) tab 进赛道 (kart) tab 第 2 个 subview "国际试车"
-/admin          /admin-v29.html?v=v29final  302
-/admin.html     /admin-v29.html?v=v29final  302
-/admin-new      /admin-v29.html?v=v29final  302
-/admin-new.html /admin-v29.html?v=v29final  302
-/admin-v28      /admin-v29.html?v=v29final  302
-/admin-v28.html /admin-v29.html?v=v29final  302
+# v30: admin.html → admin-v30.html (302 + 新文件名 + timestamp, 绕开 user 浏览器 disk cache)
+# v29 → v30: 修切 tab handler 同步切 subview active class (之前 license/kart tab 切到时 subview 一直 display:none 空白)
+/admin          /admin-v30.html?v=v30final  302
+/admin.html     /admin-v30.html?v=v30final  302
+/admin-new      /admin-v30.html?v=v30final  302
+/admin-new.html /admin-v30.html?v=v30final  302
+/admin-v28      /admin-v30.html?v=v30final  302
+/admin-v28.html /admin-v30.html?v=v30final  302
+/admin-v29      /admin-v30.html?v=v30final  302
+/admin-v29.html /admin-v30.html?v=v30final  302
