@@ -257,6 +257,9 @@ export const MIGRATIONS = [
   `CREATE INDEX IF NOT EXISTS idx_dm_from_to ON direct_messages(from_player_id, to_player_id, created_at)`,
   `CREATE INDEX IF NOT EXISTS idx_dm_to_unread ON direct_messages(to_player_id, read_at)`,
   `CREATE INDEX IF NOT EXISTS idx_dm_pair_created ON direct_messages(from_player_id, to_player_id, created_at DESC)`,
+  // v43.2: 玩家管理 /api/admin/players 用 last_session 关联 sessions 表, 必须有 player_id 索引
+  // 之前漏建, 导致每个玩家都全表扫描 sessions, 23 玩家 × N sessions ≈ 23 * 全表扫 = 卡顿
+  `CREATE INDEX IF NOT EXISTS idx_sessions_player ON sessions(player_id)`,
   `CREATE INDEX IF NOT EXISTS idx_bookings_player ON bookings(player_id)`,
   `CREATE INDEX IF NOT EXISTS idx_kart_player ON kart_signups(player_id)`,
   `CREATE INDEX IF NOT EXISTS idx_circuit_player ON circuit_signups(player_id)`,

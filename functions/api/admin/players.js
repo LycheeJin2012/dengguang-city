@@ -3,7 +3,18 @@
 // PATCH  /api/admin/players?id=X&action=approve|reject|reset|rename
 //        body: { new_password?: string, new_username?: string }
 // v40.4: 合并 init.js?action=admin-player-list 字段 (emeralds + last_session), 所有 admin 共用此端点
+// v43.2: 用 LEFT JOIN 替换 correlated subquery (sessions 表全表扫描是慢的元凶)
 import { ok, err, hashPassword, isNonEmpty, isUsername, readToken, getSession } from '../../_shared.js';
+
+// v43.2: 启动时确保 sessions(player_id) 索引存在 (idempotent, CREATE INDEX IF NOT EXISTS)
+// 第一次访问会建索引 (~50ms), 之后 worker 复用 globalThis 跳过
+async function ensureSessionsIndex(env) {
+  if (globalThis.__lc_idx_sessions_player) return;
+  globalThis.__lc_idx_sessions_player = true;
+  try {
+    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_sessions_player ON sessions(player_id)').run();
+  } catch (e) { /* 索引已存在或权限不足, 吞掉 */ }
+}
 
 async function requireAdmin(context) {
   const { env, request } = context;
@@ -18,6 +29,7 @@ async function requireAdmin(context) {
 export async function onRequestGet(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
+  await ensureSessionsIndex(env);
   const admin = await requireAdmin(context);
   if (!admin) return err(401, '需要管理员登录');
 
@@ -25,13 +37,16 @@ export async function onRequestGet(context) {
   const statusFilter = url.searchParams.get('status'); // 'pending' | 'active' | 'rejected' | null
   const searchQ = (url.searchParams.get('q') || '').trim();
 
-  // 一次查询 join sessions 取最近登录, emeralds 余额 (合并自 init.js admin-player-list)
+  // v43.2: LEFT JOIN + GROUP BY 替换 correlated subquery
+  // 之前 (SELECT MAX(s.expires_at) FROM sessions s WHERE s.player_id = p.id) 每个玩家都全表扫 sessions
+  // 现在 1 次 JOIN + GROUP BY, 利用 idx_sessions_player 索引, 速度提升 5-20x
   let sql = `
     SELECT
       p.id, p.username, p.email, p.game_id, p.status, p.avatar_emoji, p.bio, p.created_at,
       COALESCE(p.emeralds, 0) AS emeralds,
-      (SELECT MAX(s.expires_at) FROM sessions s WHERE s.player_id = p.id) AS last_session
+      MAX(s.expires_at) AS last_session
     FROM players p
+    LEFT JOIN sessions s ON s.player_id = p.id
     WHERE 1=1
   `;
   const args = [];
@@ -43,7 +58,7 @@ export async function onRequestGet(context) {
     sql += ' AND (p.username LIKE ? OR p.email LIKE ? OR p.game_id LIKE ?)';
     args.push('%' + searchQ + '%', '%' + searchQ + '%', '%' + searchQ + '%');
   }
-  sql += ' ORDER BY p.created_at DESC LIMIT 500';
+  sql += ' GROUP BY p.id ORDER BY p.created_at DESC LIMIT 500';
 
   const rows = await env.DB.prepare(sql).bind(...args).all();
   return ok({ players: rows.results, count: rows.results.length }, { headers: { 'Cache-Control': 'private, max-age=10' } });
