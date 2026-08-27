@@ -16,11 +16,11 @@
   <link rel="preload" href="assets/fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/vt323.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="css/fonts.css" />
-  <link rel="preload" href="css/style.css?v=20260828-v43-redesign" as="style" />
-  <link rel="preload" href="css/admin.css?v=20260828-v43-redesign" as="style" />
+  <link rel="preload" href="css/style.css?v=20260828-v43-admin" as="style" />
+  <link rel="preload" href="css/admin.css?v=20260828-v43-admin" as="style" />
   <link rel="preload" href="js/admin.v2551.js" as="script" />
-  <link rel="stylesheet" href="css/style.css?v=20260828-v43-redesign" />
-  <link rel="stylesheet" href="css/admin.css?v=20260828-v43-redesign" />
+  <link rel="stylesheet" href="css/style.css?v=20260828-v43-admin" />
+  <link rel="stylesheet" href="css/admin.css?v=20260828-v43-admin" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2370ad34'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='10' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='3' y='10' width='3' height='3' fill='%23ffd23f'/%3E%3C/svg%3E" />
   <!-- v14：localStorage 模式。数据只存本机浏览器,不同设备/不同人互不可见。 -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"></head>
@@ -53,25 +53,51 @@
 
   <!-- ============== 登录视图 (默认隐藏, 等 boot() 决定显示哪个) ============== -->
   <main id="view-login" class="view-login" style="display:none">
-    <div class="login-card">
-      <div class="login-head">
-        <div class="login-icon">🔐</div>
-        <h1>管理员登录</h1>
-        <p>ADMIN LOGIN</p>
-      </div>
-      <form id="loginForm" class="login-form" method="POST" action="/api/login" accept-charset="UTF-8">
-        <label>
-          <span>账号</span>
-          <input type="text" id="loginUser" name="username" autocomplete="username" required placeholder="管理员账号" />
-        </label>
-        <label>
-          <span>密码</span>
-          <input type="password" id="loginPass" name="password" autocomplete="current-password" required placeholder="••••••••" />
-        </label>
-        <div class="login-error" id="loginError"></div>
-        <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">▶ 登录</button>
-        <div class="login-hint" id="loginHint"></div>
-      </form>
+    <div class="login-grid">
+      <!-- 左: 品牌区 (v43) -->
+      <aside class="login-brand">
+        <div class="login-brand-inner">
+          <div class="login-logo-block">
+            <div class="block-grass"></div>
+            <div class="block-dirt"></div>
+          </div>
+          <h1 class="login-brand-title">灯光市</h1>
+          <p class="login-brand-sub">LIGHT&nbsp;CITY · ADMIN&nbsp;CONSOLE</p>
+          <div class="login-brand-divider"></div>
+          <p class="login-brand-desc">市政厅内部管理系统。仅授权管理员可访问,所有操作留痕审计。</p>
+          <ul class="login-brand-features">
+            <li><span class="badge badge-grass">📬</span> 市民留言审核</li>
+            <li><span class="badge badge-gold">🏨</span> 酒店 / 赛车场管理</li>
+            <li><span class="badge badge-water">📢</span> 公告 / 图集发布</li>
+            <li><span class="badge badge-stone">🛡️</span> 管理员账号 / 权限</li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- 右: 表单区 (v43) -->
+      <section class="login-form-wrap">
+        <div class="login-card">
+          <div class="login-head">
+            <div class="login-icon">🔐</div>
+            <h1>管理员登录</h1>
+            <p>ADMIN LOGIN</p>
+          </div>
+          <form id="loginForm" class="login-form" method="POST" action="/api/login" accept-charset="UTF-8" autocomplete="on">
+            <label>
+              <span class="label-text">账号</span>
+              <input type="text" id="loginUser" name="username" autocomplete="username" required placeholder="管理员账号" />
+            </label>
+            <label>
+              <span class="label-text">密码</span>
+              <input type="password" id="loginPass" name="password" autocomplete="current-password" required placeholder="••••••••" />
+            </label>
+            <div class="login-error" id="loginError"></div>
+            <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">▶ 登录</button>
+            <div class="login-hint" id="loginHint"></div>
+          </form>
+        </div>
+        <a href="index.html" class="login-back-home">← 返回市民首页</a>
+      </section>
     </div>
   </main>
 
@@ -439,9 +465,12 @@
 
   <!-- v17.9: boot 前显示 loading, 避免闪烁登录页 (combined session 会自动跳到 dash) -->
   <div id="bootLoading" class="boot-loading">
-    <div class="boot-loading-emoji">⏳</div>
-    <div class="boot-loading-text">正在验证身份…</div>
-    <div class="boot-loading-hint">如果已合并账号, 将直接进入后台</div>
+    <div class="boot-loading-card">
+      <div class="boot-loading-emoji">⏳</div>
+      <div class="boot-loading-text">正在验证身份…</div>
+      <div class="boot-loading-hint">如果已合并账号, 将直接进入后台</div>
+      <div class="boot-loading-bar"><div class="boot-loading-bar-fill"></div></div>
+    </div>
   </div>
   <script>
     // boot 完成后 (无论成功失败) 都移除 loading
