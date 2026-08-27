@@ -720,6 +720,22 @@
   </div>
 
   <script src="js/toast.js?v=20260826-toast"></script>
+  <script type="module">
+    // v45 debug 5: 测 ES module 在 Browser tool 是否支持
+    try {
+      const el = document.createElement('pre');
+      el.id = '_moduleTest';
+      el.style.cssText = 'position:fixed;left:0;top:0;background:lime;color:black;font:14px monospace;padding:8px;z-index:99999';
+      el.textContent = 'MODULE TEST: ES module works! @ ' + new Date().toISOString();
+      document.body.appendChild(el);
+    } catch (e) {
+      const el = document.createElement('pre');
+      el.id = '_moduleTest';
+      el.style.cssText = 'position:fixed;left:0;top:0;background:red;color:white;font:14px monospace;padding:8px;z-index:99999';
+      el.textContent = 'MODULE TEST FAIL: ' + e.message;
+      document.body.appendChild(el);
+    }
+  </script>
   <script type="module" src="js/main.v45b3.js"></script>
 </body>
 </html>
