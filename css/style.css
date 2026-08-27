@@ -38,6 +38,14 @@
   --font-pixel: 'Press Start 2P', 'Noto Sans SC', monospace;
   --font-mc: 'VT323', 'Noto Sans SC', monospace;
   --font-cn: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+
+  /* v42: 动效 token (保守版 — 替换 0.1/0.12/0.15/0.2s literal + transition: all 列具体属性)
+     不加入场动画, 只把现有 transition 调成统一曲线和时长 */
+  --ease-out:  cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 温和减速 (默认) */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);   /* 轻微过冲 (modal/弹层) */
+  --dur-fast: 160ms;  /* color / background 微动 */
+  --dur-base: 240ms;  /* transform 抬起 / hover */
+  --dur-slow: 360ms;  /* modal 弹入 */
 }
 
 /* ============================================
@@ -197,7 +205,7 @@
   font-family: var(--font-cn);
   color: var(--c-dark);
   padding: 0;
-  animation: cmp-modal-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: cmp-modal-in var(--dur-slow) var(--ease-spring);
 }
 @keyframes cmp-modal-in {
   from { transform: translateY(20px) scale(0.96); opacity: 0; }
@@ -703,7 +711,7 @@ textarea { resize: vertical; min-height: 90px; }
   padding: 8px 14px;
   color: var(--c-dark);
   border: 2px solid transparent;
-  transition: all 0.15s;
+  transition: color var(--dur-fast) var(--ease-out), background var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out), transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out);
   position: relative;
 }
 .nav-links a:hover {
@@ -770,7 +778,7 @@ textarea { resize: vertical; min-height: 90px; }
   background: var(--c-grass);
   border: 3px solid var(--c-black);
   box-shadow: 4px 4px 0 0 var(--c-black);
-  transition: all 0.12s;
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), background var(--dur-fast) var(--ease-out);
   cursor: pointer;
 }
 .btn:hover {
@@ -1296,7 +1304,7 @@ textarea { resize: vertical; min-height: 90px; }
   box-shadow: 5px 5px 0 var(--c-stone);
   padding: 28px 22px;
   text-align: center;
-  transition: all 0.2s;
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), background var(--dur-fast) var(--ease-out);
   position: relative;
 }
 .service-card:hover {
@@ -1630,7 +1638,7 @@ textarea { resize: vertical; min-height: 90px; }
   box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
   width: 48px; height: 48px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: transform var(--dur-base) var(--ease-out), box-shadow var(--dur-base) var(--ease-out), background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out);
   z-index: 2;
 }
 .lb-close:hover, .lb-prev:hover, .lb-next:hover {
@@ -2175,7 +2183,7 @@ textarea { resize: vertical; min-height: 90px; }
   font-family: var(--font-cn, system-ui, sans-serif);
   color: var(--c-dark, #1a1a1a);
   padding: 28px 24px 22px;
-  animation: lc-modal-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: lc-modal-in var(--dur-slow) var(--ease-spring);
 }
 @keyframes lc-modal-in { from { transform: translateY(20px) scale(0.96); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
 .modal-close {
@@ -2575,7 +2583,7 @@ textarea { resize: vertical; min-height: 90px; }
   letter-spacing: 1px;
   padding: 2px 6px;
   border: 2px solid var(--c-gold);
-  transition: all 0.15s;
+  transition: background var(--dur-fast) var(--ease-out), color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
 }
 .footer-bottom .admin-link:hover {
   background: var(--c-gold);
@@ -2596,7 +2604,7 @@ textarea { resize: vertical; min-height: 90px; }
   z-index: 40;
   opacity: 0;
   pointer-events: none;
-  transition: all 0.2s;
+  transition: opacity var(--dur-base) var(--ease-out), transform var(--dur-base) var(--ease-out);
 }
 .back-top.show { opacity: 1; pointer-events: auto; }
 .back-top:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--c-black); }
