@@ -29,6 +29,12 @@ export async function onRequestGet(context) {
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || '';
 
+  // v45 修: signin-status 走 GET (前端用 GET 拉签到状态)
+  // 之前落到默认 handler 返 tables 列表, 4 年没发现
+  if (action === 'signin-status') {
+    return signinActions.onRequestGet(context);
+  }
+
   if (action === 'unread-summary') {
     const ck = request.headers.get('Cookie') || '';
     const m = ck.match(/lc_session=([^;]+)/);
