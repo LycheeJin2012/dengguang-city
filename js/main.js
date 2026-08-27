@@ -1,4 +1,4 @@
-// v45 重写: 公共页入口 (ES module) — DEBUG 版
+// v45 debug 2: 不 import, 立刻改 title 测 module 加载
 import { bindClouds } from './home/clouds.js';
 import { bindReveal } from './home/reveal.js';
 import { bindAll as bindHero } from './home/hero.js';
@@ -10,39 +10,37 @@ import { bindAll as bindHeader } from './home/header.js';
 import { bindAll as bindAuth } from './home/auth.js';
 import { loadSigninBadge, openSigninModal } from './home/signin.js';
 
-window.openSigninModal = openSigninModal;
+// 同步 trace
+function _trace(msg) {
+  console.log('[boot]', msg);
+  try {
+    let el = document.getElementById('_bootTrace');
+    if (!el) {
+      el = document.createElement('pre');
+      el.id = '_bootTrace';
+      el.style.cssText = 'position:fixed;left:0;top:0;background:#000;color:#0f0;font:12px monospace;padding:8px;z-index:99999;max-width:90vw;max-height:50vh;overflow:auto;border:2px solid #0f0;white-space:pre-wrap';
+      (document.body || document.documentElement).appendChild(el);
+    }
+    el.textContent = (el.textContent || '') + msg + '\n';
+  } catch (e) {}
+}
 
-// DEBUG: 把 import 错误暴露到 DOM
 window._bootTrace = [];
 window._bootError = null;
-try {
-  window._bootTrace.push('imports OK at ' + new Date().toISOString());
-} catch (e) { /* ignore */ }
+_trace('=== module loaded, imports OK ===');
+
+window.openSigninModal = openSigninModal;
 
 (async function boot() {
-  const _log = (m) => {
-    try { window._bootTrace.push(m); } catch (e) {}
-    try { console.log('[boot]', m); } catch (e) {}
-    try {
-      let el = document.getElementById('_bootTrace');
-      if (!el) {
-        el = document.createElement('pre');
-        el.id = '_bootTrace';
-        el.style.cssText = 'position:fixed;left:0;top:0;background:#000;color:#0f0;font:12px monospace;padding:8px;z-index:99999;max-width:90vw;max-height:50vh;overflow:auto;border:2px solid #0f0;white-space:pre-wrap';
-        document.body && document.body.appendChild(el);
-      }
-      el.textContent = (window._bootTrace || []).join('\n');
-    } catch (e) {}
-  };
   try {
-    _log('[1/8] imports done, starting boot...');
-    _log('[2/8] bindClouds()');
+    _trace('[1/8] boot start');
     bindClouds();
-    _log('[3/8] bindReveal()');
+    _trace('[2/8] bindClouds done');
     bindReveal();
-    _log('[4/8] bindHero()');
     bindHero();
-    _log('[5/8] loadX (fire-and-forget)...');
+    _trace('[3/8] bindHero done');
+
+    _trace('[4/8] loadX (fire)...');
     loadAnnouncements();
     loadPublicMessages();
     loadGallery();
@@ -50,16 +48,17 @@ try {
     loadKartSpecs();
     loadLicenseReqs();
     loadSigninBadge();
-    _log('[6/8] bindForms()');
+    _trace('[5/8] all loadX issued');
+
     bindForms();
-    _log('[7/8] bindHeader()');
+    _trace('[6/8] bindForms done');
     bindHeader();
-    _log('[8/8] bindAuth()');
+    _trace('[7/8] bindHeader done');
     bindAuth();
-    _log('✅ BOOT SUCCESS');
+    _trace('[8/8] bindAuth done — BOOT SUCCESS');
   } catch (e) {
-    _log('❌ BOOT FAIL: ' + (e?.message || String(e)));
-    _log('   @ ' + (e?.stack || '').split('\n').slice(0, 5).join('\n   '));
+    _trace('❌ FAIL: ' + (e?.message || String(e)));
+    _trace('   stack: ' + (e?.stack || '').split('\n').slice(0, 8).join('\n   '));
     window._bootError = e?.message || String(e);
   }
 })();
