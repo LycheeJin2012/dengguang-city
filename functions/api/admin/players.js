@@ -1,7 +1,8 @@
-// GET    /api/admin/players            - 管理员看玩家列表（含状态）
+// GET    /api/admin/players            - 管理员看玩家列表（含状态, 绿宝石, 最后活跃时间）
 // GET    /api/admin/players?status=... - 按状态过滤
 // PATCH  /api/admin/players?id=X&action=approve|reject|reset|rename
 //        body: { new_password?: string, new_username?: string }
+// v40.4: 合并 init.js?action=admin-player-list 字段 (emeralds + last_session), 所有 admin 共用此端点
 import { ok, err, hashPassword, isNonEmpty, isUsername, readToken, getSession } from '../../_shared.js';
 
 async function requireAdmin(context) {
@@ -22,14 +23,27 @@ export async function onRequestGet(context) {
 
   const url = new URL(request.url);
   const statusFilter = url.searchParams.get('status'); // 'pending' | 'active' | 'rejected' | null
+  const searchQ = (url.searchParams.get('q') || '').trim();
 
-  let sql = 'SELECT id, username, email, game_id, status, avatar_emoji, bio, created_at FROM players';
+  // 一次查询 join sessions 取最近登录, emeralds 余额 (合并自 init.js admin-player-list)
+  let sql = `
+    SELECT
+      p.id, p.username, p.email, p.game_id, p.status, p.avatar_emoji, p.bio, p.created_at,
+      COALESCE(p.emeralds, 0) AS emeralds,
+      (SELECT MAX(s.expires_at) FROM sessions s WHERE s.player_id = p.id) AS last_session
+    FROM players p
+    WHERE 1=1
+  `;
   const args = [];
   if (statusFilter && ['pending', 'active', 'rejected'].includes(statusFilter)) {
-    sql += ' WHERE status = ?';
+    sql += ' AND p.status = ?';
     args.push(statusFilter);
   }
-  sql += ' ORDER BY created_at DESC LIMIT 500';
+  if (searchQ) {
+    sql += ' AND (p.username LIKE ? OR p.email LIKE ? OR p.game_id LIKE ?)';
+    args.push('%' + searchQ + '%', '%' + searchQ + '%', '%' + searchQ + '%');
+  }
+  sql += ' ORDER BY p.created_at DESC LIMIT 500';
 
   const rows = await env.DB.prepare(sql).bind(...args).all();
   return ok({ players: rows.results, count: rows.results.length });

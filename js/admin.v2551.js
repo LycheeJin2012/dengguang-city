@@ -595,11 +595,8 @@ function showReplyModal(m){
 
 async function renderPlayers(){
   try{
-    // 用 super 专用端点: 含 last_session 字段
-    const isSuper=window._me&&window._me.role==='super';
-    const url=isSuper?'/api/init?action=admin-player-list':'/api/admin/players';
-    const method=isSuper?'POST':'GET';
-    const d=isSuper?await POST(url,{}):await GET(url);
+    // v40.4: /api/admin/players 现已含 emeralds + last_session 字段, 不用再走 init.js 慢路径
+    const d=await GET('/api/admin/players');
     const list=d.players||[];
     const cP=list.filter(p=>p.status==='pending').length;
     const cA=list.filter(p=>p.status==='active').length;
