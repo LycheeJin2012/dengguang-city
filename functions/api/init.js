@@ -520,33 +520,60 @@ export async function onRequestPost(context) {
 
     try {
       if (_adm === 'admin-dm-conversations') {
-        // 列所有 DM 会话: 每对 (from,to) 一条, 含双方 username/avatar, 最后一条 content/at, 未读数
+        // v43.2: 重写 SQL, 干掉 2 层 correlated subquery
+        // 之前: WHERE dm.id IN (subquery GROUP BY) + (SELECT COUNT(*) ... WHERE ...) per row
+        //       100 conversations × N messages 全表扫 = 慢
+        // 现在: 1 次 subquery 用窗口函数 ROW_NUMBER 取每对最新消息, 1 次 LEFT JOIN 取未读数
         const _body = await request.json().catch(() => ({}));
         const _q = (_body.q || '').trim();
-        let _sql = `
+        // 步骤 1: 每个 (low_id, high_id) 对取一条最新消息
+        // CASE WHEN 让 from < to 时小在 p1, 反之 p2; 然后用 (p1, p2) 分组
+        const _sql = `
+          WITH ranked AS (
+            SELECT
+              dm.*,
+              ROW_NUMBER() OVER (
+                PARTITION BY
+                  CASE WHEN dm.from_player_id < dm.to_player_id THEN dm.from_player_id ELSE dm.to_player_id END,
+                  CASE WHEN dm.from_player_id > dm.to_player_id THEN dm.from_player_id ELSE dm.to_player_id END
+                ORDER BY dm.id DESC
+              ) AS rn
+            FROM direct_messages dm
+          ),
+          unread AS (
+            SELECT
+              CASE WHEN from_player_id < to_player_id THEN from_player_id ELSE to_player_id END AS p1,
+              CASE WHEN from_player_id > to_player_id THEN from_player_id ELSE to_player_id END AS p2,
+              COUNT(*) AS unread_count
+            FROM direct_messages
+            WHERE read_at IS NULL
+            GROUP BY p1, p2
+          )
           SELECT
-            dm.from_player_id, dm.to_player_id, dm.content AS last_content, dm.created_at AS last_at, dm.read_at,
-            dm.replied_by_admin_id,
+            r.from_player_id, r.to_player_id, r.content AS last_content, r.created_at AS last_at, r.read_at,
+            r.replied_by_admin_id,
             ad.username AS replied_by_admin_username,
             pf.username AS from_username, pt.username AS to_username,
             pf.avatar_emoji AS from_avatar, pt.avatar_emoji AS to_avatar,
-            (SELECT COUNT(*) FROM direct_messages WHERE from_player_id = dm.to_player_id AND to_player_id = dm.from_player_id AND read_at IS NULL) AS unread_count
-          FROM direct_messages dm
-          LEFT JOIN players pf ON pf.id = dm.from_player_id
-          LEFT JOIN players pt ON pt.id = dm.to_player_id
-          LEFT JOIN admins ad ON ad.id = dm.replied_by_admin_id
-          WHERE dm.id IN (
-            SELECT MAX(id) FROM direct_messages GROUP BY (CASE WHEN from_player_id < to_player_id THEN from_player_id ELSE to_player_id END), (CASE WHEN from_player_id > to_player_id THEN from_player_id ELSE to_player_id END)
-          )
+            COALESCE(u.unread_count, 0) AS unread_count
+          FROM ranked r
+          LEFT JOIN players pf ON pf.id = r.from_player_id
+          LEFT JOIN players pt ON pt.id = r.to_player_id
+          LEFT JOIN admins ad ON ad.id = r.replied_by_admin_id
+          LEFT JOIN unread u
+            ON u.p1 = CASE WHEN r.from_player_id < r.to_player_id THEN r.from_player_id ELSE r.to_player_id END
+           AND u.p2 = CASE WHEN r.from_player_id > r.to_player_id THEN r.from_player_id ELSE r.to_player_id END
+          WHERE r.rn = 1
         `;
+        let _finalSql = _sql;
         const _params = [];
         if (_q) {
-          _sql += ` AND (pf.username LIKE ? OR pt.username LIKE ? OR dm.content LIKE ?)`;
+          _finalSql += ` AND (pf.username LIKE ? OR pt.username LIKE ? OR r.content LIKE ?)`;
           const _like = `%${_q}%`;
           _params.push(_like, _like, _like);
         }
-        _sql += ` ORDER BY last_at DESC LIMIT 100`;
-        const _rows = await env.DB.prepare(_sql).bind(..._params).all();
+        _finalSql += ` ORDER BY r.created_at DESC LIMIT 100`;
+        const _rows = await env.DB.prepare(_finalSql).bind(..._params).all();
         return ok({ conversations: _rows.results || [] });
       }
 
