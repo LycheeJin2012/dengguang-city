@@ -34,7 +34,7 @@ export function bindActiveNav() {
 }
 
 export async function loadHeroStats() {
-  const statPlayers = $('#statPlayers');
+  const statPlayers = $('[data-stat="players"]') || $('#statPlayers');
   if (!statPlayers) return;
   try {
     const d = await GET('/api/homepage-bundle', undefined);

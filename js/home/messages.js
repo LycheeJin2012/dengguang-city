@@ -5,7 +5,7 @@ const _pubMsgCache = { data: null, ts: 0 };
 const CACHE_TTL = 30_000;
 
 export async function loadPublicMessages() {
-  const list = $('#pubMsgList');
+  const list = $('#publicMessageBoard') || $('#pubMsgList');
   if (!list) return;
   await safeRender(async () => {
     const msgs = await fetchPublicMessages();

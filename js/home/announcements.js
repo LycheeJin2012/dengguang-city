@@ -5,7 +5,7 @@ const _annCache = { data: null, ts: 0 };
 const CACHE_TTL = 60_000; // 60s, 跟 homepage-bundle 的服务端 cache 一致
 
 export async function loadAnnouncements() {
-  const grid = $('#noticeGrid');
+  const grid = $('.notice-grid') || $('#noticeGrid');
   if (!grid) return;
   try {
     const list = await fetchAnnouncements();
