@@ -42,6 +42,11 @@
   </div>
 
   <!-- 账号安全 / 通行密钥管理（仅本人可见） -->
+  <div class="profile-card my-messages-card" id="myMessagesCard" style="display:none">
+    <!-- JS 渲染"我的最近留言" (v37.7) -->
+  </div>
+
+  <!-- 账号安全 / 通行密钥管理（仅本人可见） -->
   <div class="profile-card passkey-card" id="passkeyCard" style="display:none">
     <div class="passkey-head">🔑 账号安全 · 通行密钥 (Passkey)</div>
     <div class="passkey-body">
@@ -65,7 +70,7 @@
     t.defer = true;
     document.currentScript.parentNode.insertBefore(t, document.currentScript);
     var s = document.createElement('script');
-    s.src = 'js/profile.js?v=20260824-profile';
+    s.src = 'js/profile.js?v=20260827-my-messages';
     s.defer = true;
     document.currentScript.parentNode.insertBefore(s, document.currentScript);
   })();

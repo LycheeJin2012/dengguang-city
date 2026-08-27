@@ -136,6 +136,11 @@
     ${actionsHtml}
   `;
 
+  // v37.7: 自己主页加"我的最近留言" 卡片 (仅本人)
+  if (isSelf) {
+    loadMyMessages();
+  }
+
   // 5. 编辑自己主页
   if (isSelf) {
     document.getElementById('btnEdit').addEventListener('click', openEditModal);
@@ -283,6 +288,32 @@
       const out = new Uint8Array(bin.length);
       for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
       return out.buffer;
+    }
+
+    // v37.7: 我的最近留言 (profile 页加卡片)
+    async function loadMyMessages() {
+      const wrap = document.getElementById('myMessagesCard');
+      if (!wrap) return;
+      try {
+        const r = await fetch('/api/messages?my=1', { credentials: 'include' });
+        const d = await r.json();
+        if (!r.ok || !d.ok) { wrap.style.display = 'none'; return; }
+        const msgs = d.messages || [];
+        if (msgs.length === 0) { wrap.style.display = 'none'; return; }
+        wrap.innerHTML = '<div class="pmm-head">📜 我最近的市民留言</div>' + msgs.slice(0, 3).map(m => {
+          const hasReply = m.admin_reply && m.admin_reply.length > 0;
+          const isAi = hasReply && m.admin_reply.startsWith('🤖');
+          const tag = isAi ? '<span class="msg-replied-tag" style="background:#1a3a1a;color:#9f9;border-color:#6f6">🤖 AI 已回复</span>'
+                    : hasReply ? '<span class="msg-replied-tag" style="background:#1a2a3a;color:#9cf;border-color:#6cf">💬 已回复</span>'
+                    : '<span class="msg-replied-tag" style="background:#3a2a1a;color:#fc6;border-color:#c84">⏳ 待回复</span>';
+          return `<article class="pmm-item">
+            <div class="pmm-head-row">${tag}<span class="pmm-time">${(m.created_at || '').slice(0, 16).replace('T', ' ')}</span></div>
+            <div class="pmm-content">${escapeHtml(m.content)}</div>
+            ${hasReply ? `<div class="pmm-reply">📣 ${escapeHtml(m.admin_reply)}</div>` : ''}
+          </article>`;
+        }).join('');
+        wrap.style.display = '';
+      } catch (e) { wrap.style.display = 'none'; }
     }
 
     async function loadPasskeys() {
