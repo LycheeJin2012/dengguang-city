@@ -1023,17 +1023,46 @@ body.admin-body {
   font-size: 13px;
 }
 .msg-filter label, .filter-bar label {
-  display: flex; align-items: center; gap: 4px;
-  cursor: pointer; padding: 4px 8px;
-  border: 2px solid transparent;
+  display: flex; align-items: center; gap: 6px;
+  cursor: pointer;
+  padding: 6px 10px;
+  border: 2px solid var(--c-stone);
+  background: var(--c-paper);
+  user-select: none;
 }
-.msg-filter input[type="radio"]:checked + span,
-.filter-bar input[type="radio"]:checked + span,
+/* v43.2: 隐藏原生 radio 圆圈, 改用 ::before 自定义方块指示 */
+.msg-filter input[type="radio"],
+.filter-bar input[type="radio"] {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 12px; height: 12px;
+  margin: 0;
+  border: 2px solid var(--c-black);
+  background: var(--c-paper);
+  position: relative;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.msg-filter input[type="radio"]:checked,
+.filter-bar input[type="radio"]:checked {
+  background: var(--c-gold);
+  box-shadow: inset 0 0 0 2px var(--c-paper);
+}
+.msg-filter input[type="radio"]:checked::after,
+.filter-bar input[type="radio"]:checked::after {
+  /* 选中后画一个中心方块 (像素风) */
+  content: '';
+  position: absolute; top: 1px; left: 1px;
+  width: 4px; height: 4px;
+  background: var(--c-black);
+}
 .msg-filter label:has(input:checked),
 .filter-bar label:has(input:checked) {
   background: var(--c-gold);
   border-color: var(--c-black);
-  padding: 4px 8px;
+  color: var(--c-dark);
+  font-weight: 700;
 }
 
 /* ---------- role-tag 升级 (admin 用户角色标签) ---------- */
@@ -1317,4 +1346,44 @@ body.admin-body {
 @keyframes boot-bar-slide {
   0%   { transform: translateX(-100%); background-position: 0% 0; }
   100% { transform: translateX(200%);  background-position: 200% 0; }
+}
+
+/* ============================================
+   v43.2: 加载占位骨架 (skeleton) — 替代 "载入中..."
+   ============================================ */
+.skeleton {
+  display: block;
+  background: linear-gradient(90deg, var(--c-bg-2) 0%, var(--c-stone-light) 50%, var(--c-bg-2) 100%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.2s linear infinite;
+  border: 2px solid var(--c-stone);
+  height: 16px;
+  margin: 6px 0;
+}
+.skeleton.skeleton-lg { height: 24px; width: 60%; }
+.skeleton.skeleton-md { width: 40%; }
+.skeleton.skeleton-sm { width: 30%; height: 12px; }
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+/* v43.2: 隐藏原 boot loading 改用 skeleton (页面加载时显示空骨架) */
+#playerList:empty::before,
+#bookList:empty::before,
+#licenseList:empty::before,
+#kartList:empty::before,
+#circuitList:empty::before,
+#msgList:empty::before,
+#adminList:empty::before,
+#dmList:empty::before,
+#galGrid:empty::before,
+#annList:empty::before {
+  content: '正在加载…';
+  display: block;
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--c-stone-dark);
+  font-family: var(--font-pixel);
+  font-size: 12px;
+  letter-spacing: 2px;
 }
