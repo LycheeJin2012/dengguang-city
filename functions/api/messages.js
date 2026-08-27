@@ -4,7 +4,8 @@
 import { ok, err, stripHtml, isNonEmpty, readToken, getSession, aiAutoReply } from '../_shared.js';
 
 export async function onRequestGet(context) {
-  const { env, request } = if (!env.DB) return err(500, 'D1 binding DB not configured');
+  const { env, request } = context;
+  if (!env.DB) return err(500, 'D1 binding DB not configured');
 
   const url = new URL(request.url);
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '20', 10), 100);
@@ -29,7 +30,8 @@ export async function onRequestGet(context) {
 }
 
 export async function onRequestPost(context) {
-  const { env, request } = if (!env.DB) return err(500, 'D1 binding DB not configured');
+  const { env, request } = context;
+  if (!env.DB) return err(500, 'D1 binding DB not configured');
 
   // 玩家登录后才能留言（可改成匿名，但反垃圾更难）
   const token = readToken(request);
