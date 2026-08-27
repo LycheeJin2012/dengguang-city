@@ -427,6 +427,9 @@ async function renderMessages(){
     const f=document.querySelector('input[name="msgFilter"]:checked');
     const filter=f?f.value:'all';
     let list=all;
+    // v38: 搜索框 (按内容/姓名/联系方式模糊匹配, 不区分大小写)
+    const _q=($('#msgSearch')?.value || '').trim().toLowerCase();
+    if(_q){list=list.filter(m=>(m.content||'').toLowerCase().includes(_q)||(m.name||'').toLowerCase().includes(_q)||(m.contact||'').toLowerCase().includes(_q));}
     if(filter==='unread')list=list.filter(m=>m.status==='new');
     if(filter==='read')list=list.filter(m=>m.status!=='new');
     const box=$('#msgList'),empty=$('#msgEmpty');
@@ -1859,6 +1862,16 @@ Object.keys(_FILTER_RENDER).forEach(name => {
     r.addEventListener('change', () => _FILTER_RENDER[name]());
   });
 });
+
+// v38: 市民留言搜索框 (input 事件 200ms debounce 触发 renderMessages)
+const _msgSearch = document.getElementById('msgSearch');
+if (_msgSearch) {
+  let _t = 0;
+  _msgSearch.addEventListener('input', () => {
+    clearTimeout(_t);
+    _t = setTimeout(renderMessages, 200);
+  });
+}
 
 // 超管代注册玩家按钮 (仅 super 可见)
 const btnPlayerCreate=$('#btnPlayerCreate');
