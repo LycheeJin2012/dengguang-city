@@ -28,7 +28,7 @@ export async function onRequestGet(context) {
        CASE l.status WHEN 'pending' THEN 0 WHEN 'passed' THEN 1 WHEN 'failed' THEN 2 ELSE 3 END,
        l.created_at DESC LIMIT 300`
   ).all();
-  return ok({ signups: rows.results });
+  return ok({ signups: rows.results }, { headers: { 'Cache-Control': 'private, max-age=10' } });
 }
 
 export async function onRequestPatch(context) {

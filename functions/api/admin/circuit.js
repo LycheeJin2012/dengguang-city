@@ -23,7 +23,7 @@ export async function onRequestGet(context) {
      FROM circuit_signups c LEFT JOIN players p ON p.id = c.player_id
      ORDER BY c.created_at DESC LIMIT 200`
   ).all();
-  return ok({ signups: rows.results });
+  return ok({ signups: rows.results }, { headers: { 'Cache-Control': 'private, max-age=10' } });
 }
 
 export async function onRequestPatch(context) {

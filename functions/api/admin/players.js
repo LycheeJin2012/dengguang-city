@@ -46,7 +46,7 @@ export async function onRequestGet(context) {
   sql += ' ORDER BY p.created_at DESC LIMIT 500';
 
   const rows = await env.DB.prepare(sql).bind(...args).all();
-  return ok({ players: rows.results, count: rows.results.length });
+  return ok({ players: rows.results, count: rows.results.length }, { headers: { 'Cache-Control': 'private, max-age=10' } });
 }
 
 export async function onRequestPatch(context) {

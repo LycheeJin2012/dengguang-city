@@ -31,7 +31,7 @@ export async function onRequestGet(context) {
       'SELECT m.*, p.username as player_username FROM messages m LEFT JOIN players p ON p.id = m.player_id ORDER BY m.created_at DESC LIMIT 200'
     ).all();
   }
-  return ok({ messages: rows.results });
+  return ok({ messages: rows.results }, { headers: { 'Cache-Control': 'private, max-age=10' } });
 }
 
 export async function onRequestPatch(context) {

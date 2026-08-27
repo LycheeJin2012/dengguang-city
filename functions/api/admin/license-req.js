@@ -21,7 +21,7 @@ export async function onRequestGet(context) {
   const { env } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
   const rows = await env.DB.prepare('SELECT * FROM license_requirements ORDER BY sort_order, id').all();
-  return ok({ requirements: rows.results || [] });
+  return ok({ requirements: rows.results || [] }, { headers: { 'Cache-Control': 'private, max-age=10' } });
 }
 
 export async function onRequestPost(context) {

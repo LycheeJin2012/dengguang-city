@@ -21,7 +21,7 @@ export async function onRequestGet(context) {
   const { env } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
   const rows = await env.DB.prepare('SELECT * FROM race_tracks ORDER BY sort_order, id').all();
-  return ok({ tracks: rows.results || [] });
+  return ok({ tracks: rows.results || [] }, { headers: { 'Cache-Control': 'private, max-age=10' } });
 }
 
 export async function onRequestPost(context) {

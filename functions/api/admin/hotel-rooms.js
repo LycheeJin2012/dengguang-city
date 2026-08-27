@@ -31,7 +31,7 @@ export async function onRequestGet(context) {
     params = [];
   }
   const rows = await env.DB.prepare(sql).bind(...params).all();
-  return ok({ rooms: rows.results || [] });
+  return ok({ rooms: rows.results || [] }, { headers: { 'Cache-Control': 'private, max-age=10' } });
 }
 
 export async function onRequestPost(context) {

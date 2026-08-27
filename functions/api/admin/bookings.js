@@ -23,7 +23,7 @@ export async function onRequestGet(context) {
      FROM bookings b LEFT JOIN players p ON p.id = b.player_id
      ORDER BY b.created_at DESC LIMIT 200`
   ).all();
-  return ok({ bookings: rows.results });
+  return ok({ bookings: rows.results }, { headers: { 'Cache-Control': 'private, max-age=10' } });
 }
 
 export async function onRequestPatch(context) {

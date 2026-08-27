@@ -26,7 +26,7 @@ export async function onRequestGet(context) {
     LEFT JOIN players lp ON lp.id = a.linked_player_id
     ORDER BY a.id ASC
   `).all();
-  return ok({ admins: rows.results });
+  return ok({ admins: rows.results }, { headers: { 'Cache-Control': 'private, max-age=10' } });
 }
 
 export async function onRequestPost(context) {

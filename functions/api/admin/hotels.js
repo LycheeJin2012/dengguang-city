@@ -33,7 +33,7 @@ export async function onRequestGet(context) {
     params = [];
   }
   const rows = await env.DB.prepare(sql).bind(...params).all();
-  return ok({ hotels: rows.results || [] });
+  return ok({ hotels: rows.results || [] }, { headers: { 'Cache-Control': 'private, max-age=10' } });
 }
 
 export async function onRequestPost(context) {
