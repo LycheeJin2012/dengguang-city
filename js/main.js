@@ -399,7 +399,7 @@
     }
     if (!force && _homepageBundlePending) return _homepageBundlePending;
     if (force) _homepageBundlePending = null;
-    _homepageBundlePending = fetch('/api/init?action=homepage-bundle', { credentials: 'omit' })
+    _homepageBundlePending = fetch('/api/homepage-bundle', { credentials: 'omit' })
       .then(r => r.json())
       .then(d => { _homepageBundle = (d && d.bundle) || {}; _homepageBundleTs = Date.now(); return _homepageBundle; })
       .catch(() => { _homepageBundle = {}; _homepageBundleTs = Date.now(); return _homepageBundle; });

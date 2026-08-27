@@ -330,13 +330,17 @@ export async function onRequestGet(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
 
-  // v19: 自动 MIGRATIONS — 任何 GET 都会确保 schema/字段最新 (先于 action 路由, 避免 action 早返回跳过迁移)
-  // 走 SCHEMA 幂等 (CREATE TABLE IF NOT EXISTS) + MIGRATIONS try/catch 吞错
-  for (const sql of SCHEMA) {
-    try { await env.DB.prepare(sql).run(); } catch (e) {}
-  }
-  for (const sql of MIGRATIONS) {
-    try { await env.DB.prepare(sql).run(); } catch (e) {}
+  // v40.2: 用 globalThis 标志 memoize — 每个 worker 实例只跑一次 SCHEMA/MIGRATIONS
+  // 之前每请求跑 56 条 CREATE/ALTER, 30-50ms/query × 56 = 2-3 秒光这部分
+  // 标志存在 globalThis (跨请求共享), worker 重启或新部署后才会重跑
+  if (!globalThis.__lc_schema_done) {
+    globalThis.__lc_schema_done = true;
+    for (const sql of SCHEMA) {
+      try { await env.DB.prepare(sql).run(); } catch (e) {}
+    }
+    for (const sql of MIGRATIONS) {
+      try { await env.DB.prepare(sql).run(); } catch (e) {}
+    }
   }
 
   // v18: GET /api/init?action=announcements-list 已拆到 functions/api/announcements.js
