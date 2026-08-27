@@ -330,18 +330,9 @@ export async function onRequestGet(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
 
-  // v40.2: 用 globalThis 标志 memoize — 每个 worker 实例只跑一次 SCHEMA/MIGRATIONS
-  // 之前每请求跑 56 条 CREATE/ALTER, 30-50ms/query × 56 = 2-3 秒光这部分
-  // 标志存在 globalThis (跨请求共享), worker 重启或新部署后才会重跑
-  if (!globalThis.__lc_schema_done) {
-    globalThis.__lc_schema_done = true;
-    for (const sql of SCHEMA) {
-      try { await env.DB.prepare(sql).run(); } catch (e) {}
-    }
-    for (const sql of MIGRATIONS) {
-      try { await env.DB.prepare(sql).run(); } catch (e) {}
-    }
-  }
+  // v40.3: GET 不再跑 SCHEMA/MIGRATIONS — 生产 schema 早就齐了 (POST /api/init 兜底)
+  // 之前 memoize 在多个 worker 实例下还是 4-5 次后才快, 因为每个实例 cold start 各跑一次 56 条
+  // POST 端点仍然跑 schema 作为显式初始化入口
 
   // v18: GET /api/init?action=announcements-list 已拆到 functions/api/announcements.js
 
