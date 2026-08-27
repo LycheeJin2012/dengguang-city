@@ -4,6 +4,6 @@
 export async function onRequest(context) {
   return new Response(null, {
     status: 302,
-    headers: { Location: '/admin-v37.html?v=20260828-apple-motion' },
+    headers: { Location: '/admin-v37.html?v=v38final' },
   });
 }
