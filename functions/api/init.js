@@ -72,7 +72,7 @@ export async function onRequestGet(context) {
   const _u = new URL(request.url);
   const _a = _u.searchParams.get('action') || '';
   if (_a === 'unread-summary') {
-    // 公开给登录玩家: 返回 DM / 留言回复 / 最新公告 id
+    // v43.3: 3 个查询 Promise.all 并发 (之前串行 3 * 30ms = 90ms)
     const _ck = request.headers.get('Cookie') || '';
     const _m = _ck.match(/lc_session=([^;]+)/);
     if (!_m) return ok({ logged_in: false, dm: 0, msg_replies: 0, announcement: null });
@@ -81,15 +81,11 @@ export async function onRequestGet(context) {
       return ok({ logged_in: false, dm: 0, msg_replies: 0, announcement: null });
     }
     const _pid = _sess.player_id;
-    const _dm = await env.DB.prepare(
-      'SELECT COUNT(*) AS c FROM direct_messages WHERE to_player_id = ? AND read_at IS NULL'
-    ).bind(_pid).first();
-    const _msgs = await env.DB.prepare(
-      "SELECT COUNT(*) AS c FROM messages WHERE player_id = ? AND admin_reply IS NOT NULL AND admin_reply != ''"
-    ).bind(_pid).first();
-    const _ann = await env.DB.prepare(
-      "SELECT id, created_at, title FROM announcements ORDER BY created_at DESC LIMIT 1"
-    ).first();
+    const [_dm, _msgs, _ann] = await Promise.all([
+      env.DB.prepare('SELECT COUNT(*) AS c FROM direct_messages WHERE to_player_id = ? AND read_at IS NULL').bind(_pid).first(),
+      env.DB.prepare("SELECT COUNT(*) AS c FROM messages WHERE player_id = ? AND admin_reply IS NOT NULL AND admin_reply != ''").bind(_pid).first(),
+      env.DB.prepare("SELECT id, created_at, title FROM announcements ORDER BY created_at DESC LIMIT 1").first(),
+    ]);
     return ok({
       logged_in: true,
       player_id: _pid,
