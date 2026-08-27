@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="css/fonts.css" />
   <link rel="preload" href="css/style.css?v=20260828-v43-admin" as="style" />
   <link rel="preload" href="css/subpages.css" as="style" />
-  <link rel="preload" href="js/hotel.js" as="script" />
+  <link rel="preload" href="js/page/hotel/entry.js?v=v45-rewrite" as="script" />
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/subpages.css" />
 </head>
@@ -182,13 +182,8 @@
     (function(){
       var t = document.createElement('script');
       t.src = 'js/toast.js?v=20260826-toast';
-      t.defer = true;
       document.currentScript.parentNode.insertBefore(t, document.currentScript);
-      var s = document.createElement('script');
-      s.src = 'js/hotel.js?v=20260824-hotel';
-      s.defer = true;
-      document.currentScript.parentNode.insertBefore(s, document.currentScript);
-    })();
   </script>
+  <script type="module" src="js/page/hotel/entry.js?v=v45-rewrite"></script>
 </body>
 </html>
