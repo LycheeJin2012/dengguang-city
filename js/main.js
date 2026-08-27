@@ -1,8 +1,4 @@
-// v45 重写: 公共页入口 (ES module)
-// 拆 11 个 home/ 子模块, 启动顺序:
-//   1. 视觉 (clouds, reveal, hero) - 立刻挂 scroll/resize
-//   2. 数据加载 (announcements, messages, gallery, services)
-//   3. 玩家登录态 (header, auth, signin, forms)
+// v45 重写: 公共页入口 (ES module) — DEBUG 版
 import { bindClouds } from './home/clouds.js';
 import { bindReveal } from './home/reveal.js';
 import { bindAll as bindHero } from './home/hero.js';
@@ -14,26 +10,43 @@ import { bindAll as bindHeader } from './home/header.js';
 import { bindAll as bindAuth } from './home/auth.js';
 import { loadSigninBadge, openSigninModal } from './home/signin.js';
 
-// 暴露到 window (兼容 HTML inline onclick, e.g. data-stat 触发)
 window.openSigninModal = openSigninModal;
 
+// DEBUG: 把 import 错误暴露到 DOM
+window._bootTrace = [];
+window._bootError = null;
+try {
+  window._bootTrace.push('imports OK at ' + new Date().toISOString());
+} catch (e) { /* ignore */ }
+
 (async function boot() {
-  // 1. 视觉: scroll/resize 不阻塞, 立即挂
-  bindClouds();
-  bindReveal();
-  bindHero();
+  const _log = (m) => {
+    try { window._bootTrace.push(m); } catch (e) {}
+    try { console.log('[boot]', m); } catch (e) {}
+  };
+  try {
+    _log('bindClouds start');
+    bindClouds();
+    _log('bindClouds done');
+    bindReveal();
+    bindHero();
+    _log('bindHero done');
 
-  // 2. 数据加载: 拉后端数据覆盖 hardcoded 草拟
-  loadAnnouncements();
-  loadPublicMessages();
-  loadGallery();
-  loadHotelRooms();
-  loadKartSpecs();
-  loadLicenseReqs();
-  loadSigninBadge();
+    loadAnnouncements();
+    loadPublicMessages();
+    loadGallery();
+    loadHotelRooms();
+    loadKartSpecs();
+    loadLicenseReqs();
+    loadSigninBadge();
+    _log('all loadX issued');
 
-  // 3. 交互绑定: 表单 + 玩家状态
-  bindForms();
-  bindHeader();
-  bindAuth();
+    bindForms();
+    bindHeader();
+    bindAuth();
+    _log('all bindX done — BOOT SUCCESS');
+  } catch (e) {
+    _log('BOOT FAIL: ' + (e?.message || String(e)) + ' @ ' + (e?.stack || '').split('\n').slice(0, 3).join(' | '));
+    window._bootError = e?.message || String(e);
+  }
 })();
