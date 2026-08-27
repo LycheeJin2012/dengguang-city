@@ -46,6 +46,33 @@
   --dur-fast: 160ms;  /* color / background 微动 */
   --dur-base: 240ms;  /* transform 抬起 / hover */
   --dur-slow: 360ms;  /* modal 弹入 */
+
+  /* ---------- v43 设计 token (统一阴影/圆角/间距) ---------- */
+  /* 圆角 (0=像素风硬角, 4=轻微软化) */
+  --r-0: 0;
+  --r-sm: 2px;
+  --r-md: 4px;
+  --r-lg: 6px;
+
+  /* 间距 */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+  --sp-8: 64px;
+
+  /* 阴影层级 (像素硬阴影, 不用 blur, 跟主题一致) */
+  --shadow-card:  4px 4px 0 var(--c-black);
+  --shadow-card-lg: 6px 6px 0 var(--c-black);
+  --shadow-soft: 2px 2px 0 rgba(0,0,0,0.15);
+
+  /* 文字层级 (中国字体的视觉重量) */
+  --lh-tight: 1.3;
+  --lh-base:  1.55;
+  --lh-loose: 1.75;
 }
 
 /* ============================================
@@ -2719,3 +2746,152 @@ textarea { resize: vertical; min-height: 90px; }
 .pm-emoji-bar { display: flex; gap: 4px; margin-top: 4px; margin-bottom: 4px; }
 .pm-emoji-btn { background: transparent; border: 1px solid var(--c-stone, #999); border-radius: 4px; padding: 2px 6px; font-size: 16px; cursor: pointer; line-height: 1; }
 .pm-emoji-btn:hover { background: var(--c-gold, #ffd23f); }
+
+/* ============================================
+   v43: 视觉系统全面优化 (empty-state / form / card / tab / login)
+   ============================================ */
+
+/* ---------- empty state 视觉升级 (v43) ---------- */
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  background: var(--c-bg-2);
+  border: 3px solid var(--c-black);
+  color: var(--c-stone-dark);
+  font-family: var(--font-cn);
+  position: relative;
+  box-shadow: var(--shadow-soft);
+}
+.empty-state::before {
+  /* 顶部金条装饰 (跟 stat 卡片呼应) */
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 4px;
+  background: var(--c-gold);
+}
+.empty-state p { margin: 8px 0 0; font-size: 15px; line-height: var(--lh-loose); }
+.empty-state .empty-sub { font-size: 13px; color: var(--c-stone); margin-top: 4px; }
+.empty-icon { font-size: 56px; opacity: 0.8; display: block; line-height: 1; margin-bottom: 12px; }
+
+/* ---------- form label 升级 (v43) ---------- */
+.form-row { display: flex; gap: var(--sp-3); margin-bottom: var(--sp-4); flex-wrap: wrap; }
+.form-row > label { flex: 1 1 200px; min-width: 180px; }
+label > span.label-text {
+  display: block;
+  font-family: var(--font-pixel);
+  font-size: 10px;
+  color: var(--c-grass-dark);
+  margin-bottom: var(--sp-2);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+label > span.hint {
+  display: block;
+  font-family: var(--font-cn);
+  font-size: 12px;
+  color: var(--c-stone-dark);
+  margin-top: 4px;
+}
+
+/* ---------- badge 组件 (v43) ---------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-family: var(--font-pixel);
+  font-size: 9px;
+  letter-spacing: 1px;
+  background: var(--c-paper);
+  border: 2px solid var(--c-black);
+  color: var(--c-dark);
+  line-height: 1.2;
+}
+.badge.badge-grass   { background: var(--c-grass);    color: #fff; }
+.badge.badge-gold    { background: var(--c-gold);     color: var(--c-dark); }
+.badge.badge-redstone{ background: var(--c-redstone); color: #fff; }
+.badge.badge-water   { background: var(--c-water);    color: #fff; }
+.badge.badge-stone   { background: var(--c-stone-light); color: var(--c-dark); }
+.badge.badge-outline { background: transparent; border-color: var(--c-stone); color: var(--c-stone-dark); }
+
+/* ---------- card 视觉升级 (v43) — 全部 .pane-card / .info-card 加内部 padding + 顶部高光条 ---------- */
+.pane-card {
+  background: var(--c-paper);
+  border: 3px solid var(--c-black);
+  box-shadow: var(--shadow-card);
+  padding: var(--sp-5);
+  position: relative;
+  margin-bottom: var(--sp-4);
+}
+.pane-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  background: var(--c-gold);
+}
+.pane-card > h3 {
+  margin: 0 0 var(--sp-3);
+  font-family: var(--font-pixel);
+  font-size: 13px;
+  color: var(--c-grass-dark);
+  letter-spacing: 1px;
+}
+.pane-card > p {
+  margin: 0;
+  font-family: var(--font-cn);
+  font-size: 14px;
+  line-height: var(--lh-loose);
+  color: var(--c-dark);
+}
+
+/* ---------- callout 提示块 (v43) — 用于"重要说明 / 待办" ---------- */
+.callout {
+  display: flex;
+  gap: var(--sp-3);
+  padding: var(--sp-3) var(--sp-4);
+  border: 2px solid var(--c-black);
+  background: var(--c-paper);
+  font-family: var(--font-cn);
+  font-size: 14px;
+  line-height: var(--lh-loose);
+  margin: var(--sp-4) 0;
+  box-shadow: var(--shadow-soft);
+}
+.callout::before { content: '💡'; font-size: 18px; line-height: 1; }
+.callout.callout-info    { border-color: var(--c-water); background: #eaf3ff; }
+.callout.callout-warn    { border-color: var(--c-redstone); background: #ffeaea; }
+.callout.callout-success { border-color: var(--c-emerald); background: #eafff3; }
+.callout strong { font-family: var(--font-pixel); font-size: 11px; color: var(--c-grass-dark); }
+
+/* ---------- link 列表 (v43) — 用于 profile 等页面侧边栏 ---------- */
+.link-list { list-style: none; padding: 0; margin: 0; }
+.link-list li {
+  padding: var(--sp-2) 0;
+  border-bottom: 1px dashed var(--c-stone-light);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-cn);
+  font-size: 14px;
+}
+.link-list li:last-child { border-bottom: 0; }
+.link-list li a { color: var(--c-grass-dark); }
+.link-list li .meta { font-size: 12px; color: var(--c-stone-dark); font-family: var(--font-pixel); }
+
+/* ---------- pane-head 升级 (v43) — 加金色左侧色条 ---------- */
+.pane-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--sp-5);
+  padding-left: var(--sp-3);
+  border-left: 4px solid var(--c-grass);
+}
+
+/* ---------- divider (v43) — 16px 金色横线 ---------- */
+.divider-gold {
+  display: block;
+  width: 64px;
+  height: 4px;
+  background: var(--c-gold);
+  border: 1px solid var(--c-black);
+  margin: var(--sp-3) 0;
+}
