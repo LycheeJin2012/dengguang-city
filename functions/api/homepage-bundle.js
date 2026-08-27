@@ -14,11 +14,10 @@ const DEFAULT_TRACKS = [
 ];
 
 async function seedDefaultTracks(env) {
-  // INSERT OR IGNORE: 用 name UNIQUE 检测是否已存在
-  // (race_tracks 表 schema 没有 UNIQUE 约束, 先 SELECT 查重)
-  const existing = await env.DB.prepare('SELECT COUNT(*) AS n FROM race_tracks').first();
-  if (existing && existing.n >= 1) return; // 至少有一条 (不管是什么), 跳过
+  // v42: 按 name 查重, 缺哪个补哪个 (不会重复插)
   for (const t of DEFAULT_TRACKS) {
+    const exist = await env.DB.prepare('SELECT id FROM race_tracks WHERE name = ?').bind(t.name).first();
+    if (exist) continue;
     await env.DB.prepare(
       'INSERT INTO race_tracks (name, length_km, laps, difficulty, description, image_url, trial_price, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)'
     ).bind(t.name, t.length_km, t.laps, t.difficulty, t.description, t.image_url || null, t.trial_price, t.sort_order).run();
