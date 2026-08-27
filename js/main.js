@@ -854,6 +854,7 @@
   const circuitCancel = document.getElementById('circuitCancel');
   const circuitName   = document.getElementById('circuitName');
   const circuitContact= document.getElementById('circuitContact');
+  const circuitTrackId= document.getElementById('circuitTrackId');
   const circuitLicense= document.getElementById('circuitLicense');
   const circuitSession= document.getElementById('circuitSession');
   const circuitCar    = document.getElementById('circuitCar');
@@ -861,9 +862,23 @@
   const circuitMsg    = document.getElementById('circuitMsg');
   const btnCircuitSignup = document.getElementById('btnCircuitSignup');
 
+  // v42: 从 bundle.tracks 动态填充赛道下拉
+  function refreshCircuitTrackOptions() {
+    if (!circuitTrackId) return;
+    const tracks = (_homepageBundle && _homepageBundle.tracks) || [];
+    if (tracks.length === 0) {
+      circuitTrackId.innerHTML = '<option value="">(暂无开放赛道)</option>';
+      return;
+    }
+    circuitTrackId.innerHTML = tracks.map(t =>
+      `<option value="${t.id}">${escHtml(t.name)} - ${t.trial_price || 0}💎/次</option>`
+    ).join('');
+  }
+
   function openCircuitModal() {
     if (!circuitMask) return;
     circuitMsg.textContent = '';
+    refreshCircuitTrackOptions();
     circuitMask.style.display = '';
     document.body.style.overflow = 'hidden';
     setTimeout(() => circuitName && circuitName.focus(), 50);
@@ -900,6 +915,7 @@
           credentials: 'include',
           body: JSON.stringify({
             name, contact,
+            track_id: parseInt(circuitTrackId?.value || 0, 10) || null,
             license: circuitLicense.value,
             session: circuitSession.value,
             car: circuitCar.value.trim(),

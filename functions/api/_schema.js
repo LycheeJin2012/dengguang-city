@@ -268,4 +268,11 @@ export const MIGRATIONS = [
   `CREATE INDEX IF NOT EXISTS idx_webauthn_expires ON webauthn_challenges(expires_at)`,
   // v19: 每日签到 — players.emeralds 绿宝石余额 + daily_signin 表 (已建在 SCHEMA)
   `ALTER TABLE players ADD COLUMN emeralds INTEGER NOT NULL DEFAULT 0`,
+  // v42: circuit_signups 加 track_id / session / car / license / emeralds_charged 字段
+  // (国际赛车场试车报名之前只存 name/contact/note, 用户选的比赛场次/车型/驾照丢了)
+  `ALTER TABLE circuit_signups ADD COLUMN track_id INTEGER`,
+  `ALTER TABLE circuit_signups ADD COLUMN session TEXT`,
+  `ALTER TABLE circuit_signups ADD COLUMN car TEXT`,
+  `ALTER TABLE circuit_signups ADD COLUMN license TEXT`,
+  `ALTER TABLE circuit_signups ADD COLUMN emeralds_charged INTEGER NOT NULL DEFAULT 0`,
 ];

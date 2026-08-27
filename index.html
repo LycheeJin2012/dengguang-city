@@ -216,8 +216,8 @@
         <h2 class="section-title">🏎️ 国际赛车场</h2>
         <p class="section-sub">KART RACING · 双车道红石冰道</p>
       </div>
-      <p class="kart-intro">
-        国际赛车场（拟建中）。具体长度、弯道、路面材料、开放时间由市政厅公告。
+      <p class="kart-intro" id="kartIntro">
+        国际赛车场赛道信息见下方规格表。需对应级别驾照方可试车, 每次试车按赛道价格扣 💎 绿宝石。
       </p>
 
       <!-- 精选 6 张赛道实景 -->
@@ -359,6 +359,11 @@
               </select>
             </label>
           </div>
+          <label><span>选择赛道</span>
+            <select id="circuitTrackId" required>
+              <!-- JS 渲染 (从 homepage-bundle.tracks 拉) -->
+            </select>
+          </label>
           <label><span>期望场次</span>
             <select id="circuitSession">
               <option>排位赛 周三 20:00</option>

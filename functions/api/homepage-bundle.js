@@ -1,12 +1,36 @@
 // GET /api/homepage-bundle — 公开首页一次性拉 5 表 + player count
 // 拆自 functions/api/init.js (v40.2)
-// 之前 init.js 1621 行, 每次 GET 跑 56 条 SCHEMA + MIGRATIONS, homepage-bundle 11s
-// 独立文件后跳过大 init.js, 6 个 query Promise.all 并发, 期望 < 800ms
+// v42: 自动 seed 2 条默认 track (国际赛车场 + 备用), 保证前端 select 有选项
 import { ok, err } from '../_shared.js';
+
+// v42: 默认赛道 seed (首次访问时插入, 已存在则跳过)
+const DEFAULT_TRACKS = [
+  { name: '🌐 国际赛车场·主赛道', length_km: 5.2, laps: 12, difficulty: '高级',
+    description: '5.2km 12 圈, 含 4 个发夹弯 + 1 个长直道 + 2 个高速弯。需 A 级以上驾照。',
+    image_url: 'assets/backgrounds/bg-pixel-circuit.jpg', trial_price: 50, sort_order: 1 },
+  { name: '🌐 国际赛车场·短赛道', length_km: 2.8, laps: 8, difficulty: '中级',
+    description: '2.8km 8 圈, 适合热身与新驾照练车。需 B 级驾照。',
+    image_url: '', trial_price: 20, sort_order: 2 },
+];
+
+async function seedDefaultTracks(env) {
+  // INSERT OR IGNORE: 用 name UNIQUE 检测是否已存在
+  // (race_tracks 表 schema 没有 UNIQUE 约束, 先 SELECT 查重)
+  const existing = await env.DB.prepare('SELECT COUNT(*) AS n FROM race_tracks').first();
+  if (existing && existing.n >= 1) return; // 至少有一条 (不管是什么), 跳过
+  for (const t of DEFAULT_TRACKS) {
+    await env.DB.prepare(
+      'INSERT INTO race_tracks (name, length_km, laps, difficulty, description, image_url, trial_price, sort_order, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)'
+    ).bind(t.name, t.length_km, t.laps, t.difficulty, t.description, t.image_url || null, t.trial_price, t.sort_order).run();
+  }
+}
 
 export async function onRequestGet(context) {
   const { env } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
+
+  // 先 seed 再查 (idempotent)
+  await seedDefaultTracks(env);
 
   const [_hotels, _rooms, _tracks, _licenseReqs, _announcements, _playerCount] = await Promise.all([
     env.DB.prepare('SELECT * FROM hotels ORDER BY sort_order, id').all(),
