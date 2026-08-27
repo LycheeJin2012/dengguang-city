@@ -38,6 +38,21 @@
   --font-pixel: 'Press Start 2P', 'Noto Sans SC', monospace;
   --font-mc: 'VT323', 'Noto Sans SC', monospace;
   --font-cn: 'PingFang SC', 'Microsoft YaHei', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', 'Noto Sans SC', system-ui, -apple-system, sans-serif;
+
+  /* ---------- 动效系统 (Apple HIG 风格: 短时长 + 标准曲线 + 弹簧) ----------
+     时长: 100-520ms, 越长越慢; easing 不要用 linear/ease, 走 cubic-bezier
+     transition 永远列具体属性, 禁止 transition: all (会触发 layout jank) */
+  --ease-standard: cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 默认, 温和减速 */
+  --ease-decel:    cubic-bezier(0, 0, 0.2, 1);            /* 入场, 减速到位 */
+  --ease-accel:    cubic-bezier(0.4, 0, 1, 1);            /* 出场, 加速离开 */
+  --ease-spring:   cubic-bezier(0.34, 1.56, 0.64, 1);     /* 弹性, 轻微过冲 (modal/弹层) */
+  --ease-snap:     cubic-bezier(0.5, 0, 0, 1);            /* 干脆, 按钮按下 */
+
+  --dur-instant: 100ms;  /* 焦点环 / 文字色 */
+  --dur-fast:    180ms;  /* color, opacity, 微动 */
+  --dur-base:    260ms;  /* 卡片悬浮, transform 位移 */
+  --dur-slow:    380ms;  /* modal 弹入, 抽屉滑入 */
+  --dur-slower:  520ms;  /* 大块切换, 页面级转场 */
 }
 
 /* ============================================
@@ -61,7 +76,7 @@
   border: 3px solid var(--c-black);
   box-shadow: 4px 4px 0 var(--c-black);
   cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+  transition: transform var(--dur-fast) var(--ease-snap), box-shadow var(--dur-fast) var(--ease-snap), background var(--dur-fast) var(--ease-standard);
   text-align: center;
   user-select: none;
 }
@@ -181,7 +196,7 @@
   z-index: 9999;
   display: flex; align-items: center; justify-content: center;
   padding: 16px;
-  animation: cmp-mask-in 0.18s ease-out;
+  animation: cmp-mask-in var(--dur-base) var(--ease-decel);
   overflow-y: auto;
 }
 @keyframes cmp-mask-in { from { opacity: 0; } to { opacity: 1; } }
@@ -197,7 +212,7 @@
   font-family: var(--font-cn);
   color: var(--c-dark);
   padding: 0;
-  animation: cmp-modal-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: cmp-modal-in var(--dur-slow) var(--ease-spring);
 }
 @keyframes cmp-modal-in {
   from { transform: translateY(20px) scale(0.96); opacity: 0; }
@@ -546,7 +561,7 @@ body {
     linear-gradient(180deg, var(--c-bg) 0%, var(--c-bg-2) 100%);
 }
 
-a { color: inherit; text-decoration: none; }
+a { color: inherit; text-decoration: none; transition: color var(--dur-fast) var(--ease-standard); }
 img, svg { image-rendering: pixelated; }
 button { font-family: inherit; cursor: pointer; border: none; background: none; }
 input, textarea, select {
@@ -559,6 +574,7 @@ input, textarea, select {
   outline: none;
   color: var(--c-dark);
   width: 100%;
+  transition: box-shadow var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
 }
 input:focus, textarea:focus, select:focus {
   box-shadow: inset 0 0 0 2px var(--c-gold);
@@ -703,7 +719,7 @@ textarea { resize: vertical; min-height: 90px; }
   padding: 8px 14px;
   color: var(--c-dark);
   border: 2px solid transparent;
-  transition: all 0.15s;
+  transition: color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard);
   position: relative;
 }
 .nav-links a:hover {
@@ -730,7 +746,7 @@ textarea { resize: vertical; min-height: 90px; }
   border: 2px solid var(--c-black);
   box-shadow: 2px 2px 0 var(--c-black);
   text-decoration: none;
-  transition: transform 0.1s, box-shadow 0.1s;
+  transition: transform var(--dur-fast) var(--ease-snap), box-shadow var(--dur-fast) var(--ease-snap);
 }
 .nav-login-link:hover, .nav-logout-link:hover {
   transform: translate(-1px, -1px);
@@ -770,7 +786,7 @@ textarea { resize: vertical; min-height: 90px; }
   background: var(--c-grass);
   border: 3px solid var(--c-black);
   box-shadow: 4px 4px 0 0 var(--c-black);
-  transition: all 0.12s;
+  transition: transform var(--dur-fast) var(--ease-snap), box-shadow var(--dur-fast) var(--ease-snap), background var(--dur-fast) var(--ease-standard);
   cursor: pointer;
 }
 .btn:hover {
@@ -961,7 +977,7 @@ textarea { resize: vertical; min-height: 90px; }
   background: var(--c-paper);
   border: 3px solid var(--c-black);
   box-shadow: 5px 5px 0 var(--c-stone);
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform var(--dur-base) var(--ease-snap), box-shadow var(--dur-base) var(--ease-snap);
   cursor: pointer;
 }
 .notice-card:hover {
@@ -1079,7 +1095,7 @@ textarea { resize: vertical; min-height: 90px; }
   padding: 32px 20px;
   text-align: center;
   position: relative;
-  transition: transform 0.2s;
+  transition: transform var(--dur-base) var(--ease-snap);
 }
 .data-card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 var(--c-stone); }
 .data-card::before {
@@ -1146,7 +1162,7 @@ textarea { resize: vertical; min-height: 90px; }
   border: 3px solid var(--c-black);
   box-shadow: 5px 5px 0 var(--c-stone);
   padding: 0 0 12px;
-  transition: transform 0.2s;
+  transition: transform var(--dur-base) var(--ease-snap);
   overflow: hidden;
   cursor: pointer;
 }
@@ -1296,7 +1312,7 @@ textarea { resize: vertical; min-height: 90px; }
   box-shadow: 5px 5px 0 var(--c-stone);
   padding: 28px 22px;
   text-align: center;
-  transition: all 0.2s;
+  transition: transform var(--dur-base) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard), background var(--dur-fast) var(--ease-standard);
   position: relative;
 }
 .service-card:hover {
@@ -1509,7 +1525,7 @@ textarea { resize: vertical; min-height: 90px; }
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: transform 0.15s, box-shadow 0.15s, background 0.15s;
+  transition: transform var(--dur-base) var(--ease-snap), box-shadow var(--dur-base) var(--ease-snap), background var(--dur-fast) var(--ease-standard);
 }
 .gal-filter:hover { transform: translate(-2px, -2px); box-shadow: 5px 5px 0 var(--c-stone); }
 .gal-filter.active {
@@ -1546,7 +1562,7 @@ textarea { resize: vertical; min-height: 90px; }
   box-shadow: 5px 5px 0 var(--c-stone);
   padding: 0;
   cursor: pointer;
-  transition: transform 0.18s, box-shadow 0.18s;
+  transition: transform var(--dur-base) var(--ease-snap), box-shadow var(--dur-base) var(--ease-snap);
   overflow: hidden;
   position: relative;
 }
@@ -1630,7 +1646,7 @@ textarea { resize: vertical; min-height: 90px; }
   box-shadow: 4px 4px 0 rgba(0,0,0,0.5);
   width: 48px; height: 48px;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: transform var(--dur-fast) var(--ease-snap), box-shadow var(--dur-fast) var(--ease-snap), background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
   z-index: 2;
 }
 .lb-close:hover, .lb-prev:hover, .lb-next:hover {
@@ -1673,7 +1689,7 @@ textarea { resize: vertical; min-height: 90px; }
   border: 3px solid var(--c-black);
   box-shadow: 5px 5px 0 var(--c-stone);
   padding: 18px 20px;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform var(--dur-base) var(--ease-snap), box-shadow var(--dur-base) var(--ease-snap);
   position: relative;
 }
 .pm-item:hover { transform: translate(-2px, -2px); box-shadow: 7px 7px 0 var(--c-grass-dark); }
@@ -1745,7 +1761,7 @@ textarea { resize: vertical; min-height: 90px; }
   border: 3px solid var(--c-black);
   box-shadow: 4px 4px 0 var(--c-stone);
   cursor: pointer;
-  transition: transform 0.18s, box-shadow 0.18s;
+  transition: transform var(--dur-base) var(--ease-snap), box-shadow var(--dur-base) var(--ease-snap);
   overflow: hidden;
 }
 .kb-item:hover {
@@ -2000,7 +2016,7 @@ textarea { resize: vertical; min-height: 90px; }
   box-shadow: 6px 6px 0 var(--c-stone);
   padding: 0;
   position: relative;
-  transition: transform 0.18s, box-shadow 0.18s;
+  transition: transform var(--dur-base) var(--ease-snap), box-shadow var(--dur-base) var(--ease-snap);
   display: flex; flex-direction: column;
 }
 .room-card:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 var(--c-grass-dark); }
@@ -2158,7 +2174,7 @@ textarea { resize: vertical; min-height: 90px; }
   z-index: 9999;
   display: flex; align-items: center; justify-content: center;
   padding: 16px;
-  animation: lc-mask-in 0.18s ease-out;
+  animation: lc-mask-in var(--dur-base) var(--ease-decel);
   -webkit-overflow-scrolling: touch;
   overflow-y: auto;
 }
@@ -2175,7 +2191,7 @@ textarea { resize: vertical; min-height: 90px; }
   font-family: var(--font-cn, system-ui, sans-serif);
   color: var(--c-dark, #1a1a1a);
   padding: 28px 24px 22px;
-  animation: lc-modal-in 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: lc-modal-in var(--dur-slow) var(--ease-spring);
 }
 @keyframes lc-modal-in { from { transform: translateY(20px) scale(0.96); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
 .modal-close {
@@ -2553,7 +2569,7 @@ textarea { resize: vertical; min-height: 90px; }
   font-size: 14px;
   color: var(--c-stone-light);
   padding: 4px 0;
-  transition: color 0.2s;
+  transition: color var(--dur-fast) var(--ease-standard);
 }
 .footer-cols a:hover { color: var(--c-gold); }
 .footer-bottom {
@@ -2575,7 +2591,7 @@ textarea { resize: vertical; min-height: 90px; }
   letter-spacing: 1px;
   padding: 2px 6px;
   border: 2px solid var(--c-gold);
-  transition: all 0.15s;
+  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
 }
 .footer-bottom .admin-link:hover {
   background: var(--c-gold);
@@ -2596,7 +2612,7 @@ textarea { resize: vertical; min-height: 90px; }
   z-index: 40;
   opacity: 0;
   pointer-events: none;
-  transition: all 0.2s;
+  transition: opacity var(--dur-base) var(--ease-decel), transform var(--dur-base) var(--ease-decel);
 }
 .back-top.show { opacity: 1; pointer-events: auto; }
 .back-top:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--c-black); }
