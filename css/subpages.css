@@ -425,7 +425,7 @@
   border-bottom: 2px solid var(--c-bg-2);
   cursor: pointer;
   display: flex; gap: 10px; align-items: flex-start;
-  transition: background var(--dur-fast) var(--ease-standard);
+  transition: background 0.15s;
   font-family: var(--font-cn);
 }
 .dm-conv:hover { background: var(--c-bg-2); }

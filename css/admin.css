@@ -86,7 +86,7 @@
   padding: 10px 12px;
   border-bottom: 1px solid var(--c-bg-2);
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-standard);
+  transition: background 0.1s;
 }
 .mp-row:hover { background: var(--c-bg-2); }
 .mp-row .grow { flex: 1; min-width: 0; }
@@ -180,7 +180,7 @@ body.admin-body {
   padding: 8px 14px;
   border: 2px solid var(--c-black, #000);
   background: var(--c-paper, #fff8dc);
-  transition: transform var(--dur-fast) var(--ease-snap), box-shadow var(--dur-fast) var(--ease-snap), background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard);
+  transition: all 0.15s;
 }
 .header-link:hover {
   background: var(--c-gold, #fc6);
@@ -356,7 +356,7 @@ body.admin-body {
   margin-bottom: -4px;
   letter-spacing: 1px;
   position: relative;
-  transition: color var(--dur-fast) var(--ease-standard), background var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+  transition: all 0.15s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -388,7 +388,7 @@ body.admin-body {
 }
 
 .tab-pane { display: none; }
-.tab-pane.active { display: block; animation: fadeIn var(--dur-base) var(--ease-decel); }
+.tab-pane.active { display: block; animation: fadeIn 0.2s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* Pane 头: 标题 + 工具区, 高度固定 56px 统一 */
@@ -486,7 +486,7 @@ body.admin-body {
   border: 3px solid var(--c-black);
   box-shadow: 4px 4px 0 var(--c-stone);
   padding: 14px 16px;
-  transition: transform var(--dur-base) var(--ease-snap), box-shadow var(--dur-base) var(--ease-snap);
+  transition: transform 0.15s;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -735,7 +735,7 @@ body.admin-body {
   font-family: inherit;
   cursor: pointer;
   box-shadow: 3px 3px 0 var(--c-black);
-  transition: transform var(--dur-fast) var(--ease-snap), box-shadow var(--dur-fast) var(--ease-snap);
+  transition: transform 0.1s, box-shadow 0.1s;
 }
 .image-upload-btn:hover {
   transform: translate(-1px, -1px);
@@ -901,7 +901,7 @@ body.admin-body {
   gap: 4px;
   white-space: nowrap;
   cursor: pointer;
-  transition: background var(--dur-fast) var(--ease-standard), color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
+  transition: all 0.15s;
 }
 .subtab:hover { background: var(--c-stone-light); color: var(--c-dark); }
 .subtab.active {
