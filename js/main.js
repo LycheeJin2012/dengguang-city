@@ -265,6 +265,7 @@
       ${me ? `
         <form class="pm-comment-form" data-mid="${mid}">
           <textarea placeholder="说点什么... (最多 1000 字)" rows="2" required maxlength="1000" class="pm-comment-textarea"></textarea>
+          <div class="pm-emoji-bar">${['😀','👍','❤️','🎉','🔥','😂'].map(e => `<button type="button" class="pm-emoji-btn" data-emoji="${e}">${e}</button>`).join('')}</div>
           <div class="pm-comment-meta"><span class="pm-comment-count">0/1000</span> <button type="submit" class="btn btn-primary btn-sm">💬 发表评论</button></div>
         </form>
       ` : `<div class="pm-comment-empty"><a href="#" class="pm-login-link">登录</a> 后可以评论</div>`}
@@ -277,6 +278,20 @@
         ta.addEventListener('input', updateCount);
         updateCount();
       }
+      // v38: emoji 按钮插入 (在光标处)
+      f.querySelectorAll('.pm-emoji-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const emoji = btn.dataset.emoji;
+          if (!ta) return;
+          const start = ta.selectionStart || ta.value.length;
+          const end = ta.selectionEnd || ta.value.length;
+          ta.value = ta.value.slice(0, start) + emoji + ta.value.slice(end);
+          ta.focus();
+          ta.selectionStart = ta.selectionEnd = start + emoji.length;
+          updateCount();
+        });
+      });
       f.addEventListener('submit', async (e) => {
         e.preventDefault();
         const text = ta.value.trim();
