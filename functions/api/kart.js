@@ -1,5 +1,18 @@
 // POST /api/kart  - 卡丁车试跑报名（需登录玩家）
+// GET  /api/kart  - 当前玩家所有卡丁车试跑 (profile 页用)
 import { ok, err, stripHtml, readToken, getSession } from '../_shared.js';
+
+export async function onRequestGet(context) {
+  const { env, request } = context;
+  if (!env.DB) return err(500, 'D1 binding DB not configured');
+  const token = readToken(request);
+  const sess = await getSession(env, token);
+  if (!sess || !sess.player_id) return err(401, '请先登录玩家账号');
+  const rows = await env.DB.prepare(
+    'SELECT id, session, car, name, contact, note, created_at FROM kart_signups WHERE player_id = ? ORDER BY created_at DESC LIMIT 30'
+  ).bind(sess.player_id).all();
+  return ok({ signups: rows.results });
+}
 
 export async function onRequestPost(context) {
   const { env, request } = context;

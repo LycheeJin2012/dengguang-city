@@ -139,6 +139,7 @@
   // v37.7: 自己主页加"我的最近留言" 卡片 (仅本人)
   if (isSelf) {
     loadMyMessages();
+    loadMyBookings();
   }
 
   // 5. 编辑自己主页
@@ -312,6 +313,34 @@
             ${hasReply ? `<div class="pmm-reply">📣 ${escapeHtml(m.admin_reply)}</div>` : ''}
           </article>`;
         }).join('');
+        wrap.style.display = '';
+      } catch (e) { wrap.style.display = 'none'; }
+    }
+
+    // v40: 我的最近报名 (酒店/驾照/赛道/电路) — 4 个端点并发拉, 取最近 3 条
+    async function loadMyBookings() {
+      const wrap = document.getElementById('myBookingsCard');
+      if (!wrap) return;
+      try {
+        const [b, l, k, c] = await Promise.all([
+          fetch('/api/bookings', { credentials: 'include' }).then(r => r.ok ? r.json() : { bookings: [] }),
+          fetch('/api/license',  { credentials: 'include' }).then(r => r.ok ? r.json() : { signups: [] }),
+          fetch('/api/kart',     { credentials: 'include' }).then(r => r.ok ? r.json() : { signups: [] }),
+          fetch('/api/circuit',  { credentials: 'include' }).then(r => r.ok ? r.json() : { signups: [] }),
+        ]);
+        const all = [];
+        (b.bookings || []).forEach(x => all.push({ type: '酒店', icon: '🏨', text: `${x.room_name || '房型'} · ${x.in_date} → ${x.out_date} (${x.nights} 晚${x.breakfast ? ' · 含早餐' : ''})`, time: x.created_at }));
+        (l.signups  || []).forEach(x => all.push({ type: '驾照', icon: '🚗', text: `${({written:'笔试',road:'路考',upgrade:'升级'})[x.exam_type] || x.exam_type} · ${x.exam_date || '日期待定'}`, time: x.created_at }));
+        (k.signups  || []).forEach(x => all.push({ type: '赛道', icon: '🏁', text: `试跑 · ${x.session || '场次待定'}${x.car ? ' · ' + x.car : ''}`, time: x.created_at }));
+        (c.signups  || []).forEach(x => all.push({ type: '赛车场', icon: '🏎️', text: `国际赛车场试车`, time: x.created_at }));
+        if (all.length === 0) { wrap.style.display = 'none'; return; }
+        all.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+        wrap.innerHTML = '<div class="pmm-head">📋 我最近的报名</div>' + all.slice(0, 3).map(it => `
+          <article class="pmm-item">
+            <div class="pmm-head-row"><span class="pmm-type-tag">${it.icon} ${it.type}</span><span class="pmm-time">${(it.time || '').slice(0, 16).replace('T', ' ')}</span></div>
+            <div class="pmm-content">${escapeHtml(it.text)}</div>
+          </article>
+        `).join('');
         wrap.style.display = '';
       } catch (e) { wrap.style.display = 'none'; }
     }

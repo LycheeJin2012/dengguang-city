@@ -1,5 +1,18 @@
 // POST /api/bookings  - 房间预订（需登录玩家）
+// GET  /api/bookings  - 当前玩家所有酒店预订 (profile 页用)
 import { ok, err, stripHtml, readToken, getSession } from '../_shared.js';
+
+export async function onRequestGet(context) {
+  const { env, request } = context;
+  if (!env.DB) return err(500, 'D1 binding DB not configured');
+  const token = readToken(request);
+  const sess = await getSession(env, token);
+  if (!sess || !sess.player_id) return err(401, '请先登录玩家账号');
+  const rows = await env.DB.prepare(
+    'SELECT id, room_id, room_name, in_date, out_date, nights, persons, breakfast, status, created_at FROM bookings WHERE player_id = ? ORDER BY created_at DESC LIMIT 30'
+  ).bind(sess.player_id).all();
+  return ok({ bookings: rows.results });
+}
 
 export async function onRequestPost(context) {
   const { env, request } = context;

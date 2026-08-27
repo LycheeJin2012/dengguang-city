@@ -41,9 +41,14 @@
     </div>
   </div>
 
-  <!-- 账号安全 / 通行密钥管理（仅本人可见） -->
+  <!-- v37.7: 我最近的市民留言 (仅登录玩家) -->
   <div class="profile-card my-messages-card" id="myMessagesCard" style="display:none">
-    <!-- JS 渲染"我的最近留言" (v37.7) -->
+    <!-- JS 渲染 -->
+  </div>
+
+  <!-- v40: 我最近的报名 (酒店/驾照/赛道/赛车场 4 端点并发拉) -->
+  <div class="profile-card my-bookings-card" id="myBookingsCard" style="display:none">
+    <!-- JS 渲染 -->
   </div>
 
   <!-- 账号安全 / 通行密钥管理（仅本人可见） -->
@@ -70,7 +75,7 @@
     t.defer = true;
     document.currentScript.parentNode.insertBefore(t, document.currentScript);
     var s = document.createElement('script');
-    s.src = 'js/profile.js?v=20260827-my-messages';
+    s.src = 'js/profile.js?v=20260828-my-bookings';
     s.defer = true;
     document.currentScript.parentNode.insertBefore(s, document.currentScript);
   })();

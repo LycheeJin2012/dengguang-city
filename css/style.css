@@ -2698,13 +2698,14 @@ textarea { resize: vertical; min-height: 90px; }
 }
 
 /* v37.7: profile 页"我的最近留言" 卡片 */
-.my-messages-card { margin-top: 18px; padding: 16px; }
+.my-messages-card, .my-bookings-card { margin-top: 18px; padding: 16px; }
 .pmm-head { font-weight: 700; color: var(--c-grass-dark, #2d6e1f); margin-bottom: 10px; }
 .pmm-item { padding: 10px; background: #fffbe5; border: 2px solid var(--c-stone, #999); margin-bottom: 8px; }
 .pmm-head-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .pmm-time { font-size: 11px; color: var(--c-stone, #999); }
 .pmm-content { font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
 .pmm-reply { margin-top: 6px; padding: 6px 10px; background: #f7eed0; border-left: 3px solid var(--c-grass, #70ad34); font-size: 12px; }
+.pmm-type-tag { display: inline-block; font-family: var(--font-pixel); font-size: 9px; letter-spacing: 1px; padding: 2px 6px; border: 2px solid var(--c-black); background: var(--c-gold, #ffd23f); color: var(--c-black); line-height: 1.4; }
 
 /* v38: 评论 emoji 选择条 */
 .pm-emoji-bar { display: flex; gap: 4px; margin-top: 4px; margin-bottom: 4px; }
