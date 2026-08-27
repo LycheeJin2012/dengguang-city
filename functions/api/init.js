@@ -102,21 +102,20 @@ export async function onRequestGet(context) {
     const _sess = await env.DB.prepare('SELECT player_id, expires_at FROM sessions WHERE token = ?').bind(_m[1]).first();
     if (!_sess || !_sess.player_id) return err(401, '需要玩家登录');
     if (new Date(_sess.expires_at) <= new Date()) return err(401, '会话已过期');
-    const _p = await env.DB.prepare('SELECT id, username, emeralds FROM players WHERE id = ?')
-      .bind(_sess.player_id).first();
+
+    const _pid = _sess.player_id;
+    // v43.3: 4 个查询 Promise.all 并发 (之前 4 * 30ms = 120ms 串行)
+    const [_p, _todayRow, _recent, _totalRow] = await Promise.all([
+      env.DB.prepare('SELECT id, username, emeralds FROM players WHERE id = ?').bind(_pid).first(),
+      env.DB.prepare('SELECT id, streak, emeralds_earned FROM daily_signin WHERE player_id = ? AND signin_date = ?')
+        .bind(_pid, new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai' }).format(new Date())).first(),
+      env.DB.prepare('SELECT signin_date, streak, emeralds_earned FROM daily_signin WHERE player_id = ? ORDER BY signin_date DESC LIMIT 7').bind(_pid).all(),
+      env.DB.prepare('SELECT COUNT(*) AS c, COALESCE(MAX(streak), 0) AS max_streak FROM daily_signin WHERE player_id = ?').bind(_pid).first(),
+    ]);
     if (!_p) return err(404, '玩家不存在');
     const _today = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Shanghai' }).format(new Date());
-    const _todayRow = await env.DB.prepare(
-      'SELECT id, streak, emeralds_earned FROM daily_signin WHERE player_id = ? AND signin_date = ?'
-    ).bind(_p.id, _today).first();
-    const _recent = await env.DB.prepare(
-      'SELECT signin_date, streak, emeralds_earned FROM daily_signin WHERE player_id = ? ORDER BY signin_date DESC LIMIT 7'
-    ).bind(_p.id).all();
-    const _totalRow = await env.DB.prepare(
-      'SELECT COUNT(*) AS c, COALESCE(MAX(streak), 0) AS max_streak FROM daily_signin WHERE player_id = ?'
-    ).bind(_p.id).first();
     let _curStreak = 0;
-    if (_recent.results.length) {
+    if (_recent.results && _recent.results.length) {
       _curStreak = _recent.results[0].streak;
       const _yest = new Date(new Date(_today).getTime() - 86400000).toISOString().slice(0, 10);
       if (_recent.results[0].signin_date !== _today && _recent.results[0].signin_date !== _yest) {
