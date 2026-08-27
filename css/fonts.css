@@ -1,0 +1,17 @@
+/* v40.6: 自托管 Google Fonts (Press Start 2P + VT323), 干掉 fonts.googleapis.com 远程请求
+   省 1-2s 首屏 (DNS + connect + 下载 woff2)
+   不引 Noto Sans SC — 系统中文字体栈 (PingFang SC / Microsoft YaHei / 苹方/雅黑) 已经够用 */
+@font-face {
+  font-family: 'Press Start 2P';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/assets/fonts/press-start-2p.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'VT323';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/assets/fonts/vt323.woff2') format('woff2');
+}
