@@ -1,5 +1,5 @@
 // v45 重写: hotel 子页 - 预订 modal + 提交
-import { $, escHtml, POST, GET } from '../util.js';
+import { $, escHtml, POST, GET } from '../util.js?v=v45-fix-401';
 
 let bookRoom = null;
 

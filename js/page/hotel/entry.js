@@ -1,5 +1,5 @@
 // v45 重写: hotel 子页 entry (ES module)
-import { $ } from '../util.js';
+import { $ } from '../util.js?v=v45-fix-401';
 import { loadRooms, bindFilters, bindRoomDetail } from './rooms.js';
 import { bindBook } from './book.js';
 

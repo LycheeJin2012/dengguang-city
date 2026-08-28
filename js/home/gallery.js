@@ -1,5 +1,5 @@
 // v45 重写: 首页图集 (gallery + lightbox)
-import { $, escHtml, GET } from './util.js';
+import { $, escHtml, GET } from './util.js?v=v45-fix-401';
 
 let _lbImages = [];
 let _lbIdx = 0;

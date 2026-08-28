@@ -1,7 +1,7 @@
 // v45 重写: 登录 modal + 密码登录 + WebAuthn 通行密钥登录 + 注册通行密钥引导
 // 原 main.js L1305-1854 拆出来, 关键 WebAuthn 逻辑逐字保留 (bug 历史敏感, 别动)
 // 关联: openLoginModal 会被 header.js / forms.js / messages.js 等调用
-import { $, escHtml, POST, GET } from './util.js';
+import { $, escHtml, POST, GET } from './util.js?v=v45-fix-401';
 import { invalidatePlayerCache, refreshUserState } from './header.js';
 
 const _toast = (msg, type) => window._toast && window._toast(msg, type);

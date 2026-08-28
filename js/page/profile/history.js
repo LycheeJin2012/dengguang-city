@@ -1,5 +1,5 @@
 // v45 重写: profile 子页 - 我的最近留言 + 我的最近报名 (仅自己)
-import { $, escHtml, GET } from '../util.js';
+import { $, escHtml, GET } from '../util.js?v=v45-fix-401';
 
 export async function loadMyMessages() {
   const wrap = $('#myMessagesCard');

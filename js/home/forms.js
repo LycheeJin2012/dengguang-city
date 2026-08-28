@@ -1,6 +1,6 @@
 // v45 重写: 服务区表单 (酒店/赛车/驾照) + 留言提交 + 30s 自动刷新
 // 原 main.js L123-200 (留言) + L700-1304 (kart/circuit/license/hotel modals) 拆出来
-import { $, escHtml, POST, GET } from './util.js';
+import { $, escHtml, POST, GET } from './util.js?v=v45-fix-401';
 import { openLoginModal } from './auth.js';
 import { getBundle, invalidateBundle } from './bundle.js';
 import { loadPublicMessages } from './messages.js';

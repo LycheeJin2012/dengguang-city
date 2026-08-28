@@ -1,5 +1,5 @@
 // v45 重写: dm 子页 - 单个对话线程 (消息列表 + 发送)
-import { $, escHtml, GET, POST, PATCH, shortTime } from '../util.js';
+import { $, escHtml, GET, POST, PATCH, shortTime } from '../util.js?v=v45-fix-401';
 import { loadList } from './list.js';
 
 let _me = null;

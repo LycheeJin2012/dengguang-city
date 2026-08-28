@@ -1,5 +1,5 @@
 // v45 重写: dm 子页 - 会话列表 + 新建/AI 客服
-import { $, escHtml, GET, POST, shortTime } from '../util.js';
+import { $, escHtml, GET, POST, shortTime } from '../util.js?v=v45-fix-401';
 
 let _onThreadOpen = null;
 let _me = null;

@@ -1,5 +1,5 @@
 // v45 重写: dm 子页 entry (ES module)
-import { $, GET, renderSubpageNav } from '../util.js';
+import { $, GET, renderSubpageNav } from '../util.js?v=v45-fix-401';
 import { loadList, setListContext, bindListActions } from './list.js';
 import { openThread, setThreadContext } from './thread.js';
 

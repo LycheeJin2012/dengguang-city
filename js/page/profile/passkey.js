@@ -1,6 +1,6 @@
 // v45 重写: profile 子页 - 通行密钥管理 (list / register / test / delete)
 // 敏感 WebAuthn 字节转换逻辑零修改, 跟 home/auth.js 同步
-import { $, escHtml, POST } from '../util.js';
+import { $, escHtml, POST } from '../util.js?v=v45-fix-401';
 
 function bufToB64url(buf) {
   const b = new Uint8Array(buf);

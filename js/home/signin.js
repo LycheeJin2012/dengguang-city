@@ -1,6 +1,6 @@
 // v45 重写: 每日签到 modal + 签到状态 badge
 // 原 main.js L1625-1778 拆出来
-import { $, escHtml, GET, POST } from './util.js';
+import { $, escHtml, GET, POST } from './util.js?v=v45-fix-401';
 const _toast = (msg, type) => window._toast && window._toast(msg, type);
 
 export async function fetchSigninStatus() {

@@ -1,5 +1,5 @@
 // v45 重写: profile 子页 entry (ES module)
-import { $, GET, renderSubpageNav } from '../util.js';
+import { $, GET, renderSubpageNav } from '../util.js?v=v45-fix-401';
 import { fetchProfile, renderProfile, setProfile, setSelf } from './info.js';
 import { bindPasskey } from './passkey.js';
 import { loadMyMessages, loadMyBookings } from './history.js';

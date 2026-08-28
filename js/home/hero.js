@@ -1,5 +1,5 @@
 // v45 重写: 首页 hero 区 (含 nav 滚动效果, 返回顶部, 数字动画)
-import { $, $$, animateNumber, GET } from './util.js';
+import { $, $$, animateNumber, GET } from './util.js?v=v45-fix-401';
 
 export function bindNav() {
   const nav = $('#navbar');
