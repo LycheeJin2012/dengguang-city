@@ -1,7 +1,8 @@
 // v45 重写: 顶栏 + 玩家状态 + 30s 未读轮询
 // 原 main.js L1857-1960 拆出来
 import { $, escHtml, GET } from './util.js';
-import { openLoginModal, openSigninModal } from './auth.js';
+import { openLoginModal } from './auth.js';
+import { openSigninModal } from './signin.js';
 const _toast = (msg, type) => window._toast && window._toast(msg, type);
 
 const _unreadTimer = { id: null };
