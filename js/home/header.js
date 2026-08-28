@@ -45,14 +45,8 @@ function prefillContactForm(player) {
 
 export async function refreshUserState() {
   const slot = $('#navUserSlot');
-  if (!slot) { console.warn('[nav] no navUserSlot'); return; }
-  // v45 debug: trace
-  const _dbg = (m) => { try { console.log('[nav]', m); } catch (e) {} };
+  if (!slot) return;
   try {
-    _dbg('GET /api/login');
-    const d = await GET('/api/login');
-    _dbg('GET /api/login done: d=' + JSON.stringify(d)?.slice(0, 100));
-    if (d && d.ok && d.player) {
     const d = await GET('/api/login');
     if (d && d.ok && d.player) {
       const p = d.player;
@@ -98,12 +92,10 @@ export async function refreshUserState() {
         }
       } catch (e) {}
     } else {
-      _dbg('else: fill 玩家登录 link');
       slot.innerHTML = `<a href="#" id="navLogin" class="nav-login-link">玩家登录</a>`;
       $('#navLogin')?.addEventListener('click', e => { e.preventDefault(); openLoginModal(); });
     }
   } catch (e) {
-    console.error('[nav] refreshUserState throw:', e);
     slot.innerHTML = '';
   }
 }
