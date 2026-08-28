@@ -720,6 +720,26 @@
   </div>
 
   <script src="js/toast.js?v=20260826-toast"></script>
+  <script type="module">
+    // v45 debug 8: 收集 console.log/error 到 DOM (refreshUserState trace)
+    (function() {
+      const _log = (level) => (...args) => {
+        try {
+          const el = document.createElement('pre');
+          el.id = '_c' + Math.random().toString(36).slice(2, 8);
+          el.style.cssText = 'position:fixed;left:0;top:' + (40 + window._consoleIdx * 12) + 'px;background:black;color:' + (level === 'error' ? '#f66' : '#0f0') + ';font:10px monospace;padding:4px;z-index:99999;max-width:80vw;white-space:pre-wrap;border:1px solid #333';
+          el.textContent = '[' + level + '] ' + args.map(a => typeof a === 'object' ? JSON.stringify(a).slice(0, 200) : String(a)).join(' ');
+          document.body.appendChild(el);
+          window._consoleIdx = (window._consoleIdx || 0) + 1;
+        } catch (e) {}
+        if (level === 'error') console.error(...args); else console.log(...args);
+      };
+      window._consoleIdx = 0;
+      const _origLog = console.log, _origErr = console.error;
+      console.log = function() { _log('log')(...arguments); _origLog.apply(console, arguments); };
+      console.error = function() { _log('error')(...arguments); _origErr.apply(console, arguments); };
+    })();
+  </script>
   <script type="module" src="js/main.js?v=v45-finalfix"></script>
 </body>
 </html>
