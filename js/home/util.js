@@ -38,9 +38,10 @@ export async function api(method, path, body) {
   }
   const r = await fetch(path, opts);
   const d = await r.json().catch(() => ({}));
-  // 401 是 "未登录" 业务状态, 不 throw, 让调用方处理
+  // 401 是 "未登录" 业务状态, 不 throw, 让调用方处理 (d.error 也忽略)
   // 5xx + 4xx 其他 + d.error 仍 throw (真错误)
-  if ((!r.ok && r.status !== 401) || d.error) throw new Error(d.error || `HTTP ${r.status}`);
+  if (r.status === 401) return d;
+  if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
   return d;
 }
 export const GET = (p, b) => api('GET', p, b);
