@@ -721,20 +721,37 @@
 
   <script src="js/toast.js?v=20260826-toast"></script>
   <script type="module">
-    // v45 debug 5: 测 ES module 在 Browser tool 是否支持
-    try {
+    // v45 debug 6: 逐个 import 找哪个 throw
+    const _errs = [];
+    const _ok = [];
+    const _showErrs = () => {
       const el = document.createElement('pre');
-      el.id = '_moduleTest';
-      el.style.cssText = 'position:fixed;left:0;top:0;background:lime;color:black;font:14px monospace;padding:8px;z-index:99999';
-      el.textContent = 'MODULE TEST: ES module works! @ ' + new Date().toISOString();
+      el.id = '_importTest';
+      el.style.cssText = 'position:fixed;left:0;top:40px;background:black;color:#0f0;font:11px monospace;padding:8px;z-index:99999;max-width:95vw;max-height:60vh;overflow:auto;border:2px solid #0f0;white-space:pre-wrap';
+      el.textContent = 'OK: ' + _ok.join(', ') + '\n\nFAIL:\n' + _errs.map(e => '  ' + e).join('\n');
       document.body.appendChild(el);
-    } catch (e) {
-      const el = document.createElement('pre');
-      el.id = '_moduleTest';
-      el.style.cssText = 'position:fixed;left:0;top:0;background:red;color:white;font:14px monospace;padding:8px;z-index:99999';
-      el.textContent = 'MODULE TEST FAIL: ' + e.message;
-      document.body.appendChild(el);
-    }
+    };
+    const tests = [
+      ['./js/home/util.js', () => import('./js/home/util.js')],
+      ['./js/home/clouds.js', () => import('./js/home/clouds.js')],
+      ['./js/home/reveal.js', () => import('./js/home/reveal.js')],
+      ['./js/home/hero.js', () => import('./js/home/hero.js')],
+      ['./js/home/announcements.js', () => import('./js/home/announcements.js')],
+      ['./js/home/messages.js', () => import('./js/home/messages.js')],
+      ['./js/home/gallery.js', () => import('./js/home/gallery.js')],
+      ['./js/home/forms.js', () => import('./js/home/forms.js')],
+      ['./js/home/header.js', () => import('./js/home/header.js')],
+      ['./js/home/auth.js', () => import('./js/home/auth.js')],
+      ['./js/home/signin.js', () => import('./js/home/signin.js')],
+      ['./js/home/bundle.js', () => import('./js/home/bundle.js')],
+    ];
+    (async () => {
+      for (const [name, fn] of tests) {
+        try { await fn(); _ok.push(name); }
+        catch (e) { _errs.push(name + ' — ' + e.message); }
+      }
+      _showErrs();
+    })();
   </script>
   <script type="module" src="js/main.v45b3.js"></script>
 </body>
