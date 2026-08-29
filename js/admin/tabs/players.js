@@ -1,5 +1,5 @@
 // v44 重写: 玩家管理 tab (renderPlayers, playerAction, createPlayerModal)
-import { $, esc, fmt, GET, POST, PATCH, safeRender, cacheClear, STATUS_LABEL, fileToDataURLP } from '../core.js';
+import { $, esc, fmt, GET, POST, PATCH, safeRender, cacheClear, STATUS_LABEL, fileToDataURLP } from '../core.js?v=v46-fix-modules';
 
 export async function renderPlayers() {
   await safeRender(async () => {

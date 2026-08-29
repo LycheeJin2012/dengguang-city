@@ -1,8 +1,8 @@
 // v45 重写: profile 子页 entry (ES module)
-import { $, GET, renderSubpageNav } from '../util.js?v=v45-fix-401';
-import { fetchProfile, renderProfile, setProfile, setSelf } from './info.js';
-import { bindPasskey } from './passkey.js';
-import { loadMyMessages, loadMyBookings } from './history.js';
+import { $, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
+import { fetchProfile, renderProfile, setProfile, setSelf } from './info.js?v=v46-fix-modules';
+import { bindPasskey } from './passkey.js?v=v46-fix-modules';
+import { loadMyMessages, loadMyBookings } from './history.js?v=v46-fix-modules';
 
 const app = $('#app');
 const pBody = $('#pBody');
@@ -17,7 +17,7 @@ const pBody = $('#pBody');
       me = d.player;
       isCombined = !!d.combined;
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[profile] 查询登录态失败', e); }
 
   // 2. 顶栏
   renderSubpageNav($('#navUserSlot'), me, isCombined);

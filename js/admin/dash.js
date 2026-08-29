@@ -1,5 +1,5 @@
 // v44 重写: 后台 dash (boot, tab 路由, filter 路由)
-import { $, POST, safeRender } from './core.js';
+import { $, POST, safeRender } from './core.js?v=v46-fix-modules';
 
 // Tab 渲染器: 每个 tab 第一次切到时调用对应的 render 函数
 const _TAB_RENDER = {
@@ -87,7 +87,7 @@ export function renderDash() {
           }
         }).catch(() => {});
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[admin/dash] tab 渲染失败', e); }
 }
 
 export function showView(name) {

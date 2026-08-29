@@ -1,5 +1,5 @@
 // v45 重写: 子页 (hotel/profile/dm) 共享工具
-import { $, escHtml, GET, POST, PATCH, DEL } from '../home/util.js?v=v45-fix-401';
+import { $, escHtml, GET, POST, PATCH, DEL } from '../home/util.js?v=v46-fix-modules';
 export { $, escHtml, GET, POST, PATCH, DEL };
 
 // 子页通用 nav 渲染 (基于 home/header 的逻辑简化, 但独立文件不依赖 home/header 的循环引用)

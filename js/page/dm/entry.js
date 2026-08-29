@@ -1,7 +1,7 @@
 // v45 重写: dm 子页 entry (ES module)
-import { $, GET, renderSubpageNav } from '../util.js?v=v45-fix-401';
-import { loadList, setListContext, bindListActions } from './list.js';
-import { openThread, setThreadContext } from './thread.js';
+import { $, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
+import { loadList, setListContext, bindListActions } from './list.js?v=v46-fix-modules';
+import { openThread, setThreadContext } from './thread.js?v=v46-fix-modules';
 
 const app = $('#app');
 

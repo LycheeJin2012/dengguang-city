@@ -1,5 +1,5 @@
 // v45 重写: profile 子页 - 公开 profile 展示 + 编辑 + 改密码
-import { $, escHtml, GET, POST, PATCH } from '../util.js?v=v45-fix-401';
+import { $, escHtml, GET, POST, PATCH } from '../util.js?v=v46-fix-modules';
 
 let _profile = null;
 let _isSelf = false;

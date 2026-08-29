@@ -68,13 +68,14 @@ export function animateNumber(el, target, dur = 800) {
 }
 
 // 渲染时错误显式抛出 (不静默吞)
+// v46: 改用 .empty-state-error class, 不内联 style (符合 UI-REDESIGN-SPEC.md)
 export function safeRender(fn, container) {
   return fn().catch(e => {
     console.error('[safeRender]', e);
     if (container) {
-      container.innerHTML = `<div class="empty-state" style="border-color:#c33;background:#fee">
+      container.innerHTML = `<div class="empty-state empty-state-error">
         <div class="empty-icon">⚠️</div>
-        <p style="color:#c33"><b>渲染失败</b></p>
+        <p class="empty-state-title">渲染失败</p>
         <p class="empty-sub">${escHtml(e.message || String(e))}</p>
       </div>`;
     }

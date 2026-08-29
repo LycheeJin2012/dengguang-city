@@ -1,5 +1,5 @@
 // v45 重写: hotel 子页 - 房型数据加载 + 渲染 + 筛选 + 详情
-import { $, escHtml, GET } from '../util.js?v=v45-fix-401';
+import { $, escHtml, GET } from '../util.js?v=v46-fix-modules';
 
 const ROOMS = [];
 const ROOM_ICON = cap => cap >= 4 ? '🏨' : (cap >= 2 ? '🛌' : '🛏️');

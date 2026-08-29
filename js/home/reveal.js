@@ -1,5 +1,5 @@
 // v45 重写: 滚动入场动画 (IntersectionObserver 加 .reveal-in)
-import { $$ } from './util.js?v=v45-fix-401';
+import { $$ } from './util.js?v=v46-fix-modules';
 
 export function bindReveal() {
   const els = $$('.reveal');

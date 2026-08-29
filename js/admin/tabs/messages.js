@@ -1,6 +1,6 @@
 // v44 重写: 市民留言 tab (renderMessages, msgAction, reply modal)
 // 替换 admin.v2551.js 里 renderMessages (L420-486) + msgAction/L491-505 + openReply/showReplyModal
-import { $, $$, esc, fmt, GET, PATCH, DEL, safeRender, cacheClear } from '../core.js';
+import { $, $$, esc, fmt, GET, PATCH, DEL, safeRender, cacheClear } from '../core.js?v=v46-fix-modules';
 
 export async function renderMessages() {
   await safeRender(async () => {

@@ -1,24 +1,15 @@
 // v45 重写: 顶栏 + 玩家状态 + 30s 未读轮询
 // 原 main.js L1857-1960 拆出来
-import { $, escHtml, GET } from './util.js?v=v45-fix-401';
-import { openLoginModal } from './auth.js';
-import { openSigninModal } from './signin.js';
+import { $, escHtml, GET } from './util.js?v=v46-fix-modules';
+import { openLoginModal } from './auth.js?v=v46-fix-modules';
+import { openSigninModal } from './signin.js?v=v46-fix-modules';
 const _toast = (msg, type) => window._toast && window._toast(msg, type);
 
 const _unreadTimer = { id: null };
-let _meCache = null;
-
-export async function getCurrentPlayer() {
-  if (_meCache !== null) return _meCache;
-  try {
-    const d = await GET('/api/login');
-    _meCache = (d && d.ok) ? d.player : null;
-  } catch (e) { _meCache = null; }
-  return _meCache;
-}
 
 export function invalidatePlayerCache() {
-  _meCache = null;
+  // 占位: 保留 export, 未来如需缓存可在此实现
+  // (v46: 删除 getCurrentPlayer 死代码, 此函数暂无消费者, 保留兼容 auth.js import)
 }
 
 // ============== 移动端菜单 ==============
@@ -70,9 +61,9 @@ export async function refreshUserState() {
         await refreshUserState();
         // 重渲染留言墙
         try {
-          const m = await import('./messages.js');
+          const m = await import('./messages.js?v=v46-fix-modules');
           m.loadPublicMessages();
-        } catch (e) {}
+        } catch (e) { console.warn('[header] 登出后重渲染留言墙失败', e); }
       });
       // 签到按钮
       $('#navSigninBtn')?.addEventListener('click', e => { e.preventDefault(); openSigninModal(); });
@@ -83,14 +74,14 @@ export async function refreshUserState() {
       });
       // 顺便拉一次签到状态
       try {
-        const sigMod = await import('./signin.js');
+        const sigMod = await import('./signin.js?v=v46-fix-modules');
         const sd = await sigMod.fetchSigninStatus();
         const nsb = $('#navSigninBtn');
         if (nsb) {
           if (sd.signed_today) nsb.textContent = '✓ 已签';
           else if (sd.current_streak > 0) nsb.textContent = `🎁 ${sd.current_streak}天`;
         }
-      } catch (e) {}
+      } catch (e) { console.warn('[header] 刷新签到状态失败', e); }
     } else {
       slot.innerHTML = `<a href="#" id="navLogin" class="nav-login-link">玩家登录</a>`;
       $('#navLogin')?.addEventListener('click', e => { e.preventDefault(); openLoginModal(); });

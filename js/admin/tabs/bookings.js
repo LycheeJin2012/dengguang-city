@@ -1,5 +1,5 @@
 // v44 重写: 酒店预订 tab
-import { $, esc, fmt, GET, PATCH, DEL, safeRender, cacheClear } from '../core.js';
+import { $, esc, fmt, GET, PATCH, DEL, safeRender, cacheClear } from '../core.js?v=v46-fix-modules';
 
 export async function renderBookings() {
   await safeRender(async () => {

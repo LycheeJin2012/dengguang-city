@@ -1,6 +1,6 @@
 // v45 重写: dm 子页 - 单个对话线程 (消息列表 + 发送)
-import { $, escHtml, GET, POST, PATCH, shortTime } from '../util.js?v=v45-fix-401';
-import { loadList } from './list.js';
+import { $, escHtml, GET, POST, PATCH, shortTime } from '../util.js?v=v46-fix-modules';
+import { loadList } from './list.js?v=v46-fix-modules';
 
 let _me = null;
 let _currentPeer = null;
@@ -21,7 +21,7 @@ export async function openThread(username) {
   // 标记已读
   try {
     await PATCH('/api/social?action=dm-read&peer=' + encodeURIComponent(username), {});
-  } catch (e) {}
+  } catch (e) { console.warn('[dm] 标记私信已读失败', e); }
   const area = $('#dmThreadArea');
   if (area) area.innerHTML = '<div class="dm-empty">载入中…</div>';
   try {

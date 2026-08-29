@@ -1,5 +1,5 @@
 // v44 重写: 卡丁车 + 国际赛车场 tab (合并, 因为功能类似)
-import { $, esc, fmt, GET, PATCH, DEL, safeRender, cacheClear } from '../core.js';
+import { $, esc, fmt, GET, PATCH, DEL, safeRender, cacheClear } from '../core.js?v=v46-fix-modules';
 
 const _KIND_LABEL = { kart: '🏁 赛道试跑', circuit: '🏎️ 国际赛车场' };
 

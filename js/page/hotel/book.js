@@ -1,5 +1,5 @@
 // v45 重写: hotel 子页 - 预订 modal + 提交
-import { $, escHtml, POST, GET } from '../util.js?v=v45-fix-401';
+import { $, escHtml, POST, GET } from '../util.js?v=v46-fix-modules';
 
 let bookRoom = null;
 
@@ -63,7 +63,7 @@ async function prefillFromPlayer() {
       const n = $('#bookName'); if (n && !n.value) n.value = d.player.username;
       const c = $('#bookContact'); if (c && !c.value && d.player.email) c.value = d.player.email;
     }
-  } catch (e) {}
+  } catch (e) { console.warn('[hotel] 自动填玩家信息失败', e); }
 }
 
 export function bindBook() {

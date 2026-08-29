@@ -1,5 +1,5 @@
 // v45 重写: hero 云朵视差 (装饰用, 不阻塞主交互)
-import { $ } from './util.js?v=v45-fix-401';
+import { $ } from './util.js?v=v46-fix-modules';
 
 export function bindClouds() {
   const clouds = document.querySelectorAll('.cloud');

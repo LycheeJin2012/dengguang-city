@@ -1,8 +1,8 @@
 // v45 重写: 登录 modal + 密码登录 + WebAuthn 通行密钥登录 + 注册通行密钥引导
 // 原 main.js L1305-1854 拆出来, 关键 WebAuthn 逻辑逐字保留 (bug 历史敏感, 别动)
 // 关联: openLoginModal 会被 header.js / forms.js / messages.js 等调用
-import { $, escHtml, POST, GET } from './util.js?v=v45-fix-401';
-import { invalidatePlayerCache, refreshUserState } from './header.js';
+import { $, escHtml, POST, GET } from './util.js?v=v46-fix-modules';
+import { invalidatePlayerCache, refreshUserState } from './header.js?v=v46-fix-modules';
 
 const _toast = (msg, type) => window._toast && window._toast(msg, type);
 
@@ -128,15 +128,15 @@ export async function postLogin() {
   invalidatePlayerCache();
   await refreshUserState();
   try {
-    const m = await import('./messages.js');
+    const m = await import('./messages.js?v=v46-fix-modules');
     await m.loadPublicMessages();
-  } catch (e) {}
+  } catch (e) { console.warn('[auth] postLogin 刷新留言失败', e); }
   // passkey offer (失败静默)
   try {
     const d = await GET('/api/login');
     const uid = (d && (d.user_id || (d.user && d.user.id))) || null;
     await maybeOfferPasskey(uid);
-  } catch (e) {}
+  } catch (e) { console.warn('[auth] passkey 引导查询失败', e); }
 }
 
 // ============== WebAuthn 工具 ==============

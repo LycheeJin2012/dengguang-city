@@ -1,6 +1,6 @@
 // v45 重写: 每日签到 modal + 签到状态 badge
 // 原 main.js L1625-1778 拆出来
-import { $, escHtml, GET, POST } from './util.js?v=v45-fix-401';
+import { $, escHtml, GET, POST } from './util.js?v=v46-fix-modules';
 const _toast = (msg, type) => window._toast && window._toast(msg, type);
 
 export async function fetchSigninStatus() {
@@ -66,9 +66,12 @@ export async function openSigninModal() {
   try {
     d = await fetchSigninStatus();
   } catch (e) {
-    const msg = (e.message || '').includes('登录') || (e.message || '').includes('会话')
+    const em = e.message || '';
+    // v46: 增加英文/简中关键词匹配, 避免未登录时显示误导的"网络错误"
+    const isAuth = /登录|会话|未登录|Not logged in|logged in|expired|401/i.test(em);
+    const msg = isAuth
       ? '请先在右上角登录市民账号, 再来签到'
-      : '网络错误: ' + e.message;
+      : '网络错误: ' + em;
     _toast(msg, 'error');
     return;
   }
@@ -147,5 +150,5 @@ export async function loadSigninBadge() {
   try {
     const d = await fetchSigninStatus();
     updateSigninBadge(d);
-  } catch (e) { /* 未登录静默 */ }
+  } catch (e) { console.warn('[signin] 签到 badge 加载失败 (未登录静默)', e); }
 }

@@ -1,5 +1,5 @@
 // v45 重写: 公共市民留言墙 (公开 + 评论)
-import { $, escHtml, relativeTime, fmtDate, GET, POST, safeRender } from './util.js?v=v45-fix-401';
+import { $, escHtml, relativeTime, fmtDate, GET, POST, safeRender } from './util.js?v=v46-fix-modules';
 
 const _pubMsgCache = { data: null, ts: 0 };
 const CACHE_TTL = 30_000;

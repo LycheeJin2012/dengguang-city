@@ -1,5 +1,5 @@
 // v44 重写: 管理员账号 tab
-import { $, esc, GET, POST, PATCH, DEL, safeRender, cacheClear } from '../core.js';
+import { $, esc, GET, POST, PATCH, DEL, safeRender, cacheClear } from '../core.js?v=v46-fix-modules';
 
 export async function renderAdminList() {
   await safeRender(async () => {

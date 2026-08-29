@@ -2772,6 +2772,13 @@ textarea { resize: vertical; min-height: 90px; }
 .empty-state .empty-sub { font-size: 13px; color: var(--c-stone); margin-top: 4px; }
 .empty-icon { font-size: 56px; opacity: 0.8; display: block; line-height: 1; margin-bottom: 12px; }
 
+/* v46: 错误态变体 (替代 safeRender 内联 style) */
+.empty-state-error {
+  background: #fee;
+  border-color: #c33;
+}
+.empty-state-error .empty-state-title { color: #c33; font-weight: bold; }
+
 /* ---------- form label 升级 (v43) ---------- */
 .form-row { display: flex; gap: var(--sp-3); margin-bottom: var(--sp-4); flex-wrap: wrap; }
 .form-row > label { flex: 1 1 200px; min-width: 180px; }

@@ -18,8 +18,8 @@
 //
 // HTML 模板不变 (admin-v37.html 仍可用), 通过 inline onclick 调 window.* 全局函数
 // 这里导出所有需要的全局函数
-import { $, POST, GET, safeRender, fileToDataURLP, cacheClear } from './admin/core.js';
-import { renderDash, _ensureTabRendered, bindFilterRadios, showView } from './admin/dash.js';
+import { $, POST, GET, safeRender, fileToDataURLP, cacheClear } from './admin/core.js?v=v46-fix-modules';
+import { renderDash, _ensureTabRendered, bindFilterRadios, showView } from './admin/dash.js?v=v46-fix-modules';
 
 // ---------- Boot ----------
 async function boot() {
@@ -69,7 +69,7 @@ async function doLogin() {
     try {
       const { maybeOfferAdminPasskey } = await import('./admin/tabs/passkey.js');
       await maybeOfferAdminPasskey(me.user && me.user.id);
-    } catch (e) {}
+    } catch (e) { console.warn('[admin] passkey 引导失败', e); }
   } catch (err) { if (errEl) errEl.textContent = '登录失败: ' + err.message; }
 }
 window.adminDoLogin = doLogin;

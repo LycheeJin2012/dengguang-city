@@ -1,5 +1,5 @@
 // v44 重写: 驾照考试 tab
-import { $, esc, fmt, GET, PATCH, DEL, safeRender, cacheClear, EXAM_LABEL, EXAM_BADGE } from '../core.js';
+import { $, esc, fmt, GET, PATCH, DEL, safeRender, cacheClear, EXAM_LABEL, EXAM_BADGE } from '../core.js?v=v46-fix-modules';
 
 export async function renderLicense() {
   await safeRender(async () => {

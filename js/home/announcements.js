@@ -1,5 +1,5 @@
 // v45 重写: 首页公告区 (list + modal)
-import { $, escHtml, fmtDate, relativeTime, GET } from './util.js?v=v45-fix-401';
+import { $, escHtml, fmtDate, relativeTime, GET } from './util.js?v=v46-fix-modules';
 
 const _annCache = { data: null, ts: 0 };
 const CACHE_TTL = 60_000; // 60s, 跟 homepage-bundle 的服务端 cache 一致
