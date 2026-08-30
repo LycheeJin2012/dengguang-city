@@ -14,7 +14,12 @@ export async function onRequestPost(context) {
   const { sess: _sess } = await parseSession(env, request);
   const rpId = getRpId(request);
   const origin = getOrigin(request);
-  const expectedOrigin = { type: 'webauthn.create', origin };
+  // v46 修: register 和 login 必须用不同的 expectedOrigin.type
+  //   register 期望 clientData.type = 'webauthn.create' (navigator.credentials.create)
+  //   login    期望 clientData.type = 'webauthn.get'    (navigator.credentials.get)
+  //   之前共用一个 {type:'webauthn.create'} 导致 login 永远 throw "clientData.type 不匹配"
+  const expectedOriginReg  = { type: 'webauthn.create', origin };
+  const expectedOriginLogin = { type: 'webauthn.get',    origin };
 
   try {
     if (action === 'passkey-register-start') {
@@ -32,7 +37,7 @@ export async function onRequestPost(context) {
       const b = await request.json();
       // v45 修: passkeyRegisterFinish 签名 (env, body, subject, rpId, expectedOrigin)
       //        老 init.js 错传 (env, subject, rpId, expectedOrigin, b) 顺序乱
-      const r = await passkeyRegisterFinish(env, b, _subject, rpId, expectedOrigin);
+      const r = await passkeyRegisterFinish(env, b, _subject, rpId, expectedOriginReg);
       return ok({ id: r.id, name: r.name });
     }
     if (action === 'passkey-login-start') {
@@ -53,8 +58,10 @@ export async function onRequestPost(context) {
       //        函数内部自己查 passkey, 不接受 _subj / _pk 参数
       //        老 init.js 传 6 参数是错的, 但 shared.js 多余参数会被忽略, 所以老代码"看起来" 工作
       //        (但 _subj.id / _pk 检查跟 shared.js 内部查的重复)
+      // v46 修: 改用 expectedOriginLogin (type: 'webauthn.get'), 之前用 expectedOrigin
+      //        (type: 'webauthn.create') 导致 clientData.type 检查永远不通过
       const b = await request.json();
-      const r = await passkeyLoginFinish(env, b, rpId, expectedOrigin);
+      const r = await passkeyLoginFinish(env, b, rpId, expectedOriginLogin);
       if (r && r.token) {
         // r.kind = 'player' | 'admin', r.{player|admin} 都有
         const cookie = `lc_session=${r.token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${8 * 3600}`;
