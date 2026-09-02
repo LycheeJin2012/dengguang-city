@@ -327,15 +327,21 @@ export async function passkeyLoginStart(env, username, rpId) {
   await env.DB.prepare(
     "INSERT OR REPLACE INTO webauthn_challenges (token, challenge, purpose, player_id, expires_at) VALUES (?, ?, 'login', ?, ?)"
   ).bind(token, challengeB64, subjectKey, expires).run();
+  // v47.2: usernameless 登录支持 — allowCredentials 为空时省略字段
+  // WebAuthn 规范: 传 [] 跟 undefined 在多数浏览器都列所有, 但少数实现会拒绝空数组
+  // 安全做法: 省略字段 (undefined = 列出该 RP 下所有可用 passkey)
+  const publicKey = {
+    challenge: challengeB64,
+    rpId,
+    userVerification: 'preferred',
+    timeout: 60000,
+  };
+  if (allowCredentials && allowCredentials.length > 0) {
+    publicKey.allowCredentials = allowCredentials;
+  }
   return {
     challenge_token: token,
-    publicKey: {
-      challenge: challengeB64,
-      rpId,
-      allowCredentials,
-      userVerification: 'preferred',
-      timeout: 60000,
-    },
+    publicKey,
     hint: subject ? { kind: subject.kind, id: subject.id, username: subject.username } : null,
   };
 }
