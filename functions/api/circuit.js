@@ -2,6 +2,7 @@
 // GET  /api/circuit  - 当前玩家所有国际赛车场试车 (profile 页用)
 // v42: 保存 track_id / session / car / license / emeralds_charged (之前只存 name/contact/note, 用户选项全丢)
 import { ok, err, stripHtml, readToken, getSession } from '../_shared.js';
+import { ticketFromCircuit } from '../_shared/tickets.js';
 
 // v42: 启动时只跑 circuit_signups 需要的迁移 (其他表的迁移交给 POST /api/init)
 const CIRCUIT_MIGRATIONS = [
@@ -73,6 +74,7 @@ export async function onRequestPost(context) {
   const ins = await env.DB.prepare(
     'INSERT INTO circuit_signups (player_id, track_id, session, car, license, name, contact, note, emeralds_charged) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
   ).bind(sess.player_id, trackId, session, car, license, name, contact, note || null, emeraldsCharged).run();
+  const csId = ins.meta.last_row_id;
 
   // 扣绿宝石
   if (emeraldsCharged > 0) {
@@ -80,5 +82,11 @@ export async function onRequestPost(context) {
       .bind(emeraldsCharged, sess.player_id).run();
   }
 
-  return ok({ id: ins.meta.last_row_id, emeralds_charged: emeraldsCharged });
+  // v47: 双写 ticket
+  await ticketFromCircuit(env, {
+    player_id: sess.player_id, track_id: trackId, session, car, license,
+    name, contact, note,
+  }, csId);
+
+  return ok({ id: csId, emeralds_charged: emeraldsCharged });
 }

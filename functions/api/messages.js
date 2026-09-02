@@ -2,6 +2,7 @@
 // GET  /api/messages?my=1  - 当前登录玩家的所有留言 (profile 页用)
 // POST /api/messages  - 提交留言（需登录玩家）→ 自动 AI 回复
 import { ok, err, stripHtml, isNonEmpty, readToken, getSession, aiAutoReply } from '../_shared.js';
+import { ticketFromMessage } from '../_shared/tickets.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -49,6 +50,9 @@ export async function onRequestPost(context) {
     'INSERT INTO messages (player_id, name, contact, content) VALUES (?, ?, ?, ?)'
   ).bind(sess.player_id, name, contact || null, content).run();
   const msgId = ins.meta.last_row_id;
+
+  // v47: 双写 ticket (失败不影响主流程, helper 内部已 try/catch)
+  await ticketFromMessage(env, { player_id: sess.player_id, content, title: content.slice(0, 30) }, msgId);
 
   // AI 自动回复（失败不阻塞主流程）
   let aiReplied = false;

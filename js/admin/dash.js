@@ -2,30 +2,26 @@
 import { $, POST, safeRender } from './core.js?v=v46-fix-modules';
 
 // Tab 渲染器: 每个 tab 第一次切到时调用对应的 render 函数
+// v47: 留言/驾照/酒店 3 个 tab 合并为 tickets (统一工单入口)
 const _TAB_RENDER = {
-  messages: () => import('./tabs/messages.js').then(m => m.renderMessages()),
-  players:  () => import('./tabs/players.js').then(m => m.renderPlayers()),
-  bookings:  () => import('./tabs/bookings.js').then(m => m.renderBookings()),
-  license:  () => import('./tabs/license.js').then(m => m.renderLicense()),
-  kart:     () => import('./tabs/kart.js').then(m => m.renderKarts()),
-  circuit:  () => import('./tabs/kart.js').then(m => m.renderCircuits()),
+  tickets:    () => import('./tabs/tickets.js').then(m => m.renderTickets()),
+  players:    () => import('./tabs/players.js').then(m => m.renderPlayers()),
+  kart:       () => import('./tabs/kart.js').then(m => m.renderKarts()),
+  circuit:    () => import('./tabs/kart.js').then(m => m.renderCircuits()),
   announcements: () => import('./tabs/announcements.js').then(m => m.renderAnnouncements()),
-  gallery:  () => import('./tabs/gallery.js').then(m => m.renderGallery()),
-  dms:      () => import('./tabs/dms.js').then(m => m.renderDms()),
-  admins:   () => import('./tabs/admins.js').then(m => m.renderAdminList()),
-  password: async () => { /* 修改密码 — 留给 password.js (Stage 3) */ },
+  gallery:    () => import('./tabs/gallery.js').then(m => m.renderGallery()),
+  dms:        () => import('./tabs/dms.js').then(m => m.renderDms()),
+  admins:     () => import('./tabs/admins.js').then(m => m.renderAdminList()),
+  password:   async () => { /* 修改密码 — 留给 password.js (Stage 3) */ },
 };
 export function _ensureTabRendered(tab) {
   const fn = _TAB_RENDER[tab];
   if (fn) safeRender(fn);
 }
 
-// Filter 切换 (用于 msgFilter / bookFilter / licenseFilter 等)
+// Filter 切换 (v47 简化: 只剩 playerFilter + tickets 自己内部 filter)
 const _FILTER_RENDER = {
-  messages:    () => import('./tabs/messages.js').then(m => m.renderMessages()),
   players:     () => import('./tabs/players.js').then(m => m.renderPlayers()),
-  bookings:     () => import('./tabs/bookings.js').then(m => m.renderBookings()),
-  license:     () => import('./tabs/license.js').then(m => m.renderLicense()),
   circuit_kart: () => import('./tabs/kart.js').then(m => m.renderKarts()),
   kart_circuit: () => import('./tabs/kart.js').then(m => m.renderCircuits()),
 };
@@ -37,14 +33,14 @@ export function bindFilterRadios() {
       if (fn) safeRender(fn);
     });
   });
-  // 搜索框 (debounce 200ms)
+  // 搜索框 (debounce 200ms) - v47 只剩 ticketSearch
   document.querySelectorAll('input[type="search"]').forEach(s => {
     let t = null;
     s.addEventListener('input', () => {
       clearTimeout(t);
       t = setTimeout(() => {
         const id = s.id;
-        if (id === 'msgSearch') import('./tabs/messages.js').then(m => m.renderMessages());
+        if (id === 'ticketSearch') import('./tabs/tickets.js').then(m => m.renderTickets());
       }, 200);
     });
   });
@@ -68,8 +64,8 @@ export function renderDash() {
     if (ba) ba.style.display = a.role === 'super' ? '' : 'none';
   } catch (e) { throw e; }
   showView('dash');
-  // v34: 只 render 默认 active tab (HTML 默认 .tab-pane.active = bookings)
-  _ensureTabRendered('bookings');
+  // v47: 默认 active tab 改为 tickets (替换原 bookings)
+  _ensureTabRendered('tickets');
   // 仅 super 可见 DM 监管 tab
   try {
     if (window._me && window._me.role === 'super') {

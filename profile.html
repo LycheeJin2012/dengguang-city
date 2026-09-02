@@ -65,6 +65,43 @@
       <p id="passkeyMsg" class="passkey-msg muted"></p>
     </div>
   </div>
+
+  <!-- v47: 赛道成绩 + 排行榜 -->
+  <div class="profile-card" id="raceCard" style="display:none">
+    <div class="passkey-head">🏁 赛道成绩</div>
+    <div class="passkey-body">
+      <p class="passkey-desc">上报你在国际赛车场的圈速，进入排行榜跟全城玩家 PK！</p>
+      <div id="raceContent">载入中…</div>
+    </div>
+  </div>
+
+  <!-- v47: 驾照模拟题库 -->
+  <div class="profile-card" id="examCard" style="display:none">
+    <div class="passkey-head">📝 驾照模拟题库</div>
+    <div class="passkey-body">
+      <p class="passkey-desc">考前去模拟题库里练手，错了的题自动进"错题本"反复练习。</p>
+      <div id="examContent">载入中…</div>
+    </div>
+  </div>
+
+  <!-- v47: 通知订阅 -->
+  <div class="profile-card" id="subCard" style="display:none">
+    <div class="passkey-head">🔔 通知订阅</div>
+    <div class="passkey-body">
+      <p class="passkey-desc">勾选订阅后，新公告/你的留言被回复/新私信会通过站内通知推送给你。</p>
+      <div id="subContent">载入中…</div>
+    </div>
+  </div>
+
+  <!-- v47: 市民身份卡 -->
+  <div class="profile-card" id="citizenCard" style="display:none">
+    <div class="passkey-head">🪪 我的市民身份卡</div>
+    <div class="passkey-body">
+      <p class="passkey-desc">点下面的按钮生成你的专属市民卡，可以下载发到 MC 服务器群跟小伙伴炫一下！</p>
+      <button id="genCardBtn" class="btn btn-primary">🎴 生成我的市民卡</button>
+      <div id="citizenCardPreview" style="margin-top:14px"></div>
+    </div>
+  </div>
 </div>
 
 <script src="js/toast.js?v=20260829-toast"></script>

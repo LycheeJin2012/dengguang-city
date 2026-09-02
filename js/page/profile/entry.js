@@ -3,6 +3,10 @@ import { $, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
 import { fetchProfile, renderProfile, setProfile, setSelf } from './info.js?v=v46-fix-modules';
 import { bindPasskey } from './passkey.js?v=v46-fix-modules';
 import { loadMyMessages, loadMyBookings } from './history.js?v=v46-fix-modules';
+import { renderRaceCard } from './race-times.js?v=v46-fix-modules';
+import { renderExamCard } from './exam-practice.js?v=v46-fix-modules';
+import { renderSubCard } from './subscriptions.js?v=v46-fix-modules';
+import { bindCitizenCard } from './citizen-card.js?v=v46-fix-modules';
 
 const app = $('#app');
 const pBody = $('#pBody');
@@ -60,9 +64,16 @@ const pBody = $('#pBody');
   // 5. 渲染
   renderProfile(me, profile, stats);
 
-  // 6. 自己: 加载最近留言/报名 + 通行密钥
+  // 6. 自己: 加载最近留言/报名 + 通行密钥 + 4 个新功能 (v47)
   if (isSelf) {
-    await Promise.all([loadMyMessages(), loadMyBookings()]);
+    await Promise.all([
+      loadMyMessages(),
+      loadMyBookings(),
+      renderRaceCard(),
+      renderExamCard(),
+      renderSubCard(),
+    ]);
     bindPasskey();
+    bindCitizenCard();
   }
 })();

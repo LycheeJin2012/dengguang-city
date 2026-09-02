@@ -118,12 +118,10 @@
       </div>
     </div>
 
-    <!-- Tab 切换 -->
+    <!-- Tab 切换 (v47: 留言/驾照/酒店 合并为 tickets 工单) -->
     <nav class="admin-tabs">
-      <button class="tab active" data-tab="messages">📬 市民留言 <span class="tab-count" id="msgUnread"></span></button>
+      <button class="tab active" data-tab="tickets">🎫 工单中心 <span class="tab-count" id="ticketTotalBadge"></span></button>
       <button class="tab" data-tab="players">👥 玩家管理 <span class="tab-count" id="playerPending"></span></button>
-      <button class="tab" data-tab="bookings">🏨 酒店预订 <span class="tab-count" id="bookPending"></span></button>
-      <button class="tab" data-tab="license">🚗 驾照考试 <span class="tab-count" id="licensePending"></span></button>
       <button class="tab" data-tab="kart">🏁 赛道 / 国际试车 <span class="tab-count" id="kartPending"></span> <span class="tab-count" id="circuitPending"></span></button>
       <button class="tab" data-tab="announcements" id="tabAnnouncements">📢 公告管理</button>
       <button class="tab" data-tab="gallery" id="tabGallery">🖼️ 首页图集</button>
@@ -132,35 +130,49 @@
       <button class="tab" data-tab="password">🔑 修改我的密码</button>
     </nav>
 
-    <!-- Tab: 留言 -->
-    <section class="tab-pane active" id="pane-messages">
+    <!-- Tab: 工单中心 (v47: 替代原 messages/license/bookings 3 个 tab) -->
+    <section class="tab-pane active" id="pane-tickets">
       <div class="pane-head">
-        <h2>市民留言</h2>
+        <h2>🎫 工单中心</h2>
         <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderMessages">🔄 刷新</button>
-          <button class="btn btn-ghost btn-sm" id="btnMarkAll">全部标为已读</button>
-          <button class="btn btn-ghost btn-sm" id="btnClearRead">清除已读</button>
+          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderTickets">🔄 刷新</button>
         </div>
       </div>
-      <div class="msg-filter">
-        <label><input type="radio" name="msgFilter" value="all" checked /> 全部 <span id="cntAll">0</span></label>
-        <label><input type="radio" name="msgFilter" value="unread" /> 未读 <span id="cntUnread">0</span></label>
-        <label><input type="radio" name="msgFilter" value="read" /> 已读 <span id="cntRead">0</span></label>
-        <input type="search" id="msgSearch" placeholder="🔍 搜索姓名/联系方式/内容" style="flex:1;padding:6px 10px;border:2px solid var(--c-stone, #999);background:var(--c-bg-1, #f7f0d8);font-family:inherit;font-size:13px;margin-left:6px" />
-        <select id="msgTypeFilter">
-          <option value="">全部类型</option>
-          <option>建议</option>
-          <option>投诉</option>
-          <option>咨询</option>
-          <option>合作</option>
+      <p class="pane-hint">统一处理所有市民事务：留言 / 酒店预订 / 驾照报名 / 赛道报名 / 玩家主动服务请求。按分类筛选 + 模糊搜索 + 状态流转 (待处理 → 处理中 → 已解决 → 关闭)。</p>
+      <div class="msg-filter" style="flex-wrap:wrap;gap:8px">
+        <select id="ticketCat" style="padding:6px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-family:inherit;font-size:13px">
+          <option value="">📂 全部类型</option>
+          <option value="message">💬 留言</option>
+          <option value="comment">💭 评论</option>
+          <option value="license">🚗 驾照</option>
+          <option value="hotel">🏨 酒店</option>
+          <option value="race">🏁 赛车</option>
+          <option value="kart">🛞 卡丁车</option>
+          <option value="service">🛎️ 服务</option>
         </select>
+        <select id="ticketStatus" style="padding:6px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-family:inherit;font-size:13px">
+          <option value="">📌 全部状态</option>
+          <option value="open">⏳ 待处理</option>
+          <option value="in_progress">🔄 处理中</option>
+          <option value="resolved">✓ 已解决</option>
+          <option value="closed">✕ 已关闭</option>
+        </select>
+        <input type="search" id="ticketSearch" placeholder="🔍 搜索标题/内容" style="flex:1;min-width:200px;padding:6px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-family:inherit;font-size:13px" />
       </div>
-      <div id="msgList" class="msg-list">
+      <div class="ticket-categories" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;font-size:13px">
+        <span>💬 留言 <span id="ticketCount_message">0</span></span>
+        <span>🚗 驾照 <span id="ticketCount_license">0</span></span>
+        <span>🏨 酒店 <span id="ticketCount_hotel">0</span></span>
+        <span>🏁 赛车 <span id="ticketCount_race">0</span></span>
+        <span>🛞 卡丁车 <span id="ticketCount_kart">0</span></span>
+        <span>🛎️ 服务 <span id="ticketCount_service">0</span></span>
+      </div>
+      <div id="ticketList" class="msg-list">
         <!-- JS 渲染 -->
       </div>
-      <div id="msgEmpty" class="empty-state" style="display:none">
-        <div class="empty-icon">📭</div>
-        <p>暂无留言</p>
+      <div id="ticketEmpty" class="empty-state" style="display:none">
+        <div class="empty-icon">🎫</div>
+        <p>暂无工单</p>
       </div>
     </section>
 
@@ -205,87 +217,26 @@
       </div>
     </section>
 
-    <!-- Tab: 酒店预订 -->
-    <section class="tab-pane" id="pane-bookings">
+    <!-- Tab: 酒店预订 (v47 删: 合并到 tickets 工单) -->
+    <section class="tab-pane" id="pane-bookings" style="display:none">
       <div class="pane-head">
-        <h2>酒店预订</h2>
+        <h2>酒店预订 (v47 合并到工单)</h2>
         <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderBookings">🔄 刷新</button>
-          <button class="btn btn-ghost btn-sm" id="btnBookClearDone">清除已完成</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.querySelector('[data-tab=tickets]').click()">🎫 跳到工单</button>
         </div>
       </div>
-      <nav class="subtabs" data-pane="bookings">
-        <button class="subtab active" data-sub="signup">📋 预订记录</button>
-        <button class="subtab" data-sub="manage" data-super-only>🏨 酒店管理 (SUPER)</button>
-      </nav>
-      <div class="subview active" data-subview="bookings-signup">
-        <div class="msg-filter">
-          <label><input type="radio" name="bookFilter" value="all" checked /> 全部 <span id="bookCntAll">0</span></label>
-          <label><input type="radio" name="bookFilter" value="pending" /> 待处理 <span id="bookCntPending">0</span></label>
-          <label><input type="radio" name="bookFilter" value="confirmed" /> 已确认 <span id="bookCntConfirmed">0</span></label>
-          <label><input type="radio" name="bookFilter" value="completed" /> 已完成 <span id="bookCntCompleted">0</span></label>
-          <select id="bookRoomFilter">
-            <option value="">全部房型</option>
-            <option value="standard">树上标间</option>
-            <option value="queen">树上大床房</option>
-            <option value="luxury">树上双床豪华房</option>
-          </select>
-        </div>
-        <div id="bookList" class="msg-list">
-          <!-- JS 渲染 -->
-        </div>
-        <div id="bookEmpty" class="empty-state" style="display:none">
-          <div class="empty-icon">🏨</div>
-          <p>暂无订单</p>
-        </div>
-      </div>
-      <div class="subview" data-subview="bookings-manage">
-        <div id="hotelManageList" class="msg-list"></div>
-        <div id="hotelManageEmpty" class="empty-state" style="display:none">
-          <div class="empty-icon">🏨</div>
-          <p>暂无酒店。点右上"新增酒店"创建,再为它添加房型。</p>
-        </div>
-        <div class="pane-tools mt-8" id="hotelManageAddBtn" data-super-only style="display:none">
-          <button class="btn btn-primary btn-sm" id="btnAddHotel">+ 新建酒店</button>
-        </div>
-      </div>
+      <p class="pane-hint">酒店预订、留言、驾照报名已统一合并到"🎫 工单" tab，请到那里处理。</p>
     </section>
 
-    <!-- Tab: 驾照考试 -->
-    <section class="tab-pane" id="pane-license">
+    <!-- Tab: 驾照考试 (v47 删: 合并到 tickets 工单) -->
+    <section class="tab-pane" id="pane-license" style="display:none">
       <div class="pane-head">
-        <h2>驾照考试报名</h2>
+        <h2>驾照考试 (v47 合并到工单)</h2>
         <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderLicense">🔄 刷新</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.querySelector('[data-tab=tickets]').click()">🎫 跳到工单</button>
         </div>
       </div>
-      <nav class="subtabs" data-pane="license">
-        <button class="subtab active" data-sub="signup">📋 报名记录</button>
-        <button class="subtab" data-sub="manage" data-super-only>🎫 考试要求 (SUPER)</button>
-      </nav>
-      <div class="subview" data-subview="license-signup">
-        <div class="msg-filter">
-          <label><input type="radio" name="licenseFilter" value="pending" checked /> 待审 <span id="cntLicPending">0</span></label>
-          <label><input type="radio" name="licenseFilter" value="passed" /> 通过 <span id="cntLicPassed">0</span></label>
-          <label><input type="radio" name="licenseFilter" value="failed" /> 未通过 <span id="cntLicFailed">0</span></label>
-          <label><input type="radio" name="licenseFilter" value="all" /> 全部 <span id="cntLicAll">0</span></label>
-        </div>
-        <div id="licenseList" class="msg-list"></div>
-        <div id="licenseEmpty" class="empty-state" style="display:none">
-          <div class="empty-icon">🚗</div>
-          <p>暂无报名</p>
-        </div>
-      </div>
-      <div class="subview" data-subview="license-manage">
-        <div id="licenseManageList" class="msg-list"></div>
-        <div id="licenseManageEmpty" class="empty-state" style="display:none">
-          <div class="empty-icon">🎫</div>
-          <p>暂无驾照要求。点右上"新增"创建 B/A/S 级要求。</p>
-        </div>
-        <div class="pane-tools mt-8" id="licenseManageAddBtn" data-super-only style="display:none">
-          <button class="btn btn-primary btn-sm" id="btnAddLicReq">+ 新增驾照要求</button>
-        </div>
-      </div>
+      <p class="pane-hint">酒店预订、留言、驾照报名已统一合并到"🎫 工单" tab，请到那里处理。</p>
     </section>
 
     <!-- Tab: 赛道报名 -->

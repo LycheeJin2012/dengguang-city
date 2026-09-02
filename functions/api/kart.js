@@ -1,6 +1,7 @@
 // POST /api/kart  - 卡丁车试跑报名（需登录玩家）
 // GET  /api/kart  - 当前玩家所有卡丁车试跑 (profile 页用)
 import { ok, err, stripHtml, readToken, getSession } from '../_shared.js';
+import { ticketFromKart } from '../_shared/tickets.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -34,6 +35,12 @@ export async function onRequestPost(context) {
   const ins = await env.DB.prepare(
     'INSERT INTO kart_signups (player_id, session, car, name, contact, note) VALUES (?, ?, ?, ?, ?, ?)'
   ).bind(sess.player_id, session || null, car || null, name, contact, note || null).run();
+  const ksId = ins.meta.last_row_id;
 
-  return ok({ id: ins.meta.last_row_id });
+  // v47: 双写 ticket
+  await ticketFromKart(env, {
+    player_id: sess.player_id, session, car, name, contact, note,
+  }, ksId);
+
+  return ok({ id: ksId });
 }

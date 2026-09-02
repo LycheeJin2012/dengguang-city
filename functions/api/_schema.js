@@ -219,6 +219,86 @@ export const SCHEMA = [
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     UNIQUE(player_id, signin_date)
   )`,
+  // v47: tickets 工单 (admin 后台统一入口, 替代分散的 messages/license/bookings/kart 3 个 tab)
+  // 双写: messages/license/bookings/circuit_signups/kart_signups POST 时同时写一张 ticket
+  // 字段: player_id 提交人, category 工单类型, source_table/source_id 反向追溯原表
+  //      status 状态 open|in_progress|resolved|closed, priority 优先级 low|normal|high|urgent
+  //      assignee_id 派单给的 admin, admin_reply 管理员回复快照
+  `CREATE TABLE IF NOT EXISTS tickets (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id INTEGER,
+    category TEXT NOT NULL,
+    source_table TEXT,
+    source_id INTEGER,
+    title TEXT NOT NULL,
+    body TEXT,
+    status TEXT NOT NULL DEFAULT 'open',
+    priority TEXT NOT NULL DEFAULT 'normal',
+    assignee_id INTEGER,
+    admin_reply TEXT,
+    replied_at TEXT,
+    replied_by INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  // v47: race_times 赛道成绩 + 排行榜
+  // time_ms 用毫秒存, 显示时再格式化为 mm:ss.fff
+  // verified=1 表示管理员确认 (后续可加截图/录像审核流程)
+  `CREATE TABLE IF NOT EXISTS race_times (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id INTEGER NOT NULL,
+    track_id INTEGER NOT NULL,
+    time_ms INTEGER NOT NULL,
+    kart_name TEXT,
+    license_grade TEXT,
+    verified INTEGER NOT NULL DEFAULT 0,
+    recorded_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  // v47: exam_questions 驾照模拟题库
+  // grade: B|A|S (B=初级/A=中级/S=高级)
+  // q_type: choice(单选)|multi(多选)|judge(判断)
+  // options: JSON 数组 (e.g. '["A. xxx","B. xxx",...]'), answer: 'A' / 'AB' / 'true'
+  `CREATE TABLE IF NOT EXISTS exam_questions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    grade TEXT NOT NULL,
+    q_type TEXT NOT NULL DEFAULT 'choice',
+    question TEXT NOT NULL,
+    options TEXT,
+    answer TEXT NOT NULL,
+    explanation TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  // v47: exam_attempts 练习记录 (错题本/历史)
+  `CREATE TABLE IF NOT EXISTS exam_attempts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id INTEGER NOT NULL,
+    question_id INTEGER NOT NULL,
+    is_correct INTEGER NOT NULL,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  // v47: subscriptions 订阅
+  // type: announcement(公告)|reply(留言被回复)|dm(私信)
+  // channel: site(站内, 默认)|email|Telegram
+  `CREATE TABLE IF NOT EXISTS subscriptions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    target_id INTEGER,
+    channel TEXT NOT NULL DEFAULT 'site',
+    enabled INTEGER NOT NULL DEFAULT 1,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
+  // v47: notification_log 站内通知 (v47 阶段只做 site channel, 邮件/Telegram 后接)
+  `CREATE TABLE IF NOT EXISTS notification_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_id INTEGER NOT NULL,
+    type TEXT NOT NULL,
+    title TEXT NOT NULL,
+    body TEXT,
+    link TEXT,
+    read_at TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+  )`,
 ];
 
 // ALTER 迁移：给已存在的表加新字段（重复加会报"duplicate column"，吞掉）
@@ -278,4 +358,14 @@ export const MIGRATIONS = [
   `ALTER TABLE circuit_signups ADD COLUMN car TEXT`,
   `ALTER TABLE circuit_signups ADD COLUMN license TEXT`,
   `ALTER TABLE circuit_signups ADD COLUMN emeralds_charged INTEGER NOT NULL DEFAULT 0`,
+  // v47: 5 张新表索引
+  `CREATE INDEX IF NOT EXISTS idx_tickets_cat_status ON tickets(category, status, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_tickets_player ON tickets(player_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_tickets_assignee ON tickets(assignee_id, status)`,
+  `CREATE INDEX IF NOT EXISTS idx_race_times_track ON race_times(track_id, time_ms)`,
+  `CREATE INDEX IF NOT EXISTS idx_race_times_player ON race_times(player_id, recorded_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS idx_exam_questions_grade ON exam_questions(grade, created_at)`,
+  `CREATE INDEX IF NOT EXISTS idx_exam_attempts_player ON exam_attempts(player_id, question_id)`,
+  `CREATE INDEX IF NOT EXISTS idx_subs_player ON subscriptions(player_id, type)`,
+  `CREATE INDEX IF NOT EXISTS idx_notif_player_unread ON notification_log(player_id, read_at, created_at DESC)`,
 ];

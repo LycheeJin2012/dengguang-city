@@ -1,6 +1,7 @@
 // POST /api/license - 玩家报名驾照考试（需玩家登录）
 // GET  /api/license - 列出自己（或 admin 看全部）的报名
 import { ok, err, stripHtml, isNonEmpty, readToken, getSession } from '../_shared.js';
+import { ticketFromLicense } from '../_shared/tickets.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -62,9 +63,16 @@ export async function onRequestPost(context) {
   const ins = await env.DB.prepare(
     'INSERT INTO license_signups (player_id, exam_type, exam_date, exam_session, contact, note) VALUES (?, ?, ?, ?, ?, ?)'
   ).bind(sess.player_id, examType, examDate || null, examSession || null, contact, note || null).run();
+  const lsId = ins.meta.last_row_id;
+
+  // v47: 双写 ticket
+  await ticketFromLicense(env, {
+    player_id: sess.player_id, exam_type: examType, exam_date: examDate,
+    exam_session: examSession, contact, name: sess.username, note,
+  }, lsId);
 
   return ok({
-    id: ins.meta.last_row_id,
+    id: lsId,
     exam_type: examType,
     status: 'pending',
     message: '报名已提交，等市政厅审核'

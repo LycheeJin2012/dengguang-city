@@ -1,6 +1,7 @@
 // POST /api/bookings  - 房间预订（需登录玩家）
 // GET  /api/bookings  - 当前玩家所有酒店预订 (profile 页用)
 import { ok, err, stripHtml, readToken, getSession } from '../_shared.js';
+import { ticketFromBooking } from '../_shared/tickets.js';
 
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -47,6 +48,13 @@ export async function onRequestPost(context) {
     `INSERT INTO bookings (player_id, room_id, room_name, in_date, out_date, nights, persons, breakfast, name, contact, note)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).bind(sess.player_id, roomId, roomName, inDate, outDate, nights, persons, breakfast, name, contact, note || null).run();
+  const bookingId = ins.meta.last_row_id;
 
-  return ok({ id: ins.meta.last_row_id, nights, in_date: inDate, out_date: outDate });
+  // v47: 双写 ticket
+  await ticketFromBooking(env, {
+    player_id: sess.player_id, room_name: roomName, name, contact,
+    in_date: inDate, out_date: outDate, nights, persons, breakfast, note,
+  }, bookingId);
+
+  return ok({ id: bookingId, nights, in_date: inDate, out_date: outDate });
 }
