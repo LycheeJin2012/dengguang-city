@@ -178,6 +178,18 @@ function bindPasskeyLogin() {
       return;
     }
     const username = $('#loginUsername')?.value.trim() || '';
+    // v47 修: 通行密钥登录需要先填用户名 (系统要知道查哪个账户的密钥)
+    // 之前不预检查, 点了按钮才发请求, 弹"username 必填" 体验烂
+    if (!username) {
+      const msg = $('#loginMsg');
+      if (msg) {
+        msg.style.color = 'var(--c-redstone, #c33)';
+        msg.textContent = '✗ 通行密钥登录需要先填用户名 (系统才知道查哪个账户的密钥)';
+        setTimeout(() => { msg.style.color = ''; }, 4000);
+      }
+      $('#loginUsername')?.focus();
+      return;
+    }
     btn.disabled = true;
     const origText = btn.textContent;
     btn.textContent = '⏳ 准备中...';
