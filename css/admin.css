@@ -388,7 +388,11 @@ body.admin-body {
 }
 
 .tab-pane { display: none; }
-.tab-pane.active { display: block; animation: fadeIn 0.2s ease; }
+.tab-pane.active {
+  display: block;
+  /* v48: tab 切换内容淡入 + 微微滑入 (用 v48 通用 keyframes) */
+  animation: v48-fade-in-up 0.35s var(--ease-out) both;
+}
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 
 /* Pane 头: 标题 + 工具区, 高度固定 56px 统一 */
@@ -486,12 +490,17 @@ body.admin-body {
   border: 3px solid var(--c-black);
   box-shadow: 4px 4px 0 var(--c-stone);
   padding: 14px 16px;
-  transition: transform 0.15s;
+  /* v48: 统一动效 token (替代 0.15s 硬编码) */
+  transition: transform var(--dur-base) var(--ease-spring),
+              box-shadow var(--dur-base) var(--ease-out),
+              background-color var(--dur-base) var(--ease-out);
   display: flex;
   flex-direction: column;
   gap: 10px;
+  will-change: transform;
 }
 .msg-item:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--c-stone); }
+.msg-item:active { transform: translate(1px, 1px); box-shadow: 2px 2px 0 var(--c-stone); transition-duration: 80ms; }
 .msg-item.is-read { opacity: 0.78; }
 .msg-item.is-read .msg-content { color: var(--c-stone-dark); }
 .msg-item.is-read .msg-name { color: var(--c-stone-dark); }
