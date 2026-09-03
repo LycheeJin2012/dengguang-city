@@ -23,8 +23,10 @@ import { renderDash, _ensureTabRendered, bindFilterRadios, showView } from './ad
 
 // ---------- Boot ----------
 async function boot() {
+  console.log('[admin] boot() start');
   try {
     const d = await GET('/api/login');
+    console.log('[admin] /api/login 返回:', d);
     const _ld = document.getElementById('bootLoading');
     if (_ld) _ld.remove();
     if (d.ok && d.user) {
@@ -40,9 +42,11 @@ async function boot() {
         if (el) el.textContent = '当前是玩家账号, 但未绑定管理员账号, 无法进入管理后台';
       }
     } else {
+      console.log('[admin] 未登录, 显示 login form');
       showView('login');
     }
   } catch (e) {
+    console.error('[admin] boot failed:', e);
     const _ld = document.getElementById('bootLoading');
     if (_ld) _ld.remove();
     const el = $('#loginError');

@@ -26,6 +26,9 @@ export const EXAM_LABEL = { written: 'B 级笔试', road: 'A 级路考', upgrade
 export const EXAM_BADGE = { pending: '待审', passed: '✓ 通过', failed: '✗ 未通过' };
 
 // ---------- API wrapper (fetch + JSON + cookie) ----------
+// v47.3 修: 401 不 throw (跟 home/util.js#api 行为一致, 业务状态不是错误)
+// 之前: 401 + {ok:false, error:'未登录'} → throw → admin boot catch 走错路径
+// 现在: 401 整支短路, 让调用方判断 d.ok
 export async function api(method, path, body) {
   const opts = { method, credentials: 'include', headers: {} };
   if (body !== undefined) {
@@ -34,6 +37,7 @@ export async function api(method, path, body) {
   }
   const r = await fetch(path, opts);
   const d = await r.json().catch(() => ({}));
+  if (r.status === 401) return d;
   if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
   return d;
 }
