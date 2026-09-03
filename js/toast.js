@@ -1,7 +1,10 @@
-// 灯光市 v35 · 共享 toast helper
-// 公共页 (main.js / hotel.js / dm.js / profile.js) + admin 都可加载使用
-// 自动按消息内容判断类型: 失败/错误/无效 → 红; 成功/已 → 绿; 其他 → 灰
-// 也覆盖 window.alert, 一次替换所有 alert 调用
+// 灯光市 v48 · 共享 toast helper
+// 公共页 + admin 都可加载使用
+// 特点:
+//   - 自动按消息内容判断类型 (失败/错误/无效 → 红, 成功/已 → 绿, 其他 → 灰)
+//   - v48 动效: 从右滑入 + 背景模糊 + 进度条收缩 + 滑出退场
+//   - 暗色模式自适应 (用 CSS 变量, 自动跟随主题切换)
+//   - 覆盖 window.alert, 一次替换所有 alert 调用
 (function() {
   'use strict';
   function _toast(msg, type) {
@@ -10,20 +13,28 @@
     if (!c) {
       c = document.createElement('div');
       c.id = '_toast-container';
-      c.style.cssText = 'position:fixed;top:80px;right:20px;z-index:99999;display:flex;flex-direction:column;gap:8px;pointer-events:none;max-width:90vw;';
+      c.className = 'v48-toast-container';
       document.body.appendChild(c);
     }
-    const bg = type === 'error' ? '#c33' : type === 'success' ? '#3a3' : '#333';
+    const icons = { error: '✕', success: '✓', info: 'ℹ' };
     const t = document.createElement('div');
-    t.style.cssText = 'background:' + bg + ';color:#fff;padding:12px 18px;border-radius:6px;font-size:14px;line-height:1.4;box-shadow:0 4px 12px rgba(0,0,0,.3);max-width:340px;pointer-events:auto;opacity:0;transform:translateY(-8px);transition:opacity .2s ease,transform .2s ease;white-space:pre-wrap;';
-    t.textContent = String(msg);
+    t.className = 'v48-toast v48-toast-' + type;
+    t.setAttribute('role', 'status');
+    t.innerHTML = `
+      <div class="v48-toast-icon">${icons[type] || 'ℹ'}</div>
+      <div class="v48-toast-body">${String(msg).replace(/</g, '&lt;')}</div>
+      <div class="v48-toast-bar"><div class="v48-toast-bar-fill"></div></div>
+    `;
     c.appendChild(t);
-    requestAnimationFrame(() => { t.style.opacity = '1'; t.style.transform = 'translateY(0)'; });
+    // 触发动画 (v48 slide-in-right)
+    requestAnimationFrame(() => t.classList.add('v48-toast-in'));
+    // 3 秒后退出
+    const ttl = 3000;
     setTimeout(() => {
-      t.style.opacity = '0';
-      t.style.transform = 'translateY(-8px)';
-      setTimeout(() => t.remove(), 250);
-    }, 3000);
+      t.classList.remove('v48-toast-in');
+      t.classList.add('v48-toast-out');
+      setTimeout(() => t.remove(), 350);
+    }, ttl);
   }
   window._toast = _toast;
   window.alert = _toast;

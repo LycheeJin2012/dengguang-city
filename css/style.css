@@ -384,18 +384,25 @@
   border: 3px solid var(--c-black);
   box-shadow: 4px 4px 0 var(--c-black);
   cursor: pointer;
-  transition: transform 0.12s, box-shadow 0.12s, background 0.12s;
+  /* v48: 统一动效 token — fast 时长 + spring 曲线 (替代 0.12s 硬编码) */
+  transition: transform var(--dur-fast) var(--ease-spring),
+              box-shadow var(--dur-fast) var(--ease-out),
+              background-color var(--dur-fast) var(--ease-out),
+              filter var(--dur-fast) var(--ease-out);
   text-align: center;
   user-select: none;
+  will-change: transform;
 }
-.btn:hover {
+.btn:hover:not(:disabled) {
   transform: translate(-2px, -2px);
   box-shadow: 6px 6px 0 var(--c-black);
   background: var(--c-grass-light);
+  filter: brightness(1.05);
 }
-.btn:active {
-  transform: translate(2px, 2px);
-  box-shadow: 0 0 0 var(--c-black);
+.btn:active:not(:disabled) {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--c-black);
+  transition-duration: 60ms;
 }
 .btn-primary { background: var(--c-grass); }
 .btn-primary:hover { background: var(--c-grass-light); }
@@ -411,7 +418,7 @@
 .btn-lg { padding: 16px 32px; font-size: 12px; box-shadow: 5px 5px 0 var(--c-black); }
 .btn-lg:hover { box-shadow: 7px 7px 0 var(--c-black); }
 .btn-block { width: 100%; justify-content: center; }
-.btn[disabled], .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn[disabled], .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: 4px 4px 0 var(--c-black); }
 
 /* ---------- 卡片 ---------- */
 
@@ -3189,4 +3196,87 @@ label > span.hint {
   background: var(--c-gold);
   border: 1px solid var(--c-black);
   margin: var(--sp-3) 0;
+}
+
+/* ============================================
+   v48: Toast 动效系统
+   ============================================ */
+.v48-toast-container {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-width: 90vw;
+}
+.v48-toast {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 240px;
+  max-width: 380px;
+  padding: 14px 16px;
+  background: var(--c-surface);
+  color: var(--c-text);
+  border: 3px solid var(--c-border);
+  box-shadow: 5px 5px 0 var(--c-shadow);
+  font-family: var(--font-cn);
+  font-size: 14px;
+  line-height: 1.4;
+  pointer-events: auto;
+  overflow: hidden;
+  transform: translateX(120%);
+  opacity: 0;
+  transition: transform 0.4s var(--ease-spring),
+              opacity 0.3s var(--ease-out),
+              box-shadow 0.3s var(--ease-out);
+  will-change: transform, opacity;
+}
+.v48-toast-in {
+  transform: translateX(0);
+  opacity: 1;
+}
+.v48-toast-out {
+  transform: translateX(120%);
+  opacity: 0;
+}
+.v48-toast:hover { box-shadow: 7px 7px 0 var(--c-shadow); }
+.v48-toast-icon {
+  flex: 0 0 28px;
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  font-weight: bold;
+  font-size: 16px;
+  color: #fff;
+}
+.v48-toast-success .v48-toast-icon { background: var(--c-success); }
+.v48-toast-error   .v48-toast-icon { background: var(--c-danger); }
+.v48-toast-info    .v48-toast-icon { background: var(--c-info); }
+.v48-toast-body { flex: 1; min-width: 0; word-break: break-word; }
+.v48-toast-bar {
+  position: absolute;
+  left: 0; bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--c-border);
+  opacity: 0.3;
+}
+.v48-toast-bar-fill {
+  height: 100%;
+  width: 100%;
+  background: currentColor;
+  transform-origin: left center;
+  animation: v48-toast-shrink 3s linear forwards;
+}
+.v48-toast-success .v48-toast-bar-fill { color: var(--c-success); }
+.v48-toast-error   .v48-toast-bar-fill { color: var(--c-danger); }
+.v48-toast-info    .v48-toast-bar-fill { color: var(--c-info); }
+@keyframes v48-toast-shrink {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
 }
