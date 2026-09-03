@@ -612,3 +612,84 @@
   margin-top: 14px; flex-wrap: wrap;
 }
 .dm-action-row > * { flex: 1; min-width: 120px; }
+
+/* ============================================
+   v48.4: 暗色模式全面适配 (子页 hotel/profile/dm)
+   ============================================ */
+[data-theme="dark"] .empty-state { color: var(--c-text-muted) !important; background: var(--c-surface) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .empty-state .empty-sub { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .pane-hint { background: var(--c-surface) !important; color: var(--c-text-muted) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .page-back-row a { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .hotel-toolbar { background: var(--c-surface) !important; color: var(--c-text) !important; border-color: var(--c-border) !important; box-shadow: 5px 5px 0 rgba(0,0,0,0.55) !important; }
+[data-theme="dark"] .hotel-filters label { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .hotel-filters select,
+[data-theme="dark"] .hotel-filters input[type="number"] {
+  background: var(--c-input-bg) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-border) !important;
+}
+[data-theme="dark"] .hotel-filters .filter-reset { background: var(--c-grass) !important; color: #fff !important; border-color: var(--c-border) !important; box-shadow: 2px 2px 0 rgba(0,0,0,0.5) !important; }
+[data-theme="dark"] .hotel-count { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .book-room-meta { color: var(--c-text-muted) !important; }
+
+[data-theme="dark"] .profile-card { background: var(--c-surface) !important; border-color: var(--c-border) !important; box-shadow: 6px 6px 0 rgba(0,0,0,0.55) !important; }
+[data-theme="dark"] .profile-avatar { background: var(--c-surface) !important; border-color: var(--c-border) !important; box-shadow: 3px 3px 0 rgba(0,0,0,0.5) !important; }
+[data-theme="dark"] .profile-name { color: var(--c-text) !important; }
+[data-theme="dark"] .profile-meta { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .profile-bio { background: var(--c-surface-2) !important; color: var(--c-text) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .profile-bio.empty { color: var(--c-text-faint) !important; }
+[data-theme="dark"] .profile-stat { background: var(--c-surface-2) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .profile-stat .num { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .profile-stat .lbl { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .profile-loading { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .profile-login-hint { background: var(--c-surface) !important; color: var(--c-text-muted) !important; border-color: var(--c-border) !important; box-shadow: 4px 4px 0 rgba(0,0,0,0.55) !important; }
+[data-theme="dark"] .profile-login-hint h2 { color: var(--c-text) !important; }
+
+[data-theme="dark"] .modal-body label { color: var(--c-text) !important; }
+[data-theme="dark"] .modal-body input,
+[data-theme="dark"] .modal-body textarea {
+  background: var(--c-input-bg) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-border) !important;
+}
+[data-theme="dark"] .modal-body input:focus,
+[data-theme="dark"] .modal-body textarea:focus { border-color: var(--c-grass) !important; }
+[data-theme="dark"] .modal-body .hint { color: var(--c-text-muted) !important; }
+
+[data-theme="dark"] .passkey-card { background: var(--c-surface) !important; border-color: var(--c-border) !important; box-shadow: 6px 6px 0 rgba(0,0,0,0.55) !important; }
+[data-theme="dark"] .passkey-head { background: var(--c-grass) !important; color: #fff !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .passkey-desc { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .passkey-empty { color: var(--c-text-faint) !important; }
+[data-theme="dark"] .passkey-item { background: var(--c-surface-2) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .passkey-item-name { color: var(--c-text) !important; }
+[data-theme="dark"] .passkey-item-detail { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .passkey-item-cred { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .passkey-item-actions button { border-color: var(--c-border) !important; }
+[data-theme="dark"] .passkey-msg.muted { color: var(--c-text-muted) !important; }
+
+[data-theme="dark"] .dm-panel { background: var(--c-surface) !important; border-color: var(--c-border) !important; box-shadow: 4px 4px 0 rgba(0,0,0,0.55) !important; }
+[data-theme="dark"] .dm-list { background: var(--c-surface) !important; }
+[data-theme="dark"] .dm-conv { border-bottom-color: var(--c-border) !important; }
+[data-theme="dark"] .dm-conv:hover { background: var(--c-surface-2) !important; }
+[data-theme="dark"] .dm-conv.active { background: var(--c-gold) !important; }
+[data-theme="dark"] .dm-conv .name { color: var(--c-text) !important; }
+[data-theme="dark"] .dm-conv .preview { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .dm-conv .ts { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .dm-thread-head { background: var(--c-surface-2) !important; border-bottom-color: var(--c-border) !important; }
+[data-theme="dark"] .dm-thread-head .name { color: var(--c-text) !important; }
+[data-theme="dark"] .dm-thread-head .sub { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .dm-thread-head a { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .dm-messages { background: var(--c-surface-2) !important; }
+[data-theme="dark"] .dm-msg .bubble { background: var(--c-surface) !important; color: var(--c-text) !important; border-color: var(--c-border) !important; box-shadow: 2px 2px 0 rgba(0,0,0,0.5) !important; }
+[data-theme="dark"] .dm-msg.mine .bubble { background: var(--c-gold) !important; color: var(--c-dark) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .dm-msg .ts { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .dm-input { background: var(--c-surface) !important; border-top-color: var(--c-border) !important; }
+[data-theme="dark"] .dm-input textarea { background: var(--c-input-bg) !important; color: var(--c-text) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .dm-input button { border-color: var(--c-border) !important; }
+[data-theme="dark"] .dm-input button:disabled { background: var(--c-stone-dark) !important; }
+[data-theme="dark"] .dm-empty { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .dm-login-hint { background: var(--c-surface) !important; color: var(--c-text-muted) !important; border-color: var(--c-border) !important; box-shadow: 4px 4px 0 rgba(0,0,0,0.55) !important; }
+[data-theme="dark"] .dm-login-hint h2 { color: var(--c-text) !important; }
+[data-theme="dark"] .dm-aibot-bar { background: var(--c-page) !important; border-top-color: var(--c-border) !important; }
+[data-theme="dark"] .dm-err-detail { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .dm-conv .unread { color: #fff !important; }

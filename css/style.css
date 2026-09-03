@@ -427,6 +427,143 @@
 [data-theme="dark"] .modal-divider::after { background: var(--c-border) !important; }
 [data-theme="dark"] .modal-divider span { background: var(--c-surface) !important; color: var(--c-text-muted) !important; }
 
+/* v48.4: 黑底黑字全面修复 — 所有"只改了 background 没改 color"的元素 */
+[data-theme="dark"] .hero-stats .stat {
+  background: rgba(26, 26, 38, 0.85) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .hero-stats .stat b { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .hero-stats .stat span { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .btn-ghost {
+  background: var(--c-elevated) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .btn-ghost:hover { background: var(--c-grass-dark) !important; color: #fff !important; }
+[data-theme="dark"] .section-title {
+  background: var(--c-surface) !important;
+  color: var(--c-grass-light) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .section-sub { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .section-alt { background: rgba(47, 47, 72, 0.45) !important; }
+[data-theme="dark"] .data-label { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .data-num { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .data-num-double > div { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .data-num-double b { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .data-num-double i { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .data-card {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .data-card::before { border-color: var(--c-border) !important; }
+[data-theme="dark"] .gallery-intro { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .gallery-item {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .gallery-item:hover { box-shadow: 8px 8px 0 var(--c-grass) !important; }
+[data-theme="dark"] .gallery-label { color: var(--c-text) !important; }
+[data-theme="dark"] .gallery-num {
+  color: var(--c-text-muted) !important;
+  background: var(--c-surface-2) !important;
+  border-color: var(--c-border) !important;
+}
+[data-theme="dark"] .gal-filter {
+  background: var(--c-surface) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.4) !important;
+}
+[data-theme="dark"] .gal-filter.active {
+  background: var(--c-grass) !important;
+  color: #fff !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .gal-filter-count {
+  background: var(--c-bg-2) !important;
+  color: var(--c-text-muted) !important;
+}
+[data-theme="dark"] .gal-filter.active .gal-filter-count { background: var(--c-elevated) !important; color: var(--c-text) !important; }
+[data-theme="dark"] .notice-card {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .notice-card:hover { box-shadow: 8px 8px 0 var(--c-grass) !important; }
+[data-theme="dark"] .notice-date .d { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .notice-date .m { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .notice-date { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .notice-body h3 { color: var(--c-text) !important; }
+[data-theme="dark"] .notice-body p { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .read-more { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .circuit-intro { color: var(--c-text) !important; }
+[data-theme="dark"] #circuit .circuit-intro strong { color: var(--c-redstone) !important; }
+[data-theme="dark"] #circuit .circuit-intro b { color: var(--c-gold) !important; }
+[data-theme="dark"] .circuit-map {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .circuit-svg-wrap {
+  background: var(--c-surface-2) !important;
+  border-color: var(--c-border) !important;
+}
+[data-theme="dark"] .scene-card {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .scene-card:hover { box-shadow: 8px 8px 0 var(--c-grass) !important; }
+[data-theme="dark"] .pm-time { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .pm-comment-author { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .pm-comment-time { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .pm-comment-text { color: var(--c-text) !important; }
+[data-theme="dark"] .pm-comment-empty { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .pm-author-link { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .pm-comment-form textarea {
+  background: var(--c-input-bg) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-input-border) !important;
+}
+[data-theme="dark"] .pm-comment-del { color: var(--c-text-muted) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .pm-comment-del:hover { color: var(--c-redstone) !important; border-color: var(--c-redstone) !important; }
+[data-theme="dark"] .pane-head { background: var(--c-surface) !important; color: var(--c-text) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .pane-head h2 { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .msg-item {
+  background: var(--c-surface) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-border) !important;
+}
+[data-theme="dark"] .msg-name { color: var(--c-text) !important; }
+[data-theme="dark"] .msg-time { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .msg-content {
+  color: var(--c-text) !important;
+  background: var(--c-surface-2) !important;
+  border-color: var(--c-border) !important;
+}
+[data-theme="dark"] .msg-actions { border-top-color: var(--c-border) !important; }
+[data-theme="dark"] .msg-reply-box,
+[data-theme="dark"] .pm-reply-box {
+  background: var(--c-surface-2) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-border) !important;
+}
+[data-theme="dark"] .msg-reply-box b,
+[data-theme="dark"] .pm-reply-box b { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .msg-reply-box small,
+[data-theme="dark"] .pm-reply-box small { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .nav-emerald { color: var(--c-gold) !important; }
+[data-theme="dark"] .nav-logo small { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .logo-zh { color: var(--c-text) !important; }
+[data-theme="dark"] .logo-en { color: var(--c-grass-light) !important; }
+
 /* v48.1: 暗色模式手动切换按钮 (已移除, 跟随系统) */
 
 /* v48: 用户偏好 (prefers-reduced-motion) — 系统设了"减少动效"则禁用 */
