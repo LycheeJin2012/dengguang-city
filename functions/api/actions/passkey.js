@@ -41,15 +41,19 @@ export async function onRequestPost(context) {
       return ok({ id: r.id, name: r.name });
     }
     if (action === 'passkey-login-start') {
-      // 公开: 根据 username 找 subject
-      // v45 修: passkeyLoginStart 签名是 (env, username, rpId), username 是 string
-      //        老 init.js 错传 (env, subject, rpId, expectedOrigin) 导致 D1_TYPE_ERROR
+      // v47.2 修: 支持 usernameless 模式
+      //   填 username → 精确模式 (只列该用户密钥, 404 如果账号不存在)
+      //   不填 username → 列 RP 下所有密钥, 浏览器弹选择对话框
+      // 之前这里写死 if (!_username) return err(400, 'username 必填'),
+      //   helper 函数 passkeyLoginStart 其实早就支持空 username
+      //   但路由层先卡住, helper 永远收不到空 username
       const b = await request.json().catch(() => ({}));
       const _username = (b.username || '').trim();
-      if (!_username) return err(400, 'username 必填');
-      // 提前检查 subject 是否存在 (404 比 200 + 空 allowCredentials 更友好)
-      const _subj = await resolveSubjectByUsername(env, _username);
-      if (!_subj) return err(404, '账号不存在或已禁用');
+      if (_username) {
+        // 填了 username: 提前检查 subject 是否存在 (404 比 200 + 空 allowCredentials 更友好)
+        const _subj = await resolveSubjectByUsername(env, _username);
+        if (!_subj) return err(404, '账号不存在或已禁用');
+      }
       const r = await passkeyLoginStart(env, _username, rpId);
       return ok({ challenge_token: r.challenge_token, publicKey: r.publicKey });
     }
