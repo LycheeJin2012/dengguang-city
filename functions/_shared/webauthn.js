@@ -347,7 +347,12 @@ export async function passkeyLoginStart(env, username, rpId) {
 }
 
 // 登录完成 (v17.5: 支持 player 和 admin)
-export async function passkeyLoginFinish(env, body, rpId, expectedOrigin) {
+// v47.5 修: 加 target 参数 ('admin' | 'player' | undefined)
+//   target='admin'  → 用该 passkey 登 admin 后台 (即使 passkey 绑在 player 上, 也能登)
+//   target='player' → 用该 passkey 登玩家端 (默认)
+//   undefined        → 跟 v17.5 行为一致: 有 player 创 player session, 有 admin 创 admin session
+// 之前只能二选一, 现在可以根据登录入口分流
+export async function passkeyLoginFinish(env, body, rpId, expectedOrigin, target) {
   const { challenge_token: challengeToken, credential } = body;
   if (!challengeToken || !credential) throw new Error('缺少参数');
   const ch = await env.DB.prepare(
@@ -406,6 +411,23 @@ export async function passkeyLoginFinish(env, body, rpId, expectedOrigin) {
     const _link = await env.DB.prepare("SELECT p.id, p.username, p.status FROM admins a LEFT JOIN players p ON p.id = a.linked_player_id WHERE a.id = ?").bind(_admin.id).first();
     if (_link && _link.id && _link.status === 'active') _player = _link;
   }
+  // v47.5: target 参数决定创建哪类 session
+  // 之前: 有 player 创 player, 有 admin 创 admin (玩家用 passkey 只能登玩家端, 不能登 admin)
+  // 现在:
+  //   target='admin'  → 创建 admin session (passkey 绑在 player 但有 linked_admin 也 OK)
+  //   target='player' → 创建 player session (默认)
+  //   target=undefined → 老行为 (优先 player, 退化 admin)
+  if (target === 'admin') {
+    if (!_admin) throw new Error('该通行密钥未关联管理员账号 (或玩家未绑定管理员)');
+    const { token, expires_at } = await createSession(env, null, _admin.id);
+    return { admin: _admin, token, expires_at, kind: 'admin' };
+  }
+  if (target === 'player') {
+    if (!_player) throw new Error('该通行密钥未关联玩家账号');
+    const { token, expires_at } = await createSession(env, _player.id, null);
+    return { player: _player, token, expires_at, kind: 'player', admin: _admin || null };
+  }
+  // 默认行为 (兼容老调用方)
   if (_player) {
     const { token, expires_at } = await createSession(env, _player.id, null);
     return { player: _player, token, expires_at, kind: 'player', admin: _admin || null };

@@ -165,6 +165,107 @@ window.adminLogout = async function() {
   location.reload();
 };
 
+// ---------- v47.5: 管理员后台通行密钥登录 ----------
+// 玩家先在主页用 Touch ID/Face ID 注册通行密钥, admin 端绑玩家 → 即可用同一密钥登 admin
+// (target='admin' 让 finish 创建 admin session 而不是 player session)
+function bufToB64url(buf) {
+  const b = new Uint8Array(buf);
+  let s = '';
+  for (let i = 0; i < b.length; i++) s += String.fromCharCode(b[i]);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64urlToBuf(s) {
+  s = s.replace(/-/g, '+').replace(/_/g, '/');
+  while (s.length % 4) s += '=';
+  const bin = atob(s);
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out.buffer;
+}
+
+function bindAdminPasskey() {
+  const btn = $('#adminPasskeyBtn');
+  if (!btn) return;
+  if (!window.PublicKeyCredential) {
+    btn.disabled = true;
+    btn.textContent = '⚠ 当前浏览器不支持通行密钥';
+    return;
+  }
+  if (!window.isSecureContext) {
+    btn.disabled = true;
+    btn.textContent = '⚠ 需要 HTTPS';
+    return;
+  }
+  btn.addEventListener('click', async () => {
+    const errEl = $('#loginError');
+    if (errEl) errEl.textContent = '';
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ 准备中...';
+    const showErr = (m) => { if (errEl) { errEl.textContent = '✗ ' + m; setTimeout(() => { if (errEl) errEl.textContent = ''; }, 5000); } };
+    let timer = setTimeout(() => { btn.disabled = false; btn.textContent = orig; showErr('操作超时, 请重试'); }, 30000);
+    try {
+      // 1) start: username 不填 → 浏览器列所有可用密钥
+      const r1 = await fetch('/api/init?action=passkey-login-start', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      const d1 = await r1.json();
+      if (!r1.ok || d1.error) throw new Error(d1.error || 'challenge 失败');
+      if (!d1.publicKey) throw new Error('服务器未返回 challenge');
+      const opts = d1.publicKey;
+      opts.challenge = b64urlToBuf(opts.challenge);
+      if (opts.allowCredentials) {
+        opts.allowCredentials = opts.allowCredentials.map(c => ({ ...c, id: b64urlToBuf(c.id) }));
+      }
+      btn.textContent = '⏳ 请触摸指纹/Face ID...';
+      let cred;
+      try {
+        cred = await navigator.credentials.get({ publicKey: opts, mediation: 'optional' });
+      } catch (we) {
+        if (we.name === 'NotAllowedError') throw new Error('已取消, 请重试');
+        throw we;
+      }
+      if (!cred) throw new Error('未获得凭据');
+      btn.textContent = '⏳ 验证中...';
+      // 2) finish: 传 target='admin' 让后端创建 admin session
+      const r2 = await fetch('/api/init?action=passkey-login-finish', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challenge_token: d1.challenge_token,
+          target: 'admin',
+          credential: {
+            id: cred.id,
+            rawId: bufToB64url(cred.rawId),
+            type: cred.type,
+            response: {
+              clientDataJSON: bufToB64url(cred.response.clientDataJSON),
+              authenticatorData: bufToB64url(cred.response.authenticatorData),
+              signature: bufToB64url(cred.response.signature),
+              userHandle: cred.response.userHandle ? bufToB64url(cred.response.userHandle) : null,
+            },
+          },
+        }),
+      });
+      const d2 = await r2.json();
+      if (!r2.ok || d2.error) throw new Error(d2.error || '验证失败');
+      clearTimeout(timer);
+      // 成功! 后端已通过 Set-Cookie 写 lc_session cookie
+      if (errEl) { errEl.style.color = 'var(--c-emerald)'; errEl.textContent = '✓ 登录成功, 跳转中...'; }
+      setTimeout(() => { location.reload(); }, 500);
+    } catch (e) {
+      clearTimeout(timer);
+      showErr('通行密钥失败: ' + (e.message || String(e)));
+    } finally {
+      clearTimeout(timer);
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
+  });
+}
+
 // ---------- 创建玩家 (super) ----------
 document.addEventListener('click', e => {
   if (e.target.id === 'btnPlayerCreate') {
@@ -181,4 +282,5 @@ document.addEventListener('click', e => {
 
 // ---------- 初始化 ----------
 bindFilterRadios();
+bindAdminPasskey();
 boot();

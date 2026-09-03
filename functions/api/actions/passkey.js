@@ -64,8 +64,12 @@ export async function onRequestPost(context) {
       //        (但 _subj.id / _pk 检查跟 shared.js 内部查的重复)
       // v46 修: 改用 expectedOriginLogin (type: 'webauthn.get'), 之前用 expectedOrigin
       //        (type: 'webauthn.create') 导致 clientData.type 检查永远不通过
+      // v47.5: 读 body.target ('admin' | 'player' | undefined) 传给 finish
+      //   admin 端用 passkey 登录时传 'admin' → 创建 admin session (即使 passkey 绑在 player 上)
+      //   玩家端用 passkey 登录时传 'player' 或不传 → 创建 player session
       const b = await request.json();
-      const r = await passkeyLoginFinish(env, b, rpId, expectedOriginLogin);
+      const _target = (b.target === 'admin' || b.target === 'player') ? b.target : undefined;
+      const r = await passkeyLoginFinish(env, b, rpId, expectedOriginLogin, _target);
       if (r && r.token) {
         // r.kind = 'player' | 'admin', r.{player|admin} 都有
         const cookie = `lc_session=${r.token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${8 * 3600}`;

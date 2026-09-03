@@ -214,11 +214,14 @@ function bindPasskeyLogin() {
       }
       if (!cred) throw new Error('未获得凭据 (设备无注册密钥?)');
       btn.textContent = '⏳ 验证中...';
+      // v47.5: 玩家端默认 target='player' (不传也行, 后端默认就是 player)
+      //   admin 端用 admin.js 自己的 handler 传 'admin'
       const r2 = await fetch('/api/init?action=passkey-login-finish', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           challenge_token: d1.challenge_token,
+          target: 'player',
           credential: {
             id: cred.id,
             rawId: bufToB64url(cred.rawId),

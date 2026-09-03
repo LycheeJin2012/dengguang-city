@@ -93,7 +93,13 @@
             </label>
             <div class="login-error" id="loginError"></div>
             <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">▶ 登录</button>
-            <div class="login-hint" id="loginHint"></div>
+            <div class="login-divider"><span>或</span></div>
+            <button type="button" id="adminPasskeyBtn" class="btn btn-ghost btn-block" title="用通行密钥登录 (需玩家账号已绑管理员)">
+              🔑 用通行密钥登录
+            </button>
+            <p class="login-hint" id="loginHint" style="font-size:12px;color:var(--c-stone-dark);margin-top:8px">
+              提示: 玩家账号先在主页用 Touch ID/Face ID 注册通行密钥, 然后绑定到管理员账号 (admin 端有"玩家管理" → "🔗 绑管理员" 按钮), 即可一键登 admin
+            </p>
           </form>
         </div>
         <a href="index.html" class="login-back-home">← 返回市民首页</a>
