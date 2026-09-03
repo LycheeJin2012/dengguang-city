@@ -710,6 +710,37 @@
   border-color: var(--c-input-border) !important;
 }
 [data-theme="dark"] .book-sub { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .pmm-head { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .pmm-head-row { color: var(--c-text) !important; }
+[data-theme="dark"] .pmm-time { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .pmm-type-tag { color: var(--c-text) !important; background: var(--c-surface-2) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .login-admin-hint { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .login-admin-hint b { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .ann-content-preview { color: var(--c-text) !important; }
+[data-theme="dark"] .ann-view-meta { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .bb-text b { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .bb-text small { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .dm-msg.from-me .dm-msg-bubble {
+  background: var(--c-grass-dark) !important;
+  color: #fff !important;
+  border-color: var(--c-border) !important;
+}
+[data-theme="dark"] .dm-chat-form textarea {
+  background: var(--c-input-bg) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-input-border) !important;
+}
+[data-theme="dark"] label > span.label-text { color: var(--c-text) !important; }
+[data-theme="dark"] label > span.hint { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .tag { color: var(--c-text) !important; }
+[data-theme="dark"] .tag-success { color: #fff !important; }
+[data-theme="dark"] .tag-warn { color: var(--c-dark) !important; }
+[data-theme="dark"] .tag-super { color: #fff !important; }
+[data-theme="dark"] .tag-info { color: #fff !important; }
+[data-theme="dark"] .tag-danger { color: #fff !important; }
+[data-theme="dark"] .modal-tiny,
+[data-theme="dark"] .modal-subtitle { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .msg-replied-tag-human { background: #1a2a3a !important; color: #9cf !important; border-color: #6cf !important; }
 [data-theme="dark"] .pane-head { background: var(--c-surface) !important; color: var(--c-text) !important; border-color: var(--c-border) !important; }
 [data-theme="dark"] .pane-head h2 { color: var(--c-grass-light) !important; }
 [data-theme="dark"] .msg-item {
