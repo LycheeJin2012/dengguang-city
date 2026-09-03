@@ -753,6 +753,45 @@
   .v48-anim-pulse, .v48-anim-shimmer, .v48-anim-spin { animation: none !important; }
 }
 
+/* v48.5: 浮动主题切换按钮 (右下角, 不在 navbar 里) */
+#themeToggleBtn {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  z-index: 9000;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  letter-spacing: 1px;
+  background: var(--c-elevated);
+  color: var(--c-text);
+  border: 3px solid var(--c-border);
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  user-select: none;
+  transition: transform var(--dur-fast) var(--ease-spring),
+              box-shadow var(--dur-fast) var(--ease-out),
+              background var(--dur-fast) var(--ease-out);
+  /* 防止被 hero/section 的高 z-index 遮 */
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+#themeToggleBtn:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.45); }
+#themeToggleBtn:active { transform: translate(1px, 1px); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.45); }
+#themeToggleBtn .ttb-icon { font-size: 14px; line-height: 1; }
+#themeToggleBtn .ttb-label { font-family: var(--font-cn); font-size: 12px; }
+#themeToggleBtn[data-mode="dark"] { background: var(--c-grass-dark); color: #fff; border-color: var(--c-border); }
+#themeToggleBtn[data-mode="light"] { background: var(--c-gold); color: var(--c-dark); border-color: var(--c-border); }
+#themeToggleBtn[data-mode="url"] { background: var(--c-water-dark); color: #fff; border-color: var(--c-border); }
+@media (max-width: 480px) {
+  #themeToggleBtn { right: 12px; bottom: 12px; padding: 8px 10px; }
+  #themeToggleBtn .ttb-label { display: none; }
+  #themeToggleBtn .ttb-icon { font-size: 16px; }
+}
+
 /* ============================================
    组件层 (Component Layer · 共享一套)
    全站统一样式入口。所有页面（包括 admin/hotel/profile/dm）
