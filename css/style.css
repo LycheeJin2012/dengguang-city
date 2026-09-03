@@ -73,6 +73,294 @@
   --lh-tight: 1.3;
   --lh-base:  1.55;
   --lh-loose: 1.75;
+
+  /* ---------- v48: 语义层 + 暗色模式 (semantic tokens) ---------- */
+  /* 表面层级: page=页面底色, surface=卡片/面板, elevated=弹层 */
+  --c-page: var(--c-bg);
+  --c-surface: var(--c-paper);
+  --c-surface-2: var(--c-bg-2);
+  --c-elevated: #ffffff;
+  --c-text: var(--c-dark);
+  --c-text-muted: var(--c-stone-dark);
+  --c-text-faint: var(--c-stone);
+  --c-border: var(--c-black);
+  --c-shadow: var(--c-black);
+  --c-link: var(--c-water);
+  --c-link-hover: var(--c-water-dark);
+  --c-success: var(--c-emerald);
+  --c-danger: var(--c-redstone);
+  --c-warning: var(--c-gold);
+  --c-info: var(--c-water);
+  --c-input-bg: #ffffff;
+  --c-input-border: var(--c-stone);
+  --c-focus-ring: var(--c-gold);
+  --c-overlay: rgba(0, 0, 0, 0.65);
+}
+
+/* v48: 暗色模式 — 手动切换 (data-theme="dark" 在 <html> 或 <body>) */
+[data-theme="dark"] {
+  --c-page: #1a1a26;          /* 深色蓝灰背景 */
+  --c-surface: #25253a;       /* 卡片背景 */
+  --c-surface-2: #2f2f48;     /* 二级表面 */
+  --c-elevated: #353550;      /* 弹层 */
+  --c-text: #e8e8f0;          /* 主文字: 亮色 */
+  --c-text-muted: #b0b0c0;     /* 次文字 */
+  --c-text-faint: #707088;     /* 淡文字 */
+  --c-border: #4a4a6a;         /* 边框: 偏暗 */
+  --c-shadow: #000018;         /* 阴影: 更深 */
+  --c-link: #6cb1ff;           /* 链接: 亮蓝 */
+  --c-link-hover: #a3d2ff;
+  --c-success: #5ddc8a;
+  --c-danger: #ff5a5a;
+  --c-warning: #ffc940;
+  --c-info: #6cb1ff;
+  --c-input-bg: #1f1f30;
+  --c-input-border: #4a4a6a;
+  --c-focus-ring: #ffc940;
+  --c-overlay: rgba(0, 0, 0, 0.78);
+  /* 主题色保持原色调, 暗色下加亮 */
+  --c-grass: #7cb02c;
+  --c-grass-light: #95d440;
+  --c-grass-dark: #5d7c15;
+  --c-gold: #ffc940;
+  --c-water: #6cb1ff;
+  --c-water-dark: #3a7ad9;
+  --c-redstone: #ff5a5a;
+  --c-emerald: #5ddc8a;
+  /* 阴影改用 rgba, 暗色背景下硬黑阴影看不见 */
+  --shadow-card:  4px 4px 0 rgba(0, 0, 0, 0.5);
+  --shadow-card-lg: 6px 6px 0 rgba(0, 0, 0, 0.5);
+  --shadow-soft: 2px 2px 0 rgba(0, 0, 0, 0.3);
+  /* 暗色下的纸张色翻转 */
+  --c-paper: #25253a;
+  --c-bg: #1a1a26;
+  --c-bg-2: #2f2f48;
+  /* sky-bg 里的云 / sun 颜色保持, 太阳要醒目 */
+  color-scheme: dark;  /* 提示浏览器用暗色滚动条/表单 */
+}
+
+/* v48: 暗色模式 — 系统自动检测 (无手动选择时) */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --c-page: #1a1a26;
+    --c-surface: #25253a;
+    --c-surface-2: #2f2f48;
+    --c-elevated: #353550;
+    --c-text: #e8e8f0;
+    --c-text-muted: #b0b0c0;
+    --c-text-faint: #707088;
+    --c-border: #4a4a6a;
+    --c-shadow: #000018;
+    --c-link: #6cb1ff;
+    --c-link-hover: #a3d2ff;
+    --c-success: #5ddc8a;
+    --c-danger: #ff5a5a;
+    --c-warning: #ffc940;
+    --c-info: #6cb1ff;
+    --c-input-bg: #1f1f30;
+    --c-input-border: #4a4a6a;
+    --c-focus-ring: #ffc940;
+    --c-overlay: rgba(0, 0, 0, 0.78);
+    --c-grass: #7cb02c;
+    --c-grass-light: #95d440;
+    --c-grass-dark: #5d7c15;
+    --c-gold: #ffc940;
+    --c-water: #6cb1ff;
+    --c-water-dark: #3a7ad9;
+    --c-redstone: #ff5a5a;
+    --c-emerald: #5ddc8a;
+    --shadow-card:  4px 4px 0 rgba(0, 0, 0, 0.5);
+    --shadow-card-lg: 6px 6px 0 rgba(0, 0, 0, 0.5);
+    --shadow-soft: 2px 2px 0 rgba(0, 0, 0, 0.3);
+    --c-paper: #25253a;
+    --c-bg: #1a1a26;
+    --c-bg-2: #2f2f48;
+    color-scheme: dark;
+  }
+}
+
+/* v48: 动效系统 — keyframes 库 */
+@keyframes v48-fade-in-up {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes v48-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes v48-pop-in {
+  0%   { opacity: 0; transform: scale(0.92) translateY(8px); }
+  60%  { opacity: 1; transform: scale(1.02) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes v48-slide-in-right {
+  from { opacity: 0; transform: translateX(40px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes v48-slide-out-right {
+  from { opacity: 1; transform: translateX(0); }
+  to   { opacity: 0; transform: translateX(40px); }
+}
+@keyframes v48-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-6px); }
+  40%, 80% { transform: translateX(6px); }
+}
+@keyframes v48-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.7; transform: scale(1.05); }
+}
+@keyframes v48-bounce-in {
+  0%   { opacity: 0; transform: scale(0.3); }
+  50%  { opacity: 1; transform: scale(1.08); }
+  70%  { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+@keyframes v48-shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+@keyframes v48-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+@keyframes v48-confetti {
+  0%   { opacity: 0; transform: translateY(0) rotate(0deg); }
+  100% { opacity: 1; transform: translateY(-20px) rotate(360deg); }
+}
+
+/* v48: 通用工具类 */
+.v48-anim-fade-up   { animation: v48-fade-in-up 0.5s var(--ease-out) both; }
+.v48-anim-fade       { animation: v48-fade-in 0.4s var(--ease-out) both; }
+.v48-anim-pop       { animation: v48-pop-in 0.4s var(--ease-spring) both; }
+.v48-anim-slide-r   { animation: v48-slide-in-right 0.4s var(--ease-out) both; }
+.v48-anim-bounce    { animation: v48-bounce-in 0.5s var(--ease-spring) both; }
+.v48-anim-shake     { animation: v48-shake 0.5s var(--ease-out) both; }
+.v48-anim-pulse     { animation: v48-pulse 1.6s var(--ease-out) infinite; }
+.v48-anim-shimmer   {
+  background: linear-gradient(90deg, var(--c-bg-2) 25%, var(--c-surface) 50%, var(--c-bg-2) 75%);
+  background-size: 200% 100%;
+  animation: v48-shimmer 1.4s linear infinite;
+}
+.v48-anim-spin      { animation: v48-spin 1s linear infinite; display: inline-block; }
+
+/* v48: stagger 工具 — 父元素加 .v48-stagger, 子元素按 nth-child 自动 delay */
+.v48-stagger > *      { animation: v48-fade-in-up 0.5s var(--ease-out) both; }
+.v48-stagger > *:nth-child(1)  { animation-delay: 0.04s; }
+.v48-stagger > *:nth-child(2)  { animation-delay: 0.08s; }
+.v48-stagger > *:nth-child(3)  { animation-delay: 0.12s; }
+.v48-stagger > *:nth-child(4)  { animation-delay: 0.16s; }
+.v48-stagger > *:nth-child(5)  { animation-delay: 0.20s; }
+.v48-stagger > *:nth-child(6)  { animation-delay: 0.24s; }
+.v48-stagger > *:nth-child(7)  { animation-delay: 0.28s; }
+.v48-stagger > *:nth-child(8)  { animation-delay: 0.32s; }
+.v48-stagger > *:nth-child(9)  { animation-delay: 0.36s; }
+.v48-stagger > *:nth-child(n+10) { animation-delay: 0.4s; }
+
+/* v48: 通用 hover 抬升 (卡片/可点击元素) */
+.v48-hover-lift {
+  transition: transform var(--dur-base) var(--ease-out),
+              box-shadow var(--dur-base) var(--ease-out);
+  will-change: transform;
+}
+.v48-hover-lift:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0 var(--c-shadow);
+}
+.v48-hover-lift:active {
+  transform: translate(1px, 1px);
+  box-shadow: 2px 2px 0 var(--c-shadow);
+}
+
+/* v48: 通用按钮 hover 抬升 */
+.v48-btn-lift {
+  transition: transform var(--dur-fast) var(--ease-out),
+              box-shadow var(--dur-fast) var(--ease-out),
+              background-color var(--dur-fast) var(--ease-out);
+  will-change: transform;
+}
+.v48-btn-lift:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+.v48-btn-lift:active:not(:disabled) {
+  transform: translateY(0);
+  filter: brightness(0.95);
+}
+
+/* v48: 全站 dark-mode 适配 - 基础元素 */
+[data-theme="dark"] body,
+[data-theme="dark"] .sky-bg,
+[data-theme="dark"] .login-card,
+[data-theme="dark"] .pane-card,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .empty-state-error,
+[data-theme="dark"] .msg-item,
+[data-theme="dark"] .room-card,
+[data-theme="dark"] .signin-modal,
+[data-theme="dark"] .modal-card {
+  background: var(--c-surface) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-border) !important;
+}
+[data-theme="dark"] .navbar,
+[data-theme="dark"] .admin-header,
+[data-theme="dark"] .admin-body,
+[data-theme="dark"] .page-back-row,
+[data-theme="dark"] .boot-loading {
+  background: var(--c-page) !important;
+  color: var(--c-text) !important;
+}
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background: var(--c-input-bg) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-input-border) !important;
+}
+[data-theme="dark"] .empty-state p,
+[data-theme="dark"] .empty-state .empty-sub { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .ticket-item { background: var(--c-surface) !important; color: var(--c-text) !important; }
+[data-theme="dark"] .ticket-item .ticket-body { background: var(--c-surface-2) !important; }
+
+/* v48: 暗色模式切换按钮 */
+.v48-theme-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--c-surface);
+  border: 3px solid var(--c-border);
+  box-shadow: 3px 3px 0 var(--c-shadow);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: pointer;
+  z-index: 9999;
+  transition: transform var(--dur-fast) var(--ease-spring),
+              box-shadow var(--dur-fast) var(--ease-out);
+}
+.v48-theme-toggle:hover {
+  transform: translateY(-2px) rotate(15deg);
+  box-shadow: 5px 5px 0 var(--c-shadow);
+}
+.v48-theme-toggle:active {
+  transform: translateY(0);
+}
+
+/* v48: 用户偏好 (prefers-reduced-motion) — 系统设了"减少动效"则禁用 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .v48-anim-pulse, .v48-anim-shimmer, .v48-anim-spin { animation: none !important; }
 }
 
 /* ============================================
