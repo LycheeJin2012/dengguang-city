@@ -816,6 +816,32 @@ body.admin-body {
 }
 .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
 
+/* v47.9: 通用 modal 提示消息 (错误/成功) + 分隔线 */
+.modal-msg { font-size: 13px; line-height: 1.4; padding: 4px 0; font-family: var(--font-cn); }
+.modal-divider {
+  text-align: center;
+  margin: 8px 0 12px;
+  color: var(--c-stone-dark);
+  font-size: 12px;
+  position: relative;
+}
+.modal-divider::before, .modal-divider::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 38%;
+  height: 1px;
+  background: var(--c-stone);
+}
+.modal-divider::before { left: 0; }
+.modal-divider::after { right: 0; }
+.modal-divider span {
+  background: var(--c-paper);
+  padding: 0 10px;
+  position: relative;
+  z-index: 1;
+}
+
 /* ============================================
    响应式 (v17.6 全面适配)
    ============================================ */

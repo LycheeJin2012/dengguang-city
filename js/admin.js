@@ -79,35 +79,78 @@ async function doLogin() {
 window.adminDoLogin = doLogin;
 
 // ---------- 二级密码弹窗 (玩家 session 升级 combined) ----------
+// v47.7: 弹窗里加 "或" + "用通行密钥登录" 按钮, 玩家可绕过密码直接用 passkey 登 admin
+// v47.9: 重写 UI 用统一的 .modal-mask/.modal/.modal-head/.modal-body 样式 (跟 admin 其他 modal 一致)
+//         移除内联 style, 加关闭按钮 (×) + ESC 键 + 点背景关闭 + Enter 键提交
 function showAdminEnterModal(player, adminId) {
   let bd = document.getElementById('adminEnterBackdrop');
   if (bd) bd.remove();
   bd = document.createElement('div');
   bd.id = 'adminEnterBackdrop';
-  bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  bd.className = 'modal-mask';
   bd.innerHTML = `
-    <div style="background:#fff;border:3px solid #000;box-shadow:6px 6px 0 #000;padding:24px;max-width:440px;width:100%">
-      <h3 style="margin:0 0 6px">🛡️ 进入管理后台</h3>
-      <p style="font-size:13px;color:#888;margin:0 0 14px">玩家 <b>@${player.username}</b> 已绑管理员 #${adminId}, 输入管理员密码验证身份。</p>
-      <input id="aePw" type="password" placeholder="管理员密码" style="width:100%;padding:8px 10px;border:1px solid #888;font-size:14px">
-      <div id="aeMsg" style="font-size:12px;margin-top:6px;min-height:16px;color:#c33"></div>
-      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-        <button id="aeCancel" style="background:#888;color:#fff;border:none;padding:8px 16px;cursor:pointer">取消</button>
-        <button id="aeSave" style="background:#6cf;color:#000;border:none;padding:8px 16px;cursor:pointer;font-weight:bold">验证进入</button>
+    <div class="modal" style="max-width:440px">
+      <div class="modal-head">
+        <h3>🛡️ 进入管理后台</h3>
+        <button class="modal-close" id="aeClose" aria-label="关闭">✕</button>
       </div>
-      <div style="text-align:center;margin:16px 0 8px;color:#888;font-size:12px">— 或 —</div>
-      <button id="aePasskeyBtn" style="width:100%;background:#fff;color:#000;border:2px solid #000;padding:10px 16px;cursor:pointer;font-weight:bold">🔑 用通行密钥登录 (Touch ID / Face ID)</button>
-      <div id="aePkMsg" style="font-size:11px;margin-top:6px;min-height:14px;color:#c33"></div>
+      <div class="modal-body">
+        <p style="margin:0 0 16px;font-size:13px;color:var(--c-stone-dark);line-height:1.5">
+          玩家 <b style="color:var(--c-dark)">@${player.username}</b> 已绑管理员 <b style="color:var(--c-water)">#${adminId}</b>。
+          <br>选择以下任一方式验证身份进入后台:
+        </p>
+        <div class="modal-form" style="margin-bottom:6px">
+          <label>
+            <span>🔑 管理员密码</span>
+            <input type="password" id="aePw" placeholder="输入管理员密码" autocomplete="current-password" />
+          </label>
+        </div>
+        <div id="aeMsg" class="modal-msg" style="min-height:18px"></div>
+        <div class="modal-actions" style="margin-bottom:18px">
+          <button class="btn btn-ghost" id="aeCancel">取消</button>
+          <button class="btn btn-primary" id="aeSave">▶ 验证进入</button>
+        </div>
+        <div class="modal-divider"><span>或</span></div>
+        <button class="btn btn-ghost btn-block" id="aePasskeyBtn" style="border:2px solid var(--c-black);background:#fff">
+          🔑 用通行密钥登录 (Touch ID / Face ID)
+        </button>
+        <div id="aePkMsg" class="modal-msg" style="min-height:18px"></div>
+        <p style="margin:14px 0 0;font-size:11px;color:var(--c-stone);line-height:1.4">
+          💡 通行密钥登录需在主页先注册一次 (Touch ID/Face ID), 然后 admin 绑玩家 → 一键登 admin
+        </p>
+      </div>
     </div>`;
   document.body.appendChild(bd);
   const close = () => bd.remove();
+  bd.querySelector('#aeClose').onclick = close;
   bd.querySelector('#aeCancel').onclick = close;
+  // 点背景关闭
+  bd.addEventListener('click', e => { if (e.target === bd) close(); });
+  // ESC 关闭
+  const onKey = e => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', onKey); } };
+  document.addEventListener('keydown', onKey);
   setTimeout(() => bd.querySelector('#aePw').focus(), 50);
+  // Enter 提交
+  bd.querySelector('#aePw').addEventListener('keydown', e => {
+    if (e.key === 'Enter') bd.querySelector('#aeSave').click();
+  });
   bd.querySelector('#aeSave').onclick = async () => {
+    const btn = bd.querySelector('#aeSave');
+    const msg = bd.querySelector('#aeMsg');
+    const orig = btn.textContent;
+    btn.disabled = true; btn.textContent = '⏳ 验证中...';
     try {
       await POST('/api/init?action=admin-enter-password', { admin_password: bd.querySelector('#aePw').value });
-      location.reload();
-    } catch (e) { bd.querySelector('#aeMsg').textContent = '密码错误'; }
+      msg.style.color = 'var(--c-emerald)';
+      msg.textContent = '✓ 验证成功, 跳转中...';
+      setTimeout(() => { location.reload(); }, 500);
+    } catch (e) {
+      msg.style.color = 'var(--c-redstone)';
+      msg.textContent = '✗ ' + (e.message || '密码错误');
+      btn.disabled = false; btn.textContent = orig;
+      bd.querySelector('#aePw')?.focus();
+      bd.querySelector('#aePw')?.select();
+    }
   };
   // v47.7: 弹窗里直接用 passkey 登 admin (target='admin'), 玩家可绕过密码
   bd.querySelector('#aePasskeyBtn').onclick = async () => {
@@ -116,7 +159,7 @@ function showAdminEnterModal(player, adminId) {
     const orig = btn.textContent;
     btn.disabled = true;
     btn.textContent = '⏳ 准备中...';
-    let timer = setTimeout(() => { btn.disabled = false; btn.textContent = orig; msg.textContent = '✗ 操作超时'; }, 30000);
+    let timer = setTimeout(() => { btn.disabled = false; btn.textContent = orig; msg.style.color = 'var(--c-redstone)'; msg.textContent = '✗ 操作超时, 请重试'; }, 30000);
     try {
       const r1 = await fetch('/api/init?action=passkey-login-start', {
         method: 'POST', credentials: 'include',
@@ -163,11 +206,12 @@ function showAdminEnterModal(player, adminId) {
       const d2 = await r2.json();
       if (!r2.ok || d2.error) throw new Error(d2.error || '验证失败');
       clearTimeout(timer);
-      msg.style.color = '#5d7c15';
+      msg.style.color = 'var(--c-emerald)';
       msg.textContent = '✓ 验证成功, 跳转中...';
       setTimeout(() => { location.reload(); }, 500);
     } catch (e) {
       clearTimeout(timer);
+      msg.style.color = 'var(--c-redstone)';
       msg.textContent = '✗ ' + (e.message || String(e));
     } finally {
       clearTimeout(timer);
