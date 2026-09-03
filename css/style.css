@@ -308,13 +308,18 @@
 [data-theme="dark"] .admin-header,
 [data-theme="dark"] .admin-body,
 [data-theme="dark"] .page-back-row,
-[data-theme="dark"] .boot-loading {
+[data-theme="dark"] .boot-loading,
+[data-theme="dark"] .page-body,
+[data-theme="dark"] body {
   background: var(--c-page) !important;
   color: var(--c-text) !important;
 }
 [data-theme="dark"] input,
 [data-theme="dark"] textarea,
-[data-theme="dark"] select {
+[data-theme="dark"] select,
+[data-theme="dark"] .modal-form input,
+[data-theme="dark"] .modal-form select,
+[data-theme="dark"] .modal-form textarea {
   background: var(--c-input-bg) !important;
   color: var(--c-text) !important;
   border-color: var(--c-input-border) !important;
@@ -323,6 +328,104 @@
 [data-theme="dark"] .empty-state .empty-sub { color: var(--c-text-muted) !important; }
 [data-theme="dark"] .ticket-item { background: var(--c-surface) !important; color: var(--c-text) !important; }
 [data-theme="dark"] .ticket-item .ticket-body { background: var(--c-surface-2) !important; }
+
+/* v48.2: 全面暗色适配 (navbar / hero / section / card / form 全部 surface 化) */
+[data-theme="dark"] .section,
+[data-theme="dark"] .pane,
+[data-theme="dark"] .pane-card,
+[data-theme="dark"] .container {
+  background: var(--c-page) !important;
+  color: var(--c-text) !important;
+}
+[data-theme="dark"] .hero,
+[data-theme="dark"] .hero-text,
+[data-theme="dark"] .hero-tag {
+  background: transparent !important;
+  color: var(--c-text) !important;
+}
+[data-theme="dark"] .hero-title,
+[data-theme="dark"] .title-line,
+[data-theme="dark"] .title-main,
+[data-theme="dark"] .title-sub { color: var(--c-text) !important; text-shadow: 0 2px 4px rgba(0,0,0,.6); }
+[data-theme="dark"] .hero-desc { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .stat,
+[data-theme="dark"] .notice-card,
+[data-theme="dark"] .scenery-card,
+[data-theme="dark"] .gallery-item,
+[data-theme="dark"] .room-card,
+[data-theme="dark"] .service-card,
+[data-theme="dark"] .signin-modal,
+[data-theme="dark"] .signin-week,
+[data-theme="dark"] .signin-day,
+[data-theme="dark"] .signin-stat,
+[data-theme="dark"] .sky-bg-overlay,
+[data-theme="dark"] .modal,
+[data-theme="dark"] .login-card,
+[data-theme="dark"] .modal-card,
+[data-theme="dark"] .empty-state,
+[data-theme="dark"] .empty-state-error,
+[data-theme="dark"] .empty-state-title,
+[data-theme="dark"] .login-back-home,
+[data-theme="dark"] .pane-tools select,
+[data-theme="dark"] .msg-filter select,
+[data-theme="dark"] .ticket-categories span,
+[data-theme="dark"] .tag,
+[data-theme="dark"] .admin-tabs,
+[data-theme="dark"] .admin-tabs .tab,
+[data-theme="dark"] .tab-pane {
+  background: var(--c-surface) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-border) !important;
+}
+[data-theme="dark"] .tag-info,
+[data-theme="dark"] .tag-success,
+[data-theme="dark"] .tag-warn,
+[data-theme="dark"] .tag-danger { color: var(--c-text) !important; }
+[data-theme="dark"] .admin-tabs .tab.active {
+  background: var(--c-grass) !important;
+  color: #fff !important;
+}
+[data-theme="dark"] .sky-bg-overlay { background: linear-gradient(180deg, rgba(26,26,38,0) 0%, rgba(26,26,38,.65) 100%); }
+[data-theme="dark"] .top-strip { background: var(--c-redstone) !important; color: #fff !important; }
+[data-theme="dark"] .navbar,
+[data-theme="dark"] .admin-header {
+  background: var(--c-elevated) !important;
+  color: var(--c-text) !important;
+  border-bottom: 2px solid var(--c-border) !important;
+}
+[data-theme="dark"] .nav-logo b,
+[data-theme="dark"] .logo-text { color: var(--c-text) !important; }
+[data-theme="dark"] .nav-emerald,
+[data-theme="dark"] .nav-signin-link,
+[data-theme="dark"] .nav-admin-link,
+[data-theme="dark"] .nav-dm-link,
+[data-theme="dark"] .nav-ann-link,
+[data-theme="dark"] .nav-profile-link,
+[data-theme="dark"] .nav-login-link,
+[data-theme="dark"] .nav-logout-link { color: var(--c-text) !important; }
+[data-theme="dark"] .nav-links a { color: var(--c-text) !important; }
+[data-theme="dark"] .nav-links a:hover,
+[data-theme="dark"] .nav-links a.active { color: var(--c-gold) !important; background: var(--c-surface-2) !important; }
+[data-theme="dark"] .page-back-row { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .page-back-row a { color: var(--c-text) !important; }
+[data-theme="dark"] .empty-state { background: var(--c-surface) !important; color: var(--c-text) !important; }
+[data-theme="dark"] .signin-stat { background: var(--c-surface-2) !important; }
+[data-theme="dark"] .signin-day { background: var(--c-surface-2) !important; }
+[data-theme="dark"] .signin-day.signed { background: var(--c-grass-dark) !important; color: #fff !important; }
+[data-theme="dark"] .signin-day.today { border-color: var(--c-gold) !important; }
+[data-theme="dark"] .sky-bg-img { opacity: 0.55; }
+[data-theme="dark"] .login-brand { background: var(--c-surface-2) !important; }
+[data-theme="dark"] .login-form-wrap { background: var(--c-page) !important; }
+[data-theme="dark"] .admin-tabs .tab { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .admin-tabs .tab.active { color: #fff !important; }
+[data-theme="dark"] .pane-head h2 { color: var(--c-text) !important; }
+[data-theme="dark"] .pane-hint { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .modal-head { background: var(--c-grass) !important; color: #fff !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .modal-msg { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .modal-divider { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .modal-divider::before,
+[data-theme="dark"] .modal-divider::after { background: var(--c-border) !important; }
+[data-theme="dark"] .modal-divider span { background: var(--c-surface) !important; color: var(--c-text-muted) !important; }
 
 /* v48.1: 暗色模式手动切换按钮 (已移除, 跟随系统) */
 
