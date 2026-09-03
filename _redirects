@@ -1,8 +1,8 @@
-# v45 清理: 删 v28-v35 累积的 admin.html 跳规则, 只保留 v37 跳
-# (老跳规则早已 1+ 年没人访问, 删了 16 行)
-/admin          /admin-v37.html?v=v44-rewrite  302
-/admin.html     /admin-v37.html?v=v44-rewrite  302
-/admin-v36      /admin-v37.html?v=v44-rewrite  302
-/admin-v36.html /admin-v37.html?v=v44-rewrite  302
-/admin-v37      /admin-v37.html?v=v44-rewrite  302
-/admin-v37.html /admin-v37.html?v=v44-rewrite  302
+# v47.3 修: 删 4 条自循环 / 死规则
+# 之前 v45 清理后还留着 /admin-v36, /admin-v36.html, /admin-v37, /admin-v37.html 这 4 条
+# 其中 /admin-v37.html → /admin-v37.html?v=v44-rewrite 是死循环 (CF Pages 路径匹配忽略 query string)
+# → 用户点旧链接 /admin-v37.html 会被无限 302, Safari 报"发生太多的重定向"
+# 这 4 条都删: CF Pages 默认静态服务对应文件, 不用重定向
+# 只留 /admin 和 /admin.html 两条兼容旧链接, cache-bust 升级到 v46
+/admin      /admin-v37.html?v=v46-fix-modules  302
+/admin.html /admin-v37.html?v=v46-fix-modules  302
