@@ -324,33 +324,7 @@
 [data-theme="dark"] .ticket-item { background: var(--c-surface) !important; color: var(--c-text) !important; }
 [data-theme="dark"] .ticket-item .ticket-body { background: var(--c-surface-2) !important; }
 
-/* v48: 暗色模式切换按钮 */
-.v48-theme-toggle {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  width: 44px;
-  height: 44px;
-  border-radius: 50%;
-  background: var(--c-surface);
-  border: 3px solid var(--c-border);
-  box-shadow: 3px 3px 0 var(--c-shadow);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  cursor: pointer;
-  z-index: 9999;
-  transition: transform var(--dur-fast) var(--ease-spring),
-              box-shadow var(--dur-fast) var(--ease-out);
-}
-.v48-theme-toggle:hover {
-  transform: translateY(-2px) rotate(15deg);
-  box-shadow: 5px 5px 0 var(--c-shadow);
-}
-.v48-theme-toggle:active {
-  transform: translateY(0);
-}
+/* v48.1: 暗色模式手动切换按钮 (已移除, 跟随系统) */
 
 /* v48: 用户偏好 (prefers-reduced-motion) — 系统设了"减少动效"则禁用 */
 @media (prefers-reduced-motion: reduce) {
