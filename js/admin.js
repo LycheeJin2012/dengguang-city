@@ -95,6 +95,9 @@ function showAdminEnterModal(player, adminId) {
         <button id="aeCancel" style="background:#888;color:#fff;border:none;padding:8px 16px;cursor:pointer">取消</button>
         <button id="aeSave" style="background:#6cf;color:#000;border:none;padding:8px 16px;cursor:pointer;font-weight:bold">验证进入</button>
       </div>
+      <div style="text-align:center;margin:16px 0 8px;color:#888;font-size:12px">— 或 —</div>
+      <button id="aePasskeyBtn" style="width:100%;background:#fff;color:#000;border:2px solid #000;padding:10px 16px;cursor:pointer;font-weight:bold">🔑 用通行密钥登录 (Touch ID / Face ID)</button>
+      <div id="aePkMsg" style="font-size:11px;margin-top:6px;min-height:14px;color:#c33"></div>
     </div>`;
   document.body.appendChild(bd);
   const close = () => bd.remove();
@@ -105,6 +108,72 @@ function showAdminEnterModal(player, adminId) {
       await POST('/api/init?action=admin-enter-password', { admin_password: bd.querySelector('#aePw').value });
       location.reload();
     } catch (e) { bd.querySelector('#aeMsg').textContent = '密码错误'; }
+  };
+  // v47.7: 弹窗里直接用 passkey 登 admin (target='admin'), 玩家可绕过密码
+  bd.querySelector('#aePasskeyBtn').onclick = async () => {
+    const btn = bd.querySelector('#aePasskeyBtn');
+    const msg = bd.querySelector('#aePkMsg');
+    const orig = btn.textContent;
+    btn.disabled = true;
+    btn.textContent = '⏳ 准备中...';
+    let timer = setTimeout(() => { btn.disabled = false; btn.textContent = orig; msg.textContent = '✗ 操作超时'; }, 30000);
+    try {
+      const r1 = await fetch('/api/init?action=passkey-login-start', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({})
+      });
+      const d1 = await r1.json();
+      if (!r1.ok || d1.error) throw new Error(d1.error || 'challenge 失败');
+      if (!d1.publicKey) throw new Error('服务器未返回 challenge');
+      const opts = d1.publicKey;
+      opts.challenge = b64urlToBuf(opts.challenge);
+      if (opts.allowCredentials) {
+        opts.allowCredentials = opts.allowCredentials.map(c => ({ ...c, id: b64urlToBuf(c.id) }));
+      }
+      btn.textContent = '⏳ 请触摸指纹/Face ID...';
+      let cred;
+      try {
+        cred = await navigator.credentials.get({ publicKey: opts, mediation: 'optional' });
+      } catch (we) {
+        if (we.name === 'NotAllowedError') throw new Error('已取消');
+        throw we;
+      }
+      if (!cred) throw new Error('未获得凭据');
+      btn.textContent = '⏳ 验证中...';
+      const r2 = await fetch('/api/init?action=passkey-login-finish', {
+        method: 'POST', credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challenge_token: d1.challenge_token,
+          target: 'admin',
+          credential: {
+            id: cred.id,
+            rawId: bufToB64url(cred.rawId),
+            type: cred.type,
+            response: {
+              clientDataJSON: bufToB64url(cred.response.clientDataJSON),
+              authenticatorData: bufToB64url(cred.response.authenticatorData),
+              signature: bufToB64url(cred.response.signature),
+              userHandle: cred.response.userHandle ? bufToB64url(cred.response.userHandle) : null,
+            },
+          },
+        }),
+      });
+      const d2 = await r2.json();
+      if (!r2.ok || d2.error) throw new Error(d2.error || '验证失败');
+      clearTimeout(timer);
+      msg.style.color = '#5d7c15';
+      msg.textContent = '✓ 验证成功, 跳转中...';
+      setTimeout(() => { location.reload(); }, 500);
+    } catch (e) {
+      clearTimeout(timer);
+      msg.textContent = '✗ ' + (e.message || String(e));
+    } finally {
+      clearTimeout(timer);
+      btn.disabled = false;
+      btn.textContent = orig;
+    }
   };
 }
 window.showAdminEnterModal = showAdminEnterModal;
