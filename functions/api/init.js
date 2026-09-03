@@ -22,6 +22,27 @@ import * as passkeyActions from './actions/passkey.js';
 import * as adminDmActions from './actions/admin-dm.js';
 import * as adminPasskeyDebugActions from './actions/admin-passkey-debug.js';
 
+// v47.8: 自动跑 schema (带 globalThis memo, 防止每请求重跑)
+// 之前 v45 重写时漏迁建表逻辑, 生产 D1 一直没人触发, 新加的 5 张表 (tickets 等) 从未建过
+// 现在 init.js 默认 GET handler 跑一次完整 schema, 后续 GET 用 memo 跳过
+async function ensureSchema(env) {
+  if (globalThis.__lc_d1_schema_inited) return;
+  globalThis.__lc_d1_schema_inited = true; // 立即置 true, 防止并发请求都跑
+  try {
+    const { SCHEMA, MIGRATIONS } = await import('./_schema.js');
+    for (const sql of SCHEMA) {
+      try { await env.DB.prepare(sql).run(); } catch (e) { /* 已有表, 跳过 */ }
+    }
+    for (const sql of MIGRATIONS) {
+      try { await env.DB.prepare(sql).run(); } catch (e) { /* ALTER 重复列, 吞掉 */ }
+    }
+    console.log('[init] schema 初始化完成 (SCHEMA + MIGRATIONS)');
+  } catch (e) {
+    console.error('[init] schema 初始化失败:', e?.message || e);
+    globalThis.__lc_d1_schema_inited = false; // 失败重试
+  }
+}
+
 // ===================== GET: 公开 5 个端点 (轻) =====================
 export async function onRequestGet(context) {
   const { env, request } = context;
@@ -104,7 +125,8 @@ export async function onRequestGet(context) {
     return ok({ items: rows.results || [] });
   }
 
-  // 默认: 返回 schema 表名
+  // 默认: 自动跑 schema (幂等) + 返表名
+  await ensureSchema(env);
   const tables = await env.DB.prepare("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name").all();
   const { SCHEMA } = await import('./_schema.js');
   return ok({ tables: tables.results.map(r => r.name), schema_count: SCHEMA.length });
