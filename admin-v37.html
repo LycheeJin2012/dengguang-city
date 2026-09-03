@@ -51,8 +51,8 @@
   </div>
   -->
 
-  <!-- ============== 登录视图 (默认隐藏, 等 boot() 决定显示哪个) ============== -->
-  <main id="view-login" class="view-login" style="display:none">
+  <!-- v47.6: 登录视图默认显示 (之前 display:none 依赖 boot 调 showView, boot 失败就空白) -->
+  <main id="view-login" class="view-login">
     <div class="login-grid">
       <!-- 左: 品牌区 (v43) -->
       <aside class="login-brand">
