@@ -553,6 +553,38 @@
   box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55) !important;
 }
 [data-theme="dark"] .scene-card:hover { box-shadow: 8px 8px 0 var(--c-grass) !important; }
+[data-theme="dark"] .scene-card h3 { color: var(--c-text) !important; }
+[data-theme="dark"] .scene-card p { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .scene-card .scene-meta { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .service-card {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .service-card h3 { color: var(--c-text) !important; }
+[data-theme="dark"] .service-card p { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .mayor-content {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55) !important;
+  color: var(--c-text) !important;
+}
+[data-theme="dark"] .mayor-content p { color: var(--c-text) !important; }
+[data-theme="dark"] .mayor-content .sign { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .mayor-quote span { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .flow-title { color: var(--c-text) !important; }
+[data-theme="dark"] .flow-steps li b { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .flow-steps li span { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .flow-steps li:not(:last-child)::after { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .visit-text h3 { color: var(--c-text) !important; }
+[data-theme="dark"] .visit-steps li b { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .visit-steps li p { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .hero-tag {
+  background: var(--c-gold) !important;
+  color: var(--c-dark) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55) !important;
+}
 [data-theme="dark"] .pm-time { color: var(--c-text-muted) !important; }
 [data-theme="dark"] .pm-comment-author { color: var(--c-grass-light) !important; }
 [data-theme="dark"] .pm-comment-time { color: var(--c-text-muted) !important; }
@@ -566,6 +598,118 @@
 }
 [data-theme="dark"] .pm-comment-del { color: var(--c-text-muted) !important; border-color: var(--c-border) !important; }
 [data-theme="dark"] .pm-comment-del:hover { color: var(--c-redstone) !important; border-color: var(--c-redstone) !important; }
+[data-theme="dark"] .wall-intro { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .wall-link { color: var(--c-grass-light) !important; border-bottom-color: var(--c-grass) !important; }
+[data-theme="dark"] .pm-item {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .pm-item:hover { box-shadow: 7px 7px 0 var(--c-grass) !important; }
+[data-theme="dark"] .pm-head b { color: var(--c-text) !important; }
+[data-theme="dark"] .pm-content {
+  background: var(--c-surface-2) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-border) !important;
+}
+[data-theme="dark"] .pm-time { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .pm-type-合作 { background: var(--c-gold) !important; color: var(--c-dark) !important; }
+[data-theme="dark"] .kb-cap { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .hotel-intro { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .hotel-intro strong { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .room-card {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55) !important;
+}
+[data-theme="dark"] .room-card:hover { box-shadow: 9px 9px 0 var(--c-grass) !important; }
+[data-theme="dark"] .room-card.featured {
+  background: linear-gradient(180deg, var(--c-surface) 0%, var(--c-surface-2) 60%) !important;
+  border-color: var(--c-gold) !important;
+  box-shadow: 6px 6px 0 var(--c-gold) !important;
+}
+[data-theme="dark"] .room-name { color: var(--c-text) !important; }
+[data-theme="dark"] .room-bed { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .room-features li { background: var(--c-surface-2) !important; color: var(--c-text) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .room-desc { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .room-price-num { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .room-price-cur,
+[data-theme="dark"] .room-price-unit,
+[data-theme="dark"] .room-guests { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .room-price-row { border-top-color: var(--c-border) !important; }
+[data-theme="dark"] .hm-item b { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .hm-item code { background: var(--c-surface-2) !important; color: var(--c-gold) !important; }
+[data-theme="dark"] .license-intro { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .license-card {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 5px 5px 0 rgba(0, 0, 0, 0.55) !important;
+  color: var(--c-text) !important;
+}
+[data-theme="dark"] .license-card h3 { color: var(--c-text) !important; }
+[data-theme="dark"] .license-card p { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .cg-spec-row span { color: var(--c-text) !important; }
+[data-theme="dark"] .contact-grid {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.55) !important;
+  color: var(--c-text) !important;
+}
+[data-theme="dark"] .contact-row b { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .contact-row p { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .contact-row p code { background: var(--c-surface-2) !important; color: var(--c-gold) !important; }
+[data-theme="dark"] .contact-form label { color: var(--c-text) !important; }
+[data-theme="dark"] .contact-form input,
+[data-theme="dark"] .contact-form textarea {
+  background: var(--c-input-bg) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-input-border) !important;
+}
+[data-theme="dark"] .footer {
+  background: var(--c-elevated) !important;
+  color: var(--c-text) !important;
+  border-top-color: var(--c-border) !important;
+}
+[data-theme="dark"] .footer-brand b { color: var(--c-text) !important; }
+[data-theme="dark"] .footer-brand p { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .footer-cols a { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .footer-cols a:hover { color: var(--c-gold) !important; }
+[data-theme="dark"] .footer-bottom { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .footer-bottom .sep { color: var(--c-text-faint) !important; }
+[data-theme="dark"] .footer-bottom .admin-link { color: var(--c-text) !important; }
+[data-theme="dark"] .footer-bottom .admin-link:hover { color: var(--c-gold) !important; }
+[data-theme="dark"] .callout { background: var(--c-surface-2) !important; color: var(--c-text) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .callout strong { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .link-list li a { color: var(--c-link) !important; }
+[data-theme="dark"] .link-list li .meta { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .badge.badge-gold { background: var(--c-gold) !important; color: var(--c-dark) !important; }
+[data-theme="dark"] .badge.badge-stone { background: var(--c-surface-2) !important; color: var(--c-text) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .badge.badge-outline { background: transparent !important; color: var(--c-text) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .pane-card {
+  background: var(--c-surface) !important;
+  border-color: var(--c-border) !important;
+  color: var(--c-text) !important;
+}
+[data-theme="dark"] .pane-card > h3 { color: var(--c-text) !important; }
+[data-theme="dark"] .pane-card > p { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .modal h3 { color: var(--c-grass-light) !important; }
+[data-theme="dark"] .modal .form-row label { color: var(--c-text) !important; }
+[data-theme="dark"] .modal-form label { color: var(--c-text) !important; }
+[data-theme="dark"] .modal-msg { color: var(--c-text-muted) !important; }
+[data-theme="dark"] .modal-close { color: var(--c-text) !important; border-color: var(--c-border) !important; }
+[data-theme="dark"] .modal-close:hover { color: var(--c-redstone) !important; border-color: var(--c-redstone) !important; }
+[data-theme="dark"] .modal input[type=text],
+[data-theme="dark"] .modal input[type=email],
+[data-theme="dark"] .modal input[type=password],
+[data-theme="dark"] .modal input[type=number],
+[data-theme="dark"] .modal input[type=date],
+[data-theme="dark"] .modal select,
+[data-theme="dark"] .modal textarea {
+  background: var(--c-input-bg) !important;
+  color: var(--c-text) !important;
+  border-color: var(--c-input-border) !important;
+}
+[data-theme="dark"] .book-sub { color: var(--c-text-muted) !important; }
 [data-theme="dark"] .pane-head { background: var(--c-surface) !important; color: var(--c-text) !important; border-color: var(--c-border) !important; }
 [data-theme="dark"] .pane-head h2 { color: var(--c-grass-light) !important; }
 [data-theme="dark"] .msg-item {
