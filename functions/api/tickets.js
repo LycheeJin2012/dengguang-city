@@ -30,15 +30,34 @@ export async function onRequestGet(context) {
   if (!admin) return err(401, '需要管理员登录');
 
   const url = new URL(request.url);
-  const id = url.searchParams.get('id');
-  if (id) {
+  const rawId = url.searchParams.get('id');
+  if (rawId) {
+    const idNum = parseInt(rawId, 10);
+    if (idNum >= 1_000_000) {
+      // v50: legacy messages 表 (id 偏移 1e6)
+      const m = await env.DB.prepare(
+        `SELECT (m.id + 1000000) AS id, m.player_id, 'message' AS category, 'messages' AS source_table,
+                m.id AS source_id, m.name AS title, m.content AS body, m.status, 'normal' AS priority,
+                NULL AS assignee_id, m.created_at, NULL AS updated_at, m.replied_at, m.admin_reply,
+                p.username AS player_username, p.avatar_emoji, NULL AS assignee_username
+         FROM messages m
+         LEFT JOIN players p ON p.id = m.player_id
+         WHERE m.id = ?`
+      ).bind(idNum - 1_000_000).first();
+      if (!m) return err(404, '工单不存在');
+      // 状态映射
+      if (m.status === 'unread') m.status = 'open';
+      else if (m.status === 'read') m.status = 'in_progress';
+      else if (m.status === 'done') m.status = 'resolved';
+      return ok({ ticket: m });
+    }
     const t = await env.DB.prepare(
       `SELECT t.*, p.username AS player_username, p.avatar_emoji, a.username AS assignee_username
        FROM tickets t
        LEFT JOIN players p ON p.id = t.player_id
        LEFT JOIN admins a ON a.id = t.assignee_id
        WHERE t.id = ?`
-    ).bind(id).first();
+    ).bind(idNum).first();
     if (!t) return err(404, '工单不存在');
     return ok({ ticket: t });
   }
@@ -58,20 +77,75 @@ export async function onRequestGet(context) {
   if (q) { where.push('(t.title LIKE ? OR t.body LIKE ?)'); binds.push('%' + q + '%', '%' + q + '%'); }
   const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
 
-  const rows = await env.DB.prepare(
+  const includeLegacyMessages = !category || category === 'message';
+
+  // v50 修复: 当 category=message 时, UNION 老 messages 表的留言
+  // 老 messages 表数据: id 范围 1..N, status: unread/read/done
+  // 工单 tickets 表数据: id 范围独立, status: open/in_progress/resolved/closed
+  // 为了 id 不冲突, messages 数据 id 全部 + 1_000_000 (前端看到 > 1e6 就走 messages 表)
+  const tRows = await env.DB.prepare(
     `SELECT t.id, t.player_id, t.category, t.source_table, t.source_id, t.title,
-            t.status, t.priority, t.assignee_id, t.created_at, t.updated_at, t.replied_at,
+            t.body, t.status, t.priority, t.assignee_id, t.created_at, t.updated_at, t.replied_at,
+            t.admin_reply,
             p.username AS player_username, p.avatar_emoji, a.username AS assignee_username
      FROM tickets t
      LEFT JOIN players p ON p.id = t.player_id
      LEFT JOIN admins a ON a.id = t.assignee_id
      ${whereSql}
-     ORDER BY
-       CASE t.status WHEN 'open' THEN 0 WHEN 'in_progress' THEN 1 WHEN 'resolved' THEN 2 ELSE 3 END,
-       CASE t.priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 WHEN 'normal' THEN 2 ELSE 3 END,
-       t.created_at DESC
+     ORDER BY t.created_at DESC
      LIMIT ?`
   ).bind(...binds, limit).all();
+
+  let mRows = [];
+  if (includeLegacyMessages) {
+    const mWhere = [];
+    const mBinds = [];
+    if (status) {
+      // messages status: unread/read/done → 映射到 tickets status: open/in_progress/resolved
+      const mStatusMap = { unread: 'unread', read: 'in_progress', done: 'resolved' };
+      mWhere.push('m.status = ?');
+      mBinds.push(mStatusMap[status] || status);
+    }
+    if (q) { mWhere.push('(m.name LIKE ? OR m.content LIKE ?)'); mBinds.push('%' + q + '%', '%' + q + '%'); }
+    const mWhereSql = mWhere.length ? 'WHERE ' + mWhere.join(' AND ') : '';
+    const mr = await env.DB.prepare(
+      `SELECT (m.id + 1000000) AS id, m.player_id, 'message' AS category, 'messages' AS source_table,
+              m.id AS source_id,
+              m.name AS title, m.content AS body, m.status, 'normal' AS priority,
+              NULL AS assignee_id, m.created_at, NULL AS updated_at, m.replied_at,
+              m.admin_reply,
+              p.username AS player_username, p.avatar_emoji,
+              NULL AS assignee_username
+       FROM messages m
+       LEFT JOIN players p ON p.id = m.player_id
+       ${mWhereSql}
+       ORDER BY m.created_at DESC
+       LIMIT ?`
+    ).bind(...mBinds, limit).all();
+    mRows = mr.results || [];
+    // 状态映射: messages.status (unread/read/done) → tickets status (open/in_progress/resolved)
+    for (const r of mRows) {
+      if (r.status === 'unread') r.status = 'open';
+      else if (r.status === 'read') r.status = 'in_progress';
+      else if (r.status === 'done') r.status = 'resolved';
+    }
+  }
+
+  // 合并: tickets (t.id < 1e6) + messages (m.id >= 1e6)
+  // 排序: status 优先级 (open=0 / in_progress=1 / resolved=2 / closed=3) → priority → created_at DESC
+  const STATUS_RANK = { open: 0, in_progress: 1, resolved: 2, closed: 3 };
+  const PRIORITY_RANK = { urgent: 0, high: 1, normal: 2, low: 3 };
+  const all = [...(tRows.results || []), ...mRows];
+  all.sort((a, b) => {
+    const sa = STATUS_RANK[a.status] ?? 9;
+    const sb = STATUS_RANK[b.status] ?? 9;
+    if (sa !== sb) return sa - sb;
+    const pa = PRIORITY_RANK[a.priority] ?? 9;
+    const pb = PRIORITY_RANK[b.priority] ?? 9;
+    if (pa !== pb) return pa - pb;
+    return (b.created_at || '').localeCompare(a.created_at || '');
+  });
+  const rows = all.slice(0, limit);
 
   // 顺便给每个 category 算 open 数, 方便 tab badge
   const counts = await env.DB.prepare(
@@ -86,8 +160,20 @@ export async function onRequestGet(context) {
     summary.by_category[r.category][r.status] = r.n;
     summary.total_open += r.n;
   }
+  // 把 legacy messages 的 open 数也加到 message category badge
+  if (includeLegacyMessages) {
+    const mc = await env.DB.prepare(
+      `SELECT status, COUNT(*) AS n FROM messages WHERE status IN ('unread', 'read') GROUP BY status`
+    ).all();
+    for (const r of mc.results || []) {
+      if (!summary.by_category.message) summary.by_category.message = { open: 0, in_progress: 0 };
+      if (r.status === 'unread') summary.by_category.message.open += r.n;
+      else if (r.status === 'read') summary.by_category.message.in_progress += r.n;
+      summary.total_open += r.n;
+    }
+  }
 
-  return ok({ tickets: rows.results || [], summary, limit });
+  return ok({ tickets: rows, summary, limit });
 }
 
 export async function onRequestPatch(context) {
@@ -97,29 +183,47 @@ export async function onRequestPatch(context) {
   if (!admin) return err(401, '需要管理员登录');
 
   const url = new URL(request.url);
-  const id = parseInt(url.searchParams.get('id') || '0', 10);
-  if (!id) return err(400, 'id 必填');
+  const rawId = parseInt(url.searchParams.get('id') || '0', 10);
+  if (!rawId) return err(400, 'id 必填');
+
+  // v50: id >= 1_000_000 → legacy messages 表
+  const isLegacy = rawId >= 1_000_000;
+  const id = isLegacy ? rawId - 1_000_000 : rawId;
+  const table = isLegacy ? 'messages' : 'tickets';
 
   const body = await request.json().catch(() => ({}));
   const sets = [];
   const binds = [];
-  if (body.status && STATUSES.has(body.status)) { sets.push('status = ?'); binds.push(body.status); }
-  if (body.priority && PRIORITIES.has(body.priority)) { sets.push('priority = ?'); binds.push(body.priority); }
-  if (body.assignee_id !== undefined) { sets.push('assignee_id = ?'); binds.push(body.assignee_id || null); }
-  if (typeof body.admin_reply === 'string' && body.admin_reply.length > 0) {
-    sets.push('admin_reply = ?'); binds.push(body.admin_reply);
-    sets.push('replied_at = ?'); binds.push(new Date().toISOString());
-    sets.push('replied_by = ?'); binds.push(admin.id);
-    if (!body.status) { sets.push('status = ?'); binds.push('resolved'); }
+
+  if (isLegacy) {
+    // messages 表的状态映射: open→unread, in_progress→read, resolved→done
+    const LEGACY_STATUS = { open: 'unread', in_progress: 'read', resolved: 'done', closed: 'done' };
+    if (body.status) { sets.push('status = ?'); binds.push(LEGACY_STATUS[body.status] || body.status); }
+    if (typeof body.admin_reply === 'string' && body.admin_reply.length > 0) {
+      sets.push('admin_reply = ?'); binds.push(body.admin_reply);
+      sets.push('replied_at = ?'); binds.push(new Date().toISOString());
+      if (!body.status) { sets.push('status = ?'); binds.push('done'); }
+    }
+  } else {
+    if (body.status && STATUSES.has(body.status)) { sets.push('status = ?'); binds.push(body.status); }
+    if (body.priority && PRIORITIES.has(body.priority)) { sets.push('priority = ?'); binds.push(body.priority); }
+    if (body.assignee_id !== undefined) { sets.push('assignee_id = ?'); binds.push(body.assignee_id || null); }
+    if (typeof body.admin_reply === 'string' && body.admin_reply.length > 0) {
+      sets.push('admin_reply = ?'); binds.push(body.admin_reply);
+      sets.push('replied_at = ?'); binds.push(new Date().toISOString());
+      sets.push('replied_by = ?'); binds.push(admin.id);
+      if (!body.status) { sets.push('status = ?'); binds.push('resolved'); }
+    }
+    if (!sets.length) return err(400, '没有可更新字段');
+    sets.push("updated_at = datetime('now')");
   }
   if (!sets.length) return err(400, '没有可更新字段');
-  sets.push("updated_at = datetime('now')");
   binds.push(id);
   const r = await env.DB.prepare(
-    `UPDATE tickets SET ${sets.join(', ')} WHERE id = ?`
+    `UPDATE ${table} SET ${sets.join(', ')} WHERE id = ?`
   ).bind(...binds).run();
   if (!r.meta?.changes) return err(404, '工单不存在或无变化');
-  return ok({ id, updated: true });
+  return ok({ id: rawId, updated: true });
 }
 
 export async function onRequestPost(context) {
