@@ -1,5 +1,5 @@
 // v44 重写: 私信监管 tab (super only)
-import { $, esc, fmt, GET, POST, safeRender, cacheClear } from '../core.js?v=v46-fix-modules';
+import { $, esc, fmt, GET, POST, safeRender, cacheClear } from '../core.v50.js?v=v50-fix';
 
 export async function renderDms(query) {
   await safeRender(async () => {

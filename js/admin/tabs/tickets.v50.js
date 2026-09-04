@@ -1,6 +1,6 @@
 // v47: 工单 tab (admin 后台统一入口, 替代原 messages/license/bookings 3 个 tab)
 // 列表支持按 category / status 过滤, 状态切换/回复/派单
-import { $, esc, fmt, GET, PATCH, safeRender, cacheClear } from '../core.js?v=v46-fix-modules';
+import { $, esc, fmt, GET, PATCH, safeRender, cacheClear } from '../core.v50.js?v=v50-fix';
 
 const CAT_LABEL = {
   message: '💬 留言',

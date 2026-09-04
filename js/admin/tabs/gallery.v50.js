@@ -1,5 +1,5 @@
 // v44 重写: 首页图集 tab
-import { $, esc, GET, PATCH, safeRender, cacheClear } from '../core.js?v=v46-fix-modules';
+import { $, esc, GET, PATCH, safeRender, cacheClear } from '../core.v50.js?v=v50-fix';
 
 export async function renderGallery() {
   await safeRender(async () => {

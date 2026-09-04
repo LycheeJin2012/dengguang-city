@@ -4,14 +4,14 @@ import { $, POST, safeRender } from './core.js?v=v46-fix-modules';
 // Tab 渲染器: 每个 tab 第一次切到时调用对应的 render 函数
 // v47: 留言/驾照/酒店 3 个 tab 合并为 tickets (统一工单入口)
 const _TAB_RENDER = {
-  tickets:    () => import('./tabs/tickets.js').then(m => m.renderTickets()),
-  players:    () => import('./tabs/players.js').then(m => m.renderPlayers()),
-  kart:       () => import('./tabs/kart.js').then(m => m.renderKarts()),
-  circuit:    () => import('./tabs/kart.js').then(m => m.renderCircuits()),
+  tickets:    () => import('./tabs/tickets.v50.js').then(m => m.renderTickets()),
+  players:    () => import('./tabs/players.v50.js').then(m => m.renderPlayers()),
+  kart:       () => import('./tabs/kart.v50.js').then(m => m.renderKarts()),
+  circuit:    () => import('./tabs/kart.v50.js').then(m => m.renderCircuits()),
   announcements: () => import('./tabs/announcements.v50.js').then(m => m.renderAnnouncements()),
-  gallery:    () => import('./tabs/gallery.js').then(m => m.renderGallery()),
-  dms:        () => import('./tabs/dms.js').then(m => m.renderDms()),
-  admins:     () => import('./tabs/admins.js').then(m => m.renderAdminList()),
+  gallery:    () => import('./tabs/gallery.v50.js').then(m => m.renderGallery()),
+  dms:        () => import('./tabs/dms.v50.js').then(m => m.renderDms()),
+  admins:     () => import('./tabs/admins.v50.js').then(m => m.renderAdminList()),
   password:   async () => { /* 修改密码 — 留给 password.js (Stage 3) */ },
 };
 export function _ensureTabRendered(tab) {
@@ -21,9 +21,9 @@ export function _ensureTabRendered(tab) {
 
 // Filter 切换 (v47 简化: 只剩 playerFilter + tickets 自己内部 filter)
 const _FILTER_RENDER = {
-  players:     () => import('./tabs/players.js').then(m => m.renderPlayers()),
-  circuit_kart: () => import('./tabs/kart.js').then(m => m.renderKarts()),
-  kart_circuit: () => import('./tabs/kart.js').then(m => m.renderCircuits()),
+  players:     () => import('./tabs/players.v50.js').then(m => m.renderPlayers()),
+  circuit_kart: () => import('./tabs/kart.v50.js').then(m => m.renderKarts()),
+  kart_circuit: () => import('./tabs/kart.v50.js').then(m => m.renderCircuits()),
 };
 export function bindFilterRadios() {
   document.querySelectorAll('input[type="radio"][name$="Filter"]').forEach(r => {
@@ -40,7 +40,7 @@ export function bindFilterRadios() {
       clearTimeout(t);
       t = setTimeout(() => {
         const id = s.id;
-        if (id === 'ticketSearch') import('./tabs/tickets.js').then(m => m.renderTickets());
+        if (id === 'ticketSearch') import('./tabs/tickets.v50.js').then(m => m.renderTickets());
       }, 200);
     });
   });

@@ -1,5 +1,5 @@
 // v44 重写: 通行密钥引导 (登录后弹窗, 邀请添加 Passkey)
-import { GET, POST, esc } from '../core.js?v=v46-fix-modules';
+import { GET, POST, esc } from '../core.v50.js?v=v50-fix';
 
 export async function maybeOfferAdminPasskey(adminId) {
   if (!adminId) return;

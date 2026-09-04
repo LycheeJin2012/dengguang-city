@@ -18,8 +18,8 @@
 //
 // HTML 模板不变 (admin-v37.html 仍可用), 通过 inline onclick 调 window.* 全局函数
 // 这里导出所有需要的全局函数
-import { $, POST, GET, safeRender, fileToDataURLP, cacheClear } from './admin/core.js?v=v46-fix-modules';
-import { renderDash, _ensureTabRendered, bindFilterRadios, showView } from './admin/dash.js?v=v46-fix-modules';
+import { $, POST, GET, safeRender, fileToDataURLP, cacheClear } from './admin/core.v50.js?v=v50-fix';
+import { renderDash, _ensureTabRendered, bindFilterRadios, showView } from './admin/dash.v50.js?v=v50-fix';
 
 // ---------- Boot ----------
 async function boot() {

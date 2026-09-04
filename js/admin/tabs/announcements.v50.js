@@ -1,5 +1,5 @@
 // v44 重写: 公告 tab (super only)
-import { $, esc, fmt, GET, POST, DEL, safeRender, cacheClear } from '../core.js?v=v46-fix-modules';
+import { $, esc, fmt, GET, POST, DEL, safeRender, cacheClear } from '../core.v50.js?v=v50-fix';
 
 export async function renderAnnouncements() {
   await safeRender(async () => {
