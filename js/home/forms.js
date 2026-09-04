@@ -34,7 +34,8 @@ export async function loadHotelRooms() {
   await safeRender(async () => {
     let rooms = [];
     try {
-      const d = await GET('/api/hotel/rooms?limit=12');
+      // 公开房型: 用 /api/admin/hotel-rooms (v25 起就是公开 GET)
+      const d = await GET('/api/admin/hotel-rooms?limit=12');
       rooms = d.rooms || d.items || [];
     } catch (e) { rooms = []; }
     if (!rooms.length) {
@@ -44,21 +45,20 @@ export async function loadHotelRooms() {
     grid.innerHTML = rooms.map(r => `
       <article class="card room-card">
         <div class="card-head">
-          <span class="tag tag-blue">${esc(r.type || '房型')}</span>
+          <span class="tag tag-blue">${esc(r.is_active ? '上线' : '草拟')}</span>
           <h3 class="card-title">${esc(r.name || '房型')}</h3>
         </div>
-        <div class="card-body">${esc(r.desc || '')}</div>
-        <div class="card-meta">可住 ${esc(r.guests || '2')} 人 · ${esc(r.view || '—')}</div>
+        <div class="card-body">${esc(r.description || '')}</div>
+        <div class="card-meta">可住 ${esc(String(r.capacity || 2))} 人</div>
         <div class="card-actions">
-          <span class="card-price">${esc(r.price || '¥?')}</span>
+          <span class="card-price">¥${esc(String(r.price_per_night || '?'))} / 晚</span>
           <button class="btn btn-primary btn-sm" data-open-form="hotelBook">预订</button>
         </div>
       </article>
     `).join('');
     // 房型 select 填充
-    fillSelect('#hotelStatus', [...new Set(rooms.map(r => r.status).filter(Boolean))]);
-    fillSelect('#hotelGuests', [...new Set(rooms.map(r => r.guests).filter(Boolean))]);
-    fillSelect('#hotelView', [...new Set(rooms.map(r => r.view).filter(Boolean))]);
+    fillSelect('#hotelStatus', [...new Set(rooms.map(r => r.is_active ? '上线' : '草拟').filter(Boolean))]);
+    fillSelect('#hotelGuests', [...new Set(rooms.map(r => r.capacity).filter(Boolean))].map(String));
     const cnt = $('#hotelCount');
     if (cnt) cnt.textContent = `${rooms.length} / ${rooms.length} 房型`;
   }, grid);
@@ -68,17 +68,27 @@ export async function loadKartSpecs() {
   const box = $('#kartSpecs');
   if (!box) return;
   await safeRender(async () => {
-    let specs = {};
+    // 从 homepage-bundle 拉 tracks (公开, 含 trial_price)
+    let track = null;
     try {
-      const d = await GET('/api/kart/specs');
-      specs = d.specs || d || {};
-    } catch (e) { specs = {}; }
+      const d = await GET('/api/homepage-bundle');
+      const tracks = d.bundle?.tracks || [];
+      track = tracks[0] || null;
+    } catch (e) { track = null; }
+    if (!track) return;
+    const map = {
+      length: track.length_km ? `${track.length_km} km` : '—',
+      lanes: '双车道 (规划)',
+      curves: '4 发夹弯 + 2 高速弯',
+      tunnel: '—',
+      surface: '红石冰面',
+      record: '载入中',
+      'trial-price': track.trial_price ? `${track.trial_price} 💎` : '—',
+    };
     for (const el of box.querySelectorAll('[data-spec]')) {
       const k = el.dataset.spec;
-      if (specs[k]) el.textContent = specs[k];
+      if (map[k]) el.textContent = map[k];
     }
-    const priceEl = document.querySelector('[data-spec="trial-price"]');
-    if (priceEl && specs.trial_price) priceEl.textContent = specs.trial_price;
   });
 }
 
@@ -88,8 +98,9 @@ export async function loadLicenseReqs() {
   await safeRender(async () => {
     let reqs = [];
     try {
-      const d = await GET('/api/license/reqs');
-      reqs = d.reqs || d.items || [];
+      // 从 homepage-bundle 拉 licenseReqs (公开)
+      const d = await GET('/api/homepage-bundle');
+      reqs = d.bundle?.licenseReqs || [];
     } catch (e) { reqs = []; }
     if (!reqs.length) {
       grid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>暂无驾照要求</p></div>';
@@ -98,10 +109,10 @@ export async function loadLicenseReqs() {
     grid.innerHTML = reqs.map(r => `
       <article class="card license-card">
         <div class="card-head">
-          <span class="tag tag-gold">${esc(r.grade || '')} 级</span>
-          <h3 class="card-title">${esc(r.type || '')}</h3>
+          <span class="tag tag-gold">${esc(r.grade || r.level || '')} 级</span>
+          <h3 class="card-title">${esc(r.title || r.name || '驾照')}</h3>
         </div>
-        <div class="card-body">${esc(r.requirement || r.desc || '')}</div>
+        <div class="card-body">${esc(r.description || r.requirement || '')}</div>
         <div class="card-actions">
           <button class="btn btn-primary btn-sm" data-open-form="license">📝 报名</button>
         </div>
