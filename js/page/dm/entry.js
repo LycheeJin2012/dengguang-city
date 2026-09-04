@@ -1,15 +1,31 @@
-// v45 重写: dm 子页 entry (ES module)
-import { $, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
-import { loadList, setListContext, bindListActions } from './list.js?v=v46-fix-modules';
-import { openThread, setThreadContext } from './thread.js?v=v46-fix-modules';
+// v50: dm 子页 entry
+import { $, GET, renderSubpageUserSlot } from '../util.js?v=20260905-v50-0';
+import { loadList, setListContext, bindListActions } from './list.js?v=20260905-v50-0';
+import { openThread, setThreadContext } from './thread.js?v=20260905-v50-0';
 
 const app = $('#app');
 
 (async function boot() {
-  // 1. 立刻渲染 loading
-  app.innerHTML = `<div class="dm-login-hint dm-loading"><div class="big-icon">⏳</div><p>正在验证登录态…</p></div>`;
+  // 1. nav toggle / 登录 modal 关闭
+  const navToggle = $('#navToggle');
+  const navLinks = $('#navLinks');
+  if (navToggle && navLinks) {
+    navToggle.addEventListener('click', () => navLinks.classList.toggle('open'));
+    navLinks.addEventListener('click', e => {
+      if (e.target.tagName === 'A' && window.innerWidth <= 768) navLinks.classList.remove('open');
+    });
+  }
+  const loginMask = $('#loginMask');
+  if (loginMask) {
+    $('#loginClose')?.addEventListener('click', () => { loginMask.style.display = 'none'; document.body.style.overflow = ''; });
+    loginMask.addEventListener('click', e => { if (e.target === loginMask) { loginMask.style.display = 'none'; document.body.style.overflow = ''; } });
+    document.addEventListener('keydown', e => { if (e.key === 'Escape' && loginMask.style.display !== 'none') { loginMask.style.display = 'none'; document.body.style.overflow = ''; } });
+  }
 
-  // 2. 检查登录态 (8s 超时, 避免 CF Pages cold start 卡死)
+  // 2. 立刻渲染 loading
+  app.innerHTML = `<div class="card"><div class="card-body" style="text-align:center;padding:48px 16px"><div class="card-icon" style="font-size:48px">⏳</div><p>正在验证登录态…</p></div></div>`;
+
+  // 3. 检查登录态 (8s 超时)
   let me = null;
   let errMsg = '';
   try {
@@ -23,30 +39,32 @@ const app = $('#app');
     else if (d.ok && !d.player) errMsg = '当前是管理员账号, 没有关联玩家身份';
   } catch (e) { errMsg = '网络超时/失败: ' + (e?.message || e); }
 
-  // 3. 顶栏
-  renderSubpageNav($('#navUserSlot'), me, false);
+  // 4. navbar slot
+  await renderSubpageUserSlot();
 
-  // 4. 未登录 → 提示
+  // 5. 未登录 → 提示
   if (!me) {
     const isNet = errMsg.startsWith('网络');
     app.innerHTML = `
-      <div class="dm-login-hint">
-        <div class="big-icon">📨</div>
-        <h2>${isNet ? '网络好像有点慢' : '请先登录玩家账号'}</h2>
-        <p>${isNet
-          ? '验证登录态超时, 可能是网络抖动或 Functions 冷启动。<br>点下面按钮重试, 或回首页重新登录。'
-          : '私信是玩家之间的私人交流，<br>需要登录后才能使用。'}</p>
-        ${errMsg ? `<p class="dm-err-detail">(${errMsg})</p>` : ''}
-        <div class="dm-action-row">
-          <button id="dmRetryBtn" class="btn btn-primary">🔄 重试</button>
-          <a href="index.html" class="btn btn-ghost">返回首页</a>
+      <div class="card">
+        <div class="card-body" style="text-align:center;padding:48px 16px">
+          <div class="card-icon" style="font-size:48px">📨</div>
+          <h3 class="card-title">${isNet ? '网络好像有点慢' : '请先登录玩家账号'}</h3>
+          <p>${isNet
+            ? '验证登录态超时, 可能是网络抖动或 Functions 冷启动。<br>点下面按钮重试, 或回首页重新登录。'
+            : '私信是玩家之间的私人交流, <br>需要登录后才能使用。'}</p>
+          ${errMsg ? `<p class="dm-err-detail">(${errMsg})</p>` : ''}
+          <div class="card-actions center" style="margin-top:20px">
+            <button id="dmRetryBtn" class="btn btn-primary">🔄 重试</button>
+            <a href="index.html" class="btn btn-ghost">返回首页</a>
+          </div>
         </div>
       </div>`;
     $('#dmRetryBtn')?.addEventListener('click', () => location.reload());
     return;
   }
 
-  // 5. 已登录 - 渲染主界面
+  // 6. 已登录 - 渲染主界面 (复用 v49 dm-* 类名, 由 §24 兼容层兜底)
   app.innerHTML = `
     <div class="dm-wrap">
       <div class="dm-panel dm-list-panel">
@@ -67,13 +85,13 @@ const app = $('#app');
       </div>
     </div>`;
 
-  // 6. 业务
+  // 7. 业务
   setListContext(me, openThread);
   setThreadContext(me);
   bindListActions();
   await loadList();
 
-  // 7. URL ?peer=X 自动打开
+  // 8. URL ?peer=X 自动打开
   const peerQ = new URL(location.href).searchParams.get('peer');
   if (peerQ) await openThread(peerQ);
 })();

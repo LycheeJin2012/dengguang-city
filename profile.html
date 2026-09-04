@@ -1,15 +1,20 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>玩家主页 · 灯光市</title>
-<link rel="preload" href="css/style.css?v=20260904-v49-0" as="style" />
-<link rel="preload" href="js/page/profile/entry.js?v=v46-fix-modules" as="script" />
-<link rel="stylesheet" href="css/style.css?v=20260904-v49-0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>玩家主页 · 灯光市</title>
+  <link rel="preload" href="assets/fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="assets/fonts/vt323.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="preload" href="css/style.css?v=20260905-v50-0" as="style" />
+  <link rel="preload" href="js/page/profile/entry.js?v=20260905-v50-0" as="script" />
+  <link rel="stylesheet" href="css/style.css?v=20260905-v50-0" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2370ad34'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='10' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='3' y='10' width='3' height='3' fill='%23ffd23f'/%3E%3C/svg%3E" />
 </head>
-<body>
-<script src="js/theme.js?v=v48-5"></script>
+<body class="page-profile">
+
+<script src="js/theme.js?v=v50-0"></script>
 
 <header class="navbar" id="navbar">
   <div class="nav-inner">
@@ -23,87 +28,157 @@
         <span class="logo-en">LIGHT CITY GOVERNMENT</span>
       </div>
     </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html#gov">政务</a>
+      <a href="index.html#traffic">交通</a>
+      <a href="index.html#gallery">图集</a>
+      <a href="index.html#wall">留言</a>
+      <a href="index.html#service">服务</a>
+      <a href="profile.html" class="active">主页</a>
+    </nav>
     <span class="nav-user-slot" id="navUserSlot"></span>
+    <button class="nav-toggle" id="navToggle" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
 
-<div class="page-back-row">
-  <a href="index.html">← 返回首页</a>
+<div class="page-back-row"><a href="index.html">← 返回首页</a></div>
+
+<div class="container">
+  <section class="page-head">
+    <div class="page-head-row">
+      <h1 class="page-title">👤 玩家主页</h1>
+      <span class="page-sub">PLAYER PROFILE · 账号 · 报名 · 通知 · 市民卡</span>
+    </div>
+  </section>
+
+  <div class="card-list profile-wrap" id="app">
+    <!-- 个人信息卡 -->
+    <article class="card" id="profileCard">
+      <div class="profile-banner"></div>
+      <div class="card-head">
+        <div class="profile-avatar" id="pAvatar">👤</div>
+        <h3 class="card-title" id="pName">载入中…</h3>
+      </div>
+      <div class="card-body" id="pBody">
+        <p class="empty-state">载入中…</p>
+      </div>
+    </article>
+
+    <!-- 市民留言 (仅登录玩家) -->
+    <article class="card" id="myMessagesCard" style="display:none">
+      <div class="card-head"><h3 class="card-title">📬 我的市民留言</h3></div>
+      <div id="myMessagesContent">载入中…</div>
+    </article>
+
+    <!-- 我的报名 (酒店/驾照/赛道 4 端点并发拉) -->
+    <article class="card" id="myBookingsCard" style="display:none">
+      <div class="card-head"><h3 class="card-title">📅 我的报名</h3></div>
+      <div id="myBookingsContent">载入中…</div>
+    </article>
+
+    <!-- 账号安全 / 通行密钥管理 (仅本人) -->
+    <article class="card" id="passkeyCard" style="display:none">
+      <div class="card-head"><h3 class="card-title">🔑 账号安全 · 通行密钥 (Passkey)</h3></div>
+      <div class="card-body">
+        <p>通行密钥用 Touch ID / Face ID / Windows Hello 登录，<b>无需输密码</b>，抗钓鱼。</p>
+        <div id="passkeyList" class="card-list"></div>
+        <div class="card-actions">
+          <button id="addPasskeyBtn" class="btn btn-primary">➕ 添加通行密钥</button>
+        </div>
+        <p id="passkeyMsg" class="section-meta"></p>
+      </div>
+    </article>
+
+    <!-- 赛道成绩 + 排行榜 -->
+    <article class="card" id="raceCard" style="display:none">
+      <div class="card-head"><h3 class="card-title">🏁 赛道成绩</h3></div>
+      <div class="card-body">
+        <p>上报你在国际赛车场的圈速，进入排行榜跟全城玩家 PK！</p>
+        <div id="raceContent">载入中…</div>
+      </div>
+    </article>
+
+    <!-- 驾照模拟题库 -->
+    <article class="card" id="examCard" style="display:none">
+      <div class="card-head"><h3 class="card-title">📝 驾照模拟题库</h3></div>
+      <div class="card-body">
+        <p>考前去模拟题库里练手，错了的题自动进"错题本"反复练习。</p>
+        <div id="examContent">载入中…</div>
+      </div>
+    </article>
+
+    <!-- 通知订阅 -->
+    <article class="card" id="subCard" style="display:none">
+      <div class="card-head"><h3 class="card-title">🔔 通知订阅</h3></div>
+      <div class="card-body">
+        <p>勾选订阅后，新公告/你的留言被回复/新私信会通过站内通知推送给你。</p>
+        <div id="subContent">载入中…</div>
+      </div>
+    </article>
+
+    <!-- 市民身份卡 -->
+    <article class="card" id="citizenCard" style="display:none">
+      <div class="card-head"><h3 class="card-title">🪪 我的市民身份卡</h3></div>
+      <div class="card-body">
+        <p>点下面的按钮生成你的专属市民卡，可以下载发到 MC 服务器群跟小伙伴炫一下！</p>
+        <div class="card-actions">
+          <button id="genCardBtn" class="btn btn-primary">🎴 生成我的市民卡</button>
+        </div>
+        <div id="citizenCardPreview" class="mt-24"></div>
+      </div>
+    </article>
+  </div>
 </div>
 
-<div class="profile-wrap" id="app">
-  <div class="profile-card">
-    <div class="profile-banner"></div>
-    <div class="profile-avatar" id="pAvatar">👤</div>
-    <div class="profile-body" id="pBody">
-      <div class="profile-loading">载入中…</div>
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4 class="footer-head">灯光市人民政府</h4>
+        <p class="footer-line">由市民共建</p>
+      </div>
+      <div class="footer-col">
+        <h4 class="footer-head">市政</h4>
+        <a href="index.html#gov" class="footer-link">公告</a>
+        <a href="index.html#data" class="footer-link">城市数据</a>
+        <a href="index.html#service" class="footer-link">市民服务</a>
+      </div>
+      <div class="footer-col">
+        <h4 class="footer-head">更多</h4>
+        <a href="admin-v37.html" class="footer-link">🔐 管理入口</a>
+        <a href="hotel.html" class="footer-link">🏨 树上酒店</a>
+        <a href="dm.html" class="footer-link">💬 私信</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 灯光市人民政府 · 由市民共建 | 本站为作品展示 · 与 Mojang/Microsoft 无关</span>
     </div>
   </div>
+</footer>
 
-  <!-- v37.7: 我最近的市民留言 (仅登录玩家) -->
-  <div class="profile-card my-messages-card" id="myMessagesCard" style="display:none">
-    <!-- JS 渲染 -->
-  </div>
-
-  <!-- v40: 我最近的报名 (酒店/驾照/赛道/赛车场 4 端点并发拉) -->
-  <div class="profile-card my-bookings-card" id="myBookingsCard" style="display:none">
-    <!-- JS 渲染 -->
-  </div>
-
-  <!-- 账号安全 / 通行密钥管理（仅本人可见） -->
-  <div class="profile-card passkey-card" id="passkeyCard" style="display:none">
-    <div class="passkey-head">🔑 账号安全 · 通行密钥 (Passkey)</div>
-    <div class="passkey-body">
-      <p class="passkey-desc">
-        通行密钥用 Touch ID / Face ID / Windows Hello 登录，<b>无需输密码</b>，抗钓鱼。
-      </p>
-      <div id="passkeyList" class="passkey-list"></div>
-      <button id="addPasskeyBtn" type="button" class="passkey-add-btn">
-        ➕ 添加通行密钥
-      </button>
-      <p id="passkeyMsg" class="passkey-msg muted"></p>
-    </div>
-  </div>
-
-  <!-- v47: 赛道成绩 + 排行榜 -->
-  <div class="profile-card" id="raceCard" style="display:none">
-    <div class="passkey-head">🏁 赛道成绩</div>
-    <div class="passkey-body">
-      <p class="passkey-desc">上报你在国际赛车场的圈速，进入排行榜跟全城玩家 PK！</p>
-      <div id="raceContent">载入中…</div>
-    </div>
-  </div>
-
-  <!-- v47: 驾照模拟题库 -->
-  <div class="profile-card" id="examCard" style="display:none">
-    <div class="passkey-head">📝 驾照模拟题库</div>
-    <div class="passkey-body">
-      <p class="passkey-desc">考前去模拟题库里练手，错了的题自动进"错题本"反复练习。</p>
-      <div id="examContent">载入中…</div>
-    </div>
-  </div>
-
-  <!-- v47: 通知订阅 -->
-  <div class="profile-card" id="subCard" style="display:none">
-    <div class="passkey-head">🔔 通知订阅</div>
-    <div class="passkey-body">
-      <p class="passkey-desc">勾选订阅后，新公告/你的留言被回复/新私信会通过站内通知推送给你。</p>
-      <div id="subContent">载入中…</div>
-    </div>
-  </div>
-
-  <!-- v47: 市民身份卡 -->
-  <div class="profile-card" id="citizenCard" style="display:none">
-    <div class="passkey-head">🪪 我的市民身份卡</div>
-    <div class="passkey-body">
-      <p class="passkey-desc">点下面的按钮生成你的专属市民卡，可以下载发到 MC 服务器群跟小伙伴炫一下！</p>
-      <button id="genCardBtn" class="btn btn-primary">🎴 生成我的市民卡</button>
-      <div id="citizenCardPreview" style="margin-top:14px"></div>
-    </div>
+<!-- 登录 Modal (复用主页) -->
+<div class="modal-mask" id="loginMask" style="display:none">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <button class="modal-close" id="loginClose" aria-label="关闭">×</button>
+    <h3 id="loginTitle" class="modal-text-center modal-title-center">玩家登录</h3>
+    <p class="modal-msg-inline" id="loginMsg">登录后可发留言、订酒店、报名赛车</p>
+    <form id="loginForm" class="modal-form">
+      <label><span>账号</span><input type="text" id="loginUsername" required autocomplete="username" /></label>
+      <label id="loginEmailRow" style="display:none"><span>邮箱（注册用）</span><input type="email" id="loginEmail" autocomplete="email" /></label>
+      <label id="loginPasswordRow"><span>密码</span><input type="password" id="loginPassword" autocomplete="current-password" /></label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="loginModeLogin">已有账号</button>
+        <button type="button" class="btn btn-ghost" id="loginModeRegister">注册新号</button>
+        <button type="submit" class="btn btn-primary" id="loginSubmit">登录</button>
+      </div>
+    </form>
+    <p class="login-back-home">管理员请去 <a href="admin-v37.html">/admin.html</a> 登录</p>
   </div>
 </div>
 
-<script src="js/toast.js?v=20260829-toast"></script>
-<script type="module" src="js/page/profile/entry.js?v=v46-fix-modules"></script>
+<script src="js/toast.js?v=20260905-v50-0"></script>
+<script type="module" src="js/page/profile/entry.js?v=20260905-v50-0"></script>
 </body>
 </html>

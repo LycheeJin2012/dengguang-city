@@ -1,41 +1,29 @@
-// v45 重写: 子页 (hotel/profile/dm) 共享工具
-import { $, escHtml, GET, POST, PATCH, DEL } from '../home/util.js?v=v46-fix-modules';
-export { $, escHtml, GET, POST, PATCH, DEL };
+// v50: 子页 (hotel/profile/dm) 共享工具 — 复用 home/util 的所有 export + 子页专用 helper
+export { $, esc as escHtml, GET, POST, PATCH, DELETE as DEL, safeRender } from '../home/util.js?v=20260905-v50-0';
 
-// 子页通用 nav 渲染 (基于 home/header 的逻辑简化, 但独立文件不依赖 home/header 的循环引用)
-export function renderSubpageNav(slot, me, isCombined) {
-  if (!slot) return;
-  if (!me) {
-    slot.innerHTML = `<a href="index.html" class="nav-login-link">返回首页登录</a>`;
-    return;
-  }
-  const adminLink = isCombined
-    ? `<a href="admin.html" class="nav-logout-link nav-admin-link">🛡️ 管理后台</a>`
-    : '';
-  slot.innerHTML = `
-    <span class="nav-user-name">👤 ${escHtml(me.username)}</span>
-    ${adminLink}
-    <a href="dm.html" class="nav-logout-link">📨 私信</a>
-    <a href="profile.html" class="nav-logout-link">${isCombined ? '我的主页' : '主页'}</a>
-    <a href="#" id="navLogout" class="nav-logout-link">登出</a>
-  `;
-  slot.querySelector('#navLogout')?.addEventListener('click', async e => {
-    e.preventDefault();
-    if (isCombined) {
-      try { await POST('/api/init?action=admin-logout', {}); } catch (e2) {}
-      location.href = 'index.html';
-    } else {
-      try { await DEL('/api/login'); } catch (e2) {}
-      location.href = 'index.html';
-    }
-  });
-}
-
-// 短时间 (HH:MM or MM-DD)
+// 子页通用: 短时间格式
 export function shortTime(iso) {
   if (!iso) return '';
   const d = new Date(iso + (iso.includes('Z') ? '' : 'Z'));
   const now = new Date();
   if (d.toDateString() === now.toDateString()) return d.toTimeString().slice(0, 5);
   return d.toISOString().slice(5, 10);
+}
+
+// 子页通用: render user slot (subpage navbar)
+export async function renderSubpageUserSlot() {
+  const slot = document.getElementById('navUserSlot');
+  if (!slot) return null;
+  let me = null;
+  try { const d = await GET('/api/auth/me'); me = d.player || d.user || null; } catch (e) { me = null; }
+  if (!me) {
+    slot.innerHTML = `<button class="btn btn-ghost btn-sm" data-open-login>登录</button>`;
+    slot.querySelector('[data-open-login]')?.addEventListener('click', () => {
+      const m = document.getElementById('loginMask');
+      if (m) { m.style.display = ''; document.body.style.overflow = 'hidden'; }
+    });
+    return null;
+  }
+  slot.innerHTML = `<a href="profile.html" class="nav-user">${me.avatar_emoji || '👤'} ${me.username}</a>`;
+  return me;
 }
