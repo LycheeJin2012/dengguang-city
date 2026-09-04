@@ -1,39 +1,49 @@
-// v45 重写: 公共页入口 (ES module)
-// 拆 11 个 home/ 子模块, 启动顺序:
-//   1. 视觉 (clouds, reveal, hero) - 立刻挂 scroll/resize
-//   2. 数据加载 (announcements, messages, gallery, services)
+// v50: 公共页入口 (ES module)
+// 启动顺序:
+//   1. 视觉 (theme 已在 <head> 后挂浮动按钮 / navbar toggle 立即挂)
+//   2. 数据加载 (announcements, public messages, gallery, services, kart, license, hotel)
 //   3. 玩家登录态 (header, auth, signin, forms)
-import { bindClouds } from './home/clouds.js';
-import { bindReveal } from './home/reveal.js';
-import { bindAll as bindHero } from './home/hero.js';
-import { loadAnnouncements } from './home/announcements.js';
-import { loadPublicMessages } from './home/messages.js';
-import { loadGallery } from './home/gallery.js';
-import { loadHotelRooms, loadKartSpecs, loadLicenseReqs, bindAll as bindForms } from './home/forms.js';
-import { bindAll as bindHeader } from './home/header.js';
-import { bindAll as bindAuth } from './home/auth.js';
-import { loadSigninBadge, openSigninModal } from './home/signin.js';
+//   4. 通用 modal (form mask / lightbox / login mask)
 
-// 暴露到 window (兼容 HTML inline onclick, e.g. data-stat 触发)
+import { bindClouds } from './home/clouds.js?v=20260905-v50-0';
+import { bindReveal } from './home/reveal.js?v=20260905-v50-0';
+import { bindAll as bindHero } from './home/hero.js?v=20260905-v50-0';
+import { loadAnnouncements } from './home/announcements.js?v=20260905-v50-0';
+import { loadPublicMessages } from './home/messages.js?v=20260905-v50-0';
+import { loadGallery } from './home/gallery.js?v=20260905-v50-0';
+import { bindAll as bindForms, loadHotelRooms, loadKartSpecs, loadLicenseReqs, loadScenery } from './home/forms.js?v=20260905-v50-0';
+import { bindAll as bindHeader } from './home/header.js?v=20260905-v50-0';
+import { bindAll as bindAuth } from './home/auth.js?v=20260905-v50-0';
+import { loadSigninBadge, openSigninModal } from './home/signin.js?v=20260905-v50-0';
+import { bindLightbox, bindGenericForm, bindLogin } from './home/ui.js?v=20260905-v50-0';
+
 window.openSigninModal = openSigninModal;
+window.openForm = (kind) => {
+  // 通用报名 modal: kind = 'kartSignup' | 'license' | 'hotelBook'
+  if (window._openGenericForm) window._openGenericForm(kind);
+};
 
 (async function boot() {
-  // 1. 视觉: scroll/resize 不阻塞, 立即挂
+  // 1. 视觉
   bindClouds();
   bindReveal();
   bindHero();
+  bindLightbox();
 
-  // 2. 数据加载: 拉后端数据覆盖 hardcoded 草拟
+  // 2. 数据加载
   loadAnnouncements();
   loadPublicMessages();
   loadGallery();
+  loadScenery();
   loadHotelRooms();
   loadKartSpecs();
   loadLicenseReqs();
   loadSigninBadge();
 
-  // 3. 交互绑定: 表单 + 玩家状态
+  // 3. 交互绑定
   bindForms();
   bindHeader();
   bindAuth();
+  bindGenericForm();
+  bindLogin();
 })();

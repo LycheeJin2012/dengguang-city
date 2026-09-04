@@ -1,82 +1,47 @@
-// v45 重写: 首页图集 (gallery + lightbox)
-import { $, escHtml, GET } from './util.js?v=v46-fix-modules';
-
-let _lbImages = [];
-let _lbIdx = 0;
+// v50: 图集 — 拉 /api/gallery 渲染
+import { $, esc, GET, safeRender } from './util.js?v=20260905-v50-0';
+import { openLightbox } from './ui.js?v=20260905-v50-0';
 
 export async function loadGallery() {
-  const grid = $('#galleryGrid');
-  if (!grid) return;
-  try {
-    const d = await GET('/api/gallery');
-    const list = d.items || d.gallery || [];
-    if (!list.length) {
-      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🖼️</div><p>暂无图集</p></div>';
+  const box = $('#galleryGrid');
+  const filterBar = $('#galleryFilterBar');
+  if (!box) return;
+  await safeRender(async () => {
+    let items = [];
+    try {
+      const d = await GET('/api/gallery?limit=60');
+      items = d.gallery || d.items || [];
+    } catch (e) { items = []; }
+    if (!items.length) {
+      box.innerHTML = '<div class="empty-state"><div class="empty-icon">📸</div><p>暂无图集</p><small>市政厅尚未发布实景图</small></div>';
+      if (filterBar) filterBar.innerHTML = '';
       return;
     }
-    grid.innerHTML = list.map((g, i) => {
-      const url = g.file_url || g.image_url || '';
-      const label = g.label || g.title || '';
-      return `<div class="gallery-item" data-i="${i}">
-        <img src="${escHtml(url)}" alt="${escHtml(label)}" class="gallery-thumb" loading="lazy" />
-        <div class="gallery-meta">
-          <span class="gallery-label">${escHtml(label)}</span>
-          <span class="gallery-num">#${g.num || g.id}</span>
-        </div>
-      </div>`;
-    }).join('');
-    _lbImages = list.map(g => g.file_url || g.image_url).filter(Boolean);
-    grid.querySelectorAll('.gallery-item').forEach(el => {
-      el.addEventListener('click', () => openLb(+el.dataset.i));
-    });
-  } catch (e) {
-    grid.innerHTML = `<div class="empty-state"><p>加载失败: ${escHtml(e.message)}</p></div>`;
-  }
-}
-
-export function openLb(i) {
-  if (!_lbImages.length) return;
-  _lbIdx = i;
-  let lb = document.getElementById('lightbox');
-  if (!lb) {
-    lb = document.createElement('div');
-    lb.id = 'lightbox';
-    lb.className = 'lightbox';
-    lb.innerHTML = `
-      <button class="lb-close" id="lbClose">✕</button>
-      <button class="lb-prev" id="lbPrev">‹</button>
-      <button class="lb-next" id="lbNext">›</button>
-      <img id="lbImg" alt="" />
-      <div class="lb-counter" id="lbCounter"></div>`;
-    document.body.appendChild(lb);
-    lb.querySelector('#lbClose').onclick = closeLb;
-    lb.querySelector('#lbPrev').onclick = () => navLb(-1);
-    lb.querySelector('#lbNext').onclick = () => navLb(1);
-    lb.addEventListener('click', e => { if (e.target === lb) closeLb(); });
-    document.addEventListener('keydown', e => {
-      if (lb.classList.contains('visible')) {
-        if (e.key === 'Escape') closeLb();
-        else if (e.key === 'ArrowLeft') navLb(-1);
-        else if (e.key === 'ArrowRight') navLb(1);
-      }
-    });
-  }
-  updateLb();
-  lb.classList.add('visible');
-  document.body.style.overflow = 'hidden';
-}
-export function closeLb() {
-  const lb = document.getElementById('lightbox');
-  if (lb) lb.classList.remove('visible');
-  document.body.style.overflow = '';
-}
-export function navLb(delta) {
-  _lbIdx = (_lbIdx + delta + _lbImages.length) % _lbImages.length;
-  updateLb();
-}
-function updateLb() {
-  const lb = document.getElementById('lightbox');
-  if (!lb) return;
-  lb.querySelector('#lbImg').src = _lbImages[_lbIdx];
-  lb.querySelector('#lbCounter').textContent = `${_lbIdx + 1} / ${_lbImages.length}`;
+    // 分类筛选
+    const cats = ['全部', ...new Set(items.map(i => i.category || '其他'))];
+    if (filterBar) {
+      filterBar.innerHTML = cats.map((c, i) => `<button class="btn btn-ghost btn-sm${i === 0 ? ' active' : ''}" data-cat="${esc(c === '全部' ? '' : c)}">${esc(c)}</button>`).join('');
+      filterBar.onclick = e => {
+        const btn = e.target.closest('[data-cat]');
+        if (!btn) return;
+        [...filterBar.children].forEach(c => c.classList.toggle('active', c === btn));
+        const cat = btn.dataset.cat;
+        render(items.filter(i => !cat || i.category === cat));
+      };
+    }
+    render(items);
+    function render(list) {
+      box.innerHTML = list.map((it, i) => `
+        <figure class="card gallery-item" data-i="${i}">
+          <div class="gallery-img"><img src="${esc(it.url || it.thumb || '')}" alt="${esc(it.title || '')}" loading="lazy" /></div>
+          <figcaption class="gallery-cap">${esc(it.title || '')}</figcaption>
+        </figure>
+      `).join('');
+      box.onclick = e => {
+        const fig = e.target.closest('.gallery-item');
+        if (!fig) return;
+        openLightbox(list.map(it => ({ url: it.url || it.thumb, title: it.title })), +fig.dataset.i);
+      };
+    }
+  });
 }

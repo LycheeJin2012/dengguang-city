@@ -1,83 +1,75 @@
-// v45 重写: 公共页 (home) 共享工具
-// 替换 main.js 顶部的 escapeHtml / formatTime / relativeTime 等散落的 helper
+// v50: 通用 helpers
+export const $ = (s, c) => (c || document).querySelector(s);
+export const $$ = (s, c) => Array.from((c || document).querySelectorAll(s));
 
-// HTML escape (双保险, 同时处理 5 个字符)
-export function escHtml(s) {
-  return String(s == null ? '' : s)
-    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+export function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
 }
 
-// ISO 时间格式化 (YYYY-MM-DD HH:MM, 本地时区)
-export function fmtDate(s) {
-  if (!s) return '—';
-  const d = new Date(s);
-  const p = n => String(n).padStart(2, '0');
-  return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
-    ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+export function fmt(time) {
+  if (!time) return '';
+  const d = new Date(time);
+  if (isNaN(d)) return String(time);
+  const now = new Date();
+  const diff = (now - d) / 1000;
+  if (diff < 60) return '刚刚';
+  if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
+  if (diff < 86400 * 7) return `${Math.floor(diff / 86400)} 天前`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// 相对时间 (3 分钟前 / 2 小时前 / 昨天)
-export function relativeTime(iso) {
-  if (!iso) return '';
-  const t = new Date(iso).getTime();
-  const diff = Date.now() - t;
-  if (diff < 60_000) return '刚刚';
-  if (diff < 3600_000) return Math.floor(diff / 60_000) + ' 分钟前';
-  if (diff < 86400_000) return Math.floor(diff / 3600_000) + ' 小时前';
-  if (diff < 7 * 86400_000) return Math.floor(diff / 86400_000) + ' 天前';
-  return fmtDate(iso).slice(0, 10);
+export async function GET(url) {
+  const r = await fetch(url, { credentials: 'include' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
 }
-
-// fetch + JSON + cookie
-export async function api(method, path, body) {
-  const opts = { method, credentials: 'include', headers: {} };
-  if (body !== undefined) {
-    opts.headers['Content-Type'] = 'application/json';
-    opts.body = JSON.stringify(body);
-  }
-  const r = await fetch(path, opts);
-  const d = await r.json().catch(() => ({}));
-  // 401 是 "未登录" 业务状态, 不 throw, 让调用方处理 (d.error 也忽略)
-  // 5xx + 4xx 其他 + d.error 仍 throw (真错误)
-  if (r.status === 401) return d;
-  if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
-  return d;
-}
-export const GET = (p, b) => api('GET', p, b);
-export const POST = (p, b) => api('POST', p, b);
-export const PATCH = (p, b) => api('PATCH', p, b);
-export const DEL = (p, b) => api('DELETE', p, b);
-
-// DOM helpers
-export const $ = s => document.querySelector(s);
-export const $$ = s => Array.from(document.querySelectorAll(s));
-
-// 数字动画 (easeOutQuad)
-export function animateNumber(el, target, dur = 800) {
-  if (!el) return;
-  const start = parseInt(el.textContent, 10) || 0;
-  const t0 = performance.now();
-  function tick(now) {
-    const p = Math.min(1, (now - t0) / dur);
-    const eased = 1 - (1 - p) * (1 - p);
-    el.textContent = Math.floor(start + (target - start) * eased).toLocaleString();
-    if (p < 1) requestAnimationFrame(tick);
-  }
-  requestAnimationFrame(tick);
-}
-
-// 渲染时错误显式抛出 (不静默吞)
-// v46: 改用 .empty-state-error class, 不内联 style (符合 UI-REDESIGN-SPEC.md)
-export function safeRender(fn, container) {
-  return fn().catch(e => {
-    console.error('[safeRender]', e);
-    if (container) {
-      container.innerHTML = `<div class="empty-state empty-state-error">
-        <div class="empty-icon">⚠️</div>
-        <p class="empty-state-title">渲染失败</p>
-        <p class="empty-sub">${escHtml(e.message || String(e))}</p>
-      </div>`;
-    }
+export async function POST(url, body) {
+  const r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body || {}),
   });
+  if (!r.ok) {
+    let msg = 'HTTP ' + r.status;
+    try { const j = await r.json(); msg = j.error || j.message || msg; } catch (_) {}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+export async function PATCH(url, body) {
+  const r = await fetch(url, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(body || {}),
+  });
+  if (!r.ok) {
+    let msg = 'HTTP ' + r.status;
+    try { const j = await r.json(); msg = j.error || j.message || msg; } catch (_) {}
+    throw new Error(msg);
+  }
+  return r.json();
+}
+export async function DELETE(url) {
+  const r = await fetch(url, { method: 'DELETE', credentials: 'include' });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+export async function safeRender(fn) {
+  const box = arguments[1] || null;
+  try { await fn(); }
+  catch (e) {
+    console.warn('[safeRender] error:', e.message);
+    if (window._toast) window._toast('加载失败: ' + e.message, 'error');
+    if (box) box.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>加载失败: ${e.message}</p></div>`;
+  }
+}
+
+export function cacheClear(prefix) {
+  // v50 stub: 未来接 IndexedDB cache
 }

@@ -1,16 +1,17 @@
-// v45 重写: 滚动入场动画 (IntersectionObserver 加 .reveal-in)
-import { $$ } from './util.js?v=v46-fix-modules';
-
+// v50: scroll reveal — IntersectionObserver 进入视口时加 .is-visible
 export function bindReveal() {
-  const els = $$('.reveal');
-  if (!els.length || !('IntersectionObserver' in window)) return;
-  const obs = new IntersectionObserver(entries => {
+  const els = document.querySelectorAll('.section, .card, .stat-card');
+  if (!('IntersectionObserver' in window)) {
+    els.forEach(e => e.classList.add('is-visible'));
+    return;
+  }
+  const io = new IntersectionObserver(entries => {
     entries.forEach(e => {
       if (e.isIntersecting) {
-        e.target.classList.add('reveal-in');
-        obs.unobserve(e.target);
+        e.target.classList.add('is-visible');
+        io.unobserve(e.target);
       }
     });
-  }, { rootMargin: '0px 0px -10% 0px', threshold: 0.1 });
-  els.forEach(el => obs.observe(el));
+  }, { threshold: 0.05, rootMargin: '50px' });
+  els.forEach(e => io.observe(e));
 }
