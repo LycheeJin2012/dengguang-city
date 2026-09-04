@@ -386,6 +386,37 @@
   color: #fff !important;
 }
 [data-theme="dark"] .sky-bg-overlay { background: linear-gradient(180deg, rgba(26,26,38,0) 0%, rgba(26,26,38,.65) 100%); }
+/* v48.5++++: 暗色下 hero 主标题加霓虹辉光 (绿色 + 暖橙) */
+[data-theme="dark"] .title-main {
+  color: var(--c-grass-light) !important;
+  text-shadow:
+    4px 0 0 var(--c-shadow),
+    0 4px 0 var(--c-shadow),
+    4px 4px 0 var(--c-shadow),
+    0 0 20px rgba(149, 212, 64, 0.6),
+    0 0 40px rgba(149, 212, 64, 0.35) !important;
+}
+[data-theme="dark"] .title-line {
+  color: var(--c-text) !important;
+  text-shadow:
+    2px 2px 0 var(--c-shadow),
+    0 0 12px rgba(255, 201, 64, 0.4) !important;
+}
+[data-theme="dark"] .title-sub {
+  color: var(--c-gold) !important;
+  text-shadow:
+    2px 2px 0 var(--c-shadow),
+    0 0 14px rgba(255, 201, 64, 0.5),
+    0 0 28px rgba(255, 201, 64, 0.25) !important;
+}
+[data-theme="dark"] .hero-tag {
+  background: var(--c-gold) !important;
+  color: var(--c-dark) !important;
+  border-color: var(--c-border) !important;
+  box-shadow:
+    4px 4px 0 var(--c-shadow),
+    0 0 12px rgba(255, 201, 64, 0.4) !important;
+}
 [data-theme="dark"] .top-strip { background: var(--c-redstone) !important; color: #fff !important; }
 [data-theme="dark"] .navbar,
 [data-theme="dark"] .admin-header {
@@ -414,6 +445,56 @@
 [data-theme="dark"] .signin-day.signed { background: var(--c-grass-dark) !important; color: #fff !important; }
 [data-theme="dark"] .signin-day.today { border-color: var(--c-gold) !important; }
 [data-theme="dark"] .sky-bg-img { opacity: 0.55; }
+[data-theme="dark"] .sky-bg {
+  background:
+    radial-gradient(ellipse at 50% 100%, rgba(108, 177, 255, 0.18) 0%, transparent 60%),
+    linear-gradient(180deg, #0a0d1c 0%, #1a1a2e 50%, #25253a 100%) !important;
+}
+/* v48.5++++: 暗色模式 hero 顶部加星点 (用 box-shadow 多点) */
+[data-theme="dark"] .sky-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 22% 32%, #fff 50%, transparent 51%),
+    radial-gradient(2px 2px at 34% 12%, #cfe6ff 50%, transparent 51%),
+    radial-gradient(1px 1px at 45% 42%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 58% 22%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 68% 8%, #fff 50%, transparent 51%),
+    radial-gradient(2px 2px at 78% 36%, #cfe6ff 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 14%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 15% 48%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 28% 56%, #fff 50%, transparent 51%),
+    radial-gradient(2px 2px at 42% 64%, #cfe6ff 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 52%, #fff 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 72% 68%, #fff 50%, transparent 51%),
+    radial-gradient(1px 1px at 85% 58%, #fff 50%, transparent 51%),
+    radial-gradient(2px 2px at 95% 72%, #cfe6ff 50%, transparent 51%);
+  opacity: 0.7;
+  animation: v48-stars-twinkle 4s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes v48-stars-twinkle {
+  from { opacity: 0.4; }
+  to   { opacity: 0.85; }
+}
+/* v48.5++++: 暗色 hero 顶部一颗发光小月亮 */
+[data-theme="dark"] .sky-bg::after {
+  content: '';
+  position: absolute;
+  top: 80px;
+  right: 18%;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #f5f3d8 0%, #ddd8a8 60%, #b8b07a 100%);
+  box-shadow:
+    0 0 18px rgba(245, 243, 216, 0.4),
+    0 0 36px rgba(245, 243, 216, 0.2),
+    inset -3px -3px 6px rgba(0, 0, 0, 0.18);
+  pointer-events: none;
+}
 [data-theme="dark"] .login-brand { background: var(--c-surface-2) !important; }
 [data-theme="dark"] .login-form-wrap { background: var(--c-page) !important; }
 [data-theme="dark"] .admin-tabs .tab { color: var(--c-text-muted) !important; }
@@ -3368,17 +3449,18 @@ textarea { resize: vertical; min-height: 90px; }
 }
 .footer-cols a:hover { color: var(--c-gold); }
 .footer-bottom {
-  background: #050508;
+  background: #0a0a14;
   padding: 16px 0;
   border-top: 2px solid var(--c-stone-dark);
   font-family: var(--font-cn);
   font-size: 12px;
-  color: var(--c-stone);
+  color: #b8a8a0;  /* v48.5++++: 提亮 footer 文字对比度, 之前 var(--c-stone) 在 dark bg 上几乎看不见 */
+  letter-spacing: 0.5px;
 }
 .footer-bottom .container {
   display: flex; flex-wrap: wrap; gap: 12px; align-items: center;
 }
-.footer-bottom .sep { color: var(--c-stone-dark); }
+.footer-bottom .sep { color: #6a5a48; }
 .footer-bottom .admin-link {
   color: var(--c-gold);
   font-family: var(--font-pixel);
@@ -3515,7 +3597,18 @@ textarea { resize: vertical; min-height: 90px; }
 .pmm-head-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .pmm-time { font-size: 11px; color: var(--c-stone, #999); }
 .pmm-content { font-size: 13px; line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
-.pmm-reply { margin-top: 6px; padding: 6px 10px; background: #f7eed0; border-left: 3px solid var(--c-grass, #70ad34); font-size: 12px; }
+.pmm-reply { margin-top: 6px; padding: 6px 10px; background: #f7eed0; border-left: 4px solid var(--c-grass-dark, #2d6e1f); font-size: 12px; }
+.pm-content {
+  font-family: var(--font-cn);
+  font-size: 14px;
+  color: var(--c-dark);
+  line-height: 1.7;
+  background: #fff;  /* 浅色下用纯白, 与 .pm-item 米黄形成清晰对比, 避免与"人工已回复"绿徽章色相冲突 */
+  border: 2px solid var(--c-stone);
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  word-break: break-word;
+}
 .pmm-type-tag { display: inline-block; font-family: var(--font-pixel); font-size: 9px; letter-spacing: 1px; padding: 2px 6px; border: 2px solid var(--c-black); background: var(--c-gold, #ffd23f); color: var(--c-black); line-height: 1.4; }
 
 /* v38: 评论 emoji 选择条 */
