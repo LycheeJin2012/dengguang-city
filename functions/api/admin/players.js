@@ -1,124 +1,39 @@
-// GET    /api/admin/players            - 管理员看玩家列表（含状态, 绿宝石, 最后活跃时间）
-// GET    /api/admin/players?status=... - 按状态过滤
-// PATCH  /api/admin/players?id=X&action=approve|reject|reset|rename
-//        body: { new_password?: string, new_username?: string }
-// v40.4: 合并 init.js?action=admin-player-list 字段 (emeralds + last_session), 所有 admin 共用此端点
-// v43.2: 用 LEFT JOIN 替换 correlated subquery (sessions 表全表扫描是慢的元凶)
-import { ok, err, hashPassword, isNonEmpty, isUsername, readToken, getSession } from '../../_shared.js';
+// v50: admin 玩家管理
+import { ok, err, handleOptions, requireAdmin, parseListParams } from './_helpers.js';
 
-// v43.2: 启动时确保 sessions(player_id) 索引存在 (idempotent, CREATE INDEX IF NOT EXISTS)
-// 第一次访问会建索引 (~50ms), 之后 worker 复用 globalThis 跳过
-async function ensureSessionsIndex(env) {
-  if (globalThis.__lc_idx_sessions_player) return;
-  globalThis.__lc_idx_sessions_player = true;
-  try {
-    await env.DB.prepare('CREATE INDEX IF NOT EXISTS idx_sessions_player ON sessions(player_id)').run();
-  } catch (e) { /* 索引已存在或权限不足, 吞掉 */ }
-}
-
-async function requireAdmin(context) {
-  const { env, request } = context;
-  const token = readToken(request);
-  const sess = await getSession(env, token);
-  if (!sess || !sess.admin_id) return null;
-  const admin = await env.DB.prepare('SELECT id, role FROM admins WHERE id = ?').bind(sess.admin_id).first();
-  if (!admin) return null;
-  return admin;
-}
+export const onRequestOptions = () => handleOptions();
 
 export async function onRequestGet(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
-  await ensureSessionsIndex(env);
-  const admin = await requireAdmin(context);
-  if (!admin) return err(401, '需要管理员登录');
-
-  const url = new URL(request.url);
-  const statusFilter = url.searchParams.get('status'); // 'pending' | 'active' | 'rejected' | null
-  const searchQ = (url.searchParams.get('q') || '').trim();
-
-  // v43.2: LEFT JOIN + GROUP BY 替换 correlated subquery
-  // 之前 (SELECT MAX(s.expires_at) FROM sessions s WHERE s.player_id = p.id) 每个玩家都全表扫 sessions
-  // 现在 1 次 JOIN + GROUP BY, 利用 idx_sessions_player 索引, 速度提升 5-20x
-  let sql = `
-    SELECT
-      p.id, p.username, p.email, p.game_id, p.status, p.avatar_emoji, p.bio, p.created_at,
-      COALESCE(p.emeralds, 0) AS emeralds,
-      MAX(s.expires_at) AS last_session
-    FROM players p
-    LEFT JOIN sessions s ON s.player_id = p.id
-    WHERE 1=1
-  `;
-  const args = [];
-  if (statusFilter && ['pending', 'active', 'rejected'].includes(statusFilter)) {
-    sql += ' AND p.status = ?';
-    args.push(statusFilter);
-  }
-  if (searchQ) {
-    sql += ' AND (p.username LIKE ? OR p.email LIKE ? OR p.game_id LIKE ?)';
-    args.push('%' + searchQ + '%', '%' + searchQ + '%', '%' + searchQ + '%');
-  }
-  sql += ' GROUP BY p.id ORDER BY p.created_at DESC LIMIT 500';
-
-  const rows = await env.DB.prepare(sql).bind(...args).all();
-  return ok({ players: rows.results, count: rows.results.length }, { headers: { 'Cache-Control': 'private, max-age=10' } });
+  const r = await requireAdmin(context);
+  if (r.error) return r.error;
+  const p = parseListParams(request);
+  const where = []; const binds = [];
+  if (p.status) { where.push('p.status = ?'); binds.push(p.status); }
+  if (p.q) { where.push('(p.username LIKE ? OR p.email LIKE ? OR p.game_id LIKE ?)'); binds.push('%' + p.q + '%', '%' + p.q + '%', '%' + p.q + '%'); }
+  const whereSql = where.length ? 'WHERE ' + where.join(' AND ') : '';
+  const rows = await env.DB.prepare(
+    `SELECT p.id, p.username, p.email, p.game_id, p.status, p.avatar_emoji, p.emeralds, p.last_login_at, p.created_at, p.linked_admin_id
+     FROM players p ${whereSql} ORDER BY p.created_at DESC LIMIT ?`
+  ).bind(...binds, p.limit).all();
+  return ok({ players: rows.results || [] });
 }
 
 export async function onRequestPatch(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
-  const me = await requireAdmin(context);
-  if (!me) return err(401, '需要管理员登录');
-
-  const url = new URL(request.url);
-  const id = parseInt(url.searchParams.get('id') || '0', 10);
-  const action = url.searchParams.get('action') || '';
+  const r = await requireAdmin(context);
+  if (r.error) return r.error;
+  const id = parseInt(new URL(request.url).searchParams.get('id') || '0', 10);
   if (!id) return err(400, 'id 必填');
-
-  const target = await env.DB.prepare('SELECT id, username, status FROM players WHERE id = ?').bind(id).first();
-  if (!target) return err(404, '玩家不存在');
-
-  let body = {};
-  try { body = await request.json(); } catch (e) { /* 可能没有 body */ }
-
-  if (action === 'approve') {
-    if (target.status === 'active') return ok({ id, status: 'active', message: '已是激活状态' });
-    await env.DB.prepare("UPDATE players SET status = 'active' WHERE id = ?").bind(id).run();
-    return ok({ id, status: 'active', message: '已批准' });
-  }
-  if (action === 'reject') {
-    if (target.status === 'rejected') return ok({ id, status: 'rejected', message: '已是拒绝状态' });
-    await env.DB.prepare("UPDATE players SET status = 'rejected' WHERE id = ?").bind(id).run();
-    return ok({ id, status: 'rejected', message: '已拒绝' });
-  }
-  if (action === 'reset') {
-    const np = (body.new_password || '').trim();
-    if (!isNonEmpty(np, 128) || np.length < 8) return err(400, '新密码至少 8 位');
-    const { hash, salt } = await hashPassword(np);
-    await env.DB.prepare('UPDATE players SET password_hash = ?, salt = ? WHERE id = ?')
-      .bind(hash, salt, id).run();
-    return ok({ id, message: '密码已重置' });
-  }
-  if (action === 'rename') {
-    // v17.10: super 改玩家 username (玩家真实账号名)
-    if (me.role !== 'super') return err(403, '只有 super 管理员可改玩家名字');
-    const newName = (body.new_username || '').trim();
-    if (!isUsername(newName)) return err(400, '新用户名格式不对 (2-32 字符, 不含 @ 和控制字符)');
-    if (newName === target.username) return ok({ id, username: target.username, message: '未变化' });
-    // 检查是否已被其他玩家占用
-    const exist = await env.DB.prepare('SELECT id FROM players WHERE username = ? AND id != ?')
-      .bind(newName, id).first();
-    if (exist) return err(409, '用户名已被占用: ' + newName);
-    // 只在 game_id 等于旧 username 时同步 (玩家未自定义 game_id)
-    const cur = await env.DB.prepare('SELECT username, game_id FROM players WHERE id = ?').bind(id).first();
-    if (cur.game_id === cur.username) {
-      await env.DB.prepare('UPDATE players SET username = ?, game_id = ? WHERE id = ?')
-        .bind(newName, newName, id).run();
-    } else {
-      await env.DB.prepare('UPDATE players SET username = ? WHERE id = ?')
-        .bind(newName, id).run();
-    }
-    return ok({ id, username: newName, game_id_synced: cur.game_id === cur.username, message: '已修改' });
-  }
-  return err(400, '未知 action，应为 approve | reject | reset | rename');
+  const body = await request.json().catch(() => ({}));
+  const sets = []; const binds = [];
+  if (body.status) { sets.push('status = ?'); binds.push(body.status); }
+  if (body.emeralds !== undefined) { sets.push('emeralds = ?'); binds.push(Number(body.emeralds) || 0); }
+  if (body.linked_admin_id !== undefined) { sets.push('linked_admin_id = ?'); binds.push(body.linked_admin_id || null); }
+  if (!sets.length) return err(400, '没有可更新字段');
+  binds.push(id);
+  await env.DB.prepare(`UPDATE players SET ${sets.join(', ')} WHERE id = ?`).bind(...binds).run();
+  return ok({ id, updated: true });
 }

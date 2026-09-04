@@ -1,22 +1,11 @@
-// v27: 赛车场管理独立端点 (替换 manage-data.js 的 keys=tracks)
-// GET /api/admin/manage-track → {ok:true, tracks:[...]}
-import { err } from '../../_shared.js';
+// v50: admin 赛道管理 alias
+import { ok, err, getSession, readToken } from '../_helpers.js';
 
 export async function onRequestGet(context) {
-  const { env } = context;
-  if (!env.DB) return err('D1 not configured', 500);
-  try {
-    const r = await env.DB.prepare('SELECT * FROM race_tracks ORDER BY sort_order, id').all();
-    return new Response(JSON.stringify({
-      ok: true,
-      tracks: r.results || [],
-    }), {
-      headers: {
-        'Content-Type': 'application/json; charset=utf-8',
-        'Cache-Control': 'no-store',
-      },
-    });
-  } catch (e) {
-    return err('SQL 失败: ' + (e.message || e), 500);
-  }
+  const { env, request } = context;
+  if (!env.DB) return err(500, 'D1 binding DB not configured');
+  const sess = await getSession(env, readToken(request));
+  if (!sess?.admin_id) return err(401, '需要管理员');
+  const rows = await env.DB.prepare('SELECT * FROM race_tracks ORDER BY sort_order, id').all();
+  return ok({ tracks: rows.results || [] });
 }

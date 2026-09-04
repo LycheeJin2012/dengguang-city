@@ -1,16 +1,14 @@
-// GET /api/admin/dashboard — 后台 1 次拉所有 tab 状态数据
-// 替换: 之前 admin 启动时需要 9 个串行 render() 各自 fetch
-// 优化: 8 个 COUNT 查询 Promise.all 并发, 1 个 GET 出全部 badge 数字
-import { ok, err, readToken, getSession } from '../../_shared.js';
+// v50: admin 后台 dashboard 聚合 (8 COUNT 并发)
+import { ok, err, handleOptions, requireAdmin } from './_helpers.js';
+
+export const onRequestOptions = () => handleOptions();
 
 export async function onRequestGet(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
-  const token = readToken(request);
-  const sess = await getSession(env, token);
-  if (!sess || !sess.admin_id) return err(401, '需要管理员登录');
+  const r = await requireAdmin(context);
+  if (r.error) return r.error;
 
-  // 8 个独立 COUNT 并发, 一次性拿到所有 tab 徽章
   const [
     msgUnread, msgTotal,
     playerPending, playerActive, playerRejected,

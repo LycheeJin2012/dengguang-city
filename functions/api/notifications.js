@@ -1,60 +1,39 @@
-// v47: 站内通知 API
-// GET    /api/notifications?my=1&unread=1   - 我的通知
-// PATCH  /api/notifications?id=X&action=read   - 标记已读
-// PATCH  /api/notifications?action=read-all     - 全部已读
+// v50: 通知 log (玩家鉴权)
+import { ok, err, handleOptions, getSession, readToken } from '../_shared.js';
 
-import { ok, err, readToken, getSession } from '../_shared.js';
+export const onRequestOptions = () => handleOptions();
 
 export async function onRequestGet(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
+  const sess = await getSession(env, readToken(request));
+  if (!sess?.player_id) return err(401, '请先登录');
   const url = new URL(request.url);
-  if (url.searchParams.get('my') !== '1') return err(400, '仅支持 my=1');
-  const token = readToken(request);
-  const sess = await getSession(env, token);
-  if (!sess || !sess.player_id) return err(401, '请先登录');
-
   const unreadOnly = url.searchParams.get('unread') === '1';
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '50', 10), 200);
-  const rows = unreadOnly
-    ? await env.DB.prepare(
-        `SELECT id, type, title, body, link, read_at, created_at FROM notification_log
-         WHERE player_id = ? AND read_at IS NULL
-         ORDER BY created_at DESC LIMIT ?`
-      ).bind(sess.player_id, limit).all()
-    : await env.DB.prepare(
-        `SELECT id, type, title, body, link, read_at, created_at FROM notification_log
-         WHERE player_id = ?
-         ORDER BY created_at DESC LIMIT ?`
-      ).bind(sess.player_id, limit).all();
+  const where = unreadOnly ? 'WHERE player_id = ? AND is_read = 0' : 'WHERE player_id = ?';
+  const rows = await env.DB.prepare(`SELECT id, topic, payload, is_read, created_at FROM notification_log ${where} ORDER BY created_at DESC LIMIT 100`).bind(sess.player_id).all();
+  return ok({ notifications: rows.results || [] });
+}
 
-  const unreadCount = await env.DB.prepare(
-    'SELECT COUNT(*) AS n FROM notification_log WHERE player_id = ? AND read_at IS NULL'
-  ).bind(sess.player_id).first();
-  return ok({ notifications: rows.results, unread_count: unreadCount?.n || 0 });
+export async function onRequestPost(context) {
+  // 内部用: 推一条通知给 player
+  const { env, request } = context;
+  if (!env.DB) return err(500, 'D1 binding DB not configured');
+  const sess = await getSession(env, readToken(request));
+  if (!sess?.admin_id) return err(401, '需要管理员');
+  const body = await request.json().catch(() => ({}));
+  if (!body.player_id || !body.topic) return err(400, 'player_id/topic 必填');
+  await env.DB.prepare(
+    'INSERT INTO notification_log (player_id, topic, payload) VALUES (?, ?, ?)'
+  ).bind(body.player_id, body.topic, JSON.stringify(body.payload || {})).run();
+  return ok({ sent: true });
 }
 
 export async function onRequestPatch(context) {
   const { env, request } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
-  const token = readToken(request);
-  const sess = await getSession(env, token);
-  if (!sess || !sess.player_id) return err(401, '请先登录');
-  const url = new URL(request.url);
-
-  if (url.searchParams.get('action') === 'read-all') {
-    await env.DB.prepare(
-      `UPDATE notification_log SET read_at = datetime('now')
-       WHERE player_id = ? AND read_at IS NULL`
-    ).bind(sess.player_id).run();
-    return ok({ read_all: true });
-  }
-
-  const id = parseInt(url.searchParams.get('id') || '0', 10);
-  if (!id) return err(400, 'id 必填');
-  await env.DB.prepare(
-    `UPDATE notification_log SET read_at = datetime('now')
-     WHERE id = ? AND player_id = ? AND read_at IS NULL`
-  ).bind(id, sess.player_id).run();
-  return ok({ id, read: true });
+  const sess = await getSession(env, readToken(request));
+  if (!sess?.player_id) return err(401, '请先登录');
+  await env.DB.prepare('UPDATE notification_log SET is_read = 1 WHERE player_id = ? AND is_read = 0').bind(sess.player_id).run();
+  return ok({ marked: true });
 }

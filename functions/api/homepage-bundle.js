@@ -1,9 +1,6 @@
-// GET /api/homepage-bundle — 公开首页一次性拉 5 表 + player count
-// 拆自 functions/api/init.js (v40.2)
-// v42: 自动 seed 2 条默认 track (国际赛车场 + 备用), 保证前端 select 有选项
-import { ok, err } from '../_shared.js';
+// v50: 首页一次性拉所有公开数据 (hotels / rooms / tracks / licenseReqs / announcements / player count)
+import { ok, err, handleOptions } from '../_shared.js';
 
-// v42: 默认赛道 seed (首次访问时插入, 已存在则跳过)
 const DEFAULT_TRACKS = [
   { name: '🌐 国际赛车场·主赛道', length_km: 5.2, laps: 12, difficulty: '高级',
     description: '5.2km 12 圈, 含 4 个发夹弯 + 1 个长直道 + 2 个高速弯。需 A 级以上驾照。',
@@ -14,7 +11,6 @@ const DEFAULT_TRACKS = [
 ];
 
 async function seedDefaultTracks(env) {
-  // v42: 按 name 查重, 缺哪个补哪个 (不会重复插)
   for (const t of DEFAULT_TRACKS) {
     const exist = await env.DB.prepare('SELECT id FROM race_tracks WHERE name = ?').bind(t.name).first();
     if (exist) continue;
@@ -24,20 +20,20 @@ async function seedDefaultTracks(env) {
   }
 }
 
+export const onRequestOptions = () => handleOptions();
+
 export async function onRequestGet(context) {
   const { env } = context;
   if (!env.DB) return err(500, 'D1 binding DB not configured');
-
-  // 先 seed 再查 (idempotent)
   await seedDefaultTracks(env);
 
   const [_hotels, _rooms, _tracks, _licenseReqs, _announcements, _playerCount] = await Promise.all([
     env.DB.prepare('SELECT * FROM hotels ORDER BY sort_order, id').all(),
     env.DB.prepare('SELECT * FROM hotel_rooms ORDER BY sort_order, id').all(),
-    env.DB.prepare('SELECT * FROM race_tracks ORDER BY sort_order, id').all(),
+    env.DB.prepare('SELECT * FROM race_tracks WHERE is_active = 1 ORDER BY sort_order, id').all(),
     env.DB.prepare('SELECT * FROM license_requirements ORDER BY sort_order, id').all(),
-    env.DB.prepare('SELECT id, title, content, image_url, created_at, updated_at, created_by FROM announcements ORDER BY created_at DESC LIMIT 5').all(),
-    env.DB.prepare("SELECT COUNT(*) AS n FROM players WHERE status != 'pending' AND status != 'rejected'").all(),
+    env.DB.prepare('SELECT id, title, content, image_url, is_pinned, created_at FROM announcements ORDER BY is_pinned DESC, created_at DESC LIMIT 5').all(),
+    env.DB.prepare("SELECT COUNT(*) AS n FROM players WHERE status = 'active'").first(),
   ]);
 
   return ok({
@@ -47,7 +43,7 @@ export async function onRequestGet(context) {
       tracks: _tracks.results || [],
       licenseReqs: _licenseReqs.results || [],
       announcements: _announcements.results || [],
-      playerCount: (_playerCount.results && _playerCount.results[0] && _playerCount.results[0].n) || 0,
+      playerCount: _playerCount?.n || 0,
     }
   }, { headers: { 'Cache-Control': 'public, max-age=60' } });
 }

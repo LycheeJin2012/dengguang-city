@@ -1,32 +1,29 @@
-// v45 重写: 通行密钥 (Passkey) action 群 (10 个)
-// 从 init.js LEGACY 段 L168-247 拆出
+// v50: Passkey (WebAuthn) action 群
 import { ok, err, parseSession, resolveSubjectFromSession, resolveSubjectByUsername, getRpId, getOrigin } from '../_helpers.js';
-import {
-  passkeyRegisterStart, passkeyRegisterFinish, passkeyLoginStart, passkeyLoginFinish,
-  listPasskeys, deletePasskey
-} from '../../_shared.js';
 
 export async function onRequestPost(context) {
   const { env, request } = context;
+  if (!env.DB) return err(500, 'D1 binding DB not configured');
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || '';
 
   const { sess: _sess } = await parseSession(env, request);
   const rpId = getRpId(request);
   const origin = getOrigin(request);
-  // v46 修: register 和 login 必须用不同的 expectedOrigin.type
-  //   register 期望 clientData.type = 'webauthn.create' (navigator.credentials.create)
-  //   login    期望 clientData.type = 'webauthn.get'    (navigator.credentials.get)
-  //   之前共用一个 {type:'webauthn.create'} 导致 login 永远 throw "clientData.type 不匹配"
   const expectedOriginReg  = { type: 'webauthn.create', origin };
   const expectedOriginLogin = { type: 'webauthn.get',    origin };
+
+  // passkey helpers
+  const {
+    passkeyRegisterStart, passkeyRegisterFinish, passkeyLoginStart, passkeyLoginFinish,
+    listPasskeys, deletePasskey,
+  } = await import('../../_shared.js');
 
   try {
     if (action === 'passkey-register-start') {
       if (!_sess) return err(401, '需要先登录');
       const _subject = await resolveSubjectFromSession(env, _sess);
-      if (!_subject) return err(401, '账号不存在或已禁用');
-      // v45 修: passkeyRegisterStart 签名 (env, subject, rpId), 不要传 expectedOrigin
+      if (!_subject) return err(401, '账号不存在');
       const r = await passkeyRegisterStart(env, _subject, rpId);
       return ok({ challenge_token: r.challenge_token, publicKey: r.publicKey });
     }
@@ -35,44 +32,26 @@ export async function onRequestPost(context) {
       const _subject = await resolveSubjectFromSession(env, _sess);
       if (!_subject) return err(401, '账号不存在');
       const b = await request.json();
-      // v45 修: passkeyRegisterFinish 签名 (env, body, subject, rpId, expectedOrigin)
-      //        老 init.js 错传 (env, subject, rpId, expectedOrigin, b) 顺序乱
       const r = await passkeyRegisterFinish(env, b, _subject, rpId, expectedOriginReg);
       return ok({ id: r.id, name: r.name });
     }
     if (action === 'passkey-login-start') {
-      // v47.2 修: 支持 usernameless 模式
-      //   填 username → 精确模式 (只列该用户密钥, 404 如果账号不存在)
-      //   不填 username → 列 RP 下所有密钥, 浏览器弹选择对话框
-      // 之前这里写死 if (!_username) return err(400, 'username 必填'),
-      //   helper 函数 passkeyLoginStart 其实早就支持空 username
-      //   但路由层先卡住, helper 永远收不到空 username
       const b = await request.json().catch(() => ({}));
       const _username = (b.username || '').trim();
       if (_username) {
-        // 填了 username: 提前检查 subject 是否存在 (404 比 200 + 空 allowCredentials 更友好)
         const _subj = await resolveSubjectByUsername(env, _username);
-        if (!_subj) return err(404, '账号不存在或已禁用');
+        if (!_subj) return err(404, '账号不存在');
       }
       const r = await passkeyLoginStart(env, _username, rpId);
       return ok({ challenge_token: r.challenge_token, publicKey: r.publicKey });
     }
     if (action === 'passkey-login-finish') {
-      // v45 修: passkeyLoginFinish 实际签名 (env, body, rpId, expectedOrigin), 4 参数
-      //        函数内部自己查 passkey, 不接受 _subj / _pk 参数
-      //        老 init.js 传 6 参数是错的, 但 shared.js 多余参数会被忽略, 所以老代码"看起来" 工作
-      //        (但 _subj.id / _pk 检查跟 shared.js 内部查的重复)
-      // v46 修: 改用 expectedOriginLogin (type: 'webauthn.get'), 之前用 expectedOrigin
-      //        (type: 'webauthn.create') 导致 clientData.type 检查永远不通过
-      // v47.5: 读 body.target ('admin' | 'player' | undefined) 传给 finish
-      //   admin 端用 passkey 登录时传 'admin' → 创建 admin session (即使 passkey 绑在 player 上)
-      //   玩家端用 passkey 登录时传 'player' 或不传 → 创建 player session
       const b = await request.json();
       const _target = (b.target === 'admin' || b.target === 'player') ? b.target : undefined;
       const r = await passkeyLoginFinish(env, b, rpId, expectedOriginLogin, _target);
       if (r && r.token) {
-        // r.kind = 'player' | 'admin', r.{player|admin} 都有
-        const cookie = `lc_session=${r.token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${8 * 3600}`;
+        const { cookieFor } = await import('../../_shared.js');
+        const cookie = cookieFor(r.token);
         const _user = r.kind === 'admin' ? r.admin : r.player;
         return new Response(JSON.stringify({ ok: true, user: _user, kind: r.kind }), {
           status: 200,
@@ -95,10 +74,6 @@ export async function onRequestPost(context) {
       if (!id) return err(400, 'id 必填');
       await deletePasskey(env, id);
       return ok({ id, deleted: true });
-    }
-    if (action === 'passkey-test-start' || action === 'passkey-test-finish') {
-      // 测试现有 passkey (用于验证密钥有效性, 不登录)
-      return err(501, 'passkey-test 暂未实现, 走 /api/admin/passkey-debug');
     }
     return err(404, '未知 passkey action');
   } catch (e) {
