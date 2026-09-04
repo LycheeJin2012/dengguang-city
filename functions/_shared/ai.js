@@ -1,114 +1,96 @@
-// v45 重写: AI 自动回复 (OpenAI 兼容 + 离线兜底) + 灯灯 system 玩家
-// 从 _shared.js L183-307 拆出
-import { hashPassword } from './auth.js';
+// v50: AI 自动回复 (简化版, 关键词匹配 + 模板回复)
+// 真实 LLM 接入: 把 AI_REPLY_API_KEY 环境变量设上后, 自动走远端 API
+// 未设: 用本地关键词匹配 (无外部依赖, 离线可用)
 
-// 离线兜底回复（key 未设时用，关键词匹配，绝不返回 null）
-// 模板里不出现具体数字/人名/电话/活动，全部诚实留白
-function offlineReply(userMessage, context) {
-  const text = String(userMessage || '').toLowerCase();
-  if (context === 'dm') {
-    if (/你好|hi|hello|嗨|您好/.test(text)) return '你好呀！我是灯灯，AI 客服灯灯～有什么事尽管说。';
-    if (/怎么|如何|怎样|哪里|在哪|几个|什么时候/.test(text)) return '这个问题建议你 DM 找市政厅管理员人工答复，我作为 AI 给不出具体流程。';
-    if (/谢谢|感谢|thanks/.test(text)) return '不客气～有事随时来找我！';
-    if (/投诉|不满|生气|垃圾/.test(text)) return '抱歉让你不满意了。我会把你的反馈转给市政厅管理员，请稍等。';
-    if (/建议|想要|希望|能不能/.test(text)) return '已收到你的建议！我会转告市政厅管理员。';
-    return '收到！我会尽快转告市政厅管理员跟进。';
-  }
-  if (/投诉|不满|生气|垃圾|差评/.test(text)) return '抱歉让你不满意了。您的投诉已记录，市政厅会在近期内处理。';
-  if (/故障|坏|报错|不行|不能|失效/.test(text)) return '已收到您的故障反馈，市政厅会尽快安排核实修复，请保持联系。';
-  if (/申请|报名|想|希望|想要|能不能/.test(text)) return '已收到您的申请/请求，市政厅会在近期内审阅，请关注本留言或 DM 跟进。';
-  if (/建议|想法|意见|提议/.test(text)) return '感谢您的宝贵建议！市政厅已记录，会在下次市政会议上讨论。';
-  if (/你好|您好|hi|hello/.test(text)) return '欢迎来到灯光市！请详细描述您的诉求，市政厅会尽快处理。';
-  if (/谢谢|感谢|thanks/.test(text)) return '不客气！服务市民是市政厅的本职工作。';
-  return '感谢您的留言！市政厅已收到，会尽快处理。如需详细沟通，请用 DM 私信联系。';
-}
+const REPLY_TEMPLATES = [
+  {
+    keywords: ['酒店', '预订', '房间', '订房', '树上'],
+    reply: '🏨 树上酒店正在筹建中, 房型与定价由合作社定稿后正式上线。\n您可以先到主页 [树上酒店] 区块看草案, 开业后会发公告通知。',
+  },
+  {
+    keywords: ['赛车', '赛道', '试车', '试跑', '驾照', '开车'],
+    reply: '🏎️ 国际赛车场 (拟建) 与驾照考试 (B/A/S 三级) 都在筹备中。\n请关注主页 [国际赛车场] 和 [驾照考试] 区块, 上线后会发公告 + 站内通知。',
+  },
+  {
+    keywords: ['注册', '登录', '账号', '密码', '忘记'],
+    reply: '👤 注册: 主页右上角 [登录] → [注册新号] (2-20 字符 + 邮箱)。\n忘记密码: 登录页点 [忘记密码] 走邮件重置。\n推荐: 注册通行密钥 (Touch ID/Face ID), 抗钓鱼, 无需记密码。',
+  },
+  {
+    keywords: ['公告', '新闻', '更新', '市政', '政府'],
+    reply: '📜 所有正式公告会发在主页 [市政公告] 区块 + 站内通知订阅。\n勾选 [通知订阅] 后, 新公告会推送给你。',
+  },
+  {
+    keywords: ['玩家', '市民', '注册市民', '加入'],
+    reply: '👋 欢迎加入灯光市! 注册流程: 主页右上 [登录] → [注册新号]。\n注册后你就是正式市民, 可以留言、订酒店、报名赛车。',
+  },
+  {
+    keywords: ['bug', '问题', '错误', '建议', '反馈', '投诉'],
+    reply: '🐛 感谢反馈! 您可以: \n1) 在本页追加描述\n2) 到主页 [📬 联系我们] 提交工单\n3) 加入 [💬 私信] 联系灯灯 (AI 客服)\n市政厅会尽快回复。',
+  },
+  {
+    keywords: ['你好', '您好', 'hi', 'hello', '在吗', '在么'],
+    reply: '👋 你好! 我是灯灯, 灯光市 AI 客服。\n可以问我关于: 酒店预订 / 赛车场 / 驾照考试 / 注册流程 / 公告订阅。\n紧急问题请用 [📬 联系我们] 提交工单, 管理员会看到。',
+  },
+];
 
-// AI 自动回复助手（OpenAI 兼容 chat completions）
-// 未配置 OPENAI_API_KEY 时走离线兜底（保证体验不中断）
-export async function aiAutoReply(env, userMessage, context = 'message') {
-  const text = String(userMessage || '').trim().slice(0, 100);
-  if (!text) return null;
-  if (!env || !env.OPENAI_API_KEY) {
-    return offlineReply(text, context);
-  }
-  const baseUrl = (env.OPENAI_BASE_URL || 'https://api.minimax.chat/v1').replace(/\/+$/, '');
-  const model = env.OPENAI_MODEL || 'abab6.5s-chat';
+const FALLBACK_REPLY = '🤖 灯灯收到您的留言了! 但我没看懂具体问题。\n建议: \n1) 描述更具体 (例如 "怎么预订酒店" / "怎么报名赛车")\n2) 到 [📬 联系我们] 提交工单, 管理员会人工回复\n3) 等我接入更聪明的 AI 模型, 敬请期待 ✨';
 
-  const sys = context === 'dm'
-    ? `你是「灯光市 AI 客服」灯灯。灯光市是一座 Minecraft 服务器上的像素城市。
-
-服务市民，解答问题、指引流程、收建议。
-要求：
-1. 亲切、简洁、像邻家小助手
-2. **总字数必须控制在 100 字以内**（含标点）
-3. 严禁编造任何具体信息：数字、电话、邮箱、人名、活动名、日期等
-4. 不确定的事请说"请联系市政厅人工客服"
-5. 不要前缀（"灯灯："等），直接正文
-6. 纯文本，不要 markdown 格式`
-    : `你是「灯光市」市政厅 AI 助手。灯光市是一座 Minecraft 服务器上的像素城市。
-
-任务是给市民留言写一封**市政厅回复**。
-要求：
-1. 亲切、正式、礼貌
-2. 先承认回应，再给下一步
-3. **总字数必须控制在 100 字以内**（含标点）
-4. 严禁编造任何具体信息：数字、电话、邮箱、人名、活动名、日期等
-5. 不确定的事引导走 DM 私信或加备注
-6. 不要前缀（"市政厅："等），直接正文
-7. 纯文本，不要 markdown 格式`;
-
+// 远端 LLM 接入 (有 API key 时)
+async function remoteAIReply({ name, content, apiKey, apiUrl }) {
   try {
-    const resp = await fetch(`${baseUrl}/chat/completions`, {
+    const r = await fetch(apiUrl, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${env.OPENAI_API_KEY}`,
-      },
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${apiKey}` },
       body: JSON.stringify({
-        model,
+        model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: sys },
-          { role: 'user', content: text },
+          { role: 'system', content: '你是灯光市 AI 客服 "灯灯"。回答简短 (50 字内), 友好, 用 emoji。不要编造不存在的信息。' },
+          { role: 'user', content: `${name}: ${content}` },
         ],
-        temperature: 0.7,
         max_tokens: 200,
+        temperature: 0.7,
       }),
     });
-    if (!resp.ok) return offlineReply(text, context);
-    const data = await resp.json().catch(() => ({}));
-    let draft = (data?.choices?.[0]?.message?.content || '').trim();
-    if (!draft) return offlineReply(text, context);
-    if (draft.length > 100) draft = draft.slice(0, 100);
-    return draft;
+    if (!r.ok) return null;
+    const d = await r.json();
+    return d.choices?.[0]?.message?.content || null;
   } catch (e) {
-    return offlineReply(text, context);
+    console.warn('[ai] remote LLM failed:', e?.message || e);
+    return null;
   }
 }
 
-// 获取/创建 AI 客服 system 玩家（username = '灯灯客服'）
-export async function getOrCreateAiBot(env) {
-  const fixedUsername = '灯灯客服';
-  let row = await env.DB.prepare(
-    "SELECT id, username, avatar_emoji FROM players WHERE username = ?"
-  ).bind(fixedUsername).first();
-  if (row) return row;
-  const randomPwd = crypto.getRandomValues(new Uint8Array(24)).toString() + Date.now();
-  const { hash, salt } = await hashPassword(randomPwd, null);
-  try {
-    await env.DB.prepare(
-      "INSERT INTO players (username, email, password_hash, salt, game_id, status, bio, avatar_emoji) VALUES (?, ?, ?, ?, ?, 'active', ?, ?)"
-    ).bind(
-      fixedUsername, 'ai-bot@system.local', hash, salt, 'AI_BOT',
-      '我是 AI 客服灯灯，由市政厅训练。', '🤖'
-    ).run();
-  } catch (e) {
-    row = await env.DB.prepare(
-      "SELECT id, username, avatar_emoji FROM players WHERE username = ?"
-    ).bind(fixedUsername).first();
-    if (row) return row;
-    throw e;
+// 本地关键词匹配
+function localAIReply(content) {
+  for (const t of REPLY_TEMPLATES) {
+    if (t.keywords.some(k => content.includes(k))) return t.reply;
   }
-  return await env.DB.prepare(
-    "SELECT id, username, avatar_emoji FROM players WHERE username = ?"
-  ).bind(fixedUsername).first();
+  return FALLBACK_REPLY;
+}
+
+/**
+ * AI 自动回复
+ * @param {object} opts - { name, content }
+ * @param {object} env - Cloudflare env (可选, 读 AI_REPLY_API_KEY)
+ * @returns {Promise<string|null>}
+ */
+export async function aiAutoReply(opts, env) {
+  const { name = '市民', content = '' } = opts || {};
+  if (!content || content.length < 2) return null;
+  // 优先远端 LLM
+  if (env?.AI_REPLY_API_KEY && env?.AI_REPLY_API_URL) {
+    const r = await remoteAIReply({ name, content, apiKey: env.AI_REPLY_API_KEY, apiUrl: env.AI_REPLY_API_URL });
+    if (r) return r;
+  }
+  return localAIReply(content);
+}
+
+// 拿 / 创建 AI bot player (DM 列表里灯灯 bot)
+// v50: 简化, 不强制创建, 由调用方决定
+export async function getOrCreateAiBot(env) {
+  if (!env?.DB) return null;
+  const exist = await env.DB.prepare('SELECT id, username, avatar_emoji FROM players WHERE username = ?').bind('灯灯').first();
+  if (exist) return exist;
+  // 不强制创建, 返回 null 让调用方处理
+  return null;
 }

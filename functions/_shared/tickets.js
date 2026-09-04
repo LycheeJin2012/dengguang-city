@@ -1,4 +1,4 @@
-// v47: 工单 helper (供 messages/bookings/license/circuit/kart POST 双写调用)
+// v50: 工单 helper (供 messages/bookings/license/circuit/kart POST 双写调用)
 // 双写: 原表写成功后, 再写一张 tickets 记录, admin 后台统一处理
 // 失败不回滚原表 (工单是辅助视图, 丢一两条不影响核心功能)
 
@@ -106,4 +106,35 @@ export async function ticketFromKart(env, ks, sourceId) {
     }),
     priority: 'low',
   });
+}
+
+// v50 新增: 从 service 通用工单 (玩家在主页 / contact 提交)
+export async function ticketFromService(env, { player_id, title, body, priority = 'normal' }) {
+  return createTicket(env, {
+    player_id, category: 'service', source_table: 'tickets', source_id: null,
+    title: title.slice(0, 100), body: body.slice(0, 2000), priority,
+  });
+}
+
+// v50 新增: 关闭工单 (admin 操作)
+export async function closeTicket(env, id) {
+  if (!env?.DB) return false;
+  await env.DB.prepare("UPDATE tickets SET status = 'closed', updated_at = datetime('now') WHERE id = ?").bind(id).run();
+  return true;
+}
+
+// v50 新增: 派单给 admin
+export async function assignTicket(env, id, adminId) {
+  if (!env?.DB) return false;
+  await env.DB.prepare("UPDATE tickets SET assignee_id = ?, updated_at = datetime('now') WHERE id = ?").bind(adminId, id).run();
+  return true;
+}
+
+// v50 新增: 状态流转
+export async function updateTicketStatus(env, id, status) {
+  const valid = ['open', 'in_progress', 'resolved', 'closed'];
+  if (!valid.includes(status)) return false;
+  if (!env?.DB) return false;
+  await env.DB.prepare("UPDATE tickets SET status = ?, updated_at = datetime('now') WHERE id = ?").bind(status, id).run();
+  return true;
 }
