@@ -1,0 +1,9 @@
+v50 §8: 修 admin tab 渲染失败 — announcements.js import 错
+
+v50 §3 写 announcements.js 时, 把 core.js 的 export name 写错:
+  import { ..., DELETE as DEL, ... } from '../core.js?v=v46-fix-modules';
+但 core.js 实际 export 的是 `DEL` (老 v45 命名), 没有 `DELETE`。
+ES module import 报 'Importing binding name DELETE is not found'。
+修: 改用 `DEL` 直接 import。
+
+影响: 切到公告管理 tab 时整个 _TAB_RENDER 失败, safeRender 在 active pane 显示 '渲染失败'。
