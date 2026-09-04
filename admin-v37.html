@@ -16,11 +16,9 @@
   <link rel="preload" href="assets/fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="preload" href="assets/fonts/vt323.woff2" as="font" type="font/woff2" crossorigin />
   <link rel="stylesheet" href="css/fonts.css" />
-  <link rel="preload" href="css/style.css?v=20260903-v48-5" as="style" />
-  <link rel="preload" href="css/admin.css?v=20260903-v48-5" as="style" />
+  <link rel="preload" href="css/style.css?v=20260904-v49-0" as="style" />
   <link rel="preload" href="js/admin.js?v=v46-fix-modules" as="script" />
-  <link rel="stylesheet" href="css/style.css?v=20260903-v48-5" />
-  <link rel="stylesheet" href="css/admin.css?v=20260903-v48-5" />
+  <link rel="stylesheet" href="css/style.css?v=20260904-v49-0" />
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2370ad34'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='10' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='3' y='10' width='3' height='3' fill='%23ffd23f'/%3E%3C/svg%3E" />
   <!-- v14：localStorage 模式。数据只存本机浏览器,不同设备/不同人互不可见。 -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"><meta http-equiv="Pragma" content="no-cache"><meta http-equiv="Expires" content="0"></head>
@@ -174,7 +172,7 @@
         <span>🛞 卡丁车 <span id="ticketCount_kart">0</span></span>
         <span>🛎️ 服务 <span id="ticketCount_service">0</span></span>
       </div>
-      <div id="ticketList" class="msg-list v48-stagger">
+      <div id="ticketList" class="msg-list v49-stagger">
         <!-- JS 渲染 -->
       </div>
       <div id="ticketEmpty" class="empty-state" style="display:none">
@@ -215,7 +213,7 @@
         <label><input type="radio" name="playerFilter" value="rejected" /> 已拒绝 <span id="cntPlayerRejected">0</span></label>
         <label><input type="radio" name="playerFilter" value="all" /> 全部 <span id="cntPlayerAll">0</span></label>
       </div>
-      <div id="playerList" class="msg-list v48-stagger">
+      <div id="playerList" class="msg-list v49-stagger">
         <!-- JS 渲染 -->
       </div>
       <div id="playerEmpty" class="empty-state" style="display:none">
@@ -274,7 +272,7 @@
             <option>其他时间</option>
           </select>
         </div>
-        <div id="kartList" class="msg-list v48-stagger">
+        <div id="kartList" class="msg-list v49-stagger">
           <!-- JS 渲染 -->
         </div>
         <div id="kartEmpty" class="empty-state" style="display:none">
@@ -313,7 +311,7 @@
             <option>S 级（高级 / 职业）</option>
           </select>
         </div>
-        <div id="circuitList" class="msg-list v48-stagger">
+        <div id="circuitList" class="msg-list v49-stagger">
           <!-- JS 渲染 -->
         </div>
         <div id="circuitEmpty" class="empty-state" style="display:none">
@@ -351,7 +349,7 @@
         </div>
       </div>
       <p class="pane-hint">监管所有玩家私信对话，可以灯灯客服身份代为回复，或查看 AI 客服"转人工"建议的对话。</p>
-      <div id="dmList" class="msg-list v48-stagger"></div>
+      <div id="dmList" class="msg-list v49-stagger"></div>
       <div id="dmEmpty" class="empty-state" style="display:none">
         <div class="empty-icon">💬</div>
         <p>暂无私信记录</p>
@@ -376,7 +374,7 @@
         <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="kart">赛道</button>
         <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="nature">自然</button>
       </div>
-      <div id="galGrid" class="gal-grid v48-stagger"></div>
+      <div id="galGrid" class="gal-grid v49-stagger"></div>
       <div id="galEmpty" class="empty-state" style="display:none">
         <div class="empty-icon">🖼️</div>
         <p>暂无图片, 点右上"+ 添加图片"开始</p>
@@ -409,7 +407,7 @@
   </main>
 
   <!-- ============== 模态：添加/重置密码 ============== -->
-  <div class="modal-mask v48-anim-pop" id="modalMask" style="display:none">
+  <div class="modal-mask v49-pop" id="modalMask" style="display:none">
     <div class="modal">
       <div class="modal-head">
         <h3 id="modalTitle">—</h3>

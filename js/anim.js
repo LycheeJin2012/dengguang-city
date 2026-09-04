@@ -1,16 +1,16 @@
-// v48: 通用动效 helper — 给动态渲染的 DOM 元素加入场动画
-// 用法: import { animateIn } from './anim.js?v=v46-fix-modules';
-//   animateIn(el)            // 单个元素 fade-in-up
-//   animateIn(nodeList)      // 多个, 错开 0.05s
+// v49: 通用动效 helper — 给动态渲染的 DOM 元素加入场动画
+// 用法: import { animateIn } from './anim.js';
+//   animateIn(el)                         // 单个元素 fade-in-up
+//   animateIn(nodeList)                   // 多个, 错开 50ms
 //   animateIn(el, { stagger: 100, anim: 'pop' })  // 100ms 错开, 用 pop 动画
+//
+// v49 简化:
+//   - 只保留 fade-up + pop 两个核心动效 (v48 时代 6 个动效砍到 2 个)
+//   - CSS 端的 .v49-stagger 容器已自动错开, JS 端只剩手动微调用
 
 const ANIMS = {
-  fade: 'v48-anim-fade',
-  'fade-up': 'v48-anim-fade-up',
-  pop: 'v48-anim-pop',
-  bounce: 'v48-anim-bounce',
-  'slide-r': 'v48-anim-slide-r',
-  shake: 'v48-anim-shake',
+  'fade-up': 'v49-fade-up',
+  pop: 'v49-pop',
 };
 
 export function animateIn(els, opts = {}) {
@@ -21,8 +21,8 @@ export function animateIn(els, opts = {}) {
   arr.forEach((el, i) => {
     if (!el) return;
     // 跳过已经动画过的 (避免 re-render 时重复)
-    if (el.dataset.v48Animated) return;
-    el.dataset.v48Animated = '1';
+    if (el.dataset.v49Animated) return;
+    el.dataset.v49Animated = '1';
     el.style.animationDelay = (i * stagger) + 'ms';
     el.classList.add(cls);
   });
@@ -62,11 +62,13 @@ export function observeIn(el, opts = {}) {
 }
 
 // 全局 window 暴露 (admin 不用 ES module 时也能用)
+// v49 主名 + v48 兼容别名 (旧 JS 可能还在 import v48Anim)
 if (typeof window !== 'undefined') {
-  window.v48Anim = { animateIn, staggerIn, observeIn, openModal };
+  window.v49Anim = { animateIn, staggerIn, observeIn, openModal, closeModal };
+  window.v48Anim = window.v49Anim;  // 兼容
 }
 
-// v48.5: 统一 modal 打开动画 — 复用 v48-anim-pop 弹簧入场
+// v49: 统一 modal 打开动画 — 复用 v49-pop 弹簧入场
 // 每次打开都重新触发 (remove + reflow + add 强制重启动画)
 export function openModal(mask, opts = {}) {
   if (!mask) return;
@@ -76,7 +78,7 @@ export function openModal(mask, opts = {}) {
   // 2) 找内部 .modal 卡片, 重启动画
   const card = mask.querySelector('.modal, .modal-card, .signin-modal, .passkey-toast');
   const target = card || mask;
-  const anim = opts.anim || 'v48-anim-pop';
+  const anim = opts.anim || 'v49-pop';
   target.classList.remove(anim);
   void target.offsetWidth;  // 强制 reflow
   target.classList.add(anim);
@@ -97,6 +99,7 @@ export function openModal(mask, opts = {}) {
     }, { once: true });
   }
 }
+
 export function closeModal(mask) {
   if (!mask) return;
   mask.style.display = 'none';
