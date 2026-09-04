@@ -1,64 +1,53 @@
-// v45 重写: Session (cookie/token) 管理 + 账号合并
-// 从 _shared.js L67-148 拆出
-import { randomToken } from './auth.js';
+// v50: Session 管理 (D1 sessions 表)
+import { randomToken, hashPassword } from './auth.js';
+import { handleOptions } from './http.js';
 
-const SESSION_TTL_HOURS = 8;
+const COOKIE_NAME = 'lc_session';
+const SESSION_TTL = 8 * 3600; // 8h
 
-export async function createSession(env, playerId = null, adminId = null) {
-  const token = randomToken(24);
-  const expires = new Date(Date.now() + SESSION_TTL_HOURS * 3600_000).toISOString();
-  await env.DB.prepare(
-    'INSERT INTO sessions (token, player_id, admin_id, expires_at) VALUES (?, ?, ?, ?)'
-  ).bind(token, playerId, adminId, expires).run();
-  return { token, expires_at: expires };
+export function readToken(request) {
+  const cookie = request.headers.get('Cookie') || '';
+  for (const part of cookie.split(/;\s*/)) {
+    const [k, v] = part.split('=');
+    if (k === COOKIE_NAME) return v;
+  }
+  // 也支持 Authorization: Bearer <token>
+  const auth = request.headers.get('Authorization');
+  if (auth && auth.startsWith('Bearer ')) return auth.slice(7);
+  return null;
 }
 
-// v17.9 修订: 合并管理员和玩家账号 (双向 linked_player_id / linked_admin_id)
-// 合并后:
-//   - 玩家侧登录(玩家密码或玩家通行密钥)自动获得 combined session (含 admin 身份)
-//   - 退出管理无需验证(只销毁 admin 身份, 保留 player session)
-//   - 通行密钥在任一边注册, 登录时即可在两边使用
-//   - 两边密码不共享: 改 admin 密码不影响 player, 改 player 密码不影响 admin
-export async function mergeAccount(env, adminId, playerId) {
-  if (!adminId || !playerId) throw new Error('mergeAccount: adminId 和 playerId 必填');
-  const _p = await env.DB.prepare("SELECT id, username, status FROM players WHERE id = ? AND status = 'active'").bind(playerId).first();
-  if (!_p) throw new Error('玩家不存在或未激活');
-  const _a = await env.DB.prepare("SELECT id, username FROM admins WHERE id = ?").bind(adminId).first();
-  if (!_a) throw new Error('管理员不存在');
-  const _pOld = await env.DB.prepare('SELECT linked_admin_id FROM players WHERE id = ?').bind(playerId).first();
-  if (_pOld?.linked_admin_id && _pOld.linked_admin_id !== adminId) {
-    throw new Error(`玩家 ${_p.username} 已绑定其他管理员 (id=${_pOld.linked_admin_id}), 请先解绑`);
-  }
-  const _aOld = await env.DB.prepare('SELECT linked_player_id FROM admins WHERE id = ?').bind(adminId).first();
-  if (_aOld?.linked_player_id && _aOld.linked_player_id !== playerId) {
-    throw new Error(`管理员 ${_a.username} 已绑定其他玩家 (id=${_aOld.linked_player_id}), 请先解绑`);
-  }
-  await env.DB.prepare('UPDATE admins SET linked_player_id = ? WHERE id = ?').bind(playerId, adminId).run();
-  await env.DB.prepare('UPDATE players SET linked_admin_id = ? WHERE id = ?').bind(adminId, playerId).run();
-  return { admin_id: adminId, player_id: playerId, admin_username: _a.username, player_username: _p.username };
+export function cookieFor(token) {
+  return `${COOKIE_NAME}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${SESSION_TTL}`;
 }
 
-export async function unmergeAccount(env, adminId, playerId) {
-  if (!adminId || !playerId) throw new Error('unmergeAccount: adminId 和 playerId 必填');
+export async function createSession(env, { player_id = null, admin_id = null, ip = null, ua = null, combined = false }) {
+  const token = randomToken(32);
   await env.DB.prepare(
-    'UPDATE admins SET linked_player_id = NULL WHERE id = ? AND linked_player_id = ?'
-  ).bind(playerId, adminId).run();
-  await env.DB.prepare(
-    'UPDATE players SET linked_admin_id = NULL WHERE id = ? AND linked_admin_id = ?'
-  ).bind(adminId, playerId).run();
+    `INSERT INTO sessions (token, player_id, admin_id, combined, ip, user_agent, expires_at)
+     VALUES (?, ?, ?, ?, ?, ?, datetime('now', '+${SESSION_TTL} seconds'))`
+  ).bind(token, player_id, admin_id, combined ? 1 : 0, ip, ua).run();
+  return token;
 }
 
 export async function getSession(env, token) {
   if (!token) return null;
   const row = await env.DB.prepare(
-    'SELECT token, player_id, admin_id, expires_at FROM sessions WHERE token = ?'
+    `SELECT s.*, p.username AS player_username, p.status AS player_status, a.username AS admin_username, a.role AS admin_role
+     FROM sessions s
+     LEFT JOIN players p ON p.id = s.player_id
+     LEFT JOIN admins a ON a.id = s.admin_id
+     WHERE s.token = ? AND s.expires_at > datetime('now')`
   ).bind(token).first();
   if (!row) return null;
-  if (new Date(row.expires_at) < new Date()) {
-    await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
-    return null;
-  }
-  return row;
+  return {
+    token: row.token,
+    player_id: row.player_id,
+    admin_id: row.admin_id,
+    combined: !!row.combined,
+    player: row.player_id ? { id: row.player_id, username: row.player_username, status: row.player_status } : null,
+    admin: row.admin_id ? { id: row.admin_id, username: row.admin_username, role: row.admin_role } : null,
+  };
 }
 
 export async function destroySession(env, token) {
@@ -66,14 +55,16 @@ export async function destroySession(env, token) {
   await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
 }
 
-export function readToken(request) {
-  const h = request.headers.get('X-Session-Token') || request.headers.get('Authorization');
-  if (h) {
-    if (h.startsWith('Bearer ')) return h.slice(7);
-    return h;
-  }
-  const cookie = request.headers.get('Cookie') || '';
-  const m = cookie.match(/(?:^|;\s*)lc_session=([^;]+)/);
-  if (m) return m[1];
-  return null;
+// 合并账号: admin + player (用同一 token)
+export async function mergeAccount(env, { player_id, admin_id }) {
+  const token = randomToken(32);
+  await env.DB.prepare(
+    `INSERT INTO sessions (token, player_id, admin_id, combined, expires_at)
+     VALUES (?, ?, ?, 1, datetime('now', '+${SESSION_TTL} seconds'))`
+  ).bind(token, player_id, admin_id).run();
+  return token;
+}
+
+export async function unmergeAccount(env, token) {
+  await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
 }
