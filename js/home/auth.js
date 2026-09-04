@@ -40,9 +40,9 @@ export function openLoginModal(reason, mode) {
   if (reason && msg) msg.textContent = reason;
   setLoginMode(mode === 'register' ? 'register' : 'login');
   mask.style.display = '';
-  mask.classList.remove('v48-anim-pop'); // 重置动画, 重新触发放大弹出
+  mask.classList.remove('v49-pop'); // 重置动画, 重新触发放大弹出
   void mask.offsetWidth; // 触发 reflow
-  mask.classList.add('v48-anim-pop');
+  mask.classList.add('v49-pop');
   document.body.style.overflow = 'hidden';
   setTimeout(() => $('#loginUsername')?.focus(), 50);
 }
