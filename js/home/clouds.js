@@ -1,17 +1,17 @@
-// v45 重写: hero 云朵视差 (装饰用, 不阻塞主交互)
-import { $ } from './util.js?v=v46-fix-modules';
+// v50: 云朵背景 (v49 §15 风格, JS 端只挂随机扰动 / 视差)
+import { $ } from './util.js?v=20260905-v50-0';
 
 export function bindClouds() {
-  const clouds = document.querySelectorAll('.cloud');
-  if (!clouds.length) return;
+  // 简单视差: 滚动时 clouds 轻微位移
   let ticking = false;
-  window.addEventListener('scroll', () => {
+  document.addEventListener('scroll', () => {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(() => {
       const y = window.scrollY;
-      clouds.forEach((c, i) => {
-        c.style.transform = `translateY(${y * (0.05 + i * 0.02)}px) scale(var(--s,1))`;
+      document.querySelectorAll('.cloud').forEach((c, i) => {
+        const k = (i + 1) * 0.1;
+        c.style.transform = `translate3d(0, ${y * k}px, 0)`;
       });
       ticking = false;
     });

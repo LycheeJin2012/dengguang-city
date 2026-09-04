@@ -1,133 +1,99 @@
-// v45 重写: hotel 子页 - 预订 modal + 提交
-import { $, escHtml, POST, GET } from '../util.js?v=v46-fix-modules';
+// v50: hotel 预订 modal
+import { $, esc, POST } from '../util.js?v=20260905-v50-0';
 
-let bookRoom = null;
+let _bookRoom = null;
 
-export function openBookModal(r) {
+export function bindBook() {
   const mask = $('#bookMask');
   if (!mask) return;
-  bookRoom = r;
-  const t = $('#bookTitle'); if (t) t.textContent = `预订 · ${r.name}`;
-  const s = $('#bookSummary');
-  if (s) s.innerHTML = `
-    <div>
-      <b>${r.icon} ${r.name}</b>
-      <span class="book-room-meta">${escHtml(r.bed)} · ${r.guests}+ 人${r.price ? ' · 💎 ' + r.price + '/晚' : ''}</span>
-    </div>`;
-  const today = new Date();
-  const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
-  const dayAfter = new Date(today); dayAfter.setDate(dayAfter.getDate() + 2);
-  const bi = $('#bookIn'); if (bi) bi.value = tomorrow.toISOString().slice(0, 10);
-  const bo = $('#bookOut'); if (bo) bo.value = dayAfter.toISOString().slice(0, 10);
-  const m = $('#bookMsg'); if (m) m.textContent = '';
-  updateBookTotal();
-  mask.style.display = '';
-  document.body.style.overflow = 'hidden';
-  setTimeout(() => $('#bookName')?.focus(), 50);
-  // 自动填玩家信息 (登录态有的话)
-  prefillFromPlayer();
+  $('#bookClose')?.addEventListener('click', closeBook);
+  $('#bookCancel')?.addEventListener('click', closeBook);
+  mask.addEventListener('click', e => { if (e.target === mask) closeBook(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && mask.style.display !== 'none') closeBook(); });
+
+  $('#bookForm')?.addEventListener('submit', onSubmit);
+
+  // 监听日期变化算晚数
+  ['#bookIn', '#bookOut', '#bookBreakfast'].forEach(s => $(s)?.addEventListener('change', updateNights));
+
+  // 暴露全局让 rooms.js 调用
+  window._openBook = openBook;
 }
 
-export function closeBookModal() {
+function openBook(room) {
+  _bookRoom = room;
   const mask = $('#bookMask');
-  if (!mask) return;
-  mask.style.display = 'none';
+  $('#bookTitle').textContent = '📅 预订：' + (room.name || '房型');
+  $('#bookSummary').innerHTML = `<div><b>${esc(room.name)}</b><br/><span class="book-sub">${esc(room.view || '')} · 可住 ${esc(String(room.guests || 2))} 人</span></div><div class="summary-price">${esc(room.price || '¥?')}</div>`;
+  // 默认日期
+  const today = new Date().toISOString().slice(0, 10);
+  const tomorrow = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
+  $('#bookIn').value = today;
+  $('#bookOut').value = tomorrow;
+  $('#bookBreakfast').checked = false;
+  $('#bookMsg').textContent = '';
+  updateNights();
+  mask.style.display = '';
+  document.body.style.overflow = 'hidden';
+}
+
+function closeBook() {
+  const mask = $('#bookMask');
+  if (mask) mask.style.display = 'none';
   document.body.style.overflow = '';
 }
 
-function updateBookTotal() {
-  if (!$('#bookIn') || !$('#bookOut') || !bookRoom) return;
-  const inD = new Date($('#bookIn').value);
-  const outD = new Date($('#bookOut').value);
-  if (isNaN(inD) || isNaN(outD) || outD <= inD) {
-    const bn = $('#bookNights'); if (bn) bn.textContent = '— 请选择有效日期';
-    const bt = $('#bookTotal'); if (bt) bt.textContent = '';
-    return;
-  }
-  const nights = Math.round((outD - inD) / 86400000);
-  const persons = parseInt($('#bookGuests').value, 10) || 1;
-  const wantBf = $('#bookBreakfast')?.checked;
-  const bn = $('#bookNights');
-  if (bn) bn.textContent = `${nights} 晚 · ${persons} 人${wantBf ? ' · 含早餐' : ''}`;
-  const bt = $('#bookTotal');
-  if (bt) {
-    const total = (bookRoom.price || 0) * nights;
-    bt.textContent = `💎 ${total}（${nights} 晚 × ${bookRoom.price || 0}）`;
+function updateNights() {
+  const inD = $('#bookIn')?.value;
+  const outD = $('#bookOut')?.value;
+  const nightsEl = $('#bookNights');
+  const totalEl = $('#bookTotal');
+  if (!inD || !outD) { if (nightsEl) nightsEl.textContent = '— 晚'; return; }
+  const d = (new Date(outD) - new Date(inD)) / 86400000;
+  if (d <= 0) { if (nightsEl) nightsEl.textContent = '退房日期需晚于入住日期'; if (totalEl) totalEl.textContent = ''; return; }
+  const nights = d;
+  if (nightsEl) nightsEl.textContent = `${nights} 晚`;
+  // 估算总价
+  const breakfast = $('#bookBreakfast')?.checked;
+  const guests = Number($('#bookGuests')?.value || 1);
+  const priceText = _bookRoom?.price || '¥?';
+  const m = String(priceText).match(/(\d+)/);
+  if (m && totalEl) {
+    const base = Number(m[1]) * nights;
+    const bf = breakfast ? 10 * nights * guests : 0;
+    totalEl.textContent = `💎 估算总价：${base + bf} 💎${breakfast ? ` (含早餐 ${bf})` : ''}`;
   }
 }
 
-async function prefillFromPlayer() {
+async function onSubmit(e) {
+  e.preventDefault();
+  if (!_bookRoom) return;
+  const msg = $('#bookMsg');
+  const submit = e.target.querySelector('button[type=submit]');
+  const data = {
+    room_id: _bookRoom.id,
+    room_name: _bookRoom.name,
+    in_date: $('#bookIn').value,
+    out_date: $('#bookOut').value,
+    nights: Math.max(1, Math.round((new Date($('#bookOut').value) - new Date($('#bookIn').value)) / 86400000)),
+    persons: Number($('#bookGuests').value || 1),
+    breakfast: $('#bookBreakfast').checked ? 1 : 0,
+    name: $('#bookName').value.trim(),
+    contact: $('#bookContact').value.trim(),
+    note: $('#bookNote').value.trim(),
+  };
+  if (!data.name || !data.contact) { msg.textContent = '请填写姓名和联系方式'; msg.className = 'modal-msg err'; return; }
+  submit.disabled = true;
+  msg.textContent = '提交中...'; msg.className = 'modal-msg';
   try {
-    const d = await GET('/api/login');
-    if (d && d.ok && d.player) {
-      const n = $('#bookName'); if (n && !n.value) n.value = d.player.username;
-      const c = $('#bookContact'); if (c && !c.value && d.player.email) c.value = d.player.email;
-    }
-  } catch (e) { console.warn('[hotel] 自动填玩家信息失败', e); }
+    await POST('/api/bookings', data);
+    msg.textContent = '预订成功! 市政厅会尽快确认。'; msg.className = 'modal-msg ok';
+    if (window._toast) window._toast('预订已提交', 'success');
+    setTimeout(closeBook, 1500);
+  } catch (err) {
+    msg.textContent = '失败: ' + err.message; msg.className = 'modal-msg err';
+    if (window._toast) window._toast('失败: ' + err.message, 'error');
+  } finally {
+    submit.disabled = false;
+  }
 }
-
-export function bindBook() {
-  $('#bookClose')?.addEventListener('click', closeBookModal);
-  $('#bookCancel')?.addEventListener('click', closeBookModal);
-  const mask = $('#bookMask');
-  if (mask) mask.addEventListener('click', e => { if (e.target === mask) closeBookModal(); });
-  $('#bookIn')?.addEventListener('change', updateBookTotal);
-  $('#bookOut')?.addEventListener('change', updateBookTotal);
-  $('#bookGuests')?.addEventListener('input', updateBookTotal);
-  $('#bookBreakfast')?.addEventListener('change', updateBookTotal);
-  document.addEventListener('keydown', e => { if (mask?.style.display === '' && e.key === 'Escape') closeBookModal(); });
-
-  $('#bookForm')?.addEventListener('submit', async e => {
-    e.preventDefault();
-    if (!bookRoom) return;
-    const inD = new Date($('#bookIn').value);
-    const outD = new Date($('#bookOut').value);
-    if (isNaN(inD) || isNaN(outD) || outD <= inD) {
-      const m = $('#bookMsg'); if (m) m.textContent = '退房日期必须晚于入住日期';
-      return;
-    }
-    const nights = Math.round((outD - inD) / 86400000);
-    const name = $('#bookName').value.trim();
-    const contact = $('#bookContact').value.trim();
-    if (!name || !contact) { const m = $('#bookMsg'); if (m) m.textContent = '请填写姓名和联系方式'; return; }
-    const note = $('#bookNote').value.trim();
-    const wantBreakfast = $('#bookBreakfast')?.checked;
-    const persons = parseInt($('#bookGuests').value, 10) || 1;
-    const submitBtn = $('#bookForm').querySelector('button[type="submit"]');
-    const origText = submitBtn.textContent;
-    submitBtn.textContent = '提交中...';
-    submitBtn.disabled = true;
-    const msg = $('#bookMsg'); if (msg) msg.textContent = '';
-    try {
-      await POST('/api/bookings', {
-        room_id: bookRoom.id,
-        room_name: bookRoom.name,
-        in_date: $('#bookIn').value,
-        out_date: $('#bookOut').value,
-        nights, persons,
-        breakfast: wantBreakfast ? 1 : 0,
-        name, contact, note
-      });
-      submitBtn.textContent = '✓ 已提交（跨设备同步, 管理员会确认）';
-      submitBtn.classList.add('btn-success');
-      $('#bookForm').reset();
-      setTimeout(() => { submitBtn.classList.remove('btn-success'); closeBookModal(); }, 1500);
-    } catch (err) {
-      if (err.message && /登录|会话/.test(err.message)) {
-        const m = $('#bookMsg'); if (m) m.textContent = '请先登录玩家账号再预订';
-        submitBtn.textContent = origText;
-        submitBtn.disabled = false;
-        setTimeout(() => {
-          closeBookModal();
-          location.href = 'index.html?action=login&reason=' + encodeURIComponent('请先登录玩家账号再预订酒店');
-        }, 1200);
-      } else {
-        const m = $('#bookMsg'); if (m) m.textContent = '✗ ' + err.message;
-        submitBtn.textContent = origText;
-        submitBtn.disabled = false;
-      }
-    }
-  });
-}
-
-// prefillFromPlayer 已在 openBookModal 内自动调用, 不需要额外包装

@@ -1,15 +1,20 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-CN" data-theme="light">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>私信 · 灯光市</title>
-<link rel="preload" href="css/style.css?v=20260904-v49-0" as="style" />
-<link rel="preload" href="js/page/dm/entry.js?v=v46-fix-modules" as="script" />
-<link rel="stylesheet" href="css/style.css?v=20260904-v49-0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>私信 · 灯光市</title>
+  <link rel="preload" href="assets/fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="assets/fonts/vt323.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="preload" href="css/style.css?v=20260905-v50-0" as="style" />
+  <link rel="preload" href="js/page/dm/entry.js?v=20260905-v50-0" as="script" />
+  <link rel="stylesheet" href="css/style.css?v=20260905-v50-0" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%2370ad34'/%3E%3Crect x='3' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='10' y='3' width='3' height='3' fill='%23ffd23f'/%3E%3Crect x='3' y='10' width='3' height='3' fill='%23ffd23f'/%3E%3C/svg%3E" />
 </head>
-<body>
-<script src="js/theme.js?v=v48-5"></script>
+<body class="page-dm">
+
+<script src="js/theme.js?v=v50-0"></script>
 
 <header class="navbar" id="navbar">
   <div class="nav-inner">
@@ -23,19 +28,83 @@
         <span class="logo-en">LIGHT CITY GOVERNMENT</span>
       </div>
     </a>
+    <nav class="nav-links" id="navLinks">
+      <a href="index.html#gov">政务</a>
+      <a href="index.html#traffic">交通</a>
+      <a href="index.html#gallery">图集</a>
+      <a href="index.html#wall">留言</a>
+      <a href="index.html#service">服务</a>
+      <a href="dm.html" class="active">私信</a>
+    </nav>
     <span class="nav-user-slot" id="navUserSlot"></span>
+    <button class="nav-toggle" id="navToggle" aria-label="菜单">
+      <span></span><span></span><span></span>
+    </button>
   </div>
 </header>
 
-<div class="page-back-row">
-  <a href="index.html">← 返回首页</a>
+<div class="page-back-row"><a href="index.html">← 返回首页</a></div>
+
+<div class="container">
+  <section class="page-head">
+    <div class="page-head-row">
+      <h1 class="page-title">💬 私信</h1>
+      <span class="page-sub">DIRECT MESSAGES · 玩家间通讯</span>
+    </div>
+  </section>
+
+  <div id="app">
+    <!-- 登录提示 / DM 主界面，由 JS 渲染 -->
+  </div>
 </div>
 
-<div id="app">
-  <!-- 登录提示 / DM 主界面，由 JS 渲染 -->
+<footer class="site-footer">
+  <div class="container">
+    <div class="footer-grid">
+      <div class="footer-col">
+        <h4 class="footer-head">灯光市人民政府</h4>
+        <p class="footer-line">由市民共建</p>
+      </div>
+      <div class="footer-col">
+        <h4 class="footer-head">市政</h4>
+        <a href="index.html#gov" class="footer-link">公告</a>
+        <a href="index.html#data" class="footer-link">城市数据</a>
+        <a href="index.html#service" class="footer-link">市民服务</a>
+      </div>
+      <div class="footer-col">
+        <h4 class="footer-head">更多</h4>
+        <a href="admin-v37.html" class="footer-link">🔐 管理入口</a>
+        <a href="hotel.html" class="footer-link">🏨 树上酒店</a>
+        <a href="profile.html" class="footer-link">👤 玩家主页</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 灯光市人民政府 · 由市民共建 | 本站为作品展示 · 与 Mojang/Microsoft 无关</span>
+    </div>
+  </div>
+</footer>
+
+<!-- 登录 Modal -->
+<div class="modal-mask" id="loginMask" style="display:none">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="loginTitle">
+    <button class="modal-close" id="loginClose" aria-label="关闭">×</button>
+    <h3 id="loginTitle" class="modal-text-center modal-title-center">玩家登录</h3>
+    <p class="modal-msg-inline" id="loginMsg">登录后可发留言、订酒店、报名赛车</p>
+    <form id="loginForm" class="modal-form">
+      <label><span>账号</span><input type="text" id="loginUsername" required autocomplete="username" /></label>
+      <label id="loginEmailRow" style="display:none"><span>邮箱（注册用）</span><input type="email" id="loginEmail" autocomplete="email" /></label>
+      <label id="loginPasswordRow"><span>密码</span><input type="password" id="loginPassword" autocomplete="current-password" /></label>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-ghost" id="loginModeLogin">已有账号</button>
+        <button type="button" class="btn btn-ghost" id="loginModeRegister">注册新号</button>
+        <button type="submit" class="btn btn-primary" id="loginSubmit">登录</button>
+      </div>
+    </form>
+    <p class="login-back-home">管理员请去 <a href="admin-v37.html">/admin.html</a> 登录</p>
+  </div>
 </div>
 
-<script src="js/toast.js?v=20260829-toast"></script>
-<script type="module" src="js/page/dm/entry.js?v=v46-fix-modules"></script>
+<script src="js/toast.js?v=20260905-v50-0"></script>
+<script type="module" src="js/page/dm/entry.js?v=20260905-v50-0"></script>
 </body>
 </html>
