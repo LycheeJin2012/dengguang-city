@@ -73,3 +73,4 @@ export async function safeRender(fn) {
 export function cacheClear(prefix) {
   // v50 stub: 未来接 IndexedDB cache
 }
+// forced redeploy Sat Sep  5 01:48:54 CST 2026
