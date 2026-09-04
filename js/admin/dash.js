@@ -8,7 +8,7 @@ const _TAB_RENDER = {
   players:    () => import('./tabs/players.js').then(m => m.renderPlayers()),
   kart:       () => import('./tabs/kart.js').then(m => m.renderKarts()),
   circuit:    () => import('./tabs/kart.js').then(m => m.renderCircuits()),
-  announcements: () => import('./tabs/announcements.js').then(m => m.renderAnnouncements()),
+  announcements: () => import('./tabs/announcements.v50.js').then(m => m.renderAnnouncements()),
   gallery:    () => import('./tabs/gallery.js').then(m => m.renderGallery()),
   dms:        () => import('./tabs/dms.js').then(m => m.renderDms()),
   admins:     () => import('./tabs/admins.js').then(m => m.renderAdminList()),
