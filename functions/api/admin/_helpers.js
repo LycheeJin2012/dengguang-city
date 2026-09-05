@@ -1,6 +1,8 @@
 // v50: admin 后台共享 helpers
 // 统一 requireAdmin / requireSuper / 列表分页 / 字段过滤
+// 兼容 13 个 admin/* endpoint — 它们从 './_helpers.js' import { ok, err, handleOptions, ... }
 
+export { ok, err, handleOptions, hashPassword, verifyPassword, readToken, getSession, createSession, destroySession, cookieFor, rateLimit, isNonEmpty, isEmail, isUsername, stripHtml } from '../../_shared.js';
 import { err, getSession, readToken, stripHtml, rateLimit } from '../../_shared.js';
 
 export async function requireAdmin(context) {

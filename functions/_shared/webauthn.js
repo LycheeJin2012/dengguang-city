@@ -2,7 +2,8 @@
 // v50 重写: 用 Web Crypto API 替代第三方库依赖, 纯 ESM 标准实现
 // 依赖: jose 不再用, 改用 Web Crypto SubtleCrypto verify
 
-import { bytesToB64url, b64urlToBytes, bytesToHex, hexToBytes, randomToken } from './bytes.js';
+import { bytesToB64url, b64urlToBytes, bytesToHex, hexToBytes } from './bytes.js';
+import { randomToken } from './auth.js';
 import { err, ok } from './http.js';
 
 // ============================================================
