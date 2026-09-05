@@ -1,5 +1,5 @@
 // v44 重写: 后台 dash (boot, tab 路由, filter 路由)
-import { $, POST, safeRender } from './core.js?v=v46-fix-modules';
+import { $, POST, safeRender } from './core.v50.js?v=v50-fix';
 
 // Tab 渲染器: 每个 tab 第一次切到时调用对应的 render 函数
 // v47: 留言/驾照/酒店 3 个 tab 合并为 tickets (统一工单入口)
