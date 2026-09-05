@@ -258,6 +258,9 @@ document.addEventListener('click', e => {
   const tab = e.target.closest('.admin-tabs .tab');
   if (tab) {
     const name = tab.dataset.tab;
+    // 切 active class + pane display (HTML tab 按钮没 inline onclick, 必须在这里切)
+    document.querySelectorAll('.admin-tabs .tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + name));
     setTimeout(() => _ensureTabRendered(name), 0);
   }
   // 刷新按钮
