@@ -1,5 +1,5 @@
 // v50: admin 留言管理 (老 messages 表专用 — admin tickets tab 也 UNION 了这些)
-// 保留作为 admin-v37 老路径兼容
+// API 路径稳定; admin tickets tab 在前端 UNION 了这个老 messages 表
 import { ok, err, handleOptions, requireAdmin, stripHtml, parseListParams } from './_helpers.js';
 
 export const onRequestOptions = () => handleOptions();

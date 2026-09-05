@@ -16,7 +16,7 @@
 //   js/admin/tabs/dms.js       私信监管 (super)
 //   js/admin/tabs/passkey.js   通行密钥引导
 //
-// HTML 模板不变 (admin-v37.html 仍可用), 通过 inline onclick 调 window.* 全局函数
+// HTML 模板 (admin.html — v50 时代主入口, 已统一命名), 通过 inline onclick 调 window.* 全局函数
 // 这里导出所有需要的全局函数
 import { $, POST, GET, safeRender, fileToDataURLP, cacheClear } from './admin/core.v50.js?v=v50-fix';
 import { renderDash, _ensureTabRendered, bindFilterRadios, showView } from './admin/dash.v50.js?v=v50-fix';
