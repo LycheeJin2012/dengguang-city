@@ -23,11 +23,16 @@
 - `fix-16` data-card "17 注册市民" 硬编码 → 动态拉
 - `fix-18` animateNumber -1 异常值防御
 - `fix-19/20` data-card + hero 直接设值 (避免 rAF 节流)
+- **v50-N6 B6-extend**: CSS minify 237→204KB + admin 工单/玩家管理 i18n
+- **v50-N6 B6-extend**: 主页全表单中英（留言/赛车/驾照/酒店预订/客房卡片）
+- **v50-N6 B6-extend**: profile/dm/notifications/leaderboard/留言墙 全链路 i18n
+- **v50-N6 C1**: 玩家排行榜（messages/bookings/licenses 3 维度）
+- **v50-N6 C2**: 通知中心页 + nav 入口
 
 ## 已实现新功能
 - **N4 通知** (admin reply → 玩家铃铛红点): functions/api/admin/messages.js PATCH 写 notification_log + js/page/util.js + js/home/header.js 加 🔔 铃铛 + profile 进 my-messages 自动 PATCH read-all
 - **N5 i18n** (中英双语 11 步):
-  - js/i18n/core.js: DICT 词典 (71 key) + t/tf/setLang/setPageTitle/setMetaDescription + localStorage 持久化 + lc:langchange 事件 + _onLangChangeOnce 防泄漏
+  - js/i18n/core.js: DICT 词典 (259 key) + t/tf/setLang/setPageTitle/setMetaDescription + localStorage 持久化 + lc:langchange 事件 + _onLangChangeOnce 防泄漏
   - 5 页面 init: index.html (主页 nav + placeholder) / hotel.html (nav + filter + modals + count) / profile.html (5 card 标题) / dm.html (加载/空态/错误) / admin-v37 (8 tab 标签)
   - 11 维度: nav / filter / count / modals / loading / empty / error / page title / placeholder / meta description / 切换器按钮文字动态
   - js/i18n/core.test.js: Node 内置 test runner, 6 个测试 100% 过 (DICT 完整性 + HTML 引用 + JS 调用 + 命名空间一致性)
@@ -48,7 +53,7 @@
 
 ## PWA 配置
 - `manifest.json` + `sw.js` + `js/pwa.js` (5 页面引用) + `assets/icons/icon.svg`
-- SW CACHE_VERSION: 'lc-v50-2026-09-06-v17' (bump 触发 activate 清旧 cache)
+- SW CACHE_VERSION: 'lc-v50-2026-09-07-v20' (bump 触发 activate 清旧 cache)
 - STATIC_ASSETS 缓存: 7 HTML + style.css + fonts.css + theme.js + toast.js + pwa.js + manifest + icon + 2 woff2 + bg-pixel-hero.jpg + track-placeholder.svg
 - 策略: navigation network-first 回退 cache → /; 静态资源 cache-first + 后台 stale-while-revalidate
 
