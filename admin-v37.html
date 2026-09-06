@@ -126,14 +126,14 @@
 
     <!-- Tab 切换 (v47: 留言/驾照/酒店 合并为 tickets 工单) -->
     <nav class="admin-tabs">
-      <button class="tab active" data-tab="tickets">🎫 工单中心 <span class="tab-count" id="ticketTotalBadge"></span></button>
-      <button class="tab" data-tab="players">👥 玩家管理 <span class="tab-count" id="playerPending"></span></button>
-      <button class="tab" data-tab="kart">🏁 赛道 / 国际试车 <span class="tab-count" id="kartPending"></span> <span class="tab-count" id="circuitPending"></span></button>
-      <button class="tab" data-tab="announcements" id="tabAnnouncements">📢 公告管理</button>
-      <button class="tab" data-tab="gallery" id="tabGallery">🖼️ 首页图集</button>
-      <button class="tab" data-tab="dms" id="tabDms">💬 私信监管</button>
-      <button class="tab" data-tab="admins" id="tabAdmins">🛡️ 管理员账号</button>
-      <button class="tab" data-tab="password">🔑 修改我的密码</button>
+      <button class="tab active" data-tab="tickets">🎫 <span data-i18n="admin.tab.tickets">工单中心</span> <span class="tab-count" id="ticketTotalBadge"></span></button>
+      <button class="tab" data-tab="players">👥 <span data-i18n="admin.tab.players">玩家管理</span> <span class="tab-count" id="playerPending"></span></button>
+      <button class="tab" data-tab="kart">🏁 <span data-i18n="admin.tab.kart">赛道 / 国际试车</span> <span class="tab-count" id="kartPending"></span> <span class="tab-count" id="circuitPending"></span></button>
+      <button class="tab" data-tab="announcements" id="tabAnnouncements">📢 <span data-i18n="admin.tab.announcements">公告管理</span></button>
+      <button class="tab" data-tab="gallery" id="tabGallery">🖼️ <span data-i18n="admin.tab.gallery">首页图集</span></button>
+      <button class="tab" data-tab="dms" id="tabDms">💬 <span data-i18n="admin.tab.dms">私信监管</span></button>
+      <button class="tab" data-tab="admins" id="tabAdmins">🛡️ <span data-i18n="admin.tab.admins">管理员账号</span></button>
+      <button class="tab" data-tab="password">🔑 <span data-i18n="admin.tab.password">修改我的密码</span></button>
     </nav>
 
     <!-- Tab: 工单中心 (v47: 替代原 messages/license/bookings 3 个 tab) -->
@@ -441,6 +441,10 @@
   <!-- v27.01: 用新版本文件名 v2541 + v2701 绕过 CF 边缘 cache (确保 user 必拿到新版) -->
   <script src="js/toast.js?v=20260829-toast"></script>
   <script src="js/admin.js?v=v46-fix-modules" type="module"></script>
+  <script type="module">
+    import { initI18n } from './js/i18n/core.js?v=n5';
+    initI18n();
+  </script>
 </body>
 </html>
 

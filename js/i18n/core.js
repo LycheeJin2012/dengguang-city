@@ -61,6 +61,15 @@ const DICT = {
   'dm.empty.noMsgs':   { 'zh-CN': '还没有消息，发起对话吧！', 'en': 'No messages yet. Start a conversation!' },
   'dm.slow':           { 'zh-CN': '网络好像有点慢',     'en': 'Network seems slow' },
   'dm.needLogin':      { 'zh-CN': '请先登录玩家账号',   'en': 'Please log in to a player account' },
+  // admin-v37 tab 标签
+  'admin.tab.tickets':      { 'zh-CN': '工单中心',         'en': 'Tickets' },
+  'admin.tab.players':      { 'zh-CN': '玩家管理',         'en': 'Players' },
+  'admin.tab.kart':         { 'zh-CN': '赛道 / 国际试车',  'en': 'Kart / Circuit' },
+  'admin.tab.announcements': { 'zh-CN': '公告管理',         'en': 'Announcements' },
+  'admin.tab.gallery':      { 'zh-CN': '首页图集',         'en': 'Gallery' },
+  'admin.tab.dms':          { 'zh-CN': '私信监管',         'en': 'DM Monitor' },
+  'admin.tab.admins':       { 'zh-CN': '管理员账号',       'en': 'Admins' },
+  'admin.tab.password':     { 'zh-CN': '修改我的密码',     'en': 'Change Password' },
 };
 
 let _current = (function () {
