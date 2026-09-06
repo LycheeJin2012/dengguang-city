@@ -149,6 +149,25 @@ async function fetchHomeUnreadBadge() {
 }
 
 // ============== 服务卡按钮绑定 ==============
+// v50-N6: 5 个 dead-link 服务卡 → 跳留言板 + 预填 type + focus textarea
+function gotoContactForm(presetType) {
+  const section = document.getElementById('contact');
+  const form = document.getElementById('contactForm');
+  if (!section || !form) return;
+  section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  if (presetType) {
+    const sel = form.querySelector('#contactType');
+    if (sel) {
+      const opt = [...sel.options].find(o => o.value === presetType || o.textContent === presetType);
+      if (opt) sel.value = opt.value;
+    }
+  }
+  setTimeout(() => {
+    const ta = form.querySelector('textarea');
+    if (ta) ta.focus();
+  }, 400);
+}
+
 export function bindServiceButtons() {
   const srvRegister = $('#srvRegister');
   if (srvRegister) {
@@ -157,6 +176,22 @@ export function bindServiceButtons() {
       openLoginModal('新市民注册 · 填写用户名+邮箱+密码即可', 'register');
     });
   }
+  // v50-N6: 其余 5 个服务卡 → 跳到留言板, 预填类型
+  const serviceMap = [
+    { id: 'srvLand',     type: '合作' },  // 地块认领 → 合作/咨询
+    { id: 'srvBuild',    type: '咨询' },  // 建筑报建 → 咨询
+    { id: 'srvPower',    type: '投诉' },  // 用电报装 → 投诉/咨询
+    { id: 'srvMarket',   type: '合作' },  // 市集摊位 → 合作
+    { id: 'srvFeedback', type: '建议' },  // 建议与投诉 → 建议
+  ];
+  serviceMap.forEach(({ id, type }) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      gotoContactForm(type);
+    });
+  });
   const srvSignin = $('#srvSignin');
   if (srvSignin) {
     srvSignin.addEventListener('click', e => {
