@@ -55,6 +55,12 @@
 ## 已知遗留 / 待你验证
 - 玩家登录 admin 跑 8 tab 验 (cloud browser auth_user_takeover 阻止代登)
 - N5 Step 6+ 翻译 admin 子表单 / 留言墙 / 赛车场 / 图集等
+- **AI fine-tune 进度**:
+  - ✅ .dev.vars 加 OpenAI key (key 不 commit, .gitignore 拦了真 .dev.vars)
+  - ✅ scripts/export-finetune-data.mjs (拉 D1 留言+回复 → JSONL, 你登录后跑)
+  - ⏳ 生产 env 设 (CF Dashboard 或 wrangler secret put, 待你确认方法)
+  - ⏳ 数据量评估 (现在只有 4 条, OpenAI 推 50+, 可能要等更多)
+  - ⏳ fine-tune job (openai CLI, 需你确认模型 + budget)
 
 ## 跟金礼知 (荔枝) 协作约定
 - 不擅自装第三方软件 (brew install / pip install / npm install 都要先问)
