@@ -244,15 +244,9 @@ document.addEventListener('change', e => {
     }
   }
 });
-document.addEventListener('input', e => {
-  if (e.target.id === 'msgSearch') {
-    clearTimeout(window._msgSearchT);
-    window._msgSearchT = setTimeout(() => {
-      import('./admin/tabs/messages.js').then(m => m.renderMessages());
-    }, 200);
-  }
-});
-
+// v50-audit-fix: 删 v47 后遗留的 #msgSearch 死代码 (messages tab 合并到 tickets, HTML 已无此 input)
+//   之前: 任何 #msgSearch input 事件 → import './admin/tabs/messages.js' (文件已不存在)
+//   修复: 删整段 listener, 避免控制台噪音
 // ---------- 全局: tab 切换时也调 _ensureTabRendered ----------
 document.addEventListener('click', e => {
   const tab = e.target.closest('.admin-tabs .tab');
