@@ -26,7 +26,12 @@
 
 ## 已实现新功能
 - **N4 通知** (admin reply → 玩家铃铛红点): functions/api/admin/messages.js PATCH 写 notification_log + js/page/util.js + js/home/header.js 加 🔔 铃铛 + profile 进 my-messages 自动 PATCH read-all
-- **N5 i18n** (中英双语): js/i18n/core.js (DICT 词典 + t/tf + localStorage 持久化 + 5 页面都加 initI18n + 🌐 切换器)
+- **N5 i18n** (中英双语 11 步):
+  - js/i18n/core.js: DICT 词典 (71 key) + t/tf/setLang/setPageTitle/setMetaDescription + localStorage 持久化 + lc:langchange 事件 + _onLangChangeOnce 防泄漏
+  - 5 页面 init: index.html (主页 nav + placeholder) / hotel.html (nav + filter + modals + count) / profile.html (5 card 标题) / dm.html (加载/空态/错误) / admin-v37 (8 tab 标签)
+  - 11 维度: nav / filter / count / modals / loading / empty / error / page title / placeholder / meta description / 切换器按钮文字动态
+  - js/i18n/core.test.js: Node 内置 test runner, 6 个测试 100% 过 (DICT 完整性 + HTML 引用 + JS 调用 + 命名空间一致性)
+  - package.json: 'npm test' script
 
 ## 关键架构决策 (不要再改)
 1. **CF Pages Functions 路由是目录式**: `/api/exam-questions/answer` 必须有 `functions/api/exam-questions/answer.js` 文件，不能依赖父 `exam-questions.js` 的 `path.endsWith('/answer')` 内部路由 (CF Pages 会去找 answer.js 找不到就 405)
