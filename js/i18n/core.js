@@ -31,6 +31,7 @@ const DICT = {
   'common.returnHome': { 'zh-CN': '← 返回首页',  'en': '← Home' },
   'common.loading':    { 'zh-CN': '载入中…',     'en': 'Loading…' },
   'common.back':       { 'zh-CN': '← 返回',       'en': '← Back' },
+  'common.send':       { 'zh-CN': '发送',         'en': 'Send' },
   // hotel 页
   'hotel.status':   { 'zh-CN': '状态：',       'en': 'Status:' },
   'hotel.guests':   { 'zh-CN': '入住人数：',   'en': 'Guests:' },

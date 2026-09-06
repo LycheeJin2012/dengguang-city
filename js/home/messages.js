@@ -73,16 +73,24 @@ async function renderComments(mid, box) {
     if (!list.length) {
       box.innerHTML = `<div class="empty-state" style="padding:16px"><p>${t('messages.empty.comments', '暂无评论, 来抢沙发')}</p></div>`;
     } else {
-      box.innerHTML = list.map(c => `<div class="comment-item">
-        <div class="comment-head"><b>${escHtml(c.author_name || c.player_username || '匿名')}</b> <span class="comment-time">${relativeTime(c.created_at)}</span></div>
-        <div class="comment-body">${escHtml(c.content)}</div>
-      </div>`).join('');
+      box.innerHTML = list.map((c, i) => {
+        const floor = i + 1;
+        const author = escHtml(c.author_name || c.player_username || '匿名');
+        const timeAgo = relativeTime(c.created_at);
+        return `<div class="comment-item">
+          <div class="comment-head">
+            <span class="comment-floor" style="background:var(--c-grass);color:#fff;font-size:11px;padding:1px 6px;border-radius:10px;margin-right:6px">#${floor}</span>
+            <b>${author}</b> <span class="comment-time">${timeAgo}</span>
+          </div>
+          <div class="comment-body">${escHtml(c.content)}</div>
+        </div>`;
+      }).join('');
     }
     // 评论表单
     box.insertAdjacentHTML('beforeend', `
       <form class="comment-form" data-mid="${mid}" style="margin-top:12px;display:flex;gap:8px">
-        <input type="text" name="content" maxlength="500" placeholder="写评论..." style="flex:1;padding:6px 10px;border:2px solid var(--c-stone);font-family:inherit">
-        <button type="submit" class="btn btn-primary btn-sm">发送</button>
+        <input type="text" name="content" maxlength="500" data-i18n-placeholder="ph.message" placeholder="${t('ph.message', '请输入你的留言...')}" style="flex:1;padding:6px 10px;border:2px solid var(--c-stone);font-family:inherit">
+        <button type="submit" class="btn btn-primary btn-sm">${t('common.send', '发送')}</button>
       </form>`);
     box.querySelector('form').onsubmit = async e => {
       e.preventDefault();
