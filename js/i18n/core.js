@@ -28,6 +28,8 @@ const DICT = {
   'nav.toggle':     { 'zh-CN': '🌐 中文/EN',  'en': '🌐 EN/中' },
   // 通用
   'common.returnHome': { 'zh-CN': '← 返回首页',  'en': '← Home' },
+  'common.loading':    { 'zh-CN': '载入中…',     'en': 'Loading…' },
+  'common.back':       { 'zh-CN': '← 返回',       'en': '← Back' },
   // hotel 页
   'hotel.status':   { 'zh-CN': '状态：',       'en': 'Status:' },
   'hotel.guests':   { 'zh-CN': '入住人数：',   'en': 'Guests:' },
@@ -42,6 +44,12 @@ const DICT = {
   'hotel.modal.book':   { 'zh-CN': '预订房间',  'en': 'Book Room' },
   'hotel.count':        { 'zh-CN': '共 ${n} 间 / 总 ${total} 间', 'en': '${n} / ${total} rooms' },
   'hotel.empty':        { 'zh-CN': '酒店正在筹建中, 上线后会在这里显示。', 'en': 'Hotel under construction. Will be available soon.' },
+  // profile 页
+  'profile.passkey.head':  { 'zh-CN': '🔑 账号安全 · 通行密钥 (Passkey)',  'en': '🔑 Account Security · Passkey' },
+  'profile.race.head':     { 'zh-CN': '🏁 赛道成绩',                       'en': '🏁 Race Records' },
+  'profile.exam.head':     { 'zh-CN': '📝 驾照模拟题库',                   'en': '📝 License Practice' },
+  'profile.sub.head':      { 'zh-CN': '🔔 通知订阅',                       'en': '🔔 Notification Subscriptions' },
+  'profile.citizen.head':  { 'zh-CN': '🪪 我的市民身份卡',                 'en': '🪪 My Citizen Card' },
 };
 
 let _current = (function () {
