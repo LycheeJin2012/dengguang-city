@@ -1,5 +1,6 @@
 // v44 重写: 后台 dash (boot, tab 路由, filter 路由)
-import { $, POST, safeRender } from './core.js?v=v46-fix-modules';
+// v50-N6: 启动时拉 dashboard API 一次性更新 4 个 tab 角标 (playerPending / kartPending / circuitPending / ticketTotalBadge)
+import { $, POST, GET, safeRender } from './core.js?v=v46-fix-modules';
 
 // Tab 渲染器: 每个 tab 第一次切到时调用对应的 render 函数
 // v47: 留言/驾照/酒店 3 个 tab 合并为 tickets (统一工单入口)
@@ -64,6 +65,8 @@ export function renderDash() {
     if (ba) ba.style.display = a.role === 'super' ? '' : 'none';
   } catch (e) { throw e; }
   showView('dash');
+  // v50-N6: 拉 dashboard 数字 (角标), 失败静默
+  fetchBadges().catch(() => {});
   // v47: 默认 active tab 改为 tickets (替换原 bookings)
   _ensureTabRendered('tickets');
   // 仅 super 可见 DM 监管 tab
@@ -92,4 +95,26 @@ export function showView(name) {
     const el = document.getElementById('view-' + v);
     if (el) el.style.display = v === name ? '' : 'none';
   }
+}
+
+// v50-N6: 拉 dashboard 数字, 1 次 GET 更新 4 个 tab 角标 (替代每个 tab 自己 fetch)
+async function fetchBadges() {
+  const d = await GET('/api/admin/dashboard');
+  if (!d || !d.ok) return;
+  // playerPending (注册审批)
+  const pp = d.player_pending || 0;
+  const ppEl = document.getElementById('playerPending');
+  if (ppEl) ppEl.textContent = pp > 0 ? `(${pp})` : '';
+  // kartPending (赛道报名待审)
+  const kp = d.kart_pending || 0;
+  const kpEl = document.getElementById('kartPending');
+  if (kpEl) kpEl.textContent = kp > 0 ? `(${kp})` : '';
+  // circuitPending (国际赛车场待审)
+  const cp = d.circuit_pending || 0;
+  const cpEl = document.getElementById('circuitPending');
+  if (cpEl) cpEl.textContent = cp > 0 ? `(${cp})` : '';
+  // ticketTotalBadge (工单总数, tickets.js 也会再更新一次)
+  const tt = d.msg_unread || 0;
+  const ttEl = document.getElementById('ticketTotalBadge');
+  if (ttEl) ttEl.textContent = tt > 0 ? `(${tt})` : '';
 }
