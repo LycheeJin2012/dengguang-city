@@ -122,6 +122,24 @@ export async function onRequestPatch(context) {
   return ok({ id });
 }
 
+// v49-fix-6: AI key 过期 fallback — 4 种 tone 的固定模板
+// 之前 key 缺/过期/401 返 5xx, admin 端 AI 草稿功能完全卡死
+// 现在任何 AI 调用失败路径都返 fallback draft + fallback:true 标记
+function aiDraftFallback(tone, userMessage, reason) {
+  const m = String(userMessage || '').slice(0, 80);
+  let draft;
+  if (tone === 'professional') {
+    draft = `您好，已收悉您的留言"${m}"。我厅将组织研处并通过 DM 私信向您反馈进展。感谢您对灯光市建设的关注与支持。`;
+  } else if (tone === 'concise') {
+    draft = `已收悉您关于"${m}"的留言，市政厅将尽快研处并回复。`;
+  } else if (tone === 'detailed') {
+    draft = `您好，感谢您的留言。\n\n已收悉您反映的"${m}"问题。\n\n市政厅将组织相关负责同志核实情况，根据核实结果制定后续处理方案。\n\n后续进展将通过 DM 私信或市政公告向您同步。如需补充信息，请通过 DM 联系我们。\n\n感谢您对灯光市建设的关注与支持。灯光市市政厅。`;
+  } else {
+    draft = `您好，已收悉您的留言"${m}"。市政厅将尽快研处并通过 DM 私信向您反馈。感谢您对灯光市建设的关注与支持。`;
+  }
+  return ok({ draft, fallback: true, reason });
+}
+
 export async function onRequestPost(context) {
   // 内部子路由：POST /api/admin/messages?action=ai-draft
   // body: { message: string, history?: [{role, content}] }
@@ -140,7 +158,9 @@ export async function onRequestPost(context) {
   const baseUrl = (env.OPENAI_BASE_URL || 'https://api.minimax.chat/v1').replace(/\/+$/, '');
   const model = env.OPENAI_MODEL || 'abab6.5s-chat';
   if (!apiKey) {
-    return err(500, 'AI 未配置：管理员需在 Cloudflare Pages → Settings → Environment variables 设置 OPENAI_API_KEY');
+    // v49-fix-6: key 缺返 fallback (不再 500), admin 不卡
+    const _body = await request.json().catch(() => ({}));
+    return aiDraftFallback((_body.tone || 'standard').toString().toLowerCase(), _body.message, 'OPENAI_API_KEY_MISSING');
   }
 
   const body = await request.json().catch(() => ({}));
@@ -225,19 +245,20 @@ export async function onRequestPost(context) {
     });
 
     if (!resp.ok) {
-      const errText = await resp.text().catch(() => '');
-      return err(502, `AI 调用失败 ${resp.status}: ${errText.slice(0, 300)}`);
+      // v49-fix-6: 401/403/500 都返 fallback (key 过期/限额/服务错), admin 不卡
+      return aiDraftFallback(tone, userMessage, `OPENAI_API_${resp.status}`);
     }
 
     const data = await resp.json().catch(() => ({}));
     let draft = (data?.choices?.[0]?.message?.content || '').trim();
-    if (!draft) return err(502, 'AI 返回为空');
+    if (!draft) return aiDraftFallback(tone, userMessage, 'AI_RETURNED_EMPTY');
     // 硬截断（兜底）- 详细 tone 上限更高
     if (draft.length > hardCap) draft = draft.slice(0, hardCap);
 
     return ok({ draft, model });
   } catch (e) {
-    return err(500, 'AI 调用异常: ' + (e?.message || e));
+    // v49-fix-6: 网络异常也返 fallback
+    return aiDraftFallback(tone, userMessage, 'AI_NETWORK_ERROR: ' + (e?.message || e));
   }
 }
 
