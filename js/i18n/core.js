@@ -87,6 +87,17 @@ const DICT = {
   'ph.noteSpecial':     { 'zh-CN': '特殊要求、纪念日等',  'en': 'Special requests, anniversaries, etc.' },
   'ph.carNo':           { 'zh-CN': '留空随机分配',       'en': 'Empty for random' },
   'ph.ticketSearch':    { 'zh-CN': '🔍 搜索标题/内容',   'en': '🔍 Search title/content' },
+  // meta description (SEO)
+  'page.meta.home':    { 'zh-CN': '灯光市人民政府官方网站 - 由市民共建的像素城市，提供政务公告、城市数据与市民服务。',
+                         'en': 'Light City Hall - A pixel city built by citizens, offering government notices, city data, and public services.' },
+  'page.meta.hotel':   { 'zh-CN': '灯光市树上酒店 - 房型浏览、状态筛选、预订。',
+                         'en': 'Light City Treehouse Hotel - Room browsing, status filters, and booking.' },
+  'page.meta.profile': { 'zh-CN': '灯光市玩家主页 - 我的留言、报名、订阅、通知。',
+                         'en': 'Light City Player Profile - My messages, signups, subscriptions, and notifications.' },
+  'page.meta.dm':      { 'zh-CN': '灯光市私信 - AI 灯灯客服 / 玩家私信。',
+                         'en': 'Light City DM - AI assistant DengDeng & player direct messages.' },
+  'page.meta.admin':   { 'zh-CN': '灯光市管理后台 - 工单 / 玩家 / 赛车场 / 公告 / 图集 / 私信监管。',
+                         'en': 'Light City Admin Panel - Tickets / players / kart / announcements / gallery / DM monitor.' },
 };
 
 let _current = (function () {
@@ -149,6 +160,21 @@ export function setPageTitle(keyOrZh, en) {
     else if (keyOrZh.includes('.') && DICT[keyOrZh]) document.title = t(keyOrZh);
     else document.title = keyOrZh;
   }, { once: false });
+}
+
+// 翻译并设置 <meta name="description"> 标签
+// 用法: setMetaDescription('page.meta.home') 或 '灯光市...' (直接传中文)
+export function setMetaDescription(keyOrZh, en) {
+  if (!keyOrZh) return;
+  const el = document.querySelector('meta[name="description"]');
+  if (!el) return;
+  const apply = () => {
+    if (_current === 'en' && en) el.setAttribute('content', en);
+    else if (keyOrZh.includes('.') && DICT[keyOrZh]) el.setAttribute('content', t(keyOrZh));
+    else el.setAttribute('content', keyOrZh);
+  };
+  apply();
+  window.addEventListener('lc:langchange', apply, { once: false });
 }
 
 // 批量翻译 (用于渲染列表)

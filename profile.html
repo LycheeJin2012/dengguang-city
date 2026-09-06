@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="灯光市玩家主页 - 我的留言、报名、订阅、通知。" />
 <title>玩家主页 · 灯光市</title>
 <link rel="preload" href="css/style.css?v=20260904-v49-0" as="style" />
 <link rel="preload" href="js/page/profile/entry.js?v=v46-fix-modules" as="script" />
@@ -106,9 +107,10 @@
 
 <script src="js/toast.js?v=20260829-toast"></script>
 <script type="module">
-  import { initI18n, setPageTitle } from './js/i18n/core.js?v=n5';
+  import { initI18n, setPageTitle, setMetaDescription } from './js/i18n/core.js?v=n5';
   initI18n();
   setPageTitle('page.title.profile');
+  setMetaDescription('page.meta.profile');
 </script>
 <script type="module" src="js/page/profile/entry.js?v=v46-fix-modules"></script>
 </body>
