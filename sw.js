@@ -1,6 +1,7 @@
 // v49-fix-8: PWA Service Worker — 主页 + 4 子页 + 关键 JS 离线缓存
 // 策略: cache-first (回退到网络), stale-while-revalidate
-const CACHE_VERSION = 'lc-v49-2026-09-06';
+// v50-fix-15: 加 /admin-v37.html (实际 admin 页, /admin.html 只是 308 跳转壳)
+const CACHE_VERSION = 'lc-v50-2026-09-06';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -8,6 +9,7 @@ const STATIC_ASSETS = [
   '/profile.html',
   '/dm.html',
   '/admin.html',
+  '/admin-v37.html',
   '/css/style.css',
   '/manifest.json',
   '/assets/icons/icon.svg'
