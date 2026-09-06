@@ -5,7 +5,8 @@
   "description": "灯光市人民政府 · 像素风 MC 城市官网（Cloudflare Pages + D1 后端版）",
   "scripts": {
     "dev": "wrangler pages dev .",
-    "deploy": "wrangler pages deploy ."
+    "deploy": "wrangler pages deploy .",
+    "test": "node --test js/i18n/core.test.js"
   },
   "devDependencies": {
     "wrangler": "^3.90.0"
