@@ -1,5 +1,7 @@
 // v45 重写: 公共市民留言墙 (公开 + 评论)
+// v50-N5 Step 15: loading/empty/error 走 i18n
 import { $, escHtml, relativeTime, fmtDate, GET, POST, safeRender } from './util.js?v=v46-fix-modules';
+import { t } from '../i18n/core.js?v=n5';
 
 const _pubMsgCache = { data: null, ts: 0 };
 const CACHE_TTL = 30_000;
@@ -10,7 +12,7 @@ export async function loadPublicMessages() {
   await safeRender(async () => {
     const msgs = await fetchPublicMessages();
     if (!msgs.length) {
-      list.innerHTML = '<div class="empty-state"><div class="empty-icon">💬</div><p>暂无留言, 来抢沙发</p></div>';
+      list.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><p>${t('messages.empty', '暂无留言, 来抢沙发')}</p></div>`;
       return;
     }
     list.innerHTML = msgs.map(m => {
@@ -60,7 +62,7 @@ export async function toggleComments(mid, btn) {
   }
   btn.textContent = '收起评论';
   section.style.display = 'block';
-  section.innerHTML = '<div class="empty-state" style="padding:20px"><p>加载中...</p></div>';
+  section.innerHTML = `<div class="empty-state" style="padding:20px"><p>${t('common.loading', '载入中…')}</p></div>`;
   await renderComments(mid, section);
 }
 
@@ -69,7 +71,7 @@ async function renderComments(mid, box) {
     const d = await GET('/api/comments?message_id=' + mid);
     const list = d.comments || [];
     if (!list.length) {
-      box.innerHTML = '<div class="empty-state" style="padding:16px"><p>暂无评论, 来抢沙发</p></div>';
+      box.innerHTML = `<div class="empty-state" style="padding:16px"><p>${t('messages.empty.comments', '暂无评论, 来抢沙发')}</p></div>`;
     } else {
       box.innerHTML = list.map(c => `<div class="comment-item">
         <div class="comment-head"><b>${escHtml(c.author_name || c.player_username || '匿名')}</b> <span class="comment-time">${relativeTime(c.created_at)}</span></div>
@@ -93,7 +95,7 @@ async function renderComments(mid, box) {
       } catch (err) { if (window._toast) window._toast('发送失败: ' + err.message, 'error'); }
     };
   } catch (e) {
-    box.innerHTML = `<div class="empty-state"><p>加载失败: ${escHtml(e.message)}</p></div>`;
+    box.innerHTML = `<div class="empty-state"><p>${t('common.error.load', '加载失败')}: ${escHtml(e.message)}</p></div>`;
   }
 }
 

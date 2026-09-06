@@ -1,5 +1,7 @@
 // v45 重写: 首页公告区 (list + modal)
+// v50-N5 Step 15: loading/empty/error 走 i18n
 import { $, escHtml, fmtDate, relativeTime, GET } from './util.js?v=v46-fix-modules';
+import { t } from '../i18n/core.js?v=n5';
 
 const _annCache = { data: null, ts: 0 };
 const CACHE_TTL = 60_000; // 60s, 跟 homepage-bundle 的服务端 cache 一致
@@ -10,7 +12,7 @@ export async function loadAnnouncements() {
   try {
     const list = await fetchAnnouncements();
     if (!list.length) {
-      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>暂无公告</p></div>';
+      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>${t('announcements.empty', '暂无公告')}</p></div>`;
       return;
     }
     grid.innerHTML = list.map((a, i) => {
@@ -43,7 +45,7 @@ export async function loadAnnouncements() {
       c.addEventListener('click', () => grid.querySelectorAll('.read-more')[i]?.click());
     });
   } catch (e) {
-    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>加载失败: ${escHtml(e.message)}</p></div>`;
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${t('common.error.load', '加载失败')}: ${escHtml(e.message)}</p></div>`;
   }
 }
 

@@ -1,8 +1,10 @@
 // v45 重写: 服务区表单 (酒店/赛车/驾照) + 留言提交 + 30s 自动刷新
 // 原 main.js L123-200 (留言) + L700-1304 (kart/circuit/license/hotel modals) 拆出来
+// v50-N5 Step 15: loading/empty/error 走 i18n
 import { $, escHtml, POST, GET } from './util.js?v=v46-fix-modules';
 import { openLoginModal } from './auth.js?v=v46-fix-modules';
 import { getBundle, invalidateBundle } from './bundle.js?v=v46-fix-modules';
+import { t } from '../i18n/core.js?v=n5';
 import { loadPublicMessages } from './messages.js?v=v46-fix-modules';
 const _toast = (msg, type) => window._toast && window._toast(msg, type);
 
@@ -129,7 +131,7 @@ function bindCircuit() {
     // 同步拉一次 (避免 bundle 还没就绪时打开)
     getBundle().then(b => {
       const tracks = b.tracks || [];
-      if (!tracks.length) { sel.innerHTML = '<option value="">(暂无开放赛道)</option>'; return; }
+      if (!tracks.length) { sel.innerHTML = `<option value="">(${t('track.empty', '暂无开放赛道')})</option>`; return; }
       sel.innerHTML = tracks.map(t =>
         `<option value="${t.id}">${escHtml(t.name)} - ${t.trial_price || 0}💎/次</option>`
       ).join('');
@@ -433,7 +435,7 @@ function renderHotelRooms() {
 
 export async function loadHotelRooms() {
   const roomGrid = $('#homeRoomGrid');
-  if (roomGrid) roomGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>正在加载房型...</p></div>';
+  if (roomGrid) roomGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><p>${t('common.loading', '载入中…')}</p></div>`;
   try {
     const bundle = await getBundle();
     const hotels = bundle.hotels || [];
@@ -465,7 +467,7 @@ export async function loadHotelRooms() {
     ROOMS.push(...all);
     renderHotelRooms();
   } catch (e) {
-    if (roomGrid) roomGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><p>加载失败: ' + escHtml(e.message) + '</p></div>';
+    if (roomGrid) roomGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><p>${t('common.error.load', '加载失败')}: ${escHtml(e.message)}</p></div>`;
   }
 }
 
@@ -477,7 +479,7 @@ export async function loadLicenseReqs() {
     const bundle = await getBundle();
     const reqs = (bundle.licenseReqs || []).filter(r => r.is_active);
     if (!reqs.length) {
-      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🚗</div><p>驾照考试暂未开放, 市政厅公告后启动。</p></div>';
+      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🚗</div><p>${t('exam.empty', '驾照考试暂未开放, 市政厅公告后启动。')}</p></div>`;
       return;
     }
     const gradeLabels = { B: 'B 级（初级）', A: 'A 级（中级）', S: 'S 级（高级 / 职业）' };
@@ -497,7 +499,7 @@ export async function loadLicenseReqs() {
         </div>`;
     }).join('');
   } catch (e) {
-    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><p>加载失败: ' + escHtml(e.message) + '</p></div>';
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><p>${t('common.error.load', '加载失败')}: ${escHtml(e.message)}</p></div>`;
   }
 }
 
@@ -510,7 +512,7 @@ export async function loadKartSpecs() {
     const bundle = await getBundle();
     const tracks = (bundle.tracks || []).filter(t => t.is_active);
     if (!tracks.length) {
-      specEls.forEach(el => el.textContent = '暂无数据');
+      specEls.forEach(el => el.textContent = t('common.empty', '暂无数据'));
       if (priceEl) priceEl.textContent = '试车价格待公告';
       return;
     }
@@ -531,8 +533,8 @@ export async function loadKartSpecs() {
       else priceEl.textContent = '试车价格待公告';
     }
   } catch (e) {
-    specEls.forEach(el => el.textContent = '加载失败');
-    if (priceEl) priceEl.textContent = '试车价格加载失败';
+    specEls.forEach(el => el.textContent = t('common.error.load', '加载失败'));
+    if (priceEl) priceEl.textContent = t('track.price.loadFail', '试车价格加载失败');
   }
 }
 

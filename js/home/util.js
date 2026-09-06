@@ -1,5 +1,7 @@
 // v45 重写: 公共页 (home) 共享工具
 // 替换 main.js 顶部的 escapeHtml / formatTime / relativeTime 等散落的 helper
+// v50-N5 Step 15: safeRender 错误文案走 i18n
+import { t } from '../i18n/core.js?v=n5';
 
 // HTML escape (双保险, 同时处理 5 个字符)
 export function escHtml(s) {
@@ -85,7 +87,7 @@ export function safeRender(fn, container) {
     if (container) {
       container.innerHTML = `<div class="empty-state empty-state-error">
         <div class="empty-icon">⚠️</div>
-        <p class="empty-state-title">渲染失败</p>
+        <p class="empty-state-title">${t('common.error.render', '渲染失败')}</p>
         <p class="empty-sub">${escHtml(e.message || String(e))}</p>
       </div>`;
     }

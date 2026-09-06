@@ -116,6 +116,18 @@ const DICT = {
   // 主页 hero CTA
   'hero.cta.notice':  { 'zh-CN': '▶ 查看公告', 'en': '▶ View Notice' },
   'hero.cta.service': { 'zh-CN': '市民服务',   'en': 'Civic Service' },
+  // 列表 3 态文案 (N5 Step 15: loading/empty/error 全 i18n)
+  'common.error.load':    { 'zh-CN': '加载失败',         'en': 'Load failed' },
+  'common.error.render':  { 'zh-CN': '渲染失败',         'en': 'Render failed' },
+  'common.empty':         { 'zh-CN': '暂无数据',         'en': 'No data' },
+  'hotel.empty.filtered': { 'zh-CN': '没有符合条件的房型，试试调整筛选条件。', 'en': 'No matching rooms. Try adjusting filters.' },
+  'messages.empty':       { 'zh-CN': '暂无留言, 来抢沙发', 'en': 'No messages yet. Be the first!' },
+  'messages.empty.comments': { 'zh-CN': '暂无评论, 来抢沙发', 'en': 'No comments yet. Be the first!' },
+  'gallery.empty':        { 'zh-CN': '暂无图集',         'en': 'No gallery items' },
+  'announcements.empty':  { 'zh-CN': '暂无公告',         'en': 'No announcements' },
+  'exam.empty':           { 'zh-CN': '驾照考试暂未开放, 市政厅公告后启动。', 'en': 'License exam not open yet. Will start after city hall notice.' },
+  'track.empty':          { 'zh-CN': '暂无开放赛道',     'en': 'No open tracks' },
+  'track.price.loadFail': { 'zh-CN': '试车价格加载失败',  'en': 'Failed to load trial price' },
 };
 
 let _current = (function () {

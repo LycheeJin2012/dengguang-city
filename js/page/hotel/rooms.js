@@ -10,7 +10,7 @@ export function getRooms() { return ROOMS; }
 export async function loadRooms() {
   const grid = $('#roomGrid');
   const count = $('#hotelCount');
-  if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>正在加载房型数据...</p></div>';
+  if (grid) grid.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><p>${t('common.loading', '载入中…')}</p></div>`;
   try {
     // v49-fix-9: 改用公开 /api/homepage-bundle (不过滤 is_active)
     // 之前用 /api/init?action=homepage-bundle 会过滤 is_active=1,
@@ -68,7 +68,7 @@ export async function loadRooms() {
     }
     renderRooms();
   } catch (e) {
-    if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">❌</div><p>加载失败: ' + escHtml(e.message) + '</p></div>';
+    if (grid) grid.innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><p>${t('common.error.load', '加载失败')}: ${escHtml(e.message)}</p></div>`;
     if (count) count.textContent = '— / —';
   }
 }
@@ -94,7 +94,7 @@ export function renderRooms() {
   const count = $('#hotelCount');
   if (count) count.textContent = tf('hotel.count', { n: list.length, total: ROOMS.length });
   if (!list.length) {
-    grid.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>没有符合条件的房型，试试调整筛选条件。</p></div>';
+    grid.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>${t('hotel.empty.filtered', '没有符合条件的房型，试试调整筛选条件。')}</p></div>`;
     return;
   }
   grid.innerHTML = list.map(r => `

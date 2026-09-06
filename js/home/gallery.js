@@ -1,5 +1,7 @@
 // v45 重写: 首页图集 (gallery + lightbox)
+// v50-N5 Step 15: loading/empty/error 走 i18n
 import { $, escHtml, GET } from './util.js?v=v46-fix-modules';
+import { t } from '../i18n/core.js?v=n5';
 
 let _lbImages = [];
 let _lbIdx = 0;
@@ -11,7 +13,7 @@ export async function loadGallery() {
     const d = await GET('/api/gallery');
     const list = d.items || d.gallery || [];
     if (!list.length) {
-      grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🖼️</div><p>暂无图集</p></div>';
+      grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🖼️</div><p>${t('gallery.empty', '暂无图集')}</p></div>`;
       return;
     }
     grid.innerHTML = list.map((g, i) => {
@@ -30,7 +32,7 @@ export async function loadGallery() {
       el.addEventListener('click', () => openLb(+el.dataset.i));
     });
   } catch (e) {
-    grid.innerHTML = `<div class="empty-state"><p>加载失败: ${escHtml(e.message)}</p></div>`;
+    grid.innerHTML = `<div class="empty-state"><p>${t('common.error.load', '加载失败')}: ${escHtml(e.message)}</p></div>`;
   }
 }
 
