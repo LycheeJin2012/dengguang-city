@@ -216,17 +216,28 @@ export function initI18n() {
 }
 
 // 渲染语言切换按钮 (返回 HTML 字符串, 调用方决定位置)
+// 按钮文字 = '🌐 EN' (在中文页) 或 '🌐 中文' (在英文页), 直观告诉用户点它会切到哪
 export function renderLangSwitcher() {
-  const other = _current === 'zh-CN' ? 'en' : 'zh-CN';
-  return `<button type="button" class="nav-lang-switch" id="navLangSwitch" title="切换语言 / Switch language" data-i18n="nav.toggle">${t('nav.toggle')}</button>`;
+  const otherLabel = _current === 'zh-CN' ? '🌐 EN' : '🌐 中文';
+  return `<button type="button" class="nav-lang-switch" id="navLangSwitch" data-lang-toggle="1" title="${otherLabel === '🌐 EN' ? '切换到 English' : 'Switch to 中文'}">${otherLabel}</button>`;
 }
 
 // 绑定切换按钮事件 (页面加载后调一次)
 export function bindLangSwitcher(root = document) {
   const btn = root.querySelector('#navLangSwitch');
   if (!btn) return;
+  // 切换时刷新按钮文字 (切到 en → 显示 '🌐 中文' 让用户知道点它回中文)
+  const refreshLabel = () => {
+    const otherLabel = _current === 'zh-CN' ? '🌐 EN' : '🌐 中文';
+    btn.textContent = otherLabel;
+    btn.title = otherLabel === '🌐 EN' ? '切换到 English' : 'Switch to 中文';
+  };
+  refreshLabel();
   btn.addEventListener('click', () => {
     const other = _current === 'zh-CN' ? 'en' : 'zh-CN';
     setLang(other);
+    refreshLabel(); // 立即更新文字 (不用等 lc:langchange 事件)
   });
+  // 同步外部切语言 (如别的模块触发 setLang) 也更新按钮
+  window.addEventListener('lc:langchange', refreshLabel);
 }
