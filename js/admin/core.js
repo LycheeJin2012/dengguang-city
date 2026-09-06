@@ -1,6 +1,8 @@
 // v44 重写: admin 共享核心 (utilities, API wrapper, helpers)
 // 所有 tab 模块都从这里 import 共享函数
 // 取代旧 admin.v2551.js 顶部的 $  / $$  / esc  / fmt  / api  / _fileToDataURL  等
+// v50-N6 B6: re-export i18n t()
+export { t } from '../i18n/core.js';
 
 // ---------- DOM helpers ----------
 export const $ = s => document.querySelector(s);
