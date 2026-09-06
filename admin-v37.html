@@ -186,10 +186,10 @@
     <!-- Tab: 管理员 -->
     <section class="tab-pane" id="pane-admins">
       <div class="pane-head">
-        <h2>管理员账号</h2>
+        <h2 data-i18n="admin.admins.title">管理员账号</h2>
         <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderAdminList">🔄 刷新</button>
-          <button class="btn btn-primary btn-sm" id="btnAddAdmin">+ 添加管理员</button>
+          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderAdminList">🔄 <span data-i18n="common.refresh">刷新</span></button>
+          <button class="btn btn-primary btn-sm" id="btnAddAdmin" data-i18n="admin.admins.add">+ 添加管理员</button>
         </div>
       </div>
       <div id="adminList" class="admin-list">
@@ -197,77 +197,77 @@
       </div>
       <div id="adminListEmpty" class="empty-state" style="display:none">
         <div class="empty-icon">🛡️</div>
-        <p>暂无管理员</p>
+        <p data-i18n="admin.admins.empty">暂无管理员</p>
       </div>
     </section>
 
     <!-- Tab: 玩家管理 -->
     <section class="tab-pane" id="pane-players">
       <div class="pane-head">
-        <h2>玩家管理（注册审批 / 重置密码）</h2>
+        <h2 data-i18n="admin.players.title">玩家管理</h2>
         <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderPlayers">🔄 刷新</button>
+          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderPlayers">🔄 <span data-i18n="common.refresh">刷新</span></button>
         </div>
       </div>
       <div class="msg-filter">
-        <label><input type="radio" name="playerFilter" value="pending" checked /> 待审批 <span id="cntPlayerPending">0</span></label>
-        <label><input type="radio" name="playerFilter" value="active" /> 已激活 <span id="cntPlayerActive">0</span></label>
-        <label><input type="radio" name="playerFilter" value="rejected" /> 已拒绝 <span id="cntPlayerRejected">0</span></label>
-        <label><input type="radio" name="playerFilter" value="all" /> 全部 <span id="cntPlayerAll">0</span></label>
+        <label><input type="radio" name="playerFilter" value="pending" checked /> <span data-i18n="admin.players.pending">待审批</span> <span id="cntPlayerPending">0</span></label>
+        <label><input type="radio" name="playerFilter" value="active" /> <span data-i18n="admin.players.active">已激活</span> <span id="cntPlayerActive">0</span></label>
+        <label><input type="radio" name="playerFilter" value="rejected" /> <span data-i18n="admin.players.rejected">已拒绝</span> <span id="cntPlayerRejected">0</span></label>
+        <label><input type="radio" name="playerFilter" value="all" /> <span data-i18n="admin.players.all">全部</span> <span id="cntPlayerAll">0</span></label>
       </div>
       <div id="playerList" class="msg-list v49-stagger">
         <!-- JS 渲染 -->
       </div>
       <div id="playerEmpty" class="empty-state" style="display:none">
         <div class="empty-icon">👥</div>
-        <p>暂无玩家</p>
+        <p data-i18n="admin.players.empty">暂无玩家</p>
       </div>
     </section>
 
     <!-- Tab: 酒店预订 (v47 删: 合并到 tickets 工单) -->
     <section class="tab-pane" id="pane-bookings" style="display:none">
       <div class="pane-head">
-        <h2>酒店预订 (v47 合并到工单)</h2>
+        <h2>🎫 Tickets</h2>
         <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm" onclick="document.querySelector('[data-tab=tickets]').click()">🎫 跳到工单</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.querySelector('[data-tab=tickets]').click()" data-i18n="admin.jumpToTickets">🎫 跳到工单</button>
         </div>
       </div>
-      <p class="pane-hint">酒店预订、留言、驾照报名已统一合并到"🎫 工单" tab，请到那里处理。</p>
+      <p class="pane-hint" data-i18n="admin.mergeNotice">酒店预订、留言、驾照报名已统一合并到"🎫 工单" tab，请到那里处理。</p>
     </section>
 
     <!-- Tab: 驾照考试 (v47 删: 合并到 tickets 工单) -->
     <section class="tab-pane" id="pane-license" style="display:none">
       <div class="pane-head">
-        <h2>驾照考试 (v47 合并到工单)</h2>
+        <h2>🎫 Tickets</h2>
         <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm" onclick="document.querySelector('[data-tab=tickets]').click()">🎫 跳到工单</button>
+          <button class="btn btn-ghost btn-sm" onclick="document.querySelector('[data-tab=tickets]').click()" data-i18n="admin.jumpToTickets">🎫 跳到工单</button>
         </div>
       </div>
-      <p class="pane-hint">酒店预订、留言、驾照报名已统一合并到"🎫 工单" tab，请到那里处理。</p>
+      <p class="pane-hint" data-i18n="admin.mergeNotice">酒店预订、留言、驾照报名已统一合并到"🎫 工单" tab，请到那里处理。</p>
     </section>
 
     <!-- Tab: 赛道报名 -->
     <section class="tab-pane" id="pane-kart">
       <div class="pane-head">
-        <h2>赛道试跑报名</h2>
+        <h2 data-i18n="admin.kart.title">赛道试跑报名</h2>
         <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderKarts">🔄 刷新</button>
-          <button class="btn btn-ghost btn-sm" id="btnKartClearDone">清除已处理</button>
+          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderKarts">🔄 <span data-i18n="common.refresh">刷新</span></button>
+          <button class="btn btn-ghost btn-sm" id="btnKartClearDone" data-i18n="admin.kart.clearDone">清除已处理</button>
         </div>
       </div>
       <nav class="subtabs" data-pane="kart">
-        <button class="subtab active" data-sub="signup">📋 赛道报名</button>
-        <button class="subtab" data-sub="circuit">🏎️ 国际试车</button>
-        <button class="subtab" data-sub="manage" data-super-only>🏁 赛车场管理 (SUPER)</button>
+        <button class="subtab active" data-sub="signup">📋 <span data-i18n="admin.kart.signup">赛道报名</span></button>
+        <button class="subtab" data-sub="circuit">🏎️ <span data-i18n="admin.kart.circuit">国际试车</span></button>
+        <button class="subtab" data-sub="manage" data-super-only>🏁 <span data-i18n="admin.kart.manage">赛车场管理 (SUPER)</span></button>
       </nav>
       <div class="subview" data-subview="kart-signup">
         <div class="msg-filter">
-          <label><input type="radio" name="kartFilter" value="all" checked /> 全部 <span id="kartCntAll">0</span></label>
-          <label><input type="radio" name="kartFilter" value="pending" /> 待审核 <span id="kartCntPending">0</span></label>
-          <label><input type="radio" name="kartFilter" value="approved" /> 已批准 <span id="kartCntApproved">0</span></label>
-          <label><input type="radio" name="kartFilter" value="rejected" /> 已拒绝 <span id="kartCntRejected">0</span></label>
+          <label><input type="radio" name="kartFilter" value="all" checked /> <span data-i18n="admin.players.all">全部</span> <span id="kartCntAll">0</span></label>
+          <label><input type="radio" name="kartFilter" value="pending" /> <span data-i18n="admin.kart.status.pending">待审核</span> <span id="kartCntPending">0</span></label>
+          <label><input type="radio" name="kartFilter" value="approved" /> <span data-i18n="admin.kart.status.approved">已批准</span> <span id="kartCntApproved">0</span></label>
+          <label><input type="radio" name="kartFilter" value="rejected" /> <span data-i18n="admin.kart.status.rejected">已拒绝</span> <span id="kartCntRejected">0</span></label>
           <select id="kartSessionFilter">
-            <option value="">全部场次</option>
+            <option value="" data-i18n="admin.kart.session.all">全部场次</option>
             <option>周六 14:00 计时赛</option>
             <option>周六 20:00 接力赛</option>
             <option>周日 10:00 教学场</option>
@@ -279,35 +279,35 @@
         </div>
         <div id="kartEmpty" class="empty-state" style="display:none">
           <div class="empty-icon">🏁</div>
-          <p>暂无报名</p>
+          <p data-i18n="admin.kart.signup.empty">暂无报名</p>
         </div>
       </div>
       <div class="subview" data-subview="kart-manage">
         <div id="trackManageList" class="msg-list"></div>
         <div id="trackManageEmpty" class="empty-state" style="display:none">
           <div class="empty-icon">🏁</div>
-          <p>暂无赛车场。点右上"新建赛车场"创建。</p>
+          <p data-i18n="admin.kart.manage.empty">暂无赛车场。点右上"新建赛车场"创建。</p>
         </div>
         <div class="pane-tools mt-8" id="trackManageAddBtn" data-super-only style="display:none">
-          <button class="btn btn-primary btn-sm" id="btnAddTrack">+ 新建赛车场</button>
+          <button class="btn btn-primary btn-sm" id="btnAddTrack">+ <span data-i18n="admin.kart.manage.add">新建赛车场</span></button>
         </div>
       </div>
       <!-- v29: 国际赛车场合并进赛道 tab 第 2 个 subview (原 circuit tab 整段) -->
       <div class="subview" data-subview="kart-circuit">
         <div class="msg-filter">
-          <label><input type="radio" name="circuitFilter" value="all" checked /> 全部 <span id="circuitCntAll">0</span></label>
-          <label><input type="radio" name="circuitFilter" value="pending" /> 待审核 <span id="circuitCntPending">0</span></label>
-          <label><input type="radio" name="circuitFilter" value="approved" /> 已批准 <span id="circuitCntApproved">0</span></label>
-          <label><input type="radio" name="circuitFilter" value="rejected" /> 已拒绝 <span id="circuitCntRejected">0</span></label>
+          <label><input type="radio" name="circuitFilter" value="all" checked /> <span data-i18n="admin.players.all">全部</span> <span id="circuitCntAll">0</span></label>
+          <label><input type="radio" name="circuitFilter" value="pending" /> <span data-i18n="admin.kart.status.pending">待审核</span> <span id="circuitCntPending">0</span></label>
+          <label><input type="radio" name="circuitFilter" value="approved" /> <span data-i18n="admin.kart.status.approved">已批准</span> <span id="circuitCntApproved">0</span></label>
+          <label><input type="radio" name="circuitFilter" value="rejected" /> <span data-i18n="admin.kart.status.rejected">已拒绝</span> <span id="circuitCntRejected">0</span></label>
           <select id="circuitSessionFilter">
-            <option value="">全部场次</option>
+            <option value="" data-i18n="admin.kart.session.all">全部场次</option>
             <option>排位赛 周三 20:00</option>
             <option>正赛 周六 15:00</option>
             <option>国际邀请赛 月初</option>
             <option>自由练习</option>
           </select>
           <select id="circuitLicenseFilter">
-            <option value="">全部驾照</option>
+            <option value="" data-i18n="admin.circuit.license.all">全部驾照</option>
             <option>B 级（初级）</option>
             <option>A 级（中级）</option>
             <option>S 级（高级 / 职业）</option>
@@ -318,7 +318,7 @@
         </div>
         <div id="circuitEmpty" class="empty-state" style="display:none">
           <div class="empty-icon">🏎️</div>
-          <p>暂无报名</p>
+          <p data-i18n="admin.kart.signup.empty">暂无报名</p>
         </div>
       </div>
     </section>
@@ -337,72 +337,72 @@
       <div id="annList"></div>
       <div id="annEmpty" class="empty-state" style="display:none">
         <div class="empty-icon">📢</div>
-        <p>暂无公告, 点右上"+ 发布新公告"创建第一条</p>
+        <p data-i18n="announcements.admin.empty">暂无公告，点右上"+ 发布新公告"创建第一条</p>
       </div>
     </section>
 
     <!-- Tab: 私信监管 (仅 super) -->
     <section class="tab-pane" id="pane-dms">
       <div class="pane-head">
-        <h2>💬 私信监管</h2>
+        <h2>💬 <span data-i18n="admin.dms.title">私信监管</span></h2>
         <div class="pane-tools">
-          <span class="tag tag-super">仅 SUPER</span>
-          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderDms">🔄 刷新</button>
+          <span class="tag tag-super">SUPER</span>
+          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderDms">🔄 <span data-i18n="common.refresh">刷新</span></button>
         </div>
       </div>
-      <p class="pane-hint">监管所有玩家私信对话，可以灯灯客服身份代为回复，或查看 AI 客服"转人工"建议的对话。</p>
+      <p class="pane-hint" data-i18n="admin.dms.hint">监管所有玩家私信对话，可以灯灯客服身份代为回复，或查看 AI 客服"转人工"建议的对话。</p>
       <div id="dmList" class="msg-list v49-stagger"></div>
       <div id="dmEmpty" class="empty-state" style="display:none">
         <div class="empty-icon">💬</div>
-        <p>暂无私信记录</p>
+        <p data-i18n="admin.dms.empty">暂无私信记录</p>
       </div>
     </section>
 
     <!-- Tab: 首页图集管理 (仅 super) -->
     <section class="tab-pane" id="pane-gallery">
       <div class="pane-head">
-        <h2>🖼️ 首页图集管理</h2>
+        <h2>🖼️ <span data-i18n="admin.gallery.title">首页图集管理</span></h2>
         <div class="pane-tools">
-          <span class="tag tag-super">仅 SUPER</span>
-          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderGallery">🔄 刷新</button>
-          <button class="btn btn-primary btn-sm" id="galCreateBtn" style="display:none">+ 添加图片</button>
+          <span class="tag tag-super">SUPER</span>
+          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderGallery">🔄 <span data-i18n="common.refresh">刷新</span></button>
+          <button class="btn btn-primary btn-sm" id="galCreateBtn" style="display:none">+ <span data-i18n="admin.gallery.add">添加图片</span></button>
         </div>
       </div>
-      <p class="pane-hint">管理首页"城市风貌"和"实景图集"栏目用的所有图片。修改后, 首页 index.html 会立即拉新版本。</p>
+      <p class="pane-hint" data-i18n="admin.gallery.hint">管理首页"城市风貌"和"实景图集"栏目用的所有图片。修改后, 首页 index.html 会立即拉新版本。</p>
       <div class="filter-bar">
-        <button class="btn btn-ghost btn-sm gal-cat-btn active" data-cat="">全部</button>
-        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="city">城市</button>
-        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="road">路网</button>
-        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="kart">赛道</button>
-        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="nature">自然</button>
+        <button class="btn btn-ghost btn-sm gal-cat-btn active" data-cat=""><span data-i18n="admin.gallery.filter.all">全部</span></button>
+        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="city"><span data-i18n="admin.gallery.filter.city">城市</span></button>
+        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="road"><span data-i18n="admin.gallery.filter.road">路网</span></button>
+        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="kart"><span data-i18n="admin.gallery.filter.kart">赛道</span></button>
+        <button class="btn btn-ghost btn-sm gal-cat-btn" data-cat="nature"><span data-i18n="admin.gallery.filter.nature">自然</span></button>
       </div>
       <div id="galGrid" class="gal-grid v49-stagger"></div>
       <div id="galEmpty" class="empty-state" style="display:none">
         <div class="empty-icon">🖼️</div>
-        <p>暂无图片, 点右上"+ 添加图片"开始</p>
+        <p data-i18n="admin.gallery.empty">暂无图片，点右上"+ 添加图片"开始</p>
       </div>
     </section>
 
     <!-- Tab: 我的密码 -->
     <section class="tab-pane" id="pane-password">
       <div class="pane-head">
-        <h2>修改我的密码</h2>
+        <h2 data-i18n="admin.pwd.title">修改我的密码</h2>
       </div>
       <form class="pwd-form" id="pwdForm">
         <label>
-          <span>当前密码</span>
+          <span data-i18n="admin.pwd.current">当前密码</span>
           <input type="password" id="pwdOld" required autocomplete="current-password" />
         </label>
         <label>
-          <span>新密码（至少 8 位）</span>
+          <span data-i18n="admin.pwd.new">新密码（至少 8 位）</span>
           <input type="password" id="pwdNew" required minlength="8" autocomplete="new-password" />
         </label>
         <label>
-          <span>确认新密码</span>
+          <span data-i18n="admin.pwd.confirm">确认新密码</span>
           <input type="password" id="pwdNew2" required minlength="8" autocomplete="new-password" />
         </label>
         <div class="pwd-msg" id="pwdMsg"></div>
-        <button type="submit" class="btn btn-primary">▶ 更新密码</button>
+        <button type="submit" class="btn btn-primary">▶ <span data-i18n="admin.pwd.submit">更新密码</span></button>
       </form>
     </section>
 
