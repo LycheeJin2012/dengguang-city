@@ -1,6 +1,9 @@
 // v45 重写: 子页 (hotel/profile/dm) 共享工具
 import { $, escHtml, GET, POST, PATCH, DEL } from '../home/util.js?v=v46-fix-modules';
 export { $, escHtml, GET, POST, PATCH, DEL };
+// v49-fix-2: 加 'esc' 别名 export — 4 个 profile 业务文件 (race-times / exam-practice /
+// citizen-card / subscriptions) import 'esc', 改 import 不如在 util.js 加别名, 1 处改完
+export { escHtml as esc };
 
 // 子页通用 nav 渲染 (基于 home/header 的逻辑简化, 但独立文件不依赖 home/header 的循环引用)
 export function renderSubpageNav(slot, me, isCombined) {
