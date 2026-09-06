@@ -37,6 +37,9 @@ export async function loadHeroStats() {
   const statPlayers = $('[data-stat="players"]') || $('#statPlayers');
   // v50-fix-16: 城市数据看板的"注册市民"卡片也用同一份 bundle 数据
   //   之前 index.html 硬编码 17, API 实际返 8 (active 过滤后), 跟 hero 数字不一致
+  // v50-fix-19: data-card 不动画 — 直接设值, 因为 hero 的 <b> 在
+  //   animateNumber 调用时是 0→8 动画, 但 data-card 同样调用却卡 0 (怀疑是
+  //   rAF / dom batching / 元素可见性 某种 edge case). 直接设值更稳.
   const cardPlayers = $('[data-stat="players-card"]');
   if (!statPlayers && !cardPlayers) return;
   try {
@@ -45,8 +48,8 @@ export async function loadHeroStats() {
     const n = Number(bundle.playerCount || 0);
     const heroB = statPlayers?.querySelector('b');
     if (heroB) animateNumber(heroB, n);
-    const cardB = cardPlayers;
-    if (cardB) animateNumber(cardB, n);
+    // data-card 直接设值 (不动画, 避免 rAF 在某些浏览器对 div 元素的行为差异)
+    if (cardPlayers) cardPlayers.textContent = n.toLocaleString();
   } catch (e) {
     // fallback: 显示 —
     const c1 = statPlayers?.querySelector('b'); if (c1) c1.textContent = '—';
