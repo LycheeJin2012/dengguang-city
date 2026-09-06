@@ -73,19 +73,24 @@ export async function onRequestGet(context) {
   if (type === 'licenses') {
     // 驾照等级榜: 看每个玩家通过的 exam_type (B/A/S), 等级越高越靠前
     // 计算公式: 持有 S 记 3 分, A 记 2 分, B 记 1 分; 同分按 last upgrade_at 排
-    const rows = await env.DB.prepare(`
-      SELECT ls.player_id, p.username, p.avatar_emoji,
-             SUM(CASE WHEN ls.exam_type = 'B' AND ls.result = 'passed' THEN 1 ELSE 0 END) AS has_b,
-             SUM(CASE WHEN ls.exam_type = 'A' AND ls.result = 'passed' THEN 1 ELSE 0 END) AS has_a,
-             SUM(CASE WHEN ls.exam_type = 'S' AND ls.result = 'passed' THEN 1 ELSE 0 END) AS has_s,
-             MAX(ls.result_at) AS latest_at
-      FROM license_signups ls
-      LEFT JOIN players p ON p.id = ls.player_id
-      WHERE ls.player_id IS NOT NULL AND p.status = 'active' AND ls.result = 'passed'
-      GROUP BY ls.player_id
-      ORDER BY has_s DESC, has_a DESC, has_b DESC, latest_at ASC
-      LIMIT ?
-    `).bind(limit).all();
+    let rows;
+    try {
+      rows = await env.DB.prepare(`
+        SELECT ls.player_id, p.username, p.avatar_emoji,
+               SUM(CASE WHEN ls.exam_type = 'B' AND ls.result = 'passed' THEN 1 ELSE 0 END) AS has_b,
+               SUM(CASE WHEN ls.exam_type = 'A' AND ls.result = 'passed' THEN 1 ELSE 0 END) AS has_a,
+               SUM(CASE WHEN ls.exam_type = 'S' AND ls.result = 'passed' THEN 1 ELSE 0 END) AS has_s,
+               MAX(ls.result_at) AS latest_at
+        FROM license_signups ls
+        LEFT JOIN players p ON p.id = ls.player_id
+        WHERE ls.player_id IS NOT NULL AND p.status = 'active' AND ls.result = 'passed'
+        GROUP BY ls.player_id
+        ORDER BY has_s DESC, has_a DESC, has_b DESC, latest_at ASC
+        LIMIT ?
+      `).bind(limit).all();
+    } catch (e) {
+      return err(500, 'licenses SQL 失败: ' + e.message);
+    }
     return ok({
       type: 'licenses',
       label: '🚗 驾照等级榜 · 老司机',
