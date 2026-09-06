@@ -32,6 +32,12 @@ const DICT = {
   'common.loading':    { 'zh-CN': '载入中…',     'en': 'Loading…' },
   'common.back':       { 'zh-CN': '← 返回',       'en': '← Back' },
   'common.send':       { 'zh-CN': '发送',         'en': 'Send' },
+  'common.comments':   { 'zh-CN': '评论',         'en': 'Comments' },
+  'common.collapse':   { 'zh-CN': '收起评论',     'en': 'Collapse' },
+  'messages.replyTag.ai':   { 'zh-CN': '🤖 AI 已回复',    'en': '🤖 AI Replied' },
+  'messages.replyTag.human':{ 'zh-CN': '💬 人工已回复',  'en': '💬 Replied' },
+  'messages.replyTag.wait':  { 'zh-CN': '⏳ 待回复',      'en': '⏳ Pending' },
+  'messages.adminReply':     { 'zh-CN': '📣 市政厅回复:', 'en': '📣 City Hall Reply:' },
   // hotel 页
   'hotel.status':   { 'zh-CN': '状态：',       'en': 'Status:' },
   'hotel.guests':   { 'zh-CN': '入住人数：',   'en': 'Guests:' },

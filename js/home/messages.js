@@ -20,18 +20,18 @@ export async function loadPublicMessages() {
       const hasReply = m.admin_reply && m.admin_reply.length > 0;
       const replyTag = hasReply
         ? (m.admin_reply.startsWith('🤖')
-            ? '<span class="msg-replied-tag" style="background:#1a3a1a;color:#9f9;border-color:#6f6">🤖 AI 已回复</span>'
-            : '<span class="msg-replied-tag" style="background:#1a2a3a;color:#9cf;border-color:#6cf">💬 人工已回复</span>')
-        : '<span class="msg-replied-tag" style="background:#3a2a1a;color:#fc6;border-color:#c84">⏳ 待回复</span>';
+            ? `<span class="msg-replied-tag" style="background:#1a3a1a;color:#9f9;border-color:#6f6">${t('messages.replyTag.ai')}</span>`
+            : `<span class="msg-replied-tag" style="background:#1a2a3a;color:#9cf;border-color:#6cf">${t('messages.replyTag.human')}</span>`)
+        : `<span class="msg-replied-tag" style="background:#3a2a1a;color:#fc6;border-color:#c84">${t('messages.replyTag.wait')}</span>`;
       return `<article class="msg-item" data-id="${m.id}">
         <div class="msg-head"><div class="msg-head-left">
           <b class="msg-name">${typeLabel} ${escHtml(m.name)}${m.contact ? ' · ' + escHtml(m.contact) : ''}</b>
           ${replyTag}
         </div><div class="msg-time">${relativeTime(m.created_at)}</div></div>
         <p class="msg-content">${escHtml(m.content)}</p>
-        ${hasReply ? `<div class="msg-reply-box"><b>📣 市政厅回复:</b><div>${escHtml(m.admin_reply)}</div><small>${fmtDate(m.replied_at)}</small></div>` : ''}
+        ${hasReply ? `<div class="msg-reply-box"><b>${t('messages.adminReply')}</b><div>${escHtml(m.admin_reply)}</div><small>${fmtDate(m.replied_at)}</small></div>` : ''}
         <div class="msg-actions book-actions">
-          <button class="btn btn-ghost btn-sm" data-act="comments">💬 评论</button>
+          <button class="btn btn-ghost btn-sm" data-act="comments">💬 ${t('common.comments', '评论')}</button>
         </div>
         <div class="comment-section" data-mid="${m.id}" style="display:none"></div>
       </article>`;
@@ -57,10 +57,10 @@ export async function toggleComments(mid, btn) {
   if (!section) return;
   if (section.style.display === 'block') {
     section.style.display = 'none';
-    btn.textContent = '💬 评论';
+    btn.textContent = '💬 ' + t('common.comments', '评论');
     return;
   }
-  btn.textContent = '收起评论';
+  btn.textContent = t('common.collapse', '收起评论');
   section.style.display = 'block';
   section.innerHTML = `<div class="empty-state" style="padding:20px"><p>${t('common.loading', '载入中…')}</p></div>`;
   await renderComments(mid, section);
