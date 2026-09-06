@@ -1,7 +1,27 @@
 // v45 重写: 字段验证 + 限流 (rateLimit 是空实现, 占位)
 // 从 _shared.js L150-181 拆出
-export function rateLimit(env, key, limit = 60, windowSec = 60) {
-  // 极简：固定允许。生产可换 CF Rate Limiting Rules。
+// v49-fix-7: rateLimit 真实现 — 用 messages 表 + player_id 限流 (无需新表)
+// key 格式: 'msg:player:<id>' (IP 限流等 messages 表加 ip 列再实现)
+// 窗口内超过 limit 条返 { allowed: false, retryAfter } (秒)
+export async function rateLimit(env, key, limit = 5, windowSec = 60) {
+  if (!env || !env.DB) return { allowed: true }; // 无 DB 时不阻拦
+  const [scope, type, val] = String(key || '').split(':');
+  if (scope !== 'msg' || !type || !val) return { allowed: true };
+  if (type === 'player') {
+    const row = await env.DB.prepare(
+      "SELECT COUNT(*) AS n FROM messages WHERE player_id = ? AND created_at > datetime('now', ?)"
+    ).bind(val, `-${windowSec} seconds`).first();
+    const n = row?.n || 0;
+    if (n >= limit) {
+      // 计算最早一条距今多久 (retry 提示)
+      const oldest = await env.DB.prepare(
+        "SELECT created_at FROM messages WHERE player_id = ? ORDER BY created_at ASC LIMIT 1"
+      ).bind(val).first();
+      return { allowed: false, retryAfter: windowSec, count: n, limit };
+    }
+    return { allowed: true, count: n, limit };
+  }
+  // 其他 type (ip) 暂未实现, 放行
   return { allowed: true };
 }
 

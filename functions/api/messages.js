@@ -1,7 +1,7 @@
 // GET  /api/messages  - 公开留言列表
 // GET  /api/messages?my=1  - 当前登录玩家的所有留言 (profile 页用)
 // POST /api/messages  - 提交留言（需登录玩家）→ 自动 AI 回复
-import { ok, err, stripHtml, isNonEmpty, readToken, getSession, aiAutoReply } from '../_shared.js';
+import { ok, err, stripHtml, isNonEmpty, readToken, getSession, aiAutoReply, rateLimit } from '../_shared.js';
 import { ticketFromMessage } from '../_shared/tickets.js';
 
 export async function onRequestGet(context) {
@@ -38,6 +38,12 @@ export async function onRequestPost(context) {
   const token = readToken(request);
   const sess = await getSession(env, token);
   if (!sess) return err(401, '请先登录玩家账号');
+
+  // v49-fix-7: 限流 — 60s 内 5 条 (防 spam 刷留言)
+  const rl = await rateLimit(env, `msg:player:${sess.player_id}`, 5, 60);
+  if (!rl.allowed) {
+    return err(429, `留言过于频繁, 请 ${rl.retryAfter || 60} 秒后再试 (本窗口已 ${rl.count}/${rl.limit} 条)`);
+  }
 
   let body;
   try { body = await request.json(); } catch (e) { return err(400, 'Invalid JSON'); }
