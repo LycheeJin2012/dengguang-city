@@ -47,6 +47,11 @@ const DICT = {
   'profile.stat.comments': { 'zh-CN': '评 论',            'en': 'Comments' },
   'profile.tbd':           { 'zh-CN': '待公告',          'en': 'TBD' },
   'profile.editModal.title': { 'zh-CN': '编辑个人主页',  'en': 'Edit Profile' },
+  // 通用相对时间 (notifications 页)
+  'time.justNow':   { 'zh-CN': '刚刚',   'en': 'just now' },
+  'time.minutesAgo': { 'zh-CN': ' 分钟前', 'en': ' min ago' },
+  'time.hoursAgo':   { 'zh-CN': ' 小时前', 'en': ' hr ago' },
+  'time.daysAgo':    { 'zh-CN': ' 天前',   'en': ' days ago' },
   'messages.replyTag.ai':   { 'zh-CN': '🤖 AI 已回复',    'en': '🤖 AI Replied' },
   'messages.replyTag.human':{ 'zh-CN': '💬 人工已回复',  'en': '💬 Replied' },
   'messages.replyTag.wait':  { 'zh-CN': '⏳ 待回复',      'en': '⏳ Pending' },

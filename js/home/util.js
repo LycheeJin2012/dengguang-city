@@ -24,10 +24,10 @@ export function relativeTime(iso) {
   if (!iso) return '';
   const t = new Date(iso).getTime();
   const diff = Date.now() - t;
-  if (diff < 60_000) return '刚刚';
-  if (diff < 3600_000) return Math.floor(diff / 60_000) + ' 分钟前';
-  if (diff < 86400_000) return Math.floor(diff / 3600_000) + ' 小时前';
-  if (diff < 7 * 86400_000) return Math.floor(diff / 86400_000) + ' 天前';
+  if (diff < 60_000) return t('time.justNow', '刚刚');
+  if (diff < 3600_000) return Math.floor(diff / 60_000) + t('time.minutesAgo', ' 分钟前');
+  if (diff < 86400_000) return Math.floor(diff / 3600_000) + t('time.hoursAgo', ' 小时前');
+  if (diff < 7 * 86400_000) return Math.floor(diff / 86400_000) + t('time.daysAgo', ' 天前');
   return fmtDate(iso).slice(0, 10);
 }
 

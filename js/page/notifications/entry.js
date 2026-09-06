@@ -16,10 +16,10 @@ function fmt(iso) {
   const d = new Date(iso.replace(' ', 'T') + 'Z');
   const now = Date.now();
   const diff = (now - d.getTime()) / 1000;
-  if (diff < 60) return '刚刚';
-  if (diff < 3600) return Math.floor(diff / 60) + ' 分钟前';
-  if (diff < 86400) return Math.floor(diff / 3600) + ' 小时前';
-  if (diff < 604800) return Math.floor(diff / 86400) + ' 天前';
+  if (diff < 60) return t('time.justNow', '刚刚');
+  if (diff < 3600) return Math.floor(diff / 60) + t('time.minutesAgo', ' 分钟前');
+  if (diff < 86400) return Math.floor(diff / 3600) + t('time.hoursAgo', ' 小时前');
+  if (diff < 604800) return Math.floor(diff / 86400) + t('time.daysAgo', ' 天前');
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
@@ -29,7 +29,7 @@ async function loadNotifs() {
   try {
     const r = await fetch('/api/notifications?my=1&limit=100', { credentials: 'include' });
     const d = await r.json();
-    if (!d.ok) throw new Error(d.error || '加载失败');
+    if (!d.ok) throw new Error(d.error || t('common.error.load', '加载失败'));
     _allNotifs = d.notifications || [];
     renderSummary(d.unread_count || 0);
     renderList();
@@ -65,7 +65,7 @@ function renderList() {
       <div class="notif-body">
         <div class="notif-head"><b>${n.title || t('notif.untitled', '(无标题)')}</b>${isUnread ? '<span class="notif-dot"></span>' : ''}</div>
         <p class="notif-text">${n.body || ''}</p>
-        <small class="notif-time">${fmt(n.created_at)} · ${n.type}</small>
+        <small class="notif-time">${fmt(n.created_at)}</small>
       </div>
       <div class="notif-actions">
         ${n.link ? `<a href="${n.link}" class="btn btn-ghost btn-small" data-act="open">${t('notif.open', '查看')}</a>` : ''}
@@ -93,7 +93,7 @@ async function readAll() {
   try {
     const r = await fetch('/api/notifications?action=read-all', { method: 'PATCH', credentials: 'include' });
     const d = await r.json();
-    if (!d.ok) throw new Error(d.error || '失败');
+    if (!d.ok) throw new Error(d.error || t('common.error.load', '操作失败'));
     _allNotifs.forEach(n => { n.read_at = n.read_at || new Date().toISOString(); });
     renderSummary(0);
     renderList();
@@ -114,7 +114,7 @@ function bindFilters() {
 }
 
 function bindAll() {
-  setPageTitle('page.title.notifications', '通知中心 · 灯光市人民政府');
+  setPageTitle('page.title.notifications', 'Notification Center · Light City');
   setMetaDescription('page.meta.notifications',
     '灯光市通知中心 - 站内所有通知, 留言回复 / DM / 公告 / 订阅推送。',
     'Light City Notification Center - All in-site notifications: message replies, DMs, announcements.');
