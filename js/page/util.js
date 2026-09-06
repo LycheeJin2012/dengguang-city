@@ -1,5 +1,6 @@
 // v45 重写: 子页 (hotel/profile/dm) 共享工具
 import { $, escHtml, GET, POST, PATCH, DEL } from '../home/util.js?v=v46-fix-modules';
+import { t } from '../i18n/core.js?v=n5';
 export { $, escHtml, GET, POST, PATCH, DEL };
 // v49-fix-2: 加 'esc' 别名 export — 4 个 profile 业务文件 (race-times / exam-practice /
 // citizen-card / subscriptions) import 'esc', 改 import 不如在 util.js 加别名, 1 处改完
@@ -10,23 +11,23 @@ export { escHtml as esc };
 export function renderSubpageNav(slot, me, isCombined) {
   if (!slot) return;
   if (!me) {
-    slot.innerHTML = `<a href="index.html" class="nav-login-link">返回首页登录</a>`;
+    slot.innerHTML = `<a href="index.html" class="nav-login-link">${t('subnav.loginFirst', '返回首页登录')}</a>`;
     return;
   }
   const adminLink = isCombined
-    ? `<a href="admin.html" class="nav-logout-link nav-admin-link">🛡️ 管理后台</a>`
+    ? `<a href="admin.html" class="nav-logout-link nav-admin-link">🛡️ ${t('subnav.adminPanel', '管理后台')}</a>`
     : '';
   // 铃铛 + 红点: 默认 0, 异步 fetch /api/notifications?my=1&unread=1 拿真实未读数
   //   profile/dm 顶 nav 是同一份代码, 都共用红点
   slot.innerHTML = `
     <span class="nav-user-name">👤 ${escHtml(me.username)}</span>
-    <a href="profile.html#myMessagesCard" id="navBell" class="nav-logout-link nav-bell" title="通知">
+    <a href="profile.html#myMessagesCard" id="navBell" class="nav-logout-link nav-bell" title="${t('subnav.notif', '通知')}">
       🔔<span class="nav-bell-badge" id="navBellBadge" hidden>0</span>
     </a>
     ${adminLink}
-    <a href="dm.html" class="nav-logout-link">📨 私信</a>
-    <a href="profile.html" class="nav-logout-link">${isCombined ? '我的主页' : '主页'}</a>
-    <a href="#" id="navLogout" class="nav-logout-link">登出</a>
+    <a href="dm.html" class="nav-logout-link">📨 ${t('subnav.dm', '私信')}</a>
+    <a href="profile.html" class="nav-logout-link">${isCombined ? t('subnav.myProfile', '我的主页') : t('subnav.profile', '主页')}</a>
+    <a href="#" id="navLogout" class="nav-logout-link">${t('subnav.logout', '登出')}</a>
   `;
   // 异步拉未读数 (失败静默)
   fetchUnreadBadge(slot).catch(() => {});

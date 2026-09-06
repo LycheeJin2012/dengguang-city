@@ -340,6 +340,14 @@ const DICT = {
   'footer.col.hotel':       { 'zh-CN': '酒店',            'en': 'Hotel' },
   'footer.col.admin':       { 'zh-CN': '管理',            'en': 'Admin' },
   'nav.brand':              { 'zh-CN': '灯光市',          'en': 'Light City' },
+  // sub-page 顶 nav (hotel/profile/dm 共用)
+  'subnav.loginFirst':      { 'zh-CN': '返回首页登录',    'en': 'Return to login' },
+  'subnav.adminPanel':      { 'zh-CN': '管理后台',        'en': 'Admin' },
+  'subnav.notif':           { 'zh-CN': '通知',            'en': 'Notifications' },
+  'subnav.dm':              { 'zh-CN': '私信',            'en': 'DM' },
+  'subnav.profile':         { 'zh-CN': '主页',            'en': 'Profile' },
+  'subnav.myProfile':       { 'zh-CN': '我的主页',        'en': 'My Profile' },
+  'subnav.logout':          { 'zh-CN': '登出',            'en': 'Logout' },
   // 公告卡 UI 标签
   'ann.tag.latest':         { 'zh-CN': '最新',           'en': 'Latest' },
   'ann.tag.normal':         { 'zh-CN': '公告',           'en': 'Notice' },
