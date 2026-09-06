@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>通知中心 · 灯光市人民政府</title>
+  <meta name="description" content="灯光市通知中心 - 站内所有通知, 留言回复 / DM / 公告 / 订阅推送。" />
+  <link rel="preload" href="assets/fonts/press-start-2p.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="preload" href="assets/fonts/vt323.woff2" as="font" type="font/woff2" crossorigin />
+  <link rel="stylesheet" href="css/fonts.css" />
+  <link rel="preload" href="css/style.css?v=20260904-v49-0" as="style" />
+  <link rel="preload" href="js/page/notifications/entry.js?v=v50-n6" as="script" />
+  <link rel="stylesheet" href="css/style.css?v=20260904-v49-0" />
+</head>
+<body>
+<script src="js/theme.js?v=v48-5"></script>
+<script src="js/pwa.js?v=v50-n1"></script>
+  <header class="top-strip">
+    <div class="container">
+      <span class="top-icon">📢</span>
+      <span>本站为灯光市人民政府官方网站（搭建中）。公告与新闻将由市政厅正式发布后呈现。</span>
+    </div>
+  </header>
+
+  <nav class="navbar" id="navbar">
+    <div class="container nav-inner">
+      <a href="index.html" class="nav-brand">灯光市人民政府 <small>LIGHT CITY GOVERNMENT</small></a>
+      <ul class="nav-links">
+        <li><a href="index.html#notice" data-i18n="nav.notice">公告</a></li>
+        <li><a href="index.html#data" data-i18n="nav.data">城市数据</a></li>
+        <li><a href="index.html#kart" data-i18n="nav.kart">🛞 卡丁车</a></li>
+        <li><a href="index.html#circuit" data-i18n="nav.circuit">🏎️ 国际赛车场</a></li>
+        <li><a href="hotel.html" data-i18n="nav.hotel">树上酒店</a></li>
+        <li><a href="index.html#service" data-i18n="nav.service">市民服务</a></li>
+        <li><a href="index.html#contact" data-i18n="nav.contact">联系我们</a></li>
+        <li><a href="leaderboard.html" data-i18n="nav.leaderboard">🏆 榜单</a></li>
+      </ul>
+      <button type="button" class="lang-toggle" id="langToggle" data-i18n="nav.toggle">🌐 中文/EN</button>
+    </div>
+  </nav>
+
+  <main>
+    <div class="page-back-row">
+      <a href="index.html" class="btn btn-ghost btn-small">← Home</a>
+    </div>
+    <section class="page-head">
+      <h1 class="page-title">🔔 通知中心</h1>
+      <p class="page-sub" data-i18n="page.sub.notifications">NOTIFICATIONS · 所有留言回复 / DM / 公告推送</p>
+    </section>
+
+    <section class="section" id="notifications">
+      <div class="container">
+        <div class="notif-toolbar">
+          <div class="notif-filters" role="tablist">
+            <button type="button" class="notif-filter active" data-filter="all" data-i18n="notif.filter.all">全部</button>
+            <button type="button" class="notif-filter" data-filter="unread" data-i18n="notif.filter.unread">未读</button>
+            <button type="button" class="notif-filter" data-filter="message_reply" data-i18n="notif.filter.reply">💬 留言回复</button>
+            <button type="button" class="notif-filter" data-filter="dm" data-i18n="notif.filter.dm">✉️ 私信</button>
+            <button type="button" class="notif-filter" data-filter="announcement" data-i18n="notif.filter.announcement">📢 公告</button>
+          </div>
+          <button type="button" class="btn btn-ghost btn-small" id="readAllBtn" data-i18n="notif.readAll">✓ 全部已读</button>
+        </div>
+
+        <div class="notif-summary" id="notifSummary"></div>
+        <div class="notif-list" id="notifList">
+          <div class="empty-state"><div class="empty-icon">⏳</div><p>载入中…</p></div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-foot">
+    <div class="container">
+      <div class="foot-cols">
+        <div><h4>酒店</h4><a href="hotel.html">树上酒店</a></div>
+        <div>
+          <h4>市政</h4>
+          <a href="index.html#notice">公告</a>
+          <a href="index.html#data">城市数据</a>
+          <a href="index.html#service">市民服务</a>
+          <a href="index.html#contact">联系我们</a>
+        </div>
+        <div><h4>管理</h4><a href="admin.html">🔐 管理入口</a></div>
+      </div>
+      <p class="foot-copy">© 2026 灯光市 · v50 · <a href="https://github.com/LycheeJin2012/dengguang-city">Source</a></p>
+    </div>
+  </footer>
+
+  <button class="back-top" id="backTop" aria-label="返回顶部">↑</button>
+  <script src="js/toast.js?v=20260829-toast"></script>
+  <script type="module" src="js/page/notifications/entry.js?v=v50-n6"></script>
+</body>
+</html>

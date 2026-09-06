@@ -77,6 +77,7 @@ const DICT = {
   'page.title.profile': { 'zh-CN': '玩家主页 · 灯光市',                       'en': 'Player Profile | Light City' },
   'page.title.dm':      { 'zh-CN': '私信 · 灯光市',                           'en': 'DM | Light City' },
   'page.title.leaderboard': { 'zh-CN': '玩家榜单 · 灯光市人民政府',           'en': 'Player Leaderboard | Light City' },
+  'page.title.notifications': { 'zh-CN': '通知中心 · 灯光市人民政府',          'en': 'Notification Center | Light City' },
   'page.title.admin':   { 'zh-CN': '管理后台 | 灯光市人民政府',                 'en': 'Admin Panel | Light City Hall' },
   // 表单 placeholder
   'ph.gameId':         { 'zh-CN': '你的游戏 ID',         'en': 'Your game ID' },
@@ -100,6 +101,8 @@ const DICT = {
                          'en': 'Light City DM - AI assistant DengDeng & player direct messages.' },
   'page.meta.leaderboard': { 'zh-CN': '灯光市玩家排行榜 - 留言数 / 酒店预订 / 驾照等级 3 维度, 看谁是灯光市最活跃的市民。',
                              'en': 'Light City Player Leaderboard - Top contributors in messages, bookings, and licenses.' },
+  'page.meta.notifications': { 'zh-CN': '灯光市通知中心 - 站内所有通知, 留言回复 / DM / 公告 / 订阅推送。',
+                               'en': 'Light City Notification Center - All in-site notifications: replies, DMs, announcements.' },
   'page.meta.admin':   { 'zh-CN': '灯光市管理后台 - 工单 / 玩家 / 赛车场 / 公告 / 图集 / 私信监管。',
                          'en': 'Light City Admin Panel - Tickets / players / kart / announcements / gallery / DM monitor.' },
   // 主页 6 个服务卡
@@ -138,6 +141,23 @@ const DICT = {
   'board.tab.licenses':  { 'zh-CN': '🚗 驾照等级榜',   'en': '🚗 License Holders' },
   'board.empty':         { 'zh-CN': '暂无玩家上榜',     'en': 'No players on the board yet' },
   'page.sub.leaderboard':{ 'zh-CN': 'LEADERBOARD · 看谁是灯光市最活跃的市民', 'en': 'LEADERBOARD · Top contributors of Light City' },
+  // v50-N6 (C2): 通知中心
+  'nav.notifications':  { 'zh-CN': '🔔 通知',           'en': '🔔 Notifications' },
+  'notif.filter.all':         { 'zh-CN': '全部',         'en': 'All' },
+  'notif.filter.unread':      { 'zh-CN': '未读',         'en': 'Unread' },
+  'notif.filter.reply':       { 'zh-CN': '💬 留言回复',  'en': '💬 Replies' },
+  'notif.filter.dm':          { 'zh-CN': '✉️ 私信',      'en': '✉️ DMs' },
+  'notif.filter.announcement':{ 'zh-CN': '📢 公告',      'en': '📢 Announcements' },
+  'notif.readAll':            { 'zh-CN': '✓ 全部已读',   'en': '✓ Mark all read' },
+  'notif.unreadCount':        { 'zh-CN': '条未读',       'en': 'unread' },
+  'notif.allRead':            { 'zh-CN': '全部已读',     'en': 'All caught up' },
+  'notif.empty':              { 'zh-CN': '暂无通知',     'en': 'No notifications' },
+  'notif.untitled':           { 'zh-CN': '(无标题)',     'en': '(No title)' },
+  'notif.open':               { 'zh-CN': '查看',         'en': 'Open' },
+  'notif.read':               { 'zh-CN': '✓ 已读',       'en': '✓ Mark read' },
+  'notif.readAllDone':        { 'zh-CN': '已全部标为已读', 'en': 'All marked as read' },
+  'notif.readAllFail':        { 'zh-CN': '操作失败: ',  'en': 'Failed: ' },
+  'page.sub.notifications':   { 'zh-CN': 'NOTIFICATIONS · 所有留言回复 / DM / 公告推送', 'en': 'NOTIFICATIONS · All replies / DMs / announcements' },
 };
 
 let _current = (function () {
