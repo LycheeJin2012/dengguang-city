@@ -30,12 +30,12 @@
         <span class="logo-text">灯光市人民政府<br><small>LIGHT CITY GOVERNMENT</small></span>
       </a>
       <nav class="nav-links" id="navLinks">
-        <a href="index.html#notice">公告</a>
-        <a href="index.html#data">城市数据</a>
-        <a href="index.html#kart">国际赛车场</a>
-        <a href="hotel.html" class="active">酒店</a>
-        <a href="index.html#service">市民服务</a>
-        <a href="index.html#contact">联系我们</a>
+        <a href="index.html#notice" data-i18n="nav.notice">公告</a>
+        <a href="index.html#data" data-i18n="nav.data">城市数据</a>
+        <a href="index.html#kart" data-i18n="nav.kart">🛞 卡丁车</a>
+        <a href="hotel.html" class="active" data-i18n="nav.hotel">酒店</a>
+        <a href="index.html#service" data-i18n="nav.service">市民服务</a>
+        <a href="index.html#contact" data-i18n="nav.contact">联系我们</a>
       </nav>
       <button class="nav-toggle" id="navToggle" aria-label="菜单">
         <span></span><span></span><span></span>
@@ -46,8 +46,8 @@
   <section class="page-head">
     <div class="container">
       <div class="page-head-row">
-        <a href="index.html" class="page-back">← 返回首页</a>
-        <h1 class="page-title">🏨 树上酒店</h1>
+        <a href="index.html" class="page-back" data-i18n="common.returnHome">← 返回首页</a>
+        <h1 class="page-title">🏨 <span data-i18n="nav.hotel">树上酒店</span></h1>
         <span class="page-sub">TREEHOUSE HOTEL · 房型与预订</span>
       </div>
     </div>
@@ -62,30 +62,30 @@
 
       <div class="hotel-toolbar">
         <div class="hotel-filters">
-          <label>状态：</label>
+          <label data-i18n="hotel.status">状态：</label>
           <select id="fStatus">
-            <option value="all">全部</option>
-            <option value="开放">开放</option>
-            <option value="草拟">草拟</option>
-            <option value="筹建">筹建</option>
-            <option value="拟建">拟建</option>
+            <option value="all" data-i18n="hotel.filter.all">全部</option>
+            <option value="开放" data-i18n="hotel.filter.open">开放</option>
+            <option value="草拟" data-i18n="hotel.filter.draft">草拟</option>
+            <option value="筹建" data-i18n="hotel.filter.building">筹建</option>
+            <option value="拟建" data-i18n="hotel.filter.planned">拟建</option>
           </select>
-          <label>入住人数：</label>
+          <label data-i18n="hotel.guests">入住人数：</label>
           <select id="fGuests">
-            <option value="0">不限</option>
+            <option value="0" data-i18n="hotel.filter.all">不限</option>
             <option value="1">1 人</option>
             <option value="2">2 人</option>
             <option value="3">3+ 人</option>
           </select>
-          <label>景观：</label>
+          <label data-i18n="hotel.view">景观：</label>
           <select id="fView">
-            <option value="all">全部</option>
+            <option value="all" data-i18n="hotel.filter.all">全部</option>
             <option value="窗外">窗外</option>
             <option value="景观">景观</option>
           </select>
-          <button type="button" class="filter-reset" id="fReset">重置筛选</button>
+          <button type="button" class="filter-reset" id="fReset" data-i18n="hotel.filter.reset">重置筛选</button>
         </div>
-        <div class="hotel-count" id="hotelCount">— 间</div>
+        <div class="hotel-count" id="hotelCount">—</div>
       </div>
 
       <div class="room-grid" id="roomGrid">
@@ -127,7 +127,7 @@
   <div class="modal-mask" id="roomMask" style="display:none">
     <div class="modal modal-room">
       <div class="modal-head">
-        <h3 id="roomTitle">房型详情</h3>
+        <h3 id="roomTitle" data-i18n="hotel.modal.detail">房型详情</h3>
         <button class="modal-close" id="roomClose" aria-label="关闭">✕</button>
       </div>
       <div class="modal-body" id="roomBody"></div>
@@ -138,7 +138,7 @@
   <div class="modal-mask" id="bookMask" style="display:none">
     <div class="modal modal-book">
       <div class="modal-head">
-        <h3 id="bookTitle">预订房间</h3>
+        <h3 id="bookTitle" data-i18n="hotel.modal.book">预订房间</h3>
         <button class="modal-close" id="bookClose" aria-label="关闭">✕</button>
       </div>
       <div class="modal-body">
@@ -179,6 +179,20 @@
   </div>
 
   <script src="js/toast.js?v=20260829-toast"></script>
+  <script type="module" src="js/i18n/core.js?v=n5"></script>
+  <script type="module">
+    import { initI18n, bindLangSwitcher, renderLangSwitcher } from './js/i18n/core.js?v=n5';
+    initI18n();
+    // 注入语言切换器到 .nav-links 末尾
+    const navLinks = document.getElementById('navLinks');
+    if (navLinks) {
+      const wrap = document.createElement('span');
+      wrap.className = 'nav-lang-wrap';
+      wrap.innerHTML = renderLangSwitcher();
+      navLinks.appendChild(wrap);
+      bindLangSwitcher(navLinks);
+    }
+  </script>
   <script type="module" src="js/page/hotel/entry.js?v=v46-fix-modules"></script>
 </body>
 </html>

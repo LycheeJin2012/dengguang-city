@@ -28,6 +28,20 @@ const DICT = {
   'nav.toggle':     { 'zh-CN': '🌐 中文/EN',  'en': '🌐 EN/中' },
   // 通用
   'common.returnHome': { 'zh-CN': '← 返回首页',  'en': '← Home' },
+  // hotel 页
+  'hotel.status':   { 'zh-CN': '状态：',       'en': 'Status:' },
+  'hotel.guests':   { 'zh-CN': '入住人数：',   'en': 'Guests:' },
+  'hotel.view':     { 'zh-CN': '景观：',       'en': 'View:' },
+  'hotel.filter.reset': { 'zh-CN': '重置筛选',  'en': 'Reset' },
+  'hotel.filter.all':   { 'zh-CN': '全部',      'en': 'All' },
+  'hotel.filter.open':  { 'zh-CN': '开放',      'en': 'Open' },
+  'hotel.filter.draft': { 'zh-CN': '草拟',      'en': 'Draft' },
+  'hotel.filter.building': { 'zh-CN': '筹建',   'en': 'Building' },
+  'hotel.filter.planned':  { 'zh-CN': '拟建',   'en': 'Planned' },
+  'hotel.modal.detail': { 'zh-CN': '房型详情',  'en': 'Room Detail' },
+  'hotel.modal.book':   { 'zh-CN': '预订房间',  'en': 'Book Room' },
+  'hotel.count':        { 'zh-CN': '共 ${n} 间 / 总 ${total} 间', 'en': '${n} / ${total} rooms' },
+  'hotel.empty':        { 'zh-CN': '酒店正在筹建中, 上线后会在这里显示。', 'en': 'Hotel under construction. Will be available soon.' },
 };
 
 let _current = (function () {
@@ -59,6 +73,18 @@ export function t(key, fallback) {
   const entry = DICT[key];
   if (!entry) return fallback !== undefined ? fallback : key;
   return entry[_current] || entry[SUPPORTED[0]] || fallback || key;
+}
+
+// 格式化翻译 (支持 {var} 占位符)
+// 用法: tf('hotel.count', {n: 3, total: 3})
+export function tf(key, vars) {
+  let s = t(key);
+  if (vars) {
+    for (const k of Object.keys(vars)) {
+      s = s.replace(new RegExp('\\$\\{' + k + '\\}', 'g'), String(vars[k]));
+    }
+  }
+  return s;
 }
 
 // 批量翻译 (用于渲染列表)

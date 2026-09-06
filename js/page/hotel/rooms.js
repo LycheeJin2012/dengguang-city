@@ -1,5 +1,6 @@
 // v45 重写: hotel 子页 - 房型数据加载 + 渲染 + 筛选 + 详情
 import { $, escHtml, GET } from '../util.js?v=v46-fix-modules';
+import { t, tf } from '../../i18n/core.js?v=n5';
 
 const ROOMS = [];
 const ROOM_ICON = cap => cap >= 4 ? '🏨' : (cap >= 2 ? '🛌' : '🛏️');
@@ -20,8 +21,8 @@ export async function loadRooms() {
     const hotels = bundle.hotels || [];
     const allRooms = bundle.rooms || [];
     if (!hotels.length && !allRooms.length) {
-      if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🏨</div><p>酒店正在筹建中, 上线后会在这里显示。</p></div>';
-      if (count) count.textContent = '共 0 间 / 总 0 间';
+      if (grid) grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🏨</div><p>${t('hotel.empty', '酒店正在筹建中, 上线后会在这里显示。')}</p></div>`;
+      if (count) count.textContent = tf('hotel.count', { n: 0, total: 0 });
       return;
     }
     // 按 hotel_id 分组
@@ -91,7 +92,7 @@ export function renderRooms() {
   if (!grid) return;
   const list = applyFilters();
   const count = $('#hotelCount');
-  if (count) count.textContent = `共 ${list.length} 间 / 总 ${ROOMS.length} 间`;
+  if (count) count.textContent = tf('hotel.count', { n: list.length, total: ROOMS.length });
   if (!list.length) {
     grid.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>没有符合条件的房型，试试调整筛选条件。</p></div>';
     return;

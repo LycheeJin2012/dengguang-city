@@ -1,5 +1,7 @@
 // v45 重写: hotel 子页 - 预订 modal + 提交
+// v50-N5: 用 t() 翻译 "预订 · {name}" 标题
 import { $, escHtml, POST, GET } from '../util.js?v=v46-fix-modules';
+import { t } from '../../i18n/core.js?v=n5';
 
 let bookRoom = null;
 
@@ -7,7 +9,7 @@ export function openBookModal(r) {
   const mask = $('#bookMask');
   if (!mask) return;
   bookRoom = r;
-  const t = $('#bookTitle'); if (t) t.textContent = `预订 · ${r.name}`;
+  const titleEl = $('#bookTitle'); if (titleEl) titleEl.textContent = `${t('hotel.modal.book')} · ${r.name}`;
   const s = $('#bookSummary');
   if (s) s.innerHTML = `
     <div>
