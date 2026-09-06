@@ -3,7 +3,7 @@
 // v50-fix-15: 加 /admin-v37.html (实际 admin 页, /admin.html 只是 308 跳转壳)
 // v50-fix-17: 加 fonts.css / theme.js / toast.js / 字体 / hero 背景图
 //   之前只缓存了 style.css + index.html, 离线时字体 + 主题色全坏
-const CACHE_VERSION = 'lc-v50-2026-09-06-v17';
+const CACHE_VERSION = 'lc-v50-2026-09-07-v18';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
