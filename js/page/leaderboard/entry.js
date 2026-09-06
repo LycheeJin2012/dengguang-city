@@ -17,7 +17,7 @@ async function loadBoard(type) {
   try {
     const r = await fetch('/api/leaderboard?type=' + type + '&limit=20', { credentials: 'include' });
     const d = await r.json();
-    if (!d.ok) throw new Error(d.error || '加载失败');
+    if (!d.ok) throw new Error(d.error || t('common.error.load', '加载失败'));
     if (label) label.textContent = d.label || '';
     _cache[type] = d;
     renderBoard(d);
@@ -58,7 +58,7 @@ function bindTabs() {
 }
 
 function bindAll() {
-  setPageTitle('page.title.leaderboard', '玩家榜单 · 灯光市人民政府');
+  setPageTitle('page.title.leaderboard', 'Player Leaderboard · Light City');
   setMetaDescription('page.meta.leaderboard',
     '灯光市玩家排行榜 - 留言数 / 酒店预订 / 驾照等级 3 维度, 看谁是灯光市最活跃的市民。',
     'Light City Player Leaderboard - Top contributors in messages, bookings, and licenses.');
