@@ -54,14 +54,24 @@ export const $ = s => document.querySelector(s);
 export const $$ = s => Array.from(document.querySelectorAll(s));
 
 // 数字动画 (easeOutQuad)
+// v50-fix-18: 强健 start 解析 — 之前 parseInt('—', 10) 返 NaN, || 0 兜底,
+//   但部分浏览器/旧值里 start 可能是负数/字符串导致动画过程出现 -1 之类异常值
+//   现在: 1) NaN/undefined/非数字 → start=0
+//        2) 负数 → start=0 (避免从负数开始)
+//        3) target 也强转 Number, NaN → 0
+//        4) Math.max(0, ...) 保证显示值不为负
 export function animateNumber(el, target, dur = 800) {
   if (!el) return;
-  const start = parseInt(el.textContent, 10) || 0;
+  const tNum = Number(target);
+  const safeTarget = Number.isFinite(tNum) ? Math.max(0, tNum) : 0;
+  const rawStart = parseInt(String(el.textContent || '').replace(/[^\d-]/g, ''), 10);
+  const start = Number.isFinite(rawStart) ? Math.max(0, rawStart) : 0;
   const t0 = performance.now();
   function tick(now) {
     const p = Math.min(1, (now - t0) / dur);
     const eased = 1 - (1 - p) * (1 - p);
-    el.textContent = Math.floor(start + (target - start) * eased).toLocaleString();
+    const v = Math.floor(start + (safeTarget - start) * eased);
+    el.textContent = Math.max(0, v).toLocaleString();
     if (p < 1) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);
