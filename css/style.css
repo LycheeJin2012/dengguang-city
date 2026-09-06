@@ -4984,6 +4984,31 @@ textarea { resize: vertical; min-height: 90px; }
   .nav-user-slot { margin-left: 0; }
 }
 
+/* v49-fix-5: admin 8 tab 移动端横向滚动 + pane 标题缩小 + 触摸适配 */
+@media (max-width: 768px) {
+  .admin-tabs { overflow-x: auto; flex-wrap: nowrap; -webkit-overflow-scrolling: touch; padding-bottom: 4px; }
+  .admin-tabs .tab { font-size: 11px; padding: 8px 10px; white-space: nowrap; flex-shrink: 0; }
+  .admin-tabs .tab-count { font-size: 9px; padding: 1px 4px; }
+  .pane-head h2 { font-size: 18px; }
+  .pane-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .pane-tools { width: 100%; flex-wrap: wrap; }
+  .pane-hint { font-size: 12px; }
+  .admin-header { flex-direction: column; gap: 8px; }
+  .admin-header-right { width: 100%; }
+  .user-bar { flex-direction: column; gap: 8px; align-items: flex-start; }
+  .user-actions { width: 100%; }
+  .login-grid { grid-template-columns: 1fr; gap: 16px; }
+  .login-brand { padding: 24px 16px; }
+  .login-form-wrap { padding: 0 16px 24px; }
+  .login-card { padding: 24px 18px; }
+}
+@media (max-width: 480px) {
+  .admin-tabs .tab { font-size: 10px; padding: 6px 8px; }
+  .pane-head h2 { font-size: 16px; }
+  .btn { padding: 10px 16px; font-size: 10px; }
+  input, select, textarea { font-size: 14px; }
+}
+
 .nav-toggle { display: none; flex-direction: column; gap: 4px; padding: 6px; }
 .nav-toggle span {
   display: block; width: 26px; height: 4px; background: var(--c-black);
