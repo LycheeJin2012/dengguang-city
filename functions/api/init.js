@@ -78,11 +78,12 @@ export async function onRequestGet(context) {
 
   if (action === 'homepage-bundle') {
     // 主端点已迁到 /api/homepage-bundle, 这里作为兜底
+    // v49-fix-3: 公开端点, 公开页只应看到 is_active=1 (草稿不外漏)
     const [hotels, rooms, tracks, licenseReqs, announcements, playerCount] = await Promise.all([
-      env.DB.prepare('SELECT * FROM hotels ORDER BY sort_order, id').all(),
-      env.DB.prepare('SELECT * FROM hotel_rooms ORDER BY sort_order, id').all(),
-      env.DB.prepare('SELECT * FROM race_tracks ORDER BY sort_order, id').all(),
-      env.DB.prepare('SELECT * FROM license_requirements ORDER BY sort_order, id').all(),
+      env.DB.prepare('SELECT * FROM hotels WHERE is_active = 1 ORDER BY sort_order, id').all(),
+      env.DB.prepare('SELECT * FROM hotel_rooms WHERE is_active = 1 ORDER BY sort_order, id').all(),
+      env.DB.prepare('SELECT * FROM race_tracks WHERE is_active = 1 ORDER BY sort_order, id').all(),
+      env.DB.prepare('SELECT * FROM license_requirements WHERE is_active = 1 ORDER BY sort_order, id').all(),
       env.DB.prepare('SELECT id, title, content, image_url, created_at, updated_at, created_by FROM announcements ORDER BY created_at DESC LIMIT 5').all(),
       env.DB.prepare("SELECT COUNT(*) AS n FROM players WHERE status != 'pending' AND status != 'rejected'").all(),
     ]);
@@ -97,6 +98,13 @@ export async function onRequestGet(context) {
   }
 
   if (action === 'hotels-manage' || action === 'hotel-rooms-manage' || action === 'race-tracks-manage' || action === 'license-req-manage') {
+    // v49-fix-3: admin 专属 manage actions, 加 requireAdmin 鉴权
+    // 之前 v45 时代没鉴权, 公开页绕过 — Bug 1 权限绕过
+    const ck = request.headers.get('Cookie') || '';
+    const m = ck.match(/lc_session=([^;]+)/);
+    if (!m) return err(401, '未登录');
+    const sess = await env.DB.prepare('SELECT admin_id, expires_at FROM sessions WHERE token = ?').bind(m[1]).first();
+    if (!sess || !sess.admin_id || new Date(sess.expires_at) <= new Date()) return err(401, '会话过期或非管理员');
     const tbl = ({ 'hotels-manage': 'hotels', 'hotel-rooms-manage': 'hotel_rooms', 'race-tracks-manage': 'race_tracks', 'license-req-manage': 'license_requirements' })[action];
     const id = url.searchParams.get('id');
     const hotelId = url.searchParams.get('hotel_id');
@@ -109,7 +117,7 @@ export async function onRequestGet(context) {
       sql = `SELECT * FROM ${tbl} ORDER BY sort_order, id`; params = [];
     }
     const rows = await env.DB.prepare(sql).bind(...params).all();
-    return ok({ items: rows.results || [] }, { headers: { 'Cache-Control': 'public, max-age=60' } });
+    return ok({ items: rows.results || [] }, { headers: { 'Cache-Control': 'no-store' } });
   }
 
   if (action === 'players-list') {

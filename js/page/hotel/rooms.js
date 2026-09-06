@@ -11,24 +11,29 @@ export async function loadRooms() {
   const count = $('#hotelCount');
   if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>正在加载房型数据...</p></div>';
   try {
-    const hData = await GET('/api/init?action=hotels-manage');
-    const hotels = hData.items || [];
+    // v49-fix-3: 用公开 homepage-bundle 替代 admin 专属 *-manage actions
+    // (admin API 不鉴权, 公开页绕过 — Bug 1 权限绕过)
+    const d = await GET('/api/init?action=homepage-bundle');
+    const bundle = d.bundle || {};
+    const hotels = bundle.hotels || [];
+    const allRooms = bundle.rooms || [];
     if (!hotels.length) {
       if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🏨</div><p>酒店正在筹建中, 上线后会在这里显示。</p></div>';
       if (count) count.textContent = '共 0 间 / 总 0 间';
       return;
     }
-    // 并发拉每个酒店的房型
-    const roomLists = await Promise.all(hotels.map(async h => {
-      try {
-        const d = await GET('/api/init?action=hotel-rooms-manage&hotel_id=' + h.id);
-        return { hotel: h, items: (d.items || []) };
-      } catch (e) { return { hotel: h, items: [] }; }
-    }));
+    // 按 hotel_id 分组
+    const roomsByHotel = new Map();
+    for (const h of hotels) roomsByHotel.set(h.id, []);
+    for (const r of allRooms) {
+      if (roomsByHotel.has(r.hotel_id)) roomsByHotel.get(r.hotel_id).push(r);
+    }
     ROOMS.length = 0;
     let idx = 0;
-    const total = roomLists.reduce((s, x) => s + x.items.length, 0);
-    for (const { hotel, items } of roomLists) {
+    let total = 0;
+    for (const arr of roomsByHotel.values()) total += arr.length;
+    for (const hotel of hotels) {
+      const items = roomsByHotel.get(hotel.id) || [];
       for (const r of items) {
         ROOMS.push({
           id: r.id,
