@@ -14,7 +14,7 @@ import { loadHotelRooms, loadKartSpecs, loadLicenseReqs, bindAll as bindForms } 
 import { bindAll as bindHeader } from './home/header.js';
 import { bindAll as bindAuth } from './home/auth.js';
 import { loadSigninBadge, openSigninModal } from './home/signin.js';
-import { initI18n, bindLangSwitcher, renderLangSwitcher } from './i18n/core.js?v=n5';
+import { initI18n, bindLangSwitcher, renderLangSwitcher, setPageTitle } from './i18n/core.js?v=n5';
 
 // 暴露到 window (兼容 HTML inline onclick, e.g. data-stat 触发)
 window.openSigninModal = openSigninModal;
@@ -22,6 +22,7 @@ window.openSigninModal = openSigninModal;
 (async function boot() {
   // 0. i18n: 立即初始化 (把 <html lang="..."> 设好 + 应用已存在的 data-i18n)
   initI18n();
+  setPageTitle('page.title.home');
 
   // 1. 视觉: scroll/resize 不阻塞, 立即挂
   bindClouds();

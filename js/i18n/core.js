@@ -70,6 +70,12 @@ const DICT = {
   'admin.tab.dms':          { 'zh-CN': '私信监管',         'en': 'DM Monitor' },
   'admin.tab.admins':       { 'zh-CN': '管理员账号',       'en': 'Admins' },
   'admin.tab.password':     { 'zh-CN': '修改我的密码',     'en': 'Change Password' },
+  // 页面 title
+  'page.title.home':    { 'zh-CN': '灯光市人民政府 | Light City Hall of MC', 'en': 'Light City Hall | MC Government' },
+  'page.title.hotel':   { 'zh-CN': '树上酒店 · 预订 | 灯光市人民政府',         'en': 'Treehouse Hotel | Light City Hall' },
+  'page.title.profile': { 'zh-CN': '玩家主页 · 灯光市',                       'en': 'Player Profile | Light City' },
+  'page.title.dm':      { 'zh-CN': '私信 · 灯光市',                           'en': 'DM | Light City' },
+  'page.title.admin':   { 'zh-CN': '管理后台 | 灯光市人民政府',                 'en': 'Admin Panel | Light City Hall' },
 };
 
 let _current = (function () {
@@ -113,6 +119,25 @@ export function tf(key, vars) {
     }
   }
   return s;
+}
+
+// 翻译并设置 document.title (页面 title 标签)
+// 用法: setPageTitle('page.title.home') 或 '灯光市人民政府 | Light City Hall of MC' (传 zh 直接)
+export function setPageTitle(keyOrZh, en) {
+  if (!keyOrZh) return;
+  if (_current === 'en' && en) {
+    document.title = en;
+  } else if (keyOrZh.includes('.') && DICT[keyOrZh]) {
+    document.title = t(keyOrZh);
+  } else {
+    document.title = keyOrZh;
+  }
+  // 订阅 langchange 自动重设
+  window.addEventListener('lc:langchange', () => {
+    if (en && _current === 'en') document.title = en;
+    else if (keyOrZh.includes('.') && DICT[keyOrZh]) document.title = t(keyOrZh);
+    else document.title = keyOrZh;
+  }, { once: false });
 }
 
 // 批量翻译 (用于渲染列表)
