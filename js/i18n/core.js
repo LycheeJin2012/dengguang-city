@@ -98,6 +98,21 @@ const DICT = {
                          'en': 'Light City DM - AI assistant DengDeng & player direct messages.' },
   'page.meta.admin':   { 'zh-CN': '灯光市管理后台 - 工单 / 玩家 / 赛车场 / 公告 / 图集 / 私信监管。',
                          'en': 'Light City Admin Panel - Tickets / players / kart / announcements / gallery / DM monitor.' },
+  // 主页 6 个服务卡
+  'service.register.title': { 'zh-CN': '市民身份登记',          'en': 'Citizen Registration' },
+  'service.register.desc':  { 'zh-CN': '新市民注册、身份卡补办、户籍迁移', 'en': 'New citizen registration, ID replacement, household migration' },
+  'service.land.title':     { 'zh-CN': '地块认领申请',          'en': 'Land Claim' },
+  'service.land.desc':      { 'zh-CN': '空置地块查询、认领抽签、产权变更', 'en': 'Vacant land search, claim lottery, ownership transfer' },
+  'service.build.title':    { 'zh-CN': '建筑报建',              'en': 'Building Permit' },
+  'service.build.desc':     { 'zh-CN': '建筑高度、外立面材料、红石结构审核', 'en': 'Height, facade materials, redstone structure review' },
+  'service.power.title':    { 'zh-CN': '红石用电报装',          'en': 'Redstone Power' },
+  'service.power.desc':     { 'zh-CN': '报装容量申请、线路走向、故障报修', 'en': 'Capacity request, line routing, fault repair' },
+  'service.market.title':   { 'zh-CN': '市集摊位申请',          'en': 'Market Stall' },
+  'service.market.desc':    { 'zh-CN': '每周末市集摊位预约、收费与卫生管理', 'en': 'Weekend market stall booking, fees & sanitation' },
+  'service.feedback.title': { 'zh-CN': '建议与投诉',            'en': 'Feedback' },
+  'service.feedback.desc':  { 'zh-CN': '城市治理建议、违规行为投诉、表扬信', 'en': 'City governance, violation reports, commendations' },
+  'section.services.title': { 'zh-CN': '🛎️ 市民服务中心',  'en': '🛎️ Civic Services' },
+  'section.services.sub':   { 'zh-CN': 'CIVIC SERVICES · 办事大厅', 'en': 'CIVIC SERVICES · Service Hall' },
 };
 
 let _current = (function () {
