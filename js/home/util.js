@@ -10,6 +10,12 @@ export function escHtml(s) {
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
+// HTML escape + 保留换行 (用 <br>)
+// 留言/评论场景用 — 用户主动换行应该被尊重, 而不是被压成空格
+export function escHtmlBr(s) {
+  return escHtml(s).replace(/\n/g, '<br>');
+}
+
 // ISO 时间格式化 (YYYY-MM-DD HH:MM, 本地时区)
 export function fmtDate(s) {
   if (!s) return '—';

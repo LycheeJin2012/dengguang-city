@@ -1,5 +1,5 @@
 // v45 重写: profile 子页 - 我的最近留言 + 我的最近报名 (仅自己)
-import { $, escHtml, GET, PATCH } from '../util.js?v=v46-fix-modules';
+import { $, escHtml, escHtmlBr, GET, PATCH } from '../util.js?v=v46-fix-modules';
 
 export async function loadMyMessages() {
   const wrap = $('#myMessagesCard');
@@ -17,8 +17,8 @@ export async function loadMyMessages() {
                 : '<span class="msg-replied-tag" style="background:#3a2a1a;color:#fc6;border-color:#c84">⏳ 待回复</span>';
       return `<article class="pmm-item">
         <div class="pmm-head-row">${tag}<span class="pmm-time">${(m.created_at || '').slice(0, 16).replace('T', ' ')}</span></div>
-        <div class="pmm-content">${escHtml(m.content)}</div>
-        ${hasReply ? `<div class="pmm-reply">📣 ${escHtml(m.admin_reply)}</div>` : ''}
+        <div class="pmm-content">${escHtmlBr(m.content)}</div>
+        ${hasReply ? `<div class="pmm-reply">📣 ${escHtmlBr(m.admin_reply)}</div>` : ''}
       </article>`;
     }).join('');
     wrap.style.display = '';

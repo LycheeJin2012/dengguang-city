@@ -1,6 +1,6 @@
 // v45 重写: 公共市民留言墙 (公开 + 评论)
 // v50-N5 Step 15: loading/empty/error 走 i18n
-import { $, escHtml, relativeTime, fmtDate, GET, POST, safeRender } from './util.js?v=v46-fix-modules';
+import { $, escHtml, escHtmlBr, relativeTime, fmtDate, GET, POST, safeRender } from './util.js?v=v46-fix-modules';
 import { t } from '../i18n/core.js?v=n5';
 
 const _pubMsgCache = { data: null, ts: 0 };
@@ -28,8 +28,8 @@ export async function loadPublicMessages() {
           <b class="msg-name">${typeLabel} ${escHtml(m.name)}${m.contact ? ' · ' + escHtml(m.contact) : ''}</b>
           ${replyTag}
         </div><div class="msg-time">${relativeTime(m.created_at)}</div></div>
-        <p class="msg-content">${escHtml(m.content)}</p>
-        ${hasReply ? `<div class="msg-reply-box"><b>${t('messages.adminReply')}</b><div>${escHtml(m.admin_reply)}</div><small>${fmtDate(m.replied_at)}</small></div>` : ''}
+        <p class="msg-content">${escHtmlBr(m.content)}</p>
+        ${hasReply ? `<div class="msg-reply-box"><b>${t('messages.adminReply')}</b><div>${escHtmlBr(m.admin_reply)}</div><small>${fmtDate(m.replied_at)}</small></div>` : ''}
         <div class="msg-actions book-actions">
           <button class="btn btn-ghost btn-sm" data-act="comments">💬 ${t('common.comments', '评论')}</button>
         </div>
@@ -82,7 +82,7 @@ async function renderComments(mid, box) {
             <span class="comment-floor" style="background:var(--c-grass);color:#fff;font-size:11px;padding:1px 6px;border-radius:10px;margin-right:6px">#${floor}</span>
             <b>${author}</b> <span class="comment-time">${timeAgo}</span>
           </div>
-          <div class="comment-body">${escHtml(c.content)}</div>
+          <div class="comment-body">${escHtmlBr(c.content)}</div>
         </div>`;
       }).join('');
     }

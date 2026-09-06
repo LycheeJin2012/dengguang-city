@@ -1,6 +1,6 @@
 // v45 重写: dm 子页 - 单个对话线程 (消息列表 + 发送)
 // v50-N5: 用 t() 翻译空态/错误文案
-import { $, escHtml, GET, POST, PATCH, shortTime } from '../util.js?v=v46-fix-modules';
+import { $, escHtml, escHtmlBr, GET, POST, PATCH, shortTime } from '../util.js?v=v46-fix-modules';
 import { loadList } from './list.js?v=v46-fix-modules';
 import { t } from '../../i18n/core.js?v=n5';
 
@@ -65,7 +65,7 @@ function renderThread() {
     wrap.innerHTML = _messages.map(m => {
       const mine = m.from_player_id === _me.id;
       return `<div class="dm-msg ${mine ? 'mine' : ''}">
-        <div class="bubble">${escHtml(m.content)}</div>
+        <div class="bubble">${escHtmlBr(m.content)}</div>
         <div class="ts">${shortTime(m.created_at)}${!mine && !m.read_at ? ' · ' + t('dm.unread', '未读') : ''}</div>
       </div>`;
     }).join('');
