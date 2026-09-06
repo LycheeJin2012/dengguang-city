@@ -6278,6 +6278,25 @@ textarea { resize: vertical; min-height: 90px; }
   letter-spacing: 1px;
   z-index: 2;
 }
+/* v49-fix-9: 草稿酒店 badge (黄底, 不跟红色推荐 badge 撞) */
+.room-badge-draft {
+  background: var(--c-gold);
+  color: var(--c-dark);
+  top: -10px; left: 12px; right: auto;
+}
+/* v49-fix-9: 草稿酒店房型卡 — 边框+背景淡化 */
+.room-card.is-draft {
+  opacity: 0.78;
+  border-color: var(--c-stone);
+}
+.room-card.is-draft:hover { opacity: 0.95; }
+/* v49-fix-9: 暂不开放按钮 (灰底) */
+.btn-disabled, .btn-disabled:hover {
+  background: var(--c-stone) !important;
+  color: var(--c-stone-dark) !important;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
 .room-thumb {
   width: 100%;
   aspect-ratio: 16 / 9;

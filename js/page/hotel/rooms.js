@@ -11,13 +11,15 @@ export async function loadRooms() {
   const count = $('#hotelCount');
   if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">⏳</div><p>正在加载房型数据...</p></div>';
   try {
-    // v49-fix-3: 用公开 homepage-bundle 替代 admin 专属 *-manage actions
-    // (admin API 不鉴权, 公开页绕过 — Bug 1 权限绕过)
-    const d = await GET('/api/init?action=homepage-bundle');
+    // v49-fix-9: 改用公开 /api/homepage-bundle (不过滤 is_active)
+    // 之前用 /api/init?action=homepage-bundle 会过滤 is_active=1,
+    // 但 DB 里"🏨 树屋酒店"is_active=0 / 房型 is_active=1 → init 端点 hotels=[] → 显示"共 0 间"
+    // homepage-bundle 不过滤, 能看到草稿酒店 + 房型, 加 hotelDraft 标记在 UI 显示
+    const d = await GET('/api/homepage-bundle');
     const bundle = d.bundle || {};
     const hotels = bundle.hotels || [];
     const allRooms = bundle.rooms || [];
-    if (!hotels.length) {
+    if (!hotels.length && !allRooms.length) {
       if (grid) grid.innerHTML = '<div class="empty-state"><div class="empty-icon">🏨</div><p>酒店正在筹建中, 上线后会在这里显示。</p></div>';
       if (count) count.textContent = '共 0 间 / 总 0 间';
       return;
@@ -34,14 +36,21 @@ export async function loadRooms() {
     for (const arr of roomsByHotel.values()) total += arr.length;
     for (const hotel of hotels) {
       const items = roomsByHotel.get(hotel.id) || [];
+      const hotelDraft = !hotel.is_active;
       for (const r of items) {
         ROOMS.push({
           id: r.id,
           hotelId: hotel.id,
           hotelName: hotel.name,
+          hotelDraft,
           name: r.name,
           icon: ROOM_ICON(r.capacity || 1),
-          status: r.is_active ? '开放' : '草拟',
+          // 状态字符串对齐 filter 下拉 (草拟/筹建/拟建)
+          //   hotel 草稿 → '筹建' (酒店整体在筹建, 房型还未对外开放预订)
+          //   hotel 上线 + room 上线 → '开放' (用户能订)
+          //   hotel 上线 + room 草稿 → '草拟' (酒店运营中, 房型草案)
+          //   hotel 上线 + room sort_order>0 未激活 → '拟建' (酒店运营中, 房型规划)
+          status: hotelDraft ? '筹建' : (r.is_active ? '开放' : (r.sort_order === 0 ? '草拟' : '拟建')),
           bed: r.beds || '床型待公告',
           guests: r.capacity || 1,
           view: '景观',
@@ -88,11 +97,12 @@ export function renderRooms() {
     return;
   }
   grid.innerHTML = list.map(r => `
-    <article class="room-card" data-id="${r.id}">
+    <article class="room-card ${r.hotelDraft ? 'is-draft' : ''}" data-id="${r.id}">
       ${r.recommend ? '<div class="room-badge">★ 推荐</div>' : ''}
+      ${r.hotelDraft ? '<div class="room-badge room-badge-draft">📝 筹建中</div>' : ''}
       <div class="room-head">
         <span class="room-icon">${r.icon}</span>
-        <h3 class="room-name">${escHtml(r.name)}<span class="room-status active">${escHtml(r.status)}</span></h3>
+        <h3 class="room-name">${escHtml(r.name)}<span class="room-status ${r.status === '开放' ? 'active' : 'draft'}">${escHtml(r.status)}</span></h3>
       </div>
       <ul class="room-features">
         <li>床型：${escHtml(r.bed)}</li>
@@ -106,7 +116,10 @@ export function renderRooms() {
         </div>
         <div class="room-actions">
           <button type="button" class="btn btn-ghost btn-small" data-action="detail" data-id="${r.id}">详情</button>
-          <button type="button" class="btn btn-primary btn-small" data-action="book" data-id="${r.id}">📅 预订</button>
+          ${r.status === '开放' && !r.hotelDraft
+            ? `<button type="button" class="btn btn-primary btn-small" data-action="book" data-id="${r.id}">📅 预订</button>`
+            : `<button type="button" class="btn btn-disabled btn-small" disabled>🚧 暂不开放</button>`
+          }
         </div>
       </div>
     </article>`).join('');
