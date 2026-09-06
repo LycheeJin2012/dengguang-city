@@ -399,4 +399,84 @@ document.addEventListener('click', e => {
 // ---------- 初始化 ----------
 bindFilterRadios();
 bindAdminPasskey();
+bindChangePassword();
+bindAdminLogin();
 boot();
+
+// ---------- Admin 登录表单 (v50-fix-13) ----------
+// Bug: loginForm 用浏览器默认 POST 提交到 /api/login, 返 JSON 后浏览器直接渲染 JSON 页, UX 差.
+//      改为前端 fetch + 错误提示 + 成功刷新 boot 状态.
+function bindAdminLogin() {
+  const form = $('#loginForm');
+  if (!form) return;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const u = ($('#loginUser')?.value || '').trim();
+    const p = ($('#loginPass')?.value || '').trim();
+    const errEl = $('#loginError');
+    const btn = $('#loginSubmitBtn');
+    if (!u || !p) {
+      if (errEl) errEl.textContent = '请填写账号和密码';
+      return;
+    }
+    if (btn) { btn.disabled = true; btn.textContent = '登录中…'; }
+    if (errEl) errEl.textContent = '';
+    try {
+      const d = await POST('/api/login', { username: u, password: p });
+      if (d && d.ok && (d.user || d.player)) {
+        // 成功 → 重新 boot (会从 /api/login 读 session 然后渲染 admin dash)
+        if (btn) btn.textContent = '✓ 登录成功';
+        setTimeout(() => location.reload(), 300);
+      } else {
+        if (errEl) errEl.textContent = d?.error || '登录失败';
+        if (btn) { btn.disabled = false; btn.textContent = '▶ 登录'; }
+      }
+    } catch (err) {
+      if (errEl) errEl.textContent = '网络错误: ' + (err?.message || '');
+      if (btn) { btn.disabled = false; btn.textContent = '▶ 登录'; }
+    }
+  });
+}
+
+// ---------- 修改我的密码 (v50-fix-13) ----------
+// Bug: pwdForm 在 admin-v37.html 里有静态 form + submit 按钮, 但没 JS handler.
+//      之前点击"更新密码"会做浏览器默认 form submit (POST 当前页 URL), 完全失效.
+//      现在调 /api/admin/change-password (已存在端点).
+function bindChangePassword() {
+  const form = $('#pwdForm');
+  if (!form) return;
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const oldPw  = ($('#pwdOld')?.value || '').trim();
+    const newPw  = ($('#pwdNew')?.value || '').trim();
+    const newPw2 = ($('#pwdNew2')?.value || '').trim();
+    const msg = $('#pwdMsg');
+    const btn = form.querySelector('button[type="submit"]');
+    const orig = btn?.textContent;
+    const showMsg = (text, ok) => {
+      if (msg) {
+        msg.textContent = text;
+        msg.style.color = ok ? 'var(--c-emerald)' : 'var(--c-redstone)';
+      }
+    };
+    if (!oldPw || !newPw || !newPw2) return showMsg('请完整填写', false);
+    if (newPw.length < 8) return showMsg('新密码至少 8 位', false);
+    if (newPw !== newPw2) return showMsg('两次新密码不一致', false);
+    if (btn) { btn.disabled = true; btn.textContent = '提交中…'; }
+    try {
+      const r = await POST('/api/admin/change-password', {
+        old_password: oldPw, new_password: newPw
+      });
+      if (r && r.ok) {
+        showMsg('✓ 密码已更新', true);
+        form.reset();
+      } else {
+        showMsg('✗ ' + (r?.error || '更新失败'), false);
+      }
+    } catch (err) {
+      showMsg('✗ ' + (err?.message || '网络错误'), false);
+    } finally {
+      if (btn) { btn.disabled = false; btn.textContent = orig; }
+    }
+  });
+}
