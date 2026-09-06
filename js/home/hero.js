@@ -40,6 +40,8 @@ export async function loadHeroStats() {
   // v50-fix-19: data-card 不动画 — 直接设值, 因为 hero 的 <b> 在
   //   animateNumber 调用时是 0→8 动画, 但 data-card 同样调用却卡 0 (怀疑是
   //   rAF / dom batching / 元素可见性 某种 edge case). 直接设值更稳.
+  // v50-fix-20: hero 也直接设值 — 同样 rAF 风险, 用户切 tab / 慢设备可能卡在中间帧
+  //   数字动画只是锦上添花, 准确性更重要, 一致性也更好 (hero 和 data-card 都瞬时同步)
   const cardPlayers = $('[data-stat="players-card"]');
   if (!statPlayers && !cardPlayers) return;
   try {
@@ -47,8 +49,7 @@ export async function loadHeroStats() {
     const bundle = d.bundle || {};
     const n = Number(bundle.playerCount || 0);
     const heroB = statPlayers?.querySelector('b');
-    if (heroB) animateNumber(heroB, n);
-    // data-card 直接设值 (不动画, 避免 rAF 在某些浏览器对 div 元素的行为差异)
+    if (heroB) heroB.textContent = n.toLocaleString();
     if (cardPlayers) cardPlayers.textContent = n.toLocaleString();
   } catch (e) {
     // fallback: 显示 —
