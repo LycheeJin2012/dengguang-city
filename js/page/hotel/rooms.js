@@ -51,13 +51,13 @@ export async function loadRooms() {
           //   hotel 上线 + room 上线 → '开放' (用户能订)
           //   hotel 上线 + room 草稿 → '草拟' (酒店运营中, 房型草案)
           //   hotel 上线 + room sort_order>0 未激活 → '拟建' (酒店运营中, 房型规划)
-          status: hotelDraft ? '筹建' : (r.is_active ? '开放' : (r.sort_order === 0 ? '草拟' : '拟建')),
-          bed: r.beds || '床型待公告',
+          status: hotelDraft ? t('hotel.filter.building') : (r.is_active ? t('hotel.filter.open') : (r.sort_order === 0 ? t('hotel.filter.draft') : t('hotel.filter.planned'))),
+          bed: r.beds || t('hotel.bed.tbd'),
           guests: r.capacity || 1,
-          view: '景观',
+          view: t('hotel.view.label'),
           features: [
-            r.breakfast_included ? '含早餐' : '不含早餐',
-            hotel.address ? '地址: ' + hotel.address : null
+            r.breakfast_included ? t('hotel.breakfast.yes') : t('hotel.breakfast.no'),
+            hotel.address ? t('hotel.address') + hotel.address : null
           ].filter(Boolean),
           price: r.price_per_night,
           recommend: idx === Math.max(0, total - 1),
@@ -69,7 +69,7 @@ export async function loadRooms() {
     renderRooms();
   } catch (e) {
     if (grid) grid.innerHTML = `<div class="empty-state"><div class="empty-icon">❌</div><p>${t('common.error.load', '加载失败')}: ${escHtml(e.message)}</p></div>`;
-    if (count) count.textContent = '— / —';
+    if (count) count.textContent = t('hotel.count.fallback', '— / —');
   }
 }
 
