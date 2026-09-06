@@ -49,10 +49,13 @@ export async function refreshUserState() {
         <a href="#" id="navSigninBtn" class="nav-logout-link nav-signin-link" title="每日签到领绿宝石">🎁 签到</a>
         <a href="profile.html" class="nav-user-name nav-profile-link">${escHtml(p.avatar_emoji || '👤')} ${escHtml(p.username)}</a>
         ${adminLink}
+        <a href="profile.html#myMessagesCard" id="navBell" class="nav-logout-link nav-bell" title="通知">🔔<span class="nav-bell-badge" id="navBellBadge" hidden>0</span></a>
         <a href="dm.html" class="nav-logout-link nav-dm-link">📨 私信<span id="dmBadge" class="nav-badge nav-badge-dm">0</span></a>
         <a href="#notice" class="nav-logout-link nav-ann-link" id="navAnn">📢<span id="annBadge" class="nav-badge nav-badge-ann">新</span></a>
         <a href="#" id="navLogout" class="nav-logout-link">登出</a>`;
       prefillContactForm(p);
+      // v50-N4: 主页 nav 同步拉未读通知数, 显示铃铛红点
+      fetchHomeUnreadBadge().catch(() => {});
       // 登出
       $('#navLogout')?.addEventListener('click', async e => {
         e.preventDefault();
@@ -116,6 +119,8 @@ export async function pollUnread() {
         if (ann) ann.style.display = 'none';
       }
     }
+    // v50-N4: 30s 轮询顺便刷一下铃铛 (玩家在首页停留时也能看到新通知)
+    fetchHomeUnreadBadge().catch(() => {});
   } catch (e) { /* 静默 */ }
 }
 
@@ -123,6 +128,24 @@ export function startUnreadPolling() {
   if (_unreadTimer.id) clearInterval(_unreadTimer.id);
   _unreadTimer.id = setInterval(pollUnread, 30000);
   pollUnread();
+}
+
+// v50-N4: 主页 nav 拉未读通知数, 更新铃铛红点
+async function fetchHomeUnreadBadge() {
+  const badge = $('#navBellBadge');
+  if (!badge) return;
+  try {
+    const r = await fetch('/api/notifications?my=1&unread=1&limit=1', { credentials: 'include' });
+    if (!r.ok) return;
+    const d = await r.json();
+    const n = Number(d.unread_count || 0);
+    if (n > 0) {
+      badge.textContent = n > 99 ? '99+' : String(n);
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
+  } catch (e) { /* 静默 */ }
 }
 
 // ============== 服务卡按钮绑定 ==============
