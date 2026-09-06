@@ -113,6 +113,9 @@ const DICT = {
   'service.feedback.desc':  { 'zh-CN': '城市治理建议、违规行为投诉、表扬信', 'en': 'City governance, violation reports, commendations' },
   'section.services.title': { 'zh-CN': '🛎️ 市民服务中心',  'en': '🛎️ Civic Services' },
   'section.services.sub':   { 'zh-CN': 'CIVIC SERVICES · 办事大厅', 'en': 'CIVIC SERVICES · Service Hall' },
+  // 主页 hero CTA
+  'hero.cta.notice':  { 'zh-CN': '▶ 查看公告', 'en': '▶ View Notice' },
+  'hero.cta.service': { 'zh-CN': '市民服务',   'en': 'Civic Service' },
 };
 
 let _current = (function () {
