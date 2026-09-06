@@ -14,6 +14,7 @@ import { loadHotelRooms, loadKartSpecs, loadLicenseReqs, bindAll as bindForms } 
 import { bindAll as bindHeader } from './home/header.js';
 import { bindAll as bindAuth } from './home/auth.js';
 import { loadSigninBadge, openSigninModal } from './home/signin.js';
+import { bindKeyboardShortcuts } from './home/keyboard.js?v=n6';
 import { initI18n, bindLangSwitcher, renderLangSwitcher, setPageTitle, setMetaDescription } from './i18n/core.js?v=n5';
 
 // 暴露到 window (兼容 HTML inline onclick, e.g. data-stat 触发)
@@ -54,4 +55,7 @@ window.openSigninModal = openSigninModal;
     navLinks.appendChild(wrap);
     bindLangSwitcher(navLinks);
   }
+
+  // 5. v50-N6: 键盘快捷键 (g/h/n/d/s/b/?)
+  bindKeyboardShortcuts();
 })();
