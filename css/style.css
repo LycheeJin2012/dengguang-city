@@ -4996,6 +4996,21 @@ textarea { resize: vertical; min-height: 90px; }
   pointer-events: none;
 }
 .nav-bell-badge[hidden] { display: none; }
+
+/* v50-N5: 语言切换器 (主页 nav 末尾) */
+.nav-lang-wrap { display: inline-block; margin-left: 8px; }
+.nav-lang-switch {
+  background: var(--c-paper-2);
+  color: var(--c-text);
+  border: 2px solid var(--c-black);
+  font-family: var(--font-pixel);
+  font-size: 11px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.nav-lang-switch:hover { background: var(--c-grass); color: white; }
+.nav-lang-switch:active { transform: translate(1px, 1px); }
 @media (max-width: 768px) {
   .nav-user-slot { margin-left: 0; }
 }

@@ -3,6 +3,7 @@
 //   1. 视觉 (clouds, reveal, hero) - 立刻挂 scroll/resize
 //   2. 数据加载 (announcements, messages, gallery, services)
 //   3. 玩家登录态 (header, auth, signin, forms)
+// v50-N5: 启动时初始化 i18n (主页 nav data-i18n 由 core.js applyToDOM 自动翻译)
 import { bindClouds } from './home/clouds.js';
 import { bindReveal } from './home/reveal.js';
 import { bindAll as bindHero } from './home/hero.js';
@@ -13,11 +14,15 @@ import { loadHotelRooms, loadKartSpecs, loadLicenseReqs, bindAll as bindForms } 
 import { bindAll as bindHeader } from './home/header.js';
 import { bindAll as bindAuth } from './home/auth.js';
 import { loadSigninBadge, openSigninModal } from './home/signin.js';
+import { initI18n, bindLangSwitcher, renderLangSwitcher } from './i18n/core.js?v=n5';
 
 // 暴露到 window (兼容 HTML inline onclick, e.g. data-stat 触发)
 window.openSigninModal = openSigninModal;
 
 (async function boot() {
+  // 0. i18n: 立即初始化 (把 <html lang="..."> 设好 + 应用已存在的 data-i18n)
+  initI18n();
+
   // 1. 视觉: scroll/resize 不阻塞, 立即挂
   bindClouds();
   bindReveal();
@@ -36,4 +41,15 @@ window.openSigninModal = openSigninModal;
   bindForms();
   bindHeader();
   bindAuth();
+
+  // 4. v50-N5: 把语言切换器按钮注入到 .nav-links 末尾, 然后绑事件
+  const navLinks = document.getElementById('navLinks');
+  if (navLinks) {
+    // 用 <li> 包一层保持 nav 排版一致
+    const wrap = document.createElement('span');
+    wrap.className = 'nav-lang-wrap';
+    wrap.innerHTML = renderLangSwitcher();
+    navLinks.appendChild(wrap);
+    bindLangSwitcher(navLinks);
+  }
 })();
