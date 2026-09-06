@@ -79,6 +79,30 @@
   --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* ---------- v49-fix-4: 跨设备适配 (触摸 / 鼠标 / Retina) ---------- */
+/* iOS 慢点击 350ms 延迟修复 (不用 touch-action: none 阻止缩放, 保留无障碍缩放) */
+html { touch-action: manipulation; }
+
+/* iOS Safari 点击蓝色高亮去掉, 保持像素风 */
+* { -webkit-tap-highlight-color: transparent; }
+
+/* 鼠标设备专属 hover 状态 (触摸设备 touchstart 后 hover 残留) */
+@media (hover: hover) and (pointer: fine) {
+  .btn:hover, a:hover, .tab:hover { /* 鼠标 hover 样式已在 768px 媒体外定义 */ }
+}
+
+/* 粗指针 (触摸) 设备: 加大点击区, 避免 hover 残留 */
+@media (pointer: coarse) {
+  .btn, .tab, .nav-toggle, a.btn { min-height: 44px; min-width: 44px; }
+}
+
+/* Retina / 高 DPI 设备: 像素资源保持锐利不模糊 */
+img[src*="gallery"], img[src*="assets"], .pixel-art, canvas {
+  image-rendering: pixelated;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: crisp-edges;
+}
+
 /* ---------- 2. 暗色模式 (单一覆盖块) ---------- */
 [data-theme="dark"] {
   --c-page:        #1a1a26;
