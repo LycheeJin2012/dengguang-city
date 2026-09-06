@@ -25,6 +25,7 @@ const DICT = {
   'nav.hotel':      { 'zh-CN': '树上酒店',     'en': 'Hotel' },
   'nav.service':    { 'zh-CN': '市民服务',     'en': 'Service' },
   'nav.contact':    { 'zh-CN': '联系我们',     'en': 'Contact' },
+  'nav.leaderboard':{ 'zh-CN': '🏆 榜单',     'en': '🏆 Leaderboard' },
   'nav.toggle':     { 'zh-CN': '🌐 中文/EN',  'en': '🌐 EN/中' },
   // 通用
   'common.returnHome': { 'zh-CN': '← 返回首页',  'en': '← Home' },
@@ -75,6 +76,7 @@ const DICT = {
   'page.title.hotel':   { 'zh-CN': '树上酒店 · 预订 | 灯光市人民政府',         'en': 'Treehouse Hotel | Light City Hall' },
   'page.title.profile': { 'zh-CN': '玩家主页 · 灯光市',                       'en': 'Player Profile | Light City' },
   'page.title.dm':      { 'zh-CN': '私信 · 灯光市',                           'en': 'DM | Light City' },
+  'page.title.leaderboard': { 'zh-CN': '玩家榜单 · 灯光市人民政府',           'en': 'Player Leaderboard | Light City' },
   'page.title.admin':   { 'zh-CN': '管理后台 | 灯光市人民政府',                 'en': 'Admin Panel | Light City Hall' },
   // 表单 placeholder
   'ph.gameId':         { 'zh-CN': '你的游戏 ID',         'en': 'Your game ID' },
@@ -96,6 +98,8 @@ const DICT = {
                          'en': 'Light City Player Profile - My messages, signups, subscriptions, and notifications.' },
   'page.meta.dm':      { 'zh-CN': '灯光市私信 - AI 灯灯客服 / 玩家私信。',
                          'en': 'Light City DM - AI assistant DengDeng & player direct messages.' },
+  'page.meta.leaderboard': { 'zh-CN': '灯光市玩家排行榜 - 留言数 / 酒店预订 / 驾照等级 3 维度, 看谁是灯光市最活跃的市民。',
+                             'en': 'Light City Player Leaderboard - Top contributors in messages, bookings, and licenses.' },
   'page.meta.admin':   { 'zh-CN': '灯光市管理后台 - 工单 / 玩家 / 赛车场 / 公告 / 图集 / 私信监管。',
                          'en': 'Light City Admin Panel - Tickets / players / kart / announcements / gallery / DM monitor.' },
   // 主页 6 个服务卡
@@ -128,6 +132,12 @@ const DICT = {
   'exam.empty':           { 'zh-CN': '驾照考试暂未开放, 市政厅公告后启动。', 'en': 'License exam not open yet. Will start after city hall notice.' },
   'track.empty':          { 'zh-CN': '暂无开放赛道',     'en': 'No open tracks' },
   'track.price.loadFail': { 'zh-CN': '试车价格加载失败',  'en': 'Failed to load trial price' },
+  // v50-N6 (C1): 玩家榜单
+  'board.tab.messages':  { 'zh-CN': '💬 留言数榜',     'en': '💬 Most Active' },
+  'board.tab.bookings':  { 'zh-CN': '🏨 酒店预订榜',   'en': '🏨 Top Travelers' },
+  'board.tab.licenses':  { 'zh-CN': '🚗 驾照等级榜',   'en': '🚗 License Holders' },
+  'board.empty':         { 'zh-CN': '暂无玩家上榜',     'en': 'No players on the board yet' },
+  'page.sub.leaderboard':{ 'zh-CN': 'LEADERBOARD · 看谁是灯光市最活跃的市民', 'en': 'LEADERBOARD · Top contributors of Light City' },
 };
 
 let _current = (function () {

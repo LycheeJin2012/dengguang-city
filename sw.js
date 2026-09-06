@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   '/dm.html',
   '/admin.html',
   '/admin-v37.html',
+  '/leaderboard.html',
   '/css/style.css',
   '/css/fonts.css',
   '/js/theme.js',
