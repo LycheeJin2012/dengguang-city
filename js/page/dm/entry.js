@@ -1,13 +1,15 @@
 // v45 重写: dm 子页 entry (ES module)
+// v50-N5: 改用 t() 翻译界面文案
 import { $, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
 import { loadList, setListContext, bindListActions } from './list.js?v=v46-fix-modules';
 import { openThread, setThreadContext } from './thread.js?v=v46-fix-modules';
+import { t } from '../../i18n/core.js?v=n5';
 
 const app = $('#app');
 
 (async function boot() {
   // 1. 立刻渲染 loading
-  app.innerHTML = `<div class="dm-login-hint dm-loading"><div class="big-icon">⏳</div><p>正在验证登录态…</p></div>`;
+  app.innerHTML = `<div class="dm-login-hint dm-loading"><div class="big-icon">⏳</div><p>${t('dm.verifyLogin')}</p></div>`;
 
   // 2. 检查登录态 (8s 超时, 避免 CF Pages cold start 卡死)
   let me = null;
@@ -32,7 +34,7 @@ const app = $('#app');
     app.innerHTML = `
       <div class="dm-login-hint">
         <div class="big-icon">📨</div>
-        <h2>${isNet ? '网络好像有点慢' : '请先登录玩家账号'}</h2>
+        <h2>${isNet ? t('dm.slow') : t('dm.needLogin')}</h2>
         <p>${isNet
           ? '验证登录态超时, 可能是网络抖动或 Functions 冷启动。<br>点下面按钮重试, 或回首页重新登录。'
           : '私信是玩家之间的私人交流，<br>需要登录后才能使用。'}</p>
@@ -52,9 +54,9 @@ const app = $('#app');
       <div class="dm-panel dm-list-panel">
         <div class="dm-head">
           <span>📨 私信收件箱</span>
-          <button class="dm-new-btn" id="dmNewBtn">+ 写新私信</button>
+          <button class="dm-new-btn" id="dmNewBtn">${t('dm.newBtn')}</button>
         </div>
-        <div class="dm-list" id="dmList"><div class="dm-empty">载入中…</div></div>
+        <div class="dm-list" id="dmList"><div class="dm-empty">${t('dm.loading')}</div></div>
         <div class="dm-aibot-bar">
           <button id="dmAiBotBtn" class="dm-aibot-btn">🤖 找 AI 客服灯灯聊聊</button>
           <div class="dm-aibot-hint">24h 自动回复 · 100 字内</div>
@@ -62,7 +64,7 @@ const app = $('#app');
       </div>
       <div class="dm-panel dm-thread">
         <div id="dmThreadArea">
-          <div class="dm-empty dm-loading">← 选择左侧会话查看<br>或点击右上"写新私信"</div>
+          <div class="dm-empty dm-loading">${t('dm.empty.thread')}</div>
         </div>
       </div>
     </div>`;

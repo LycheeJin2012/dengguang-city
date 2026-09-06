@@ -50,6 +50,17 @@ const DICT = {
   'profile.exam.head':     { 'zh-CN': '📝 驾照模拟题库',                   'en': '📝 License Practice' },
   'profile.sub.head':      { 'zh-CN': '🔔 通知订阅',                       'en': '🔔 Notification Subscriptions' },
   'profile.citizen.head':  { 'zh-CN': '🪪 我的市民身份卡',                 'en': '🪪 My Citizen Card' },
+  // dm 页
+  'dm.verifyLogin':    { 'zh-CN': '正在验证登录态…',     'en': 'Verifying login…' },
+  'dm.newBtn':         { 'zh-CN': '+ 写新私信',         'en': '+ New DM' },
+  'dm.loading':        { 'zh-CN': '载入中…',             'en': 'Loading…' },
+  'dm.empty.title':    { 'zh-CN': '还没有私信',         'en': 'No messages yet' },
+  'dm.empty.hint':     { 'zh-CN': '点右上角"写新私信"开始', 'en': 'Click "+ New DM" to start' },
+  'dm.empty.thread':   { 'zh-CN': '← 选择左侧会话查看<br>或点击右上"写新私信"', 'en': '← Pick a thread on the left<br>or click "+ New DM"' },
+  'dm.empty.loadFail': { 'zh-CN': '载入失败',            'en': 'Load failed' },
+  'dm.empty.noMsgs':   { 'zh-CN': '还没有消息，发起对话吧！', 'en': 'No messages yet. Start a conversation!' },
+  'dm.slow':           { 'zh-CN': '网络好像有点慢',     'en': 'Network seems slow' },
+  'dm.needLogin':      { 'zh-CN': '请先登录玩家账号',   'en': 'Please log in to a player account' },
 };
 
 let _current = (function () {

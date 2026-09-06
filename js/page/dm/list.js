@@ -1,5 +1,7 @@
 // v45 重写: dm 子页 - 会话列表 + 新建/AI 客服
+// v50-N5: 用 t() 翻译空态文案
 import { $, escHtml, GET, POST, shortTime } from '../util.js?v=v46-fix-modules';
+import { t } from '../../i18n/core.js?v=n5';
 
 let _onThreadOpen = null;
 let _me = null;
@@ -17,11 +19,11 @@ export async function loadList() {
     const d = await GET('/api/social?action=dm-list');
     conversations = d.conversations || [];
   } catch (e) {
-    list.innerHTML = '<div class="dm-empty">载入失败</div>';
+    list.innerHTML = `<div class="dm-empty">${t('dm.empty.loadFail')}</div>`;
     return;
   }
   if (!conversations.length) {
-    list.innerHTML = '<div class="dm-empty">还没有私信<br>点右上角"写新私信"开始</div>';
+    list.innerHTML = `<div class="dm-empty">${t('dm.empty.title')}<br>${t('dm.empty.hint')}</div>`;
     return;
   }
   const current = window._dmCurrentPeer;

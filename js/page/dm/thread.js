@@ -1,6 +1,8 @@
 // v45 重写: dm 子页 - 单个对话线程 (消息列表 + 发送)
+// v50-N5: 用 t() 翻译空态/错误文案
 import { $, escHtml, GET, POST, PATCH, shortTime } from '../util.js?v=v46-fix-modules';
 import { loadList } from './list.js?v=v46-fix-modules';
+import { t } from '../../i18n/core.js?v=n5';
 
 let _me = null;
 let _currentPeer = null;
@@ -23,18 +25,18 @@ export async function openThread(username) {
     await PATCH('/api/social?action=dm-read&peer=' + encodeURIComponent(username), {});
   } catch (e) { console.warn('[dm] 标记私信已读失败', e); }
   const area = $('#dmThreadArea');
-  if (area) area.innerHTML = '<div class="dm-empty">载入中…</div>';
+  if (area) area.innerHTML = `<div class="dm-empty">${t('dm.loading')}</div>`;
   try {
     const d = await GET('/api/social?action=dm-thread&peer=' + encodeURIComponent(username));
     if (!d.ok) {
-      if (area) area.innerHTML = '<div class="dm-empty">载入失败：' + escHtml(d.error || '') + '</div>';
+      if (area) area.innerHTML = `<div class="dm-empty">${t('dm.empty.loadFail')}：${escHtml(d.error || '')}</div>`;
       return;
     }
     _currentPeer = d.peer;
     _messages = d.messages || [];
     renderThread();
   } catch (e) {
-    if (area) area.innerHTML = '<div class="dm-empty">载入失败</div>';
+    if (area) area.innerHTML = `<div class="dm-empty">${t('dm.empty.loadFail')}</div>`;
   }
 }
 
@@ -58,7 +60,7 @@ function renderThread() {
     </div>`;
   const wrap = $('#dmMessages');
   if (!_messages.length) {
-    wrap.innerHTML = '<div class="dm-empty">还没有消息，发起对话吧！</div>';
+    wrap.innerHTML = `<div class="dm-empty">${t('dm.empty.noMsgs')}</div>`;
   } else {
     wrap.innerHTML = _messages.map(m => {
       const mine = m.from_player_id === _me.id;
