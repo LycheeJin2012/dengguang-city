@@ -1,0 +1,27 @@
+{
+  "name": "灯光市人民政府 | Light City Hall",
+  "short_name": "灯光市",
+  "description": "Minecraft 像素城市官方网站 — 公告 / 服务 / 留言 / 酒店 / 赛车",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3e9c8",
+  "theme_color": "#70ad34",
+  "lang": "zh-CN",
+  "categories": ["games", "productivity", "social"],
+  "icons": [
+    {
+      "src": "/assets/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    { "name": "酒店", "url": "/hotel.html", "description": "树上酒店预订" },
+    { "name": "主页", "url": "/profile.html", "description": "我的玩家主页" },
+    { "name": "私信", "url": "/dm.html", "description": "AI 灯灯客服 / 玩家私信" },
+    { "name": "市政厅", "url": "/admin", "description": "管理后台" }
+  ]
+}

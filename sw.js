@@ -1,0 +1,59 @@
+// v49-fix-8: PWA Service Worker — 主页 + 4 子页 + 关键 JS 离线缓存
+// 策略: cache-first (回退到网络), stale-while-revalidate
+const CACHE_VERSION = 'lc-v49-2026-09-06';
+const STATIC_ASSETS = [
+  '/',
+  '/index.html',
+  '/hotel.html',
+  '/profile.html',
+  '/dm.html',
+  '/admin.html',
+  '/css/style.css',
+  '/manifest.json',
+  '/assets/icons/icon.svg'
+];
+
+self.addEventListener('install', (e) => {
+  e.waitUntil(
+    caches.open(CACHE_VERSION).then((cache) => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keys) => Promise.all(
+      keys.filter((k) => k !== CACHE_VERSION).map((k) => caches.delete(k))
+    )).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', (e) => {
+  const { request } = e;
+  if (request.method !== 'GET') return;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return; // 跨域不 cache (含 CF Pages Functions)
+  // navigation 请求 (HTML): network-first, 回退到 cache, 最后回退到 /
+  if (request.mode === 'navigate') {
+    e.respondWith(
+      fetch(request).then((r) => {
+        const copy = r.clone();
+        caches.open(CACHE_VERSION).then((c) => c.put(request, copy));
+        return r;
+      }).catch(() => caches.match(request).then((r) => r || caches.match('/')))
+    );
+    return;
+  }
+  // 静态资源: cache-first, 后台 stale-while-revalidate
+  e.respondWith(
+    caches.match(request).then((cached) => {
+      const network = fetch(request).then((r) => {
+        if (r && r.ok) {
+          const copy = r.clone();
+          caches.open(CACHE_VERSION).then((c) => c.put(request, copy));
+        }
+        return r;
+      }).catch(() => cached);
+      return cached || network;
+    })
+  );
+});
