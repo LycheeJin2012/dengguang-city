@@ -1,7 +1,17 @@
 // v44 重写: 卡丁车 + 国际赛车场 tab (合并, 因为功能类似)
-import { $, esc, fmt, GET, PATCH, DEL, safeRender, cacheClear } from '../core.js?v=v46-fix-modules';
+// v50-N6 B6: i18n 化
+import { $, esc, fmt, GET, PATCH, DEL, safeRender, cacheClear, t } from '../core.js?v=v46-fix-modules';
 
-const _KIND_LABEL = { kart: '🏁 赛道试跑', circuit: '🏎️ 国际赛车场' };
+function _kindLabel(k) { return k === 'kart' ? t('admin.kart.kind.kart') : t('admin.kart.kind.circuit'); }
+function _statusOpts(s, current) {
+  return ['pending','approved','rejected'].map(st =>
+    `<option value="${st}" ${st === current ? 'selected' : ''}>${{
+      pending: t('admin.status.pending'),
+      approved: t('admin.status.approved'),
+      rejected: t('admin.status.rejected')
+    }[st]}</option>`
+  ).join('');
+}
 
 export async function renderKarts() {
   await safeRender(async () => renderKind('kart', 'kart'));
@@ -32,11 +42,10 @@ async function renderKind(kind, prefix) {
   empty.style.display = 'none';
 
   box.innerHTML = shown.map(it => {
-    const opts = ['pending', 'approved', 'rejected']
-      .map(s => `<option value="${s}" ${s === it.status ? 'selected' : ''}>${{ pending: '待审核', approved: '已批准', rejected: '已拒绝' }[s]}</option>`).join('');
+    const opts = _statusOpts('pending', it.status) + _statusOpts('approved', it.status) + _statusOpts('rejected', it.status);
     return `<article class="msg-item" data-id="${it.id}">
       <div class="msg-head"><div class="msg-head-left">
-        <span class="msg-type type-book">${_KIND_LABEL[kind]}</span>
+        <span class="msg-type type-book">${_kindLabel(kind)}</span>
         <b class="msg-name">👤 ${esc(it.name)} · ${esc(it.contact)}</b>
         <span class="book-status">${esc(it.status)}</span>
         ${it.license ? `<span class="gallery-num" style="margin-left:4px">${esc(it.license)}</span>` : ''}
@@ -48,10 +57,10 @@ async function renderKind(kind, prefix) {
       </div>
       ${it.note ? `<p class="msg-content" style="font-size:13px;color:var(--c-stone-dark)">📝 ${esc(it.note)}</p>` : ''}
       <div class="msg-actions book-actions">
-        <button class="btn btn-primary btn-sm" data-act="edit">✎ 编辑</button>
+        <button class="btn btn-primary btn-sm" data-act="edit">${t('admin.kart.edit')}</button>
         <select class="${prefix}-status-sel">${opts}</select>
-        <button class="btn btn-ghost btn-sm" data-act="save">保存状态</button>
-        <button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>
+        <button class="btn btn-ghost btn-sm" data-act="save">${t('admin.kart.save')}</button>
+        <button class="btn btn-ghost btn-sm btn-danger" data-act="del">${t('admin.kart.delete')}</button>
       </div>
     </article>`;
   }).join('');
@@ -70,17 +79,18 @@ async function saveStatus(prefix, id, status) {
     const endpoint = prefix === 'kart' ? '/api/admin/kart' : '/api/admin/circuit';
     await PATCH(endpoint + '?id=' + id + '&status=' + status);
     cacheClear(prefix + ':');
+    if (window._toast) window._toast(t('admin.kart.saved'), 'success');
     if (prefix === 'kart') renderKarts(); else renderCircuits();
-  } catch (e) { if (window._toast) window._toast('失败: ' + e.message, 'error'); }
+  } catch (e) { if (window._toast) window._toast(t('admin.kart.fail') + e.message, 'error'); }
 }
 async function delItem(prefix, id, kind) {
-  if (!confirm('删除该报名？')) return;
+  if (!confirm(t('admin.kart.confirmDel'))) return;
   try {
     const endpoint = prefix === 'kart' ? '/api/admin/kart' : '/api/admin/circuit';
     await DEL(endpoint + '?id=' + id);
     cacheClear(prefix + ':');
     if (kind === 'kart') renderKarts(); else renderCircuits();
-  } catch (e) { if (window._toast) window._toast('失败: ' + e.message, 'error'); }
+  } catch (e) { if (window._toast) window._toast(t('admin.kart.fail') + e.message, 'error'); }
 }
 
 export function kartCircuitEdit(it, kind) {
