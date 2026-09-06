@@ -49,14 +49,14 @@ function renderThread() {
       <span class="avatar">${escHtml(_currentPeer.avatar_emoji || '👤')}</span>
       <div>
         <div class="name">${escHtml(_currentPeer.username)}</div>
-        <div class="sub">私信对话</div>
+        <div class="sub">${t('dm.thread.sub', '私信对话')}</div>
       </div>
-      <a href="profile.html?u=${encodeURIComponent(_currentPeer.username)}">查看对方主页 →</a>
+      <a href="profile.html?u=${encodeURIComponent(_currentPeer.username)}">${t('dm.thread.viewProfile', '查看对方主页 →')}</a>
     </div>
     <div class="dm-messages" id="dmMessages"></div>
     <div class="dm-input">
-      <textarea id="dmInput" placeholder="输入私信内容（最多 2000 字）…"></textarea>
-      <button id="dmSend">发送</button>
+      <textarea id="dmInput" placeholder="${t('dm.thread.inputPh', '输入私信内容（最多 2000 字）…')}"></textarea>
+      <button id="dmSend">${t('common.send', '发送')}</button>
     </div>`;
   const wrap = $('#dmMessages');
   if (!_messages.length) {
@@ -66,7 +66,7 @@ function renderThread() {
       const mine = m.from_player_id === _me.id;
       return `<div class="dm-msg ${mine ? 'mine' : ''}">
         <div class="bubble">${escHtml(m.content)}</div>
-        <div class="ts">${shortTime(m.created_at)}${!mine && !m.read_at ? ' · 未读' : ''}</div>
+        <div class="ts">${shortTime(m.created_at)}${!mine && !m.read_at ? ' · ' + t('dm.unread', '未读') : ''}</div>
       </div>`;
     }).join('');
     wrap.scrollTop = wrap.scrollHeight;
@@ -85,18 +85,21 @@ async function sendMessage() {
   const btn = $('#dmSend');
   const content = inp.value.trim();
   if (!content || !_currentPeer) return;
-  btn.disabled = true; btn.textContent = '发送中…';
+  const sendingL = t('dm.sending', '发送中…');
+  const failL = t('dm.sendFail', '发送失败：');
+  const sendL = t('common.send', '发送');
+  btn.disabled = true; btn.textContent = sendingL;
   try {
     const d = await POST('/api/social?action=dm-send', {
       to_username: _currentPeer.username, content
     });
-    if (!d.ok) { alert('发送失败：' + (d.error || '')); return; }
+    if (!d.ok) { alert(failL + (d.error || '')); return; }
     inp.value = '';
     await openThread(_currentPeer.username);
     await loadList();
   } catch (e) {
-    alert('发送失败：' + e.message);
+    alert(failL + e.message);
   } finally {
-    btn.disabled = false; btn.textContent = '发送';
+    btn.disabled = false; btn.textContent = sendL;
   }
 }

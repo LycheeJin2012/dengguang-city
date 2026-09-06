@@ -1,6 +1,6 @@
 // v45 重写: dm 子页 entry (ES module)
 // v50-N5: 改用 t() 翻译界面文案
-import { $, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
+import { $, escHtml, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
 import { loadList, setListContext, bindListActions } from './list.js?v=v46-fix-modules';
 import { openThread, setThreadContext } from './thread.js?v=v46-fix-modules';
 import { t } from '../../i18n/core.js?v=n5';
@@ -36,12 +36,12 @@ const app = $('#app');
         <div class="big-icon">📨</div>
         <h2>${isNet ? t('dm.slow') : t('dm.needLogin')}</h2>
         <p>${isNet
-          ? '验证登录态超时, 可能是网络抖动或 Functions 冷启动。<br>点下面按钮重试, 或回首页重新登录。'
-          : '私信是玩家之间的私人交流，<br>需要登录后才能使用。'}</p>
-        ${errMsg ? `<p class="dm-err-detail">(${errMsg})</p>` : ''}
+          ? t('dm.timeout.body', '验证登录态超时, 可能是网络抖动或 Functions 冷启动。<br>点下面按钮重试, 或回首页重新登录。')
+          : t('dm.needLogin.body', '私信是玩家之间的私人交流，<br>需要登录后才能使用。')}</p>
+        ${errMsg ? `<p class="dm-err-detail">(${escHtml(errMsg)})</p>` : ''}
         <div class="dm-action-row">
-          <button id="dmRetryBtn" class="btn btn-primary">🔄 重试</button>
-          <a href="index.html" class="btn btn-ghost">返回首页</a>
+          <button id="dmRetryBtn" class="btn btn-primary">🔄 ${t('common.retry', '重试')}</button>
+          <a href="index.html" class="btn btn-ghost">${t('common.returnHome', '← 返回首页')}</a>
         </div>
       </div>`;
     $('#dmRetryBtn')?.addEventListener('click', () => location.reload());
