@@ -1,5 +1,6 @@
 // v45 重写: profile 子页 entry (ES module)
 import { $, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
+import { t } from '../../i18n/core.js?v=n5';
 import { fetchProfile, renderProfile, setProfile, setSelf } from './info.js?v=v46-fix-modules';
 import { bindPasskey } from './passkey.js?v=v46-fix-modules';
 import { loadMyMessages, loadMyBookings } from './history.js?v=v46-fix-modules';
@@ -39,9 +40,9 @@ const pBody = $('#pBody');
       pBody.innerHTML = `
         <div class="profile-login-hint">
           <div class="big-icon">👤</div>
-          <h2>请先登录查看个人主页</h2>
-          <p>登录后自动跳转到你的个人主页</p>
-          <a href="index.html" class="btn btn-primary" style="margin-top:12px;">返回首页</a>
+          <h2>${t('profile.needLogin.title', '请先登录查看个人主页')}</h2>
+          <p>${t('profile.needLogin.hint', '登录后自动跳转到你的个人主页')}</p>
+          <a href="index.html" class="btn btn-primary" style="margin-top:12px;">${t('common.returnHome', '← 返回首页')}</a>
         </div>`;
       return;
     }

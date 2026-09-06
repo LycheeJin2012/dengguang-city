@@ -1,5 +1,7 @@
 // v45 重写: profile 子页 - 公开 profile 展示 + 编辑 + 改密码
+// v50-N6 B6: i18n 化
 import { $, escHtml, GET, POST, PATCH } from '../util.js?v=v46-fix-modules';
+import { t } from '../../i18n/core.js?v=n5';
 
 let _profile = null;
 let _isSelf = false;
@@ -21,26 +23,35 @@ export function renderProfile(me, profile, stats) {
   if (pAvatar) pAvatar.textContent = profile.avatar_emoji || '👤';
   const bio = (profile.bio || '').trim();
   const created = (profile.created_at || '').slice(0, 10);
+  const regDateL = t('profile.regDate', '注册日期：');
+  const noBioL = t('profile.noBio', '这位玩家还没有写个人简介…');
+  const editL = t('profile.editBtn', '✏️ 编辑我的主页');
+  const pwL = t('profile.changePwBtn', '🔑 修改密码');
+  const dmL = t('profile.sendDm', '📨 发私信');
+  const myDmL = t('profile.myDm', '📨 我的私信');
+  const loginToDmL = t('profile.loginToDm', '登录后发私信');
+  const msgL = t('profile.stat.messages', '留 言');
+  const cmtL = t('profile.stat.comments', '评 论');
   const actionsHtml = _isSelf
     ? `<div class="profile-actions">
-         <button id="btnEdit" class="btn btn-primary">✏️ 编辑我的主页</button>
-         <button id="btnChangePw" class="btn btn-primary">🔑 修改密码</button>
+         <button id="btnEdit" class="btn btn-primary">${editL}</button>
+         <button id="btnChangePw" class="btn btn-primary">${pwL}</button>
        </div>`
     : (me
         ? `<div class="profile-actions">
-             <a href="dm.html?peer=${encodeURIComponent(profile.username)}" class="btn btn-primary">📨 发私信</a>
-             <a href="dm.html" class="btn btn-ghost">📨 我的私信</a>
+             <a href="dm.html?peer=${encodeURIComponent(profile.username)}" class="btn btn-primary">${dmL}</a>
+             <a href="dm.html" class="btn btn-ghost">${myDmL}</a>
            </div>`
         : `<div class="profile-actions">
-             <a href="index.html" class="btn btn-ghost">登录后发私信</a>
+             <a href="index.html" class="btn btn-ghost">${loginToDmL}</a>
            </div>`);
   pBody.innerHTML = `
     <div class="profile-name">${escHtml(profile.username)}</div>
-    <div class="profile-meta">注册日期：${escHtml(created) || '待公告'}</div>
-    <div class="profile-bio ${bio ? '' : 'empty'}">${bio ? escHtml(bio) : '这位玩家还没有写个人简介…'}</div>
+    <div class="profile-meta">${regDateL}${escHtml(created) || t('profile.tbd', '待公告')}</div>
+    <div class="profile-bio ${bio ? '' : 'empty'}">${bio ? escHtml(bio) : noBioL}</div>
     <div class="profile-stats">
-      <div class="profile-stat"><div class="num">${stats?.messages || 0}</div><div class="lbl">留 言</div></div>
-      <div class="profile-stat"><div class="num">${stats?.comments || 0}</div><div class="lbl">评 论</div></div>
+      <div class="profile-stat"><div class="num">${stats?.messages || 0}</div><div class="lbl">${msgL}</div></div>
+      <div class="profile-stat"><div class="num">${stats?.comments || 0}</div><div class="lbl">${cmtL}</div></div>
     </div>
     ${actionsHtml}`;
   if (_isSelf) {
@@ -56,7 +67,7 @@ function openEditModal() {
   mask.innerHTML = `
     <div class="modal">
       <div class="modal-head">
-        <h3>✏️ 编辑个人主页</h3>
+        <h3>✏️ ${t('profile.editModal.title', '编辑个人主页')}</h3>
         <button class="modal-close" id="mClose">×</button>
       </div>
       <div class="modal-body">
