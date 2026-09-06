@@ -35,16 +35,22 @@ export function bindActiveNav() {
 
 export async function loadHeroStats() {
   const statPlayers = $('[data-stat="players"]') || $('#statPlayers');
-  if (!statPlayers) return;
+  // v50-fix-16: 城市数据看板的"注册市民"卡片也用同一份 bundle 数据
+  //   之前 index.html 硬编码 17, API 实际返 8 (active 过滤后), 跟 hero 数字不一致
+  const cardPlayers = $('[data-stat="players-card"]');
+  if (!statPlayers && !cardPlayers) return;
   try {
     const d = await GET('/api/homepage-bundle', undefined);
     const bundle = d.bundle || {};
-    const c = statPlayers.querySelector('b');
-    if (c) animateNumber(c, bundle.playerCount || 0);
+    const n = Number(bundle.playerCount || 0);
+    const heroB = statPlayers?.querySelector('b');
+    if (heroB) animateNumber(heroB, n);
+    const cardB = cardPlayers;
+    if (cardB) animateNumber(cardB, n);
   } catch (e) {
     // fallback: 显示 —
-    const c = statPlayers.querySelector('b');
-    if (c) c.textContent = '—';
+    const c1 = statPlayers?.querySelector('b'); if (c1) c1.textContent = '—';
+    const c2 = cardPlayers; if (c2) c2.textContent = '—';
   }
 }
 
