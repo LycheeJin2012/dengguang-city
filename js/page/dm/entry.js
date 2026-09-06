@@ -1,9 +1,9 @@
 // v45 重写: dm 子页 entry (ES module)
 // v50-N5: 改用 t() 翻译界面文案
-import { $, escHtml, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
+import { $, escHtml, GET, renderSubpageNav, injectLangSwitch } from '../util.js?v=v46-fix-modules';
 import { loadList, setListContext, bindListActions } from './list.js?v=v46-fix-modules';
 import { openThread, setThreadContext } from './thread.js?v=v46-fix-modules';
-import { t, setPageTitle, setMetaDescription } from '../../i18n/core.js?v=n5';
+import { t, setPageTitle, setMetaDescription, initI18n } from '../../i18n/core.js?v=n5';
 
 const app = $('#app');
 
@@ -12,6 +12,8 @@ setPageTitle('page.title.dm', 'DM | Light City');
 setMetaDescription('page.meta.dm', 'Light City DM - AI assistant DengDeng & player direct messages.');
 
 (async function boot() {
+  // v50-N6: i18n 必须先 init
+  await initI18n();
   // 1. 立刻渲染 loading
   app.innerHTML = `<div class="dm-login-hint dm-loading"><div class="big-icon">⏳</div><p>${t('dm.verifyLogin')}</p></div>`;
 
@@ -31,6 +33,8 @@ setMetaDescription('page.meta.dm', 'Light City DM - AI assistant DengDeng & play
 
   // 3. 顶栏
   renderSubpageNav($('#navUserSlot'), me, false);
+  // v50-N6: 注入语言切换按钮
+  injectLangSwitch($('.nav-inner') || $('#navbar'));
 
   // 4. 未登录 → 提示
   if (!me) {

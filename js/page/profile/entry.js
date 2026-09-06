@@ -1,6 +1,6 @@
 // v45 重写: profile 子页 entry (ES module)
-import { $, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
-import { t, setPageTitle, setMetaDescription } from '../../i18n/core.js?v=n5';
+import { $, GET, renderSubpageNav, injectLangSwitch } from '../util.js?v=v46-fix-modules';
+import { t, setPageTitle, setMetaDescription, initI18n } from '../../i18n/core.js?v=n5';
 import { fetchProfile, renderProfile, setProfile, setSelf } from './info.js?v=v46-fix-modules';
 import { bindPasskey } from './passkey.js?v=v46-fix-modules';
 import { loadMyMessages, loadMyBookings } from './history.js?v=v46-fix-modules';
@@ -17,6 +17,8 @@ setPageTitle('page.title.profile', 'Player Profile | Light City');
 setMetaDescription('page.meta.profile', 'Light City Player Profile - My messages, signups, subscriptions, and notifications.');
 
 (async function boot() {
+  // v50-N6: i18n 必须先 init 才能让 data-i18n 生效
+  await initI18n();
   // 1. 当前登录态
   let me = null;
   let isCombined = false;
@@ -30,6 +32,8 @@ setMetaDescription('page.meta.profile', 'Light City Player Profile - My messages
 
   // 2. 顶栏
   renderSubpageNav($('#navUserSlot'), me, isCombined);
+  // v50-N6: 注入语言切换按钮到 nav-inner (profile 没自带 lang-toggle)
+  injectLangSwitch($('.nav-inner') || $('#navbar'));
 
   // 3. 决定查看谁
   const url = new URL(location.href);

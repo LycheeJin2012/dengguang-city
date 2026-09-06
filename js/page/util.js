@@ -62,6 +62,31 @@ async function fetchUnreadBadge(slot) {
   } catch (e) { /* 静默 */ }
 }
 
+// v50-N6: 注入语言切换按钮 (4 个 sub-page 共用, hotel/profile/dm/notifications)
+export function injectLangSwitch(container) {
+  if (!container || document.getElementById('navLangBtn')) return;
+  const btn = document.createElement('button');
+  btn.id = 'navLangBtn';
+  btn.type = 'button';
+  const cur = localStorage.getItem('lc_lang') || 'zh-CN';
+  const refresh = (lang) => {
+    btn.textContent = lang === 'zh-CN' ? '🌐 EN' : '🌐 中文';
+    btn.title = lang === 'zh-CN' ? '切换到 English' : 'Switch to 中文';
+  };
+  refresh(cur);
+  btn.style.cssText = 'background:transparent;border:2px solid var(--c-border,#2a2a2a);padding:4px 10px;font-family:inherit;font-size:13px;cursor:pointer;margin-left:8px;';
+  btn.addEventListener('click', () => {
+    const c = localStorage.getItem('lc_lang') || 'zh-CN';
+    const next = c === 'zh-CN' ? 'en' : 'zh-CN';
+    localStorage.setItem('lc_lang', next);
+    document.documentElement.lang = next;
+    window.dispatchEvent(new CustomEvent('lc:langchange', { detail: { lang: next } }));
+    refresh(next);
+    // 触发自定义事件, 页面可监听并重渲染需要重拉的组件
+  });
+  container.appendChild(btn);
+}
+
 // 短时间 (HH:MM or MM-DD)
 export function shortTime(iso) {
   if (!iso) return '';

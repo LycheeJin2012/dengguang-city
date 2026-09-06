@@ -119,6 +119,25 @@ function bindAll() {
     '灯光市通知中心 - 站内所有通知, 留言回复 / DM / 公告 / 订阅推送。',
     'Light City Notification Center - All in-site notifications: message replies, DMs, announcements.');
   bindFilters();
+  // v50-N6: notifications 自带 lang-toggle 按钮, 绑事件
+  const langBtn = document.getElementById('langToggle');
+  if (langBtn) {
+    const refresh = () => {
+      const lang = localStorage.getItem('lc_lang') || 'zh-CN';
+      langBtn.textContent = lang === 'zh-CN' ? '🌐 EN' : '🌐 中文';
+    };
+    refresh();
+    langBtn.addEventListener('click', () => {
+      const cur = localStorage.getItem('lc_lang') || 'zh-CN';
+      const next = cur === 'zh-CN' ? 'en' : 'zh-CN';
+      localStorage.setItem('lc_lang', next);
+      document.documentElement.lang = next;
+      window.dispatchEvent(new CustomEvent('lc:langchange', { detail: { lang: next } }));
+      refresh();
+      // 重拉通知 (时间 label / 标题跟语言走)
+      loadNotifs();
+    });
+  }
   loadNotifs();
 }
 
