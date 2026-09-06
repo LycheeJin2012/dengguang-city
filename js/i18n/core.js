@@ -76,6 +76,17 @@ const DICT = {
   'page.title.profile': { 'zh-CN': '玩家主页 · 灯光市',                       'en': 'Player Profile | Light City' },
   'page.title.dm':      { 'zh-CN': '私信 · 灯光市',                           'en': 'DM | Light City' },
   'page.title.admin':   { 'zh-CN': '管理后台 | 灯光市人民政府',                 'en': 'Admin Panel | Light City Hall' },
+  // 表单 placeholder
+  'ph.gameId':         { 'zh-CN': '你的游戏 ID',         'en': 'Your game ID' },
+  'ph.gameIdShort':    { 'zh-CN': '你的游戏ID',         'en': 'Game ID' },
+  'ph.contact':         { 'zh-CN': '邮箱 / 游戏内编号',   'en': 'Email / In-game ID' },
+  'ph.contactShort':    { 'zh-CN': '邮箱或游戏内编号',   'en': 'Email or In-game ID' },
+  'ph.adminUser':       { 'zh-CN': '管理员账号',         'en': 'Admin Username' },
+  'ph.message':         { 'zh-CN': '请输入你的留言...',   'en': 'Type your message...' },
+  'ph.note':            { 'zh-CN': '是否需要教学、组队信息等', 'en': 'Need teaching or team info?' },
+  'ph.noteSpecial':     { 'zh-CN': '特殊要求、纪念日等',  'en': 'Special requests, anniversaries, etc.' },
+  'ph.carNo':           { 'zh-CN': '留空随机分配',       'en': 'Empty for random' },
+  'ph.ticketSearch':    { 'zh-CN': '🔍 搜索标题/内容',   'en': '🔍 Search title/content' },
 };
 
 let _current = (function () {

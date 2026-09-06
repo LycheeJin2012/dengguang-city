@@ -85,7 +85,7 @@
           <form id="loginForm" class="login-form" method="POST" action="/api/login" accept-charset="UTF-8" autocomplete="on">
             <label>
               <span class="label-text">账号</span>
-              <input type="text" id="loginUser" name="username" autocomplete="username" required placeholder="管理员账号" />
+              <input type="text" id="loginUser" name="username" autocomplete="username" required placeholder="管理员账号" data-i18n-placeholder="ph.adminUser" />
             </label>
             <label>
               <span class="label-text">密码</span>
@@ -163,7 +163,7 @@
           <option value="resolved">✓ 已解决</option>
           <option value="closed">✕ 已关闭</option>
         </select>
-        <input type="search" id="ticketSearch" placeholder="🔍 搜索标题/内容" style="flex:1;min-width:200px;padding:6px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-family:inherit;font-size:13px" />
+        <input type="search" id="ticketSearch" placeholder="🔍 搜索标题/内容" data-i18n-placeholder="ph.ticketSearch" style="flex:1;min-width:200px;padding:6px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-family:inherit;font-size:13px" />
       </div>
       <div class="ticket-categories" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;font-size:13px">
         <span>💬 留言 <span id="ticketCount_message">0</span></span>
