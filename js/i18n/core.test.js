@@ -109,3 +109,26 @@ test('命名空间一致性 (group 子 key 必须在父 namespace 下)', () => {
   assert.ok(groups.hotel >= 5, 'hotel.* 应该至少 5 个');
   console.log(`  → 命名空间分布: ${JSON.stringify(groups)}`);
 });
+
+// ====== 运行时行为测试 (i18n 核心 API) ======
+test('DICT 内容正确 (spot check)', () => {
+  assert.equal(DICT['nav.home']['zh-CN'], '首页');
+  assert.equal(DICT['nav.home']['en'], 'Home');
+  assert.equal(DICT['hotel.count']['zh-CN'], '共 ${n} 间 / 总 ${total} 间');
+  assert.equal(DICT['page.meta.home']['en'], 'Light City Hall - A pixel city built by citizens, offering government notices, city data, and public services.');
+});
+
+test('DICT 没有重复 key (含大小写敏感)', () => {
+  const re = /^\s*'([a-z][a-zA-Z0-9._-]+)':\s*\{/gm;
+  const seen = new Map();
+  let m;
+  while ((m = re.exec(coreSrc)) !== null) {
+    const k = m[1];
+    if (seen.has(k)) assert.fail(`重复 key: ${k}`);
+    seen.set(k, true);
+  }
+  // 也检查大小写不同但语义相同的 (避免 Nav.Home 和 nav.home 重复)
+  const lcKeys = [...seen.keys()].map(k => k.toLowerCase());
+  const dupLc = lcKeys.filter((k, i) => lcKeys.indexOf(k) !== i);
+  assert.equal(dupLc.length, 0, `大小写不同但可能重复的 key: ${dupLc.join(', ')}`);
+});
