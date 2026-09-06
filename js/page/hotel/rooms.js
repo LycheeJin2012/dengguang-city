@@ -47,10 +47,12 @@ export async function loadRooms() {
           name: r.name,
           icon: ROOM_ICON(r.capacity || 1),
           // 状态字符串对齐 filter 下拉 (草拟/筹建/拟建)
-          //   hotel 草稿 → '筹建' (酒店整体在筹建, 房型还未对外开放预订)
-          //   hotel 上线 + room 上线 → '开放' (用户能订)
-          //   hotel 上线 + room 草稿 → '草拟' (酒店运营中, 房型草案)
-          //   hotel 上线 + room sort_order>0 未激活 → '拟建' (酒店运营中, 房型规划)
+          // v50-N6: status 用 canonical key, 切换语言时统一查 t() (filter 比较不被 i18n 影响)
+          //   hotelDraft → 'building'
+          //   r.is_active → 'open'
+          //   sort_order === 0 → 'draft'
+          //   其余 → 'planned'
+          statusKey: hotelDraft ? 'building' : (r.is_active ? 'open' : (r.sort_order === 0 ? 'draft' : 'planned')),
           status: hotelDraft ? t('hotel.filter.building') : (r.is_active ? t('hotel.filter.open') : (r.sort_order === 0 ? t('hotel.filter.draft') : t('hotel.filter.planned'))),
           bed: r.beds || t('hotel.bed.tbd'),
           guests: r.capacity || 1,
@@ -77,7 +79,8 @@ const filters = { status: 'all', guests: 0, view: 'all' };
 
 function applyFilters() {
   return ROOMS.filter(r => {
-    if (filters.status !== 'all' && r.status !== filters.status) return false;
+    // v50-N6: 用 canonical statusKey 比较, 不受 i18n 影响
+    if (filters.status !== 'all' && r.statusKey !== filters.status) return false;
     if (filters.guests > 0) {
       if (filters.guests === 3) { if (r.guests < 3) return false; }
       else { if (r.guests !== filters.guests) return false; }
@@ -99,27 +102,27 @@ export function renderRooms() {
   }
   grid.innerHTML = list.map(r => `
     <article class="room-card ${r.hotelDraft ? 'is-draft' : ''}" data-id="${r.id}">
-      ${r.recommend ? '<div class="room-badge">★ 推荐</div>' : ''}
-      ${r.hotelDraft ? '<div class="room-badge room-badge-draft">📝 筹建中</div>' : ''}
+      ${r.recommend ? `<div class="room-badge">★ ${t('hotel.badge.recommend')}</div>` : ''}
+      ${r.hotelDraft ? `<div class="room-badge room-badge-draft">📝 ${t('hotel.badge.building')}</div>` : ''}
       <div class="room-head">
         <span class="room-icon">${r.icon}</span>
-        <h3 class="room-name">${escHtml(r.name)}<span class="room-status ${r.status === '开放' ? 'active' : 'draft'}">${escHtml(r.status)}</span></h3>
+        <h3 class="room-name">${escHtml(r.name)}<span class="room-status ${r.statusKey === 'open' ? 'active' : 'draft'}">${escHtml(r.status)}</span></h3>
       </div>
       <ul class="room-features">
-        <li>床型：${escHtml(r.bed)}</li>
-        <li>适合：${r.guests}+ 人</li>
+        <li>${t('hotel.bedLabel')}: ${escHtml(r.bed)}</li>
+        <li>${t('hotel.guestsLabel')}: ${r.guests}+ ${t('common.person', '人')}</li>
         ${r.features.map(f => `<li>${escHtml(f)}</li>`).join('')}
       </ul>
       <div class="room-foot">
         <div class="room-price">
           <span class="room-price-cur">💎</span>
-          <span class="room-price-num">${r.price ? r.price + ' / 晚' : '价格待定'}</span>
+          <span class="room-price-num">${r.price ? r.price + ' / ' + t('hotel.perNight', '晚') : t('hotel.price.tbd', '价格待定')}</span>
         </div>
         <div class="room-actions">
-          <button type="button" class="btn btn-ghost btn-small" data-action="detail" data-id="${r.id}">详情</button>
-          ${r.status === '开放' && !r.hotelDraft
-            ? `<button type="button" class="btn btn-primary btn-small" data-action="book" data-id="${r.id}">📅 预订</button>`
-            : `<button type="button" class="btn btn-disabled btn-small" disabled>🚧 暂不开放</button>`
+          <button type="button" class="btn btn-ghost btn-small" data-action="detail" data-id="${r.id}">${t('hotel.btn.detail')}</button>
+          ${r.statusKey === 'open' && !r.hotelDraft
+            ? `<button type="button" class="btn btn-primary btn-small" data-action="book" data-id="${r.id}">📅 ${t('hotel.btn.book')}</button>`
+            : `<button type="button" class="btn btn-disabled btn-small" disabled>🚧 ${t('hotel.btn.unavailable')}</button>`
           }
         </div>
       </div>
@@ -159,17 +162,18 @@ export function bindFilters() {
 const roomMask = () => $('#roomMask');
 export function openRoomDetail(r) {
   const mask = roomMask();
-  const t = $('#roomTitle');
+  const titleEl = $('#roomTitle');
   const body = $('#roomBody');
-  if (t) t.textContent = `${r.icon} ${r.name}（${r.status}）`;
+  // v50-N6: 用 titleEl 避免 shadow i18n t()
+  if (titleEl) titleEl.textContent = `${r.icon} ${r.name}（${r.status}）`;
   if (body) body.innerHTML = `
     <div class="rd-summary">
-      <p class="rd-line"><b>所属酒店：</b>${escHtml(r.hotelName)}</p>
-      <p class="rd-line"><b>床型：</b>${escHtml(r.bed)}</p>
-      <p class="rd-line"><b>适合：</b>${r.guests}+ 人</p>
-      <p class="rd-line"><b>价格：</b>${r.price ? '💎 ' + r.price + ' / 晚' : '待定'}</p>
+      <p class="rd-line"><b>${t('hotel.detail.hotel')}:</b> ${escHtml(r.hotelName)}</p>
+      <p class="rd-line"><b>${t('hotel.bedLabel')}:</b> ${escHtml(r.bed)}</p>
+      <p class="rd-line"><b>${t('hotel.guestsLabel')}:</b> ${r.guests}+ ${t('common.person')}</p>
+      <p class="rd-line"><b>${t('hotel.detail.price')}:</b> ${r.price ? '💎 ' + r.price + ' / ' + t('hotel.perNight', '晚') : t('hotel.price.tbd', '待定')}</p>
       <ul class="rd-features">${r.features.map(f => `<li>${escHtml(f)}</li>`).join('')}</ul>
-      <div class="rd-cta"><button type="button" class="btn btn-primary" id="rdBook">📅 预订</button></div>
+      <div class="rd-cta"><button type="button" class="btn btn-primary" id="rdBook">📅 ${t('hotel.btn.book')}</button></div>
     </div>`;
   if (mask) { mask.style.display = ''; document.body.style.overflow = 'hidden'; }
   setTimeout(() => {
