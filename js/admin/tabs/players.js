@@ -1,5 +1,6 @@
 // v44 重写: 玩家管理 tab (renderPlayers, playerAction, createPlayerModal)
-import { $, esc, fmt, GET, POST, PATCH, safeRender, cacheClear, STATUS_LABEL, fileToDataURLP } from '../core.js?v=v46-fix-modules';
+// v50-N6 B6: i18n 化
+import { $, esc, fmt, GET, POST, PATCH, safeRender, cacheClear, STATUS_LABEL, fileToDataURLP, t } from '../core.js?v=v46-fix-modules';
 
 export async function renderPlayers() {
   await safeRender(async () => {
@@ -34,24 +35,27 @@ export async function renderPlayers() {
       const isRejected = p.status === 'rejected';
       const lastSession = p.last_session
         ? fmt(p.last_session)
-        : '<i style="color:#aaa">从未登录</i>';
+        : '<i style="color:#aaa">' + t('admin.players.neverLogin') + '</i>';
+      const regL = t('admin.players.regDate');
+      const activeL = t('admin.players.lastActive');
+      const bioL = p.bio ? esc(p.bio) : '<i>' + t('admin.players.noBio') + '</i>';
       return `<article class="msg-item" data-id="${p.id}">
         <div class="msg-head"><div class="msg-head-left">
           <b class="msg-name">${esc(p.avatar_emoji || '👤')} ${esc(p.username)}</b>
           <span style="color:var(--c-stone-dark);font-size:12px;margin-left:6px">${esc(p.email)}</span>
           <span class="msg-player-tag">${STATUS_LABEL[p.status] || p.status}</span>
           ${p.game_id ? `<span class="gallery-num" title="游戏ID" style="margin-left:4px">🎮 ${esc(p.game_id)}</span>` : ''}
-        </div><div class="msg-time">注册：${fmt(p.created_at)}</div></div>
+        </div><div class="msg-time">${regL}${fmt(p.created_at)}</div></div>
         <div style="display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--c-stone-dark);padding:4px 0 2px">
-          <span title="注册时间">📅 已注册：${fmt(p.created_at)}</span>
-          <span title="最后活跃">🕒 最后活跃：${lastSession}</span>
+          <span title="注册时间">📅 ${regL}${fmt(p.created_at)}</span>
+          <span title="最后活跃">🕒 ${activeL}${lastSession}</span>
         </div>
-        <p class="msg-content" style="font-size:13px;color:var(--c-stone-dark);margin:6px 0">${p.bio ? esc(p.bio) : '<i>暂无简介</i>'}</p>
+        <p class="msg-content" style="font-size:13px;color:var(--c-stone-dark);margin:6px 0">${bioL}</p>
         <div class="msg-actions book-actions">
-          ${isPending ? '<button class="btn btn-primary btn-sm" data-act="approve">✓ 批准</button><button class="btn btn-ghost btn-sm btn-danger" data-act="reject">✗ 拒绝</button>' : ''}
-          ${!isPending ? '<button class="btn btn-ghost btn-sm" data-act="reset-pw">🔑 重置密码</button>' : ''}
-          ${isActive ? '<button class="btn btn-ghost btn-sm btn-danger" data-act="reject">✗ 改为拒绝</button>' : ''}
-          ${isRejected ? '<button class="btn btn-ghost btn-sm" data-act="approve">↻ 改为批准</button>' : ''}
+          ${isPending ? `<button class="btn btn-primary btn-sm" data-act="approve">${t('admin.players.approve')}</button><button class="btn btn-ghost btn-sm btn-danger" data-act="reject">${t('admin.players.reject')}</button>` : ''}
+          ${!isPending ? `<button class="btn btn-ghost btn-sm" data-act="reset-pw">${t('admin.players.resetPw')}</button>` : ''}
+          ${isActive ? `<button class="btn btn-ghost btn-sm btn-danger" data-act="reject">${t('admin.players.changeReject')}</button>` : ''}
+          ${isRejected ? `<button class="btn btn-ghost btn-sm" data-act="approve">${t('admin.players.changeApprove')}</button>` : ''}
         </div>
       </article>`;
     }).join('');
@@ -75,11 +79,11 @@ export async function playerAction(id, act) {
   } catch (e) { if (window._toast) window._toast('失败: ' + e.message, 'error'); }
 }
 export async function playerResetPw(id) {
-  const newPw = prompt('输入新密码 (至少 8 位):');
-  if (!newPw || newPw.length < 8) { if (window._toast) window._toast('密码至少 8 位', 'error'); return; }
+  const newPw = prompt(t('admin.players.pwPrompt'));
+  if (!newPw || newPw.length < 8) { if (window._toast) window._toast(t('admin.players.pwMin'), 'error'); return; }
   try {
     await PATCH('/api/admin/players?id=' + id + '&action=reset', { new_password: newPw });
-    if (window._toast) window._toast('密码已重置', 'success');
+    if (window._toast) window._toast(t('admin.players.pwReset'), 'success');
   } catch (e) { if (window._toast) window._toast('失败: ' + e.message, 'error'); }
 }
 export async function playerRename(id, currentName) {
@@ -101,9 +105,9 @@ export function showCreatePlayerModal() {
   bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
   bd.innerHTML = `
     <div style="background:var(--c-cream,#f5e6c5);border:3px solid #000;box-shadow:6px 6px 0 #000;padding:24px;max-width:520px;width:100%">
-      <h3 style="margin:0 0 6px;color:#000;font-size:17px;">🆕 代注册玩家账号</h3>
+      <h3 style="margin:0 0 6px;color:#000;font-size:17px;">🆕 ${t('admin.players.createTitle')}</h3>
       <p style="color:#888;font-size:12px;margin:0 0 14px;line-height:1.5">
-        由 super 管理员直接创建账号，无需玩家本人注册和审批。账号立即激活可用。
+        ${t('admin.players.createDesc')}
       </p>
       <div style="display:grid;gap:10px">
         <label style="display:flex;flex-direction:column;gap:4px;font-size:12px;color:#333">
