@@ -335,6 +335,11 @@ const DICT = {
   'flow.step4.desc':        { 'zh-CN': '结果以公告、信件或消息方式送达', 'en': 'Result is delivered via announcement, mail, or message.' },
   'flow.note':              { 'zh-CN': '具体办事流程由市政厅随服务上线后正式公告。本栏仅作草案展示。', 'en': 'Final service flow will be officially announced by the city hall when each service goes live. This section is a draft preview.' },
   'circuit.mapTitle':       { 'zh-CN': '—— TRACK MAP / 赛道线路图 ——', 'en': '—— TRACK MAP / Circuit Layout ——' },
+  'common.backHome':        { 'zh-CN': 'Home',           'en': 'Home' },
+  'common.loading':         { 'zh-CN': '载入中…',        'en': 'Loading…' },
+  'footer.col.hotel':       { 'zh-CN': '酒店',            'en': 'Hotel' },
+  'footer.col.admin':       { 'zh-CN': '管理',            'en': 'Admin' },
+  'nav.brand':              { 'zh-CN': '灯光市',          'en': 'Light City' },
   // 公告卡 UI 标签
   'ann.tag.latest':         { 'zh-CN': '最新',           'en': 'Latest' },
   'ann.tag.normal':         { 'zh-CN': '公告',           'en': 'Notice' },
@@ -402,9 +407,12 @@ const DICT = {
   'track.empty':          { 'zh-CN': '暂无开放赛道',     'en': 'No open tracks' },
   'track.price.loadFail': { 'zh-CN': '试车价格加载失败',  'en': 'Failed to load trial price' },
   // v50-N6 (C1): 玩家榜单
-  'board.tab.messages':  { 'zh-CN': '💬 留言数榜',     'en': '💬 Most Active' },
-  'board.tab.bookings':  { 'zh-CN': '🏨 酒店预订榜',   'en': '🏨 Top Travelers' },
-  'board.tab.licenses':  { 'zh-CN': '🚗 驾照等级榜',   'en': '🚗 License Holders' },
+  'board.tab.messages':  { 'zh-CN': '💬 留言数榜 · 最活跃市民', 'en': '💬 Most Active Citizens' },
+  'board.tab.bookings':  { 'zh-CN': '🏨 酒店预订榜 · 最常出游', 'en': '🏨 Top Travelers' },
+  'board.tab.licenses':  { 'zh-CN': '🚗 驾照等级榜 · 老司机',    'en': '🚗 License Holders' },
+  'board.unit.messages': { 'zh-CN': '条',  'en': '' },
+  'board.unit.bookings': { 'zh-CN': '次',  'en': '' },
+  'board.unit.licenses': { 'zh-CN': '级',  'en': '' },
   'board.empty':         { 'zh-CN': '暂无玩家上榜',     'en': 'No players on the board yet' },
   'page.sub.leaderboard':{ 'zh-CN': 'LEADERBOARD · 看谁是灯光市最活跃的市民', 'en': 'LEADERBOARD · Top contributors of Light City' },
   // v50-N6 (C2): 通知中心

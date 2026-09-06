@@ -10,6 +10,8 @@ async function loadBoard(type) {
   const list = $('#boardList');
   const label = $('#boardLabel');
   if (list) list.innerHTML = `<div class="empty-state"><div class="empty-icon">⏳</div><p>${t('common.loading', '载入中…')}</p></div>`;
+  // v50-N6: 客户端 i18n label (覆盖 API 的中文 label)
+  if (label) label.textContent = t('board.tab.' + type, '');
   if (_cache[type]) {
     renderBoard(_cache[type]);
     return;
@@ -18,7 +20,6 @@ async function loadBoard(type) {
     const r = await fetch('/api/leaderboard?type=' + type + '&limit=20', { credentials: 'include' });
     const d = await r.json();
     if (!d.ok) throw new Error(d.error || t('common.error.load', '加载失败'));
-    if (label) label.textContent = d.label || '';
     _cache[type] = d;
     renderBoard(d);
   } catch (e) {
@@ -34,7 +35,8 @@ function renderBoard(data) {
     list.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><p>${t('board.empty', '暂无数据')}</p></div>`;
     return;
   }
-  const unit = data.unit || '';
+  // v50-N6: unit 也走 i18n (英文模式不加 "条/次/级")
+  const unit = t('board.unit.' + (_currentType || 'messages'), data.unit || '');
   list.innerHTML = `<ol class="board-entries">${entries.map(e => `
     <li class="board-entry ${e.rank <= 3 ? 'board-top' : ''}" data-rank="${e.rank}">
       <span class="board-rank">${e.rank <= 3 ? ['🥇','🥈','🥉'][e.rank-1] : '#' + e.rank}</span>
@@ -63,6 +65,26 @@ function bindAll() {
     '灯光市玩家排行榜 - 留言数 / 酒店预订 / 驾照等级 3 维度, 看谁是灯光市最活跃的市民。',
     'Light City Player Leaderboard - Top contributors in messages, bookings, and licenses.');
   bindTabs();
+  // v50-N6: 语言切换按钮 (leaderboard 顶栏有自己的 lang-toggle)
+  const langBtn = document.getElementById('langToggle');
+  if (langBtn) {
+    const refresh = () => {
+      const lang = localStorage.getItem('lc_lang') || 'zh-CN';
+      langBtn.textContent = lang === 'zh-CN' ? '🌐 EN' : '🌐 中文';
+    };
+    refresh();
+    langBtn.addEventListener('click', () => {
+      const cur = localStorage.getItem('lc_lang') || 'zh-CN';
+      const next = cur === 'zh-CN' ? 'en' : 'zh-CN';
+      localStorage.setItem('lc_lang', next);
+      document.documentElement.lang = next;
+      // 触发 data-i18n 重新应用
+      window.dispatchEvent(new CustomEvent('lc:langchange', { detail: { lang: next } }));
+      refresh();
+      // 重渲染当前 tab (label/unit 跟语言走)
+      loadBoard(_currentType);
+    });
+  }
   loadBoard('messages');
 }
 
