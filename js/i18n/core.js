@@ -154,12 +154,7 @@ export function setPageTitle(keyOrZh, en) {
   } else {
     document.title = keyOrZh;
   }
-  // 订阅 langchange 自动重设
-  window.addEventListener('lc:langchange', () => {
-    if (en && _current === 'en') document.title = en;
-    else if (keyOrZh.includes('.') && DICT[keyOrZh]) document.title = t(keyOrZh);
-    else document.title = keyOrZh;
-  }, { once: false });
+  _onLangChangeOnce('page-title', () => setPageTitle(keyOrZh, en));
 }
 
 // 翻译并设置 <meta name="description"> 标签
@@ -174,7 +169,17 @@ export function setMetaDescription(keyOrZh, en) {
     else el.setAttribute('content', keyOrZh);
   };
   apply();
-  window.addEventListener('lc:langchange', apply, { once: false });
+  _onLangChangeOnce('meta-desc', () => setMetaDescription(keyOrZh, en));
+}
+
+// 内部: 注册一次性的 lc:langchange 监听 (按 key 去重, 避免累积)
+const _langListeners = new Map();
+function _onLangChangeOnce(key, fn) {
+  // 用 key + fn 一起做唯一性, 同 key 第二次调用先 remove 旧 fn 再 add 新 fn
+  const existing = _langListeners.get(key);
+  if (existing) window.removeEventListener('lc:langchange', existing);
+  window.addEventListener('lc:langchange', fn);
+  _langListeners.set(key, fn);
 }
 
 // 批量翻译 (用于渲染列表)
