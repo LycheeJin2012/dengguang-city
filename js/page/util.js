@@ -6,6 +6,7 @@ export { $, escHtml, GET, POST, PATCH, DEL };
 export { escHtml as esc };
 
 // 子页通用 nav 渲染 (基于 home/header 的逻辑简化, 但独立文件不依赖 home/header 的循环引用)
+// v50-N4: 加通知铃铛 + 未读红点 (admin 回复玩家留言后, 玩家在 profile/dm 看到红点)
 export function renderSubpageNav(slot, me, isCombined) {
   if (!slot) return;
   if (!me) {
@@ -15,13 +16,20 @@ export function renderSubpageNav(slot, me, isCombined) {
   const adminLink = isCombined
     ? `<a href="admin.html" class="nav-logout-link nav-admin-link">🛡️ 管理后台</a>`
     : '';
+  // 铃铛 + 红点: 默认 0, 异步 fetch /api/notifications?my=1&unread=1 拿真实未读数
+  //   profile/dm 顶 nav 是同一份代码, 都共用红点
   slot.innerHTML = `
     <span class="nav-user-name">👤 ${escHtml(me.username)}</span>
+    <a href="profile.html#myMessagesCard" id="navBell" class="nav-logout-link nav-bell" title="通知">
+      🔔<span class="nav-bell-badge" id="navBellBadge" hidden>0</span>
+    </a>
     ${adminLink}
     <a href="dm.html" class="nav-logout-link">📨 私信</a>
     <a href="profile.html" class="nav-logout-link">${isCombined ? '我的主页' : '主页'}</a>
     <a href="#" id="navLogout" class="nav-logout-link">登出</a>
   `;
+  // 异步拉未读数 (失败静默)
+  fetchUnreadBadge(slot).catch(() => {});
   slot.querySelector('#navLogout')?.addEventListener('click', async e => {
     e.preventDefault();
     if (isCombined) {
@@ -32,6 +40,25 @@ export function renderSubpageNav(slot, me, isCombined) {
       location.href = 'index.html';
     }
   });
+}
+
+// 拉未读通知数, 更新红点
+async function fetchUnreadBadge(slot) {
+  const badge = slot.querySelector('#navBellBadge');
+  if (!badge) return;
+  try {
+    // API 已直接返 unread_count 字段, limit=1 只为节省 payload
+    const r = await fetch('/api/notifications?my=1&unread=1&limit=1', { credentials: 'include' });
+    if (!r.ok) return;
+    const d = await r.json();
+    const n = Number(d.unread_count || 0);
+    if (n > 0) {
+      badge.textContent = n > 99 ? '99+' : String(n);
+      badge.hidden = false;
+    } else {
+      badge.hidden = true;
+    }
+  } catch (e) { /* 静默 */ }
 }
 
 // 短时间 (HH:MM or MM-DD)

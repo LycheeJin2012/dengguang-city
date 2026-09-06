@@ -4980,6 +4980,22 @@ textarea { resize: vertical; min-height: 90px; }
   font-size: 13px;
   padding: 4px 8px;
 }
+/* v50-N4: 通知铃铛 + 未读红点 */
+.nav-bell { position: relative; display: inline-block; }
+.nav-bell-badge {
+  position: absolute; top: -6px; right: -8px;
+  min-width: 18px; height: 18px; padding: 0 5px;
+  background: var(--c-redstone);
+  color: white;
+  font-family: var(--font-pixel);
+  font-size: 9px; line-height: 18px;
+  text-align: center;
+  border: 2px solid var(--c-black);
+  border-radius: 9px;
+  box-sizing: border-box;
+  pointer-events: none;
+}
+.nav-bell-badge[hidden] { display: none; }
 @media (max-width: 768px) {
   .nav-user-slot { margin-left: 0; }
 }

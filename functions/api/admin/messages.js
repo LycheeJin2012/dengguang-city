@@ -105,6 +105,24 @@ export async function onRequestPatch(context) {
           "UPDATE messages SET admin_reply = ?, replied_at = datetime('now'), replied_by = ? WHERE id = ?"
         ).bind(cleaned, admin.id, id).run();
       }
+
+      // v50-N4: admin 真实回复了 (cleaned 非空) → 写一条 notification_log 给玩家
+      //   玩家下次进 profile / dm 页面就能看到红点
+      //   之前 reply 写库后玩家完全无感, 必须自己刷留言板才知道被回复了
+      // 防御: 如果 message 是匿名/无 player_id (老数据), 跳过通知
+      try {
+        const msgRow = await env.DB.prepare('SELECT player_id, name, content FROM messages WHERE id = ?').bind(id).first();
+        if (msgRow && msgRow.player_id) {
+          const preview = cleaned.length > 80 ? cleaned.slice(0, 80) + '...' : cleaned;
+          await env.DB.prepare(
+            "INSERT INTO notification_log (player_id, type, title, body, link) VALUES (?, 'message_reply', ?, ?, 'profile.html')"
+          ).bind(
+            msgRow.player_id,
+            '🏛️ 市政厅回复了你的留言',
+            `「${(msgRow.content || '').slice(0, 40)}」→ ${preview}`
+          ).run();
+        }
+      } catch (e) { console.warn('[admin/messages] 写 notification_log 失败 (非致命):', e?.message); }
     } else {
       // 空字符串 = 清除回复(连同 previous_reply 一起清)
       try {

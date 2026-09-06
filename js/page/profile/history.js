@@ -1,5 +1,5 @@
 // v45 重写: profile 子页 - 我的最近留言 + 我的最近报名 (仅自己)
-import { $, escHtml, GET } from '../util.js?v=v46-fix-modules';
+import { $, escHtml, GET, PATCH } from '../util.js?v=v46-fix-modules';
 
 export async function loadMyMessages() {
   const wrap = $('#myMessagesCard');
@@ -22,6 +22,15 @@ export async function loadMyMessages() {
       </article>`;
     }).join('');
     wrap.style.display = '';
+    // v50-N4: 玩家看到自己的留言列表后, 自动把 message_reply 通知标已读
+    //   这样顶栏铃铛红点消失, 玩家不需要点任何按钮
+    //   用 PATCH /api/notifications?action=read-all (已有端点, 一键全标)
+    if (msgs.some(m => m.admin_reply && m.admin_reply.length > 0)) {
+      PATCH('/api/notifications?action=read-all', {}).catch(() => {});
+      // 同步刷新铃铛 (隐藏)
+      const badge = document.querySelector('#navBellBadge');
+      if (badge) badge.hidden = true;
+    }
   } catch (e) { wrap.style.display = 'none'; }
 }
 
