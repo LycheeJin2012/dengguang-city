@@ -282,6 +282,13 @@ const DICT = {
   'service.feedback.desc':  { 'zh-CN': '城市治理建议、违规行为投诉、表扬信', 'en': 'City governance, violation reports, commendations' },
   'section.services.title': { 'zh-CN': '🛎️ 市民服务中心',  'en': '🛎️ Civic Services' },
   'section.services.sub':   { 'zh-CN': 'CIVIC SERVICES · 办事大厅', 'en': 'CIVIC SERVICES · Service Hall' },
+  // footer
+  'footer.tagline':    { 'zh-CN': '由市民共建',  'en': 'Built by Citizens' },
+  'footer.col.gov':    { 'zh-CN': '政务',         'en': 'Government' },
+  'footer.col.service':{ 'zh-CN': '服务',         'en': 'Service' },
+  'footer.copy':       { 'zh-CN': '本站为作品展示 · 与 Mojang/Microsoft 无关', 'en': 'Showcase project. Not affiliated with Mojang/Microsoft.' },
+  'footer.admin':      { 'zh-CN': '管理入口',  'en': 'Admin' },
+  'contact.title':     { 'zh-CN': '联系我们',  'en': 'Contact Us' },
   // 主页 hero CTA
   'hero.cta.notice':  { 'zh-CN': '▶ 查看公告', 'en': '▶ View Notice' },
   'hero.cta.service': { 'zh-CN': '市民服务',   'en': 'Civic Service' },
