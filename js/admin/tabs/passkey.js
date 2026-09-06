@@ -1,5 +1,6 @@
 // v44 重写: 通行密钥引导 (登录后弹窗, 邀请添加 Passkey)
-import { GET, POST, esc } from '../core.js?v=v46-fix-modules';
+// v50-N6 B6: i18n 化
+import { GET, POST, esc, t } from '../core.js?v=v46-fix-modules';
 
 export async function maybeOfferAdminPasskey(adminId) {
   if (!adminId) return;
@@ -55,7 +56,7 @@ async function addPasskey(adminId, bd) {
     opts.challenge = b64urlToBuf(opts.challenge);
     opts.user.id = b64urlToBuf(opts.user.id);
     const cred = await navigator.credentials.create({ publicKey: opts });
-    if (!cred) throw new Error('未创建凭据');
+    if (!cred) throw new Error(t('admin.passkey.notCreated', '未创建凭据'));
     await POST('/api/init?action=passkey-register-finish', {
       challenge_token: r1.challenge_token,
       credential: {
@@ -68,10 +69,10 @@ async function addPasskey(adminId, bd) {
         }
       }
     });
-    if (window._toast) window._toast('✓ 通行密钥已添加', 'success');
+    if (window._toast) window._toast(t('admin.passkey.added', '✓ 通行密钥已添加'), 'success');
     bd.remove();
   } catch (e) {
-    if (window._toast) window._toast('添加失败: ' + e.message, 'error');
+    if (window._toast) window._toast(t('admin.passkey.fail', '添加失败: ') + e.message, 'error');
   }
 }
 
