@@ -44,6 +44,15 @@ export async function onRequestPost(context) {
   const nights = Math.round((outD - inD) / 86400000);
   if (persons < 1 || persons > 6) return err(400, '入住人数 1-6');
 
+  // v49-fix-12: 服务端拒收草稿酒店 / 草稿房型 — 防止前端绕过直接 POST
+  // (主页 hotel 预览 / hotel.html 都已禁用按钮, 但 API 仍要兜底)
+  const roomRow = await env.DB.prepare(
+    'SELECT r.id AS room_id, r.is_active AS room_active, h.is_active AS hotel_active, h.name AS hotel_name FROM hotel_rooms r JOIN hotels h ON h.id = r.hotel_id WHERE r.id = ?'
+  ).bind(roomId).first();
+  if (!roomRow) return err(404, '房型不存在');
+  if (!roomRow.room_active) return err(400, '此房型暂未上线, 无法预订');
+  if (!roomRow.hotel_active) return err(400, '此酒店正在筹建中, 暂不开放预订');
+
   const ins = await env.DB.prepare(
     `INSERT INTO bookings (player_id, room_id, room_name, in_date, out_date, nights, persons, breakfast, name, contact, note)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`

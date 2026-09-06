@@ -401,9 +401,14 @@ function renderHotelRooms() {
     const priceTag = r.price == null
       ? '<span class="room-price-cur">📋</span><span class="room-price-num">价格待定</span>'
       : `<span class="room-price-cur">💎</span><span class="room-price-num">${r.price}</span><span class="room-price-unit">绿宝石/晚</span>`;
+    // v49-fix-12: 草稿酒店或草稿房型, 预订按钮换成"暂不开放" (跟 hotel.html 一致)
+    const bookBtn = r.bookable
+      ? `<button class="btn btn-primary room-book-btn" data-room="${r.id}">📅 预订</button>`
+      : `<button class="btn btn-disabled room-book-btn" disabled>🚧 暂不开放</button>`;
     return `
-      <article class="room-card ${r.featured ? 'featured' : ''}" data-room="${r.id}">
+      <article class="room-card ${r.featured ? 'featured' : ''} ${r.hotelDraft ? 'is-draft' : ''}" data-room="${r.id}">
         ${r.featured ? '<div class="room-badge">★ 推荐</div>' : ''}
+        ${r.hotelDraft ? '<div class="room-badge room-badge-draft">📝 筹建中</div>' : ''}
         <div class="room-thumb ${r.thumbClass}">
           <div class="room-thumb-tree"></div>
           <div class="room-thumb-tower"></div>
@@ -417,11 +422,11 @@ function renderHotelRooms() {
             <div class="room-price">${priceTag}</div>
             <div class="room-guests">👥 ${r.guests}</div>
           </div>
-          <button class="btn btn-primary room-book-btn" data-room="${r.id}">📅 预订</button>
+          ${bookBtn}
         </div>
       </article>`;
   }).join('');
-  roomGrid.querySelectorAll('.room-book-btn').forEach(btn => {
+  roomGrid.querySelectorAll('.room-book-btn:not([disabled])').forEach(btn => {
     btn.addEventListener('click', () => openBookModal(btn.dataset.room));
   });
 }
@@ -434,12 +439,13 @@ export async function loadHotelRooms() {
     const hotels = bundle.hotels || [];
     const all = [];
     for (const h of hotels) {
+      const hotelDraft = !h.is_active; // v49-fix-12: 父酒店草稿, 房型统一标"筹建"
       const items = (bundle.rooms || []).filter(r => r.hotel_id === h.id);
       for (const r of items) {
         const cap = r.capacity || 1;
         all.push({
           id: r.id,
-          name: r.name + (r.is_active ? '' : '（草拟）'),
+          name: r.name + (hotelDraft ? '（筹建）' : (r.is_active ? '' : '（草拟）')),
           icon: cap >= 4 ? '🏨' : (cap >= 2 ? '🛌' : '🛏️'),
           price: r.price_per_night,
           bed: r.beds || '床型待公告',
@@ -447,7 +453,9 @@ export async function loadHotelRooms() {
           features: [r.breakfast_included ? '含早餐' : null, r.description || null].filter(Boolean),
           desc: r.description || '房型介绍待公告',
           thumbClass: cap >= 4 ? 't-luxury' : (cap >= 2 ? 't-queen' : 't-standard'),
-          featured: r.sort_order >= 99
+          featured: r.sort_order >= 99,
+          hotelDraft, // v49-fix-12: 给 renderHotelRooms 用来禁用预订按钮
+          bookable: !hotelDraft && !!r.is_active
         });
       }
     }
