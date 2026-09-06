@@ -310,6 +310,7 @@ export const MIGRATIONS = [
   `ALTER TABLE messages ADD COLUMN replied_at TEXT`,
   `ALTER TABLE messages ADD COLUMN replied_by INTEGER`,
   // 修复 license_signups 缺 result_by/result_at 列
+  `ALTER TABLE license_signups ADD COLUMN result TEXT`,
   `ALTER TABLE license_signups ADD COLUMN result_by INTEGER`,
   `ALTER TABLE license_signups ADD COLUMN result_at TEXT`,
   `ALTER TABLE license_signups ADD COLUMN reviewed_by INTEGER`,
