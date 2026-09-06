@@ -3,9 +3,13 @@
 import { $, escHtml, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
 import { loadList, setListContext, bindListActions } from './list.js?v=v46-fix-modules';
 import { openThread, setThreadContext } from './thread.js?v=v46-fix-modules';
-import { t } from '../../i18n/core.js?v=n5';
+import { t, setPageTitle, setMetaDescription } from '../../i18n/core.js?v=n5';
 
 const app = $('#app');
+
+// v50-N6: SEO meta
+setPageTitle('page.title.dm', 'DM | Light City');
+setMetaDescription('page.meta.dm', 'Light City DM - AI assistant DengDeng & player direct messages.');
 
 (async function boot() {
   // 1. 立刻渲染 loading

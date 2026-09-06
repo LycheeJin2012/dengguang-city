@@ -1,6 +1,6 @@
 // v45 重写: profile 子页 entry (ES module)
 import { $, GET, renderSubpageNav } from '../util.js?v=v46-fix-modules';
-import { t } from '../../i18n/core.js?v=n5';
+import { t, setPageTitle, setMetaDescription } from '../../i18n/core.js?v=n5';
 import { fetchProfile, renderProfile, setProfile, setSelf } from './info.js?v=v46-fix-modules';
 import { bindPasskey } from './passkey.js?v=v46-fix-modules';
 import { loadMyMessages, loadMyBookings } from './history.js?v=v46-fix-modules';
@@ -11,6 +11,10 @@ import { bindCitizenCard } from './citizen-card.js?v=v46-fix-modules';
 
 const app = $('#app');
 const pBody = $('#pBody');
+
+// v50-N6: SEO meta
+setPageTitle('page.title.profile', 'Player Profile | Light City');
+setMetaDescription('page.meta.profile', 'Light City Player Profile - My messages, signups, subscriptions, and notifications.');
 
 (async function boot() {
   // 1. 当前登录态

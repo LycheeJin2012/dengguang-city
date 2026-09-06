@@ -1,5 +1,6 @@
-// v44 重写: 管理员账号 tab
+// v44 重写: 管理员账号 tab (v50-N6: 全 i18n)
 import { $, esc, GET, POST, PATCH, DEL, safeRender, cacheClear } from '../core.js?v=v46-fix-modules';
+import { t } from '../../i18n/core.js?v=n5';
 
 export async function renderAdminList() {
   await safeRender(async () => {
@@ -10,19 +11,21 @@ export async function renderAdminList() {
     empty.style.display = 'none';
     box.innerHTML = list.map(a => {
       const isSuper = a.role === 'super';
-      const linked = a.linked_player_username ? `@${esc(a.linked_player_username)}` : '未绑玩家';
+      const linked = a.linked_player_username
+        ? `@${esc(a.linked_player_username)}`
+        : t('admin.admins.unlinked');
       return `<article class="msg-item" data-id="${a.id}">
         <div class="msg-head"><div class="msg-head-left">
           <b class="msg-name">🛡️ ${esc(a.username)}</b>
-          <span class="msg-player-tag">${isSuper ? 'SUPER' : 'ADMIN'}</span>
+          <span class="msg-player-tag">${isSuper ? t('admin.admins.role.super') : t('admin.admins.role.admin')}</span>
           ${a.linked_player_id ? `<span class="gallery-num" style="margin-left:6px">${linked}</span>` : ''}
-        </div><div class="msg-time">注册: ${esc(a.created_at || '—')}</div></div>
+        </div><div class="msg-time">${t('admin.admins.registered')}: ${esc(a.created_at || '—')}</div></div>
         <div class="msg-actions book-actions">
-          <button class="btn btn-primary btn-sm" data-act="reset">🔑 重置密码</button>
+          <button class="btn btn-primary btn-sm" data-act="reset">🔑 ${t('admin.admins.resetPw')}</button>
           ${a.linked_player_id
-            ? `<button class="btn btn-ghost btn-sm btn-danger" data-act="unlink">🚫 解绑玩家</button>`
-            : `<button class="btn btn-ghost btn-sm" data-act="link">🔗 绑玩家</button>`}
-          ${isSuper ? '' : `<button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>`}
+            ? `<button class="btn btn-ghost btn-sm btn-danger" data-act="unlink">🚫 ${t('admin.admins.unlink')}</button>`
+            : `<button class="btn btn-ghost btn-sm" data-act="link">🔗 ${t('admin.admins.link')}</button>`}
+          ${isSuper ? '' : `<button class="btn btn-ghost btn-sm btn-danger" data-act="del">${t('admin.admins.delete')}</button>`}
         </div>
       </article>`;
     }).join('');
@@ -37,42 +40,46 @@ export async function renderAdminList() {
 }
 
 export async function adminReset(id) {
-  const newPw = prompt('输入新密码 (至少 8 位):');
-  if (!newPw || newPw.length < 8) { if (window._toast) window._toast('密码至少 8 位', 'error'); return; }
+  const newPw = prompt(t('admin.admins.resetPw.prompt'));
+  if (!newPw || newPw.length < 8) {
+    if (window._toast) window._toast(t('admin.admins.resetPw.prompt'), 'error');
+    return;
+  }
   try {
     await PATCH('/api/admin/admins?id=' + id, { new_password: newPw });
-    if (window._toast) window._toast('密码已重置', 'success');
-  } catch (e) { if (window._toast) window._toast('失败: ' + e.message, 'error'); }
+    if (window._toast) window._toast(t('admin.admins.resetPw.success'), 'success');
+  } catch (e) { if (window._toast) window._toast(t('admin.admins.fail') + ': ' + e.message, 'error'); }
 }
 export async function adminDel(id, kind) {
   if (kind === 'unlink') {
-    // 解绑
-    if (!confirm('解绑该管理员的关联玩家账号？')) return;
+    if (!confirm(t('admin.admins.unlink.confirm'))) return;
     try {
       await POST('/api/init?action=admin-unmerge-account', { admin_id: id, player_id: 0 });
       cacheClear('admins:');
       renderAdminList();
-    } catch (e) { if (window._toast) window._toast('失败: ' + e.message, 'error'); }
+    } catch (e) { if (window._toast) window._toast(t('admin.admins.fail') + ': ' + e.message, 'error'); }
     return;
   }
-  if (!confirm('删除该管理员账号？')) return;
+  if (!confirm(t('admin.admins.delete.confirm'))) return;
   try {
     await DEL('/api/admin/admins?id=' + id);
     cacheClear('admins:');
     renderAdminList();
-  } catch (e) { if (window._toast) window._toast('失败: ' + e.message, 'error'); }
+  } catch (e) { if (window._toast) window._toast(t('admin.admins.fail') + ': ' + e.message, 'error'); }
 }
 export function adminLink(id) {
-  // 弹窗: 输入玩家 ID 绑到该 admin
-  const pid = prompt('输入要绑定的玩家 ID:');
+  const pid = prompt(t('admin.admins.link.prompt'));
   if (!pid) return;
   const pId = parseInt(pid, 10);
   if (!pId) return;
   showMergePlayerModal(id, pId);
 }
 export function showMergePlayerModal(adminId, playerId) {
-  if (!confirm(`绑定 admin #${adminId} ↔ player #${playerId}？合并后两边可互相登录。`)) return;
+  const msg = t('admin.admins.merge.confirm')
+    .replace('#{adminId}', adminId)
+    .replace('#{playerId}', playerId);
+  if (!confirm(msg)) return;
   POST('/api/init?action=admin-merge-account', { admin_id: adminId, player_id: playerId })
     .then(() => { cacheClear('admins:'); renderAdminList(); })
-    .catch(e => { if (window._toast) window._toast('失败: ' + e.message, 'error'); });
+    .catch(e => { if (window._toast) window._toast(t('admin.admins.fail') + ': ' + e.message, 'error'); });
 }
