@@ -335,6 +335,14 @@ const DICT = {
   'flow.step4.desc':        { 'zh-CN': '结果以公告、信件或消息方式送达', 'en': 'Result is delivered via announcement, mail, or message.' },
   'flow.note':              { 'zh-CN': '具体办事流程由市政厅随服务上线后正式公告。本栏仅作草案展示。', 'en': 'Final service flow will be officially announced by the city hall when each service goes live. This section is a draft preview.' },
   'circuit.mapTitle':       { 'zh-CN': '—— TRACK MAP / 赛道线路图 ——', 'en': '—— TRACK MAP / Circuit Layout ——' },
+  // 公告卡 UI 标签
+  'ann.tag.latest':         { 'zh-CN': '最新',           'en': 'Latest' },
+  'ann.tag.normal':         { 'zh-CN': '公告',           'en': 'Notice' },
+  'ann.meta.edited':        { 'zh-CN': '已编辑',         'en': 'Edited' },
+  'ann.meta.author':        { 'zh-CN': '市政厅',         'en': 'City Hall' },
+  'ann.readMore':           { 'zh-CN': '阅读全文 →',     'en': 'Read more →' },
+  'ann.coverAlt':           { 'zh-CN': '公告配图',       'en': 'Notice cover image' },
+  'common.close':           { 'zh-CN': '关闭',           'en': 'Close' },
   // 主页 hero CTA
   'hero.cta.notice':  { 'zh-CN': '▶ 查看公告', 'en': '▶ View Notice' },
   'hero.cta.service': { 'zh-CN': '市民服务',   'en': 'Civic Service' },

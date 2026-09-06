@@ -17,18 +17,20 @@ export async function loadAnnouncements() {
     }
     grid.innerHTML = list.map((a, i) => {
       const isLatest = i === 0;
-      const tag = isLatest ? '<span class="tag tag-super">最新</span>' : '<span class="tag tag-info">公告</span>';
+      const tag = isLatest
+        ? `<span class="tag tag-super">${t('ann.tag.latest')}</span>`
+        : `<span class="tag tag-info">${t('ann.tag.normal')}</span>`;
       const coverImg = a.image_url
-        ? `<img src="${escHtml(a.image_url)}" alt="公告配图" loading="lazy" class="notice-cover-img" onerror="this.style.opacity=0" />`
+        ? `<img src="${escHtml(a.image_url)}" alt="${t('ann.coverAlt')}" loading="lazy" class="notice-cover-img" onerror="this.style.opacity=0" />`
         : '';
       return `<article class="notice-card">
         <div class="notice-body">
           ${coverImg}
           ${tag}
           <h3>${escHtml(a.title)}</h3>
-          <p class="ann-meta">📅 ${relativeTime(a.created_at)}${a.updated_at ? ' · <span class="ann-meta-edited">已编辑</span>' : ''} · ✍️ ${escHtml(a.admin_username || '市政厅')}</p>
+          <p class="ann-meta">📅 ${relativeTime(a.created_at)}${a.updated_at ? ` · <span class="ann-meta-edited">${t('ann.meta.edited')}</span>` : ''} · ✍️ ${escHtml(a.admin_username || t('ann.meta.author'))}</p>
           <p class="ann-content-preview">${escHtml(a.content)}</p>
-          <a href="#ann-${a.id}" class="read-more" data-id="${a.id}">阅读全文 →</a>
+          <a href="#ann-${a.id}" class="read-more" data-id="${a.id}">${t('ann.readMore')}</a>
         </div>
       </article>`;
     }).join('');
@@ -72,11 +74,11 @@ export function showAnnModal(ann) {
       </div>
       <div class="modal-body">
         ${ann.image_url ? `<div class="ann-view-cover-wrap"><img src="${escHtml(ann.image_url)}" class="ann-view-cover" /></div>` : ''}
-        <div class="ann-view-meta">📅 ${fmtDate(ann.created_at)}${ann.updated_at ? ' · <span style="color:#a6a">已编辑</span>' : ''} · ✍️ ${escHtml(ann.admin_username || '市政厅')}</div>
+        <div class="ann-view-meta">📅 ${fmtDate(ann.created_at)}${ann.updated_at ? ` · <span style="color:#a6a">${t('ann.meta.edited')}</span>` : ''} · ✍️ ${escHtml(ann.admin_username || t('ann.meta.author'))}</div>
         <div class="ann-view-content">${escHtml(ann.content).replace(/\n/g, '<br>')}</div>
       </div>
       <div class="modal-actions">
-        <button class="btn btn-ghost btn-sm" id="annClose2">关闭</button>
+        <button class="btn btn-ghost btn-sm" id="annClose2">${t('common.close')}</button>
       </div>
     </div>`;
   document.body.appendChild(bd);
