@@ -21,13 +21,19 @@ function bindMessageSubmit() {
     const content = (inputs[3]?.value || '').trim();
     const btn = form.querySelector('button[type="submit"]');
     const origTxt = btn.textContent;
+    const errL = t('form.submit.incomplete', '请完整填写 ✗');
+    const loadingL = t('form.submit.loading', '提交中…');
+    const successL = t('form.submit.success', '✓ 已提交');
+    const loginL = t('form.submit.loginFirst', '请先登录玩家账号');
+    const failL = t('form.submit.fail', '提交失败 ✗');
+    const loginPromptL = t('form.submit.loginPrompt', '请先登录玩家账号再发留言');
     if (!name || !content) {
-      btn.textContent = '请完整填写 ✗';
+      btn.textContent = errL;
       btn.style.background = 'var(--c-redstone)';
       setTimeout(() => { btn.textContent = origTxt; btn.style.background = ''; }, 1800);
       return;
     }
-    btn.textContent = '提交中...';
+    btn.textContent = loadingL;
     btn.disabled = true;
     try {
       const res = await fetch('/api/messages', {
@@ -37,20 +43,20 @@ function bindMessageSubmit() {
       });
       const data = await res.json();
       if (res.ok && data.ok) {
-        btn.textContent = '✓ 已提交';
+        btn.textContent = successL;
         btn.style.background = 'var(--c-emerald)';
         form.reset();
         await loadPublicMessages();
       } else if (res.status === 401 || /登录/.test(data.error || '')) {
-        btn.textContent = '请先登录玩家账号';
+        btn.textContent = loginL;
         btn.style.background = 'var(--c-redstone)';
-        setTimeout(() => openLoginModal('请先登录玩家账号再发留言'), 1500);
+        setTimeout(() => openLoginModal(loginPromptL), 1500);
       } else {
-        btn.textContent = '✗ ' + (data.error || '提交失败');
+        btn.textContent = '✗ ' + (data.error || t('form.submit.fail.default', '提交失败'));
         btn.style.background = 'var(--c-redstone)';
       }
     } catch (err) {
-      btn.textContent = '提交失败 ✗';
+      btn.textContent = failL;
       btn.style.background = 'var(--c-redstone)';
     }
     setTimeout(() => { btn.textContent = origTxt; btn.style.background = ''; btn.disabled = false; }, 2200);
@@ -91,25 +97,25 @@ function bindKart() {
     e.preventDefault();
     const name = $('#kartName')?.value.trim();
     const contact = $('#kartContact')?.value.trim();
-    if (!name || !contact) { $('#kartMsg').textContent = '请填写游戏 ID 和联系方式'; return; }
+    if (!name || !contact) { $('#kartMsg').textContent = t('kart.fillIdContact'); return; }
     const session = $('#kartSession')?.value;
     const car = $('#kartCar')?.value.trim();
     const note = $('#kartNote')?.value.trim();
     const submitBtn = form.querySelector('button[type="submit"]');
     const origText = submitBtn.textContent;
-    submitBtn.textContent = '提交中...';
+    submitBtn.textContent = t('form.submit.loading');
     submitBtn.disabled = true;
     $('#kartMsg').textContent = '';
     try {
       const data = await POST('/api/kart', { name, contact, session, car, note });
-      submitBtn.textContent = '✓ 报名已提交（跨设备同步）';
+      submitBtn.textContent = t('kart.submit');
       submitBtn.style.background = 'var(--c-emerald)';
       form.reset();
       setTimeout(() => close(), 1500);
     } catch (err) {
       if (err.message && /登录|会话/.test(err.message)) {
-        $('#kartMsg').textContent = '请先登录玩家账号';
-        setTimeout(() => { close(); openLoginModal('请先登录玩家账号再报名'); }, 1000);
+        $('#kartMsg').textContent = t('form.submit.loginFirst');
+        setTimeout(() => { close(); openLoginModal(t('kart.loginPrompt')); }, 1000);
       } else {
         $('#kartMsg').textContent = '✗ ' + err.message;
       }
@@ -156,10 +162,10 @@ function bindCircuit() {
     e.preventDefault();
     const name = $('#circuitName')?.value.trim();
     const contact = $('#circuitContact')?.value.trim();
-    if (!name || !contact) { $('#circuitMsg').textContent = '请填写游戏 ID 和联系方式'; return; }
+    if (!name || !contact) { $('#circuitMsg').textContent = t('circuit.fillIdContact'); return; }
     const submitBtn = form.querySelector('button[type="submit"]');
     const origText = submitBtn.textContent;
-    submitBtn.textContent = '提交中...';
+    submitBtn.textContent = t('form.submit.loading');
     submitBtn.disabled = true;
     $('#circuitMsg').textContent = '';
     try {
@@ -171,14 +177,14 @@ function bindCircuit() {
         car: $('#circuitCar')?.value.trim(),
         note: $('#circuitNote')?.value.trim()
       });
-      submitBtn.textContent = '✓ 报名已提交（跨设备同步）';
+      submitBtn.textContent = t('circuit.submit');
       submitBtn.style.background = 'var(--c-emerald)';
       form.reset();
       setTimeout(() => close(), 1500);
     } catch (err) {
       if (err.message && /登录|会话/.test(err.message)) {
-        $('#circuitMsg').textContent = '请先登录玩家账号';
-        setTimeout(() => { close(); openLoginModal('请先登录玩家账号再报名'); }, 1000);
+        $('#circuitMsg').textContent = t('form.submit.loginFirst');
+        setTimeout(() => { close(); openLoginModal(t('kart.loginPrompt')); }, 1000);
       } else {
         $('#circuitMsg').textContent = '✗ ' + err.message;
       }
@@ -196,7 +202,11 @@ function bindLicense() {
   let _type = 'written';
   const open = (type, grade) => {
     _type = type;
-    const typeMap = { written: '笔试 - 选择题 + 简答', road: '路考 - 实景驾驶', upgrade: '升级赛 - 极限测试' };
+    const typeMap = {
+      written: t('license.written'),
+      road: t('license.road'),
+      upgrade: t('license.upgrade'),
+    };
     const t = $('#licenseTitle'); if (t) t.textContent = `${grade} 级驾照报名`;
     const gl = $('#licenseGradeLabel'); if (gl) gl.textContent = `${grade} 级`;
     const tl = $('#licenseTypeLabel'); if (tl) tl.textContent = typeMap[type] || '';
@@ -222,10 +232,10 @@ function bindLicense() {
             if (d.player.email) { const c = $('#licenseContact'); if (c) c.value = d.player.email; }
             open(type, grade);
           } else {
-            openLoginModal('请先登录玩家账号再报名考试');
+            openLoginModal(t('license.signupPrompt'));
           }
         })
-        .catch(() => openLoginModal('网络错误，请稍后再试'));
+        .catch(() => openLoginModal(t('license.netError')));
     });
   });
 
@@ -235,7 +245,7 @@ function bindLicense() {
     const origTxt = submitBtn.textContent;
     const msg = $('#licenseMsg');
     msg.textContent = '';
-    submitBtn.textContent = '提交中...';
+    submitBtn.textContent = t('form.submit.loading');
     submitBtn.disabled = true;
     try {
       const data = await POST('/api/license', {
@@ -245,7 +255,7 @@ function bindLicense() {
         contact: $('#licenseContact')?.value.trim(),
         note: $('#licenseNote')?.value.trim()
       });
-      msg.textContent = '✓ ' + (data.message || '报名成功');
+      msg.textContent = '✓ ' + (data.message || t('form.submit.success'));
       msg.style.color = 'var(--c-emerald)';
       setTimeout(() => { close(); msg.style.color = ''; form.reset(); }, 1500);
     } catch (err) {
@@ -276,7 +286,7 @@ function openBookModal(roomId) {
   const s = $('#bookSummary');
   if (s) s.innerHTML = `
     <div><b>${r.icon} ${r.name}</b><br/><span class="book-sub">${r.bed} · ${r.guests}</span></div>
-    <div class="summary-price">💎 ${r.price} / 晚</div>`;
+    <div class="summary-price">💎 ${r.price}${t('book.perNight')}</div>`;
   // 自动填玩家信息
   fetch('/api/login', { credentials: 'include' })
     .then(r => r.json())
@@ -315,7 +325,7 @@ function updateBookTotal() {
   const bn = $('#bookNights');
   const bt = $('#bookTotal');
   if (isNaN(inD) || isNaN(outD) || outD <= inD) {
-    if (bn) bn.textContent = '— 请选择有效日期';
+    if (bn) bn.textContent = t('book.selectDate');
     if (bt) bt.textContent = '—';
     return;
   }
@@ -324,10 +334,13 @@ function updateBookTotal() {
   const wantBf = $('#bookBreakfast')?.checked;
   const price = bookRoom.price || 0;
   const bfCost = wantBf ? nights * persons * BFAST_PER_NIGHT_PER_PERSON : 0;
-  if (bn) bn.textContent = `${nights} 晚 · ${persons} 人${wantBf ? ' · 含早餐' : ''}`;
-  let totalText = `💎 ${nights * price + bfCost} 绿宝石（房费 ${nights} 晚 × ${price}`;
-  if (bfCost) totalText += ` + 早餐 ${nights} 晚 × ${persons} 人 × ${BFAST_PER_NIGHT_PER_PERSON}`;
-  totalText += '）';
+  const bfLabel = wantBf ? t('home.room.breakfast') : '';
+  const personsL = t('book.persons');
+  const nightsL = t('book.nights');
+  if (bn) bn.textContent = `${nights}${nightsL}${persons}${personsL}${wantBf ? ' · ' + bfLabel : ''}`;
+  let totalText = `💎 ${nights * price + bfCost} ${t('book.price.label')}${nights}${t('book.price.perNight')}×${price}`;
+  if (bfCost) totalText += `${t('book.price.bf')}${nights}${t('book.price.bfUnit')}×${BFAST_PER_NIGHT_PER_PERSON}`;
+  totalText += t('book.price.close');
   if (bt) bt.textContent = totalText;
 }
 
@@ -349,19 +362,19 @@ function bindHotel() {
     const inD = new Date($('#bookIn')?.value);
     const outD = new Date($('#bookOut')?.value);
     if (isNaN(inD) || isNaN(outD) || outD <= inD) {
-      const m = $('#bookMsg'); if (m) m.textContent = '退房日期必须晚于入住日期';
+      const m = $('#bookMsg'); if (m) m.textContent = t('book.checkoutBefore');
       return;
     }
     const nights = Math.round((outD - inD) / 86400000);
     const name = $('#bookName')?.value.trim();
     const contact = $('#bookContact')?.value.trim();
-    if (!name || !contact) { const m = $('#bookMsg'); if (m) m.textContent = '请填写姓名和联系方式'; return; }
+    if (!name || !contact) { const m = $('#bookMsg'); if (m) m.textContent = t('book.fillContact'); return; }
     const note = $('#bookNote')?.value.trim();
     const wantBreakfast = $('#bookBreakfast')?.checked;
     const persons = parseInt($('#bookGuests')?.value, 10) || 1;
     const submitBtn = $('#bookForm').querySelector('button[type="submit"]');
     const origText = submitBtn.textContent;
-    submitBtn.textContent = '提交中...';
+    submitBtn.textContent = t('form.submit.loading');
     submitBtn.disabled = true;
     const msg = $('#bookMsg'); if (msg) msg.textContent = '';
     try {
@@ -374,16 +387,16 @@ function bindHotel() {
         breakfast: wantBreakfast ? 1 : 0,
         name, contact, note
       });
-      submitBtn.textContent = '✓ 已提交（跨设备同步，管理员会确认）';
+      submitBtn.textContent = t('book.submit');
       submitBtn.style.background = 'var(--c-emerald)';
       $('#bookForm').reset();
       setTimeout(() => closeBookModal(), 1500);
     } catch (err) {
       if (err.message && /登录|会话/.test(err.message)) {
-        const m = $('#bookMsg'); if (m) m.textContent = '请先登录玩家账号';
-        setTimeout(() => { closeBookModal(); openLoginModal('请先登录玩家账号再预订'); }, 1000);
+        const m = $('#bookMsg'); if (m) m.textContent = t('form.submit.loginFirst');
+        setTimeout(() => { closeBookModal(); openLoginModal(t('book.loginPrompt')); }, 1000);
       } else {
-        const m = $('#bookMsg'); if (m) m.textContent = '提交失败: ' + err.message;
+        const m = $('#bookMsg'); if (m) m.textContent = t('book.submitFail') + err.message;
       }
     } finally {
       setTimeout(() => { submitBtn.textContent = origText; submitBtn.style.background = ''; submitBtn.disabled = false; }, 2200);
@@ -395,29 +408,29 @@ function renderHotelRooms() {
   const roomGrid = $('#homeRoomGrid');
   if (!roomGrid) return;
   if (!ROOMS.length) {
-    roomGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">🏨</div><p>酒店正在筹建中, 上线后会在这里显示。</p></div>';
+    roomGrid.innerHTML = `<div class="empty-state"><div class="empty-icon">🏨</div><p>${t('hotel.empty')}</p></div>`;
     return;
   }
   roomGrid.innerHTML = ROOMS.map(r => {
     const features = r.features.map(f => `<li>${f}</li>`).join('');
     const priceTag = r.price == null
-      ? '<span class="room-price-cur">📋</span><span class="room-price-num">价格待定</span>'
-      : `<span class="room-price-cur">💎</span><span class="room-price-num">${r.price}</span><span class="room-price-unit">绿宝石/晚</span>`;
+      ? `<span class="room-price-cur">📋</span><span class="room-price-num">${t('home.room.price.tbd')}</span>`
+      : `<span class="room-price-cur">💎</span><span class="room-price-num">${r.price}</span><span class="room-price-unit">${t('home.room.perNight')}</span>`;
     // v49-fix-12: 草稿酒店或草稿房型, 预订按钮换成"暂不开放" (跟 hotel.html 一致)
     const bookBtn = r.bookable
-      ? `<button class="btn btn-primary room-book-btn" data-room="${r.id}">📅 预订</button>`
-      : `<button class="btn btn-disabled room-book-btn" disabled>🚧 暂不开放</button>`;
+      ? `<button class="btn btn-primary room-book-btn" data-room="${r.id}">${t('home.room.book')}</button>`
+      : `<button class="btn btn-disabled room-book-btn" disabled>${t('home.room.closed')}</button>`;
     return `
       <article class="room-card ${r.featured ? 'featured' : ''} ${r.hotelDraft ? 'is-draft' : ''}" data-room="${r.id}">
-        ${r.featured ? '<div class="room-badge">★ 推荐</div>' : ''}
-        ${r.hotelDraft ? '<div class="room-badge room-badge-draft">📝 筹建中</div>' : ''}
+        ${r.featured ? `<div class="room-badge">${t('home.room.featured')}</div>` : ''}
+        ${r.hotelDraft ? `<div class="room-badge room-badge-draft">${t('home.room.building')}</div>` : ''}
         <div class="room-thumb ${r.thumbClass}">
           <div class="room-thumb-tree"></div>
           <div class="room-thumb-tower"></div>
         </div>
         <div class="room-body">
           <h3 class="room-name"><span class="room-icon">${r.icon}</span>${r.name}</h3>
-          <div class="room-bed">${r.bed} · 适合 ${r.guests}</div>
+          <div class="room-bed">${r.bed} · ${t('home.room.bedInfo')}${r.guests}</div>
           <ul class="room-features">${features}</ul>
           <p class="room-desc">${r.desc}</p>
           <div class="room-price-row">
@@ -450,10 +463,10 @@ export async function loadHotelRooms() {
           name: r.name + (hotelDraft ? '（筹建）' : (r.is_active ? '' : '（草拟）')),
           icon: cap >= 4 ? '🏨' : (cap >= 2 ? '🛌' : '🛏️'),
           price: r.price_per_night,
-          bed: r.beds || '床型待公告',
-          guests: (cap) + '+ 人',
-          features: [r.breakfast_included ? '含早餐' : null, r.description || null].filter(Boolean),
-          desc: r.description || '房型介绍待公告',
+          bed: r.beds || t('home.room.bed.tbd'),
+          guests: (cap) + t('home.room.guests'),
+          features: [r.breakfast_included ? t('home.room.breakfast') : null, r.description || null].filter(Boolean),
+          desc: r.description || t('home.room.desc.tbd'),
           thumbClass: cap >= 4 ? 't-luxury' : (cap >= 2 ? 't-queen' : 't-standard'),
           featured: r.sort_order >= 99,
           hotelDraft, // v49-fix-12: 给 renderHotelRooms 用来禁用预订按钮
@@ -482,7 +495,11 @@ export async function loadLicenseReqs() {
       grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🚗</div><p>${t('exam.empty', '驾照考试暂未开放, 市政厅公告后启动。')}</p></div>`;
       return;
     }
-    const gradeLabels = { B: 'B 级（初级）', A: 'A 级（中级）', S: 'S 级（高级 / 职业）' };
+    const gradeLabels = {
+      B: t('license.grade.B', 'B 级（初级）'),
+      A: t('license.grade.A', 'A 级（中级）'),
+      S: t('license.grade.S', 'S 级（高级 / 职业）'),
+    };
     const gradeIcons = { B: '📝', A: '🏁', S: '🏆' };
     const examTypes = { B: 'written', A: 'road', S: 'upgrade' };
     const GRADE_CLASS = { S: 'license-grade-s' };
@@ -530,7 +547,7 @@ export async function loadKartSpecs() {
     if (mapImg && t.image_url) mapImg.src = t.image_url;
     if (priceEl) {
       if (t.trial_price && t.trial_price > 0) priceEl.textContent = `试车 ¥${t.trial_price} 💎/次`;
-      else priceEl.textContent = '试车价格待公告';
+      else priceEl.textContent = t('spec.price.tbd');
     }
   } catch (e) {
     specEls.forEach(el => el.textContent = t('common.error.load', '加载失败'));
