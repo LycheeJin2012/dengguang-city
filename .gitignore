@@ -1,3 +1,7 @@
 .DS_Store
 *.log
 node_modules/
+# Cloudflare Pages 本地开发密钥 — 永远不 commit
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
