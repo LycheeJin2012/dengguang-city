@@ -370,6 +370,15 @@ const DICT = {
   'license.btn.examSuffix': { 'zh-CN': '级考试',          'en': 'Exam' },
   'profile.stat.days':      { 'zh-CN': '天',              'en': 'Days' },
   'profile.stat.daysTip':   { 'zh-CN': '从注册日算起',     'en': 'Days since joining' },
+  // 纪念勋章 (加入天数里程碑)
+  'profile.badge.sprout':   { 'zh-CN': '萌芽',            'en': 'Sprout' },
+  'profile.badge.settled':  { 'zh-CN': '落户',            'en': 'Settled' },
+  'profile.badge.veteran':  { 'zh-CN': '老市民',          'en': 'Veteran' },
+  'profile.badge.pioneer':  { 'zh-CN': '元老',            'en': 'Pioneer' },
+  'profile.badge.sprout.tip':  { 'zh-CN': '加入满 7 天',    'en': '7 days in the city' },
+  'profile.badge.settled.tip': { 'zh-CN': '加入满 30 天',   'en': '30 days in the city' },
+  'profile.badge.veteran.tip': { 'zh-CN': '加入满 100 天',  'en': '100 days in the city' },
+  'profile.badge.pioneer.tip': { 'zh-CN': '加入满 365 天',  'en': '365 days in the city' },
   'hotel.intro':            { 'zh-CN': '树上酒店（筹建）。选址、规模、定价、运营方由市民大会与合作社讨论后公布。当前展示房型为草案，待合作社定稿后正式上线。',
                                'en': 'Treehouse Hotel (under construction). Site, scale, pricing, and operator will be decided by the Citizens Assembly and the cooperative. Room listings shown are drafts and will go live once finalized.' },
   // 公告卡 UI 标签

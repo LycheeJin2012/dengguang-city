@@ -3,6 +3,33 @@
 import { $, escHtml, GET, POST, PATCH } from '../util.js?v=v46-fix-modules';
 import { t } from '../../i18n/core.js?v=n5';
 
+// v50-N6: 注入 profile 勋章样式 (避免依赖外部 CSS)
+(function injectProfileBadgeCss() {
+  if (document.getElementById('profileBadgeCss')) return;
+  const s = document.createElement('style');
+  s.id = 'profileBadgeCss';
+  s.textContent = `
+.profile-badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;justify-content:center}
+.profile-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border:2px solid var(--c-border,#2a2a2a);box-shadow:2px 2px 0 var(--c-border,#2a2a2a);font-family:'Press Start 2P',monospace;font-size:9px;line-height:1;background:var(--c-bg-1,#f3e9c8)}
+.profile-badge .badge-icon{font-size:14px;font-family:inherit}
+.profile-badge-bronze{background:#cd7f32;color:#fff}
+.profile-badge-silver{background:#c0c0c0;color:#222}
+.profile-badge-gold{background:#ffd700;color:#7a4a00}
+.profile-badge-diamond{background:#b9f2ff;color:#1a3a8a;animation:diamond-shine 2s linear infinite}
+@keyframes diamond-shine{0%{box-shadow:2px 2px 0 var(--c-border,#2a2a2a),0 0 0 rgba(185,242,255,0)}50%{box-shadow:2px 2px 0 var(--c-border,#2a2a2a),0 0 8px rgba(185,242,255,.6)}100%{box-shadow:2px 2px 0 var(--c-border,#2a2a2a),0 0 0 rgba(185,242,255,0)}}
+`;
+  document.head.appendChild(s);
+})();
+
+// v50-N6: 纪念勋章 (加入天数里程碑)
+const BADGES = [
+  { days: 7,   key: 'sprout',     icon: '🌱' },
+  { days: 30,  key: 'settled',    icon: '🏠' },
+  { days: 100, key: 'veteran',    icon: '🏆' },
+  { days: 365, key: 'pioneer',    icon: '👑' },
+];
+const BADGE_CLASS = { sprout: 'profile-badge-bronze', settled: 'profile-badge-silver', veteran: 'profile-badge-gold', pioneer: 'profile-badge-diamond' };
+
 let _profile = null;
 let _isSelf = false;
 
@@ -54,6 +81,17 @@ export function renderProfile(me, profile, stats) {
     <div class="profile-name">${escHtml(profile.username)}</div>
     <div class="profile-meta">${regDateL}${escHtml(created) || t('profile.tbd', '待公告')}</div>
     <div class="profile-bio ${bio ? '' : 'empty'}">${bio ? escHtml(bio) : noBioL}</div>
+    ${(() => {
+      const earned = BADGES.filter(b => daysSinceJoin >= b.days);
+      if (!earned.length) return '';
+      return `<div class="profile-badges">${earned.map(b =>
+        `<span class="profile-badge ${BADGE_CLASS[b.key]}" title="${t('profile.badge.' + b.key + '.tip', daysSinceJoin + ' 天 / ' + b.days + ' 天')}"
+              aria-label="${t('profile.badge.' + b.key)}">`
+          + `<span class="badge-icon">${b.icon}</span>`
+          + `<span>${t('profile.badge.' + b.key, b.key.toUpperCase())}</span>`
+        + `</span>`
+      ).join('')}</div>`;
+    })()}
     <div class="profile-stats">
       <div class="profile-stat"><div class="num">${stats?.messages || 0}</div><div class="lbl">${msgL}</div></div>
       <div class="profile-stat"><div class="num">${stats?.comments || 0}</div><div class="lbl">${cmtL}</div></div>
