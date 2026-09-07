@@ -41,10 +41,10 @@
 
   <main>
     <div class="page-back-row">
-      <a href="index.html" class="btn btn-ghost btn-small">← Home</a>
+      <a href="index.html" class="btn btn-ghost btn-small">← <span data-i18n="common.backHome">Home</span></a>
     </div>
     <section class="page-head">
-      <h1 class="page-title">🔔 通知中心</h1>
+      <h1 class="page-title" data-i18n="page.title.notifications">🔔 通知中心</h1>
       <p class="page-sub" data-i18n="page.sub.notifications">NOTIFICATIONS · 所有留言回复 / DM / 公告推送</p>
     </section>
 
@@ -63,7 +63,7 @@
 
         <div class="notif-summary" id="notifSummary"></div>
         <div class="notif-list" id="notifList">
-          <div class="empty-state"><div class="empty-icon">⏳</div><p>载入中…</p></div>
+          <div class="empty-state"><div class="empty-icon">⏳</div><p data-i18n="common.loading">载入中…</p></div>
         </div>
       </div>
     </section>
@@ -72,21 +72,27 @@
   <footer class="site-foot">
     <div class="container">
       <div class="foot-cols">
-        <div><h4>酒店</h4><a href="hotel.html">树上酒店</a></div>
         <div>
-          <h4>市政</h4>
-          <a href="index.html#notice">公告</a>
-          <a href="index.html#data">城市数据</a>
-          <a href="index.html#service">市民服务</a>
-          <a href="index.html#contact">联系我们</a>
+          <h4 data-i18n="footer.col.hotel">酒店</h4>
+          <a href="hotel.html" data-i18n="nav.hotel">树上酒店</a>
         </div>
-        <div><h4>管理</h4><a href="admin.html">🔐 管理入口</a></div>
+        <div>
+          <h4 data-i18n="footer.col.gov">市政</h4>
+          <a href="index.html#notice" data-i18n="nav.notice">公告</a>
+          <a href="index.html#data" data-i18n="nav.data">城市数据</a>
+          <a href="index.html#service" data-i18n="nav.service">市民服务</a>
+          <a href="index.html#contact" data-i18n="nav.contact">联系我们</a>
+        </div>
+        <div>
+          <h4 data-i18n="footer.col.admin">管理</h4>
+          <a href="admin.html">🔐 <span data-i18n="footer.admin">管理入口</span></a>
+        </div>
       </div>
-      <p class="foot-copy">© 2026 灯光市 · v50 · <a href="https://github.com/LycheeJin2012/dengguang-city">Source</a></p>
+      <p class="foot-copy">© 2026 <span data-i18n="nav.brand">灯光市</span> · v50 · <a href="https://github.com/LycheeJin2012/dengguang-city">Source</a></p>
     </div>
   </footer>
 
-  <button class="back-top" id="backTop" data-i18n-aria="common.backTop" aria-label="返回顶部">↑</button>
+  <button class="back-top" id="backTop" data-i18n-aria="common.backTop" aria-label="返回顶部 / Back to top">↑</button>
   <script src="js/toast.js?v=20260829-toast"></script>
   <script type="module" src="js/page/notifications/entry.js?v=v50-n6"></script>
 </body>

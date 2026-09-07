@@ -35,12 +35,12 @@
         <div class="block-dirt"></div>
       </div>
       <div>
-        <b>灯光市 · 管理后台</b>
+        <b data-i18n="admin.login.header">灯光市 · 管理后台</b>
         <span>LIGHT CITY · ADMIN CONSOLE</span>
       </div>
     </a>
     <div class="admin-header-right">
-      <a href="index.html" class="header-link">← 返回首页</a>
+      <a href="index.html" class="header-link" data-i18n="admin.login.backHome">← 返回首页</a>
     </div>
   </header>
 
@@ -62,15 +62,15 @@
             <div class="block-grass"></div>
             <div class="block-dirt"></div>
           </div>
-          <h1 class="login-brand-title">灯光市</h1>
+          <h1 class="login-brand-title" data-i18n="admin.login.brandTitle">灯光市</h1>
           <p class="login-brand-sub">LIGHT&nbsp;CITY · ADMIN&nbsp;CONSOLE</p>
           <div class="login-brand-divider"></div>
-          <p class="login-brand-desc">市政厅内部管理系统。仅授权管理员可访问,所有操作留痕审计。</p>
+          <p class="login-brand-desc" data-i18n="admin.login.brandDesc">市政厅内部管理系统。仅授权管理员可访问,所有操作留痕审计。</p>
           <ul class="login-brand-features">
-            <li><span class="badge badge-grass">📬</span> 市民留言审核</li>
-            <li><span class="badge badge-gold">🏨</span> 酒店 / 赛车场管理</li>
-            <li><span class="badge badge-water">📢</span> 公告 / 图集发布</li>
-            <li><span class="badge badge-stone">🛡️</span> 管理员账号 / 权限</li>
+            <li><span class="badge badge-grass">📬</span> <span data-i18n="admin.login.featMsgs">市民留言审核</span></li>
+            <li><span class="badge badge-gold">🏨</span> <span data-i18n="admin.login.featHotel">酒店 / 赛车场管理</span></li>
+            <li><span class="badge badge-water">📢</span> <span data-i18n="admin.login.featAnn">公告 / 图集发布</span></li>
+            <li><span class="badge badge-stone">🛡️</span> <span data-i18n="admin.login.featAdmin">管理员账号 / 权限</span></li>
           </ul>
         </div>
       </aside>
@@ -80,30 +80,30 @@
         <div class="login-card">
           <div class="login-head">
             <div class="login-icon">🔐</div>
-            <h1>管理员登录</h1>
+            <h1 data-i18n="admin.login.title">管理员登录</h1>
             <p>ADMIN LOGIN</p>
           </div>
           <form id="loginForm" class="login-form" method="POST" action="/api/login" accept-charset="UTF-8" autocomplete="on">
             <label>
-              <span class="label-text">账号</span>
+              <span class="label-text" data-i18n="admin.login.labelUser">账号</span>
               <input type="text" id="loginUser" name="username" autocomplete="username" required placeholder="管理员账号" data-i18n-placeholder="ph.adminUser" />
             </label>
             <label>
-              <span class="label-text">密码</span>
+              <span class="label-text" data-i18n="admin.login.labelPass">密码</span>
               <input type="password" id="loginPass" name="password" autocomplete="current-password" required placeholder="••••••••" />
             </label>
             <div class="login-error" id="loginError"></div>
-            <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">▶ 登录</button>
-            <div class="login-divider"><span>或</span></div>
-            <button type="button" id="adminPasskeyBtn" class="btn btn-ghost btn-block" title="用通行密钥登录 (需玩家账号已绑管理员)">
-              🔑 用通行密钥登录
+            <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block" data-i18n="admin.login.submit">▶ 登录</button>
+            <div class="login-divider"><span data-i18n="admin.login.or">或</span></div>
+            <button type="button" id="adminPasskeyBtn" class="btn btn-ghost btn-block" data-i18n-title="admin.login.passkeyTitle" title="用通行密钥登录 (需玩家账号已绑管理员)">
+              <span data-i18n="admin.login.passkeyBtn">🔑 用通行密钥登录</span>
             </button>
-            <p class="login-hint" id="loginHint" style="font-size:12px;color:var(--c-stone-dark);margin-top:8px">
+            <p class="login-hint" id="loginHint" style="font-size:12px;color:var(--c-stone-dark);margin-top:8px" data-i18n="admin.login.hint">
               提示: 玩家账号先在主页用 Touch ID/Face ID 注册通行密钥, 然后绑定到管理员账号 (admin 端有"玩家管理" → "🔗 绑管理员" 按钮), 即可一键登 admin
             </p>
           </form>
         </div>
-        <a href="index.html" class="login-back-home">← 返回市民首页</a>
+        <a href="index.html" class="login-back-home" data-i18n="admin.login.backHome2">← 返回市民首页</a>
       </section>
     </div>
   </main>
@@ -121,7 +121,7 @@
         </div>
       </div>
       <div class="user-actions">
-        <button class="btn btn-ghost btn-sm" id="btnLogout">退出登录</button>
+        <button class="btn btn-ghost btn-sm" id="btnLogout" data-i18n="admin.dash.logout">退出登录</button>
       </div>
     </div>
 
@@ -147,7 +147,7 @@
       </button>
       <div class="dash-stats-foot">
         <span id="dashLastUpdate" class="muted" style="font-size:11px"></span>
-        <button type="button" class="btn btn-ghost btn-sm" id="dashRefresh" data-i18n-title="admin.dash.refreshTip" title="刷新数据" style="padding:2px 8px;font-size:11px">🔄</button>
+        <button type="button" class="btn btn-ghost btn-sm" id="dashRefresh" data-i18n-title="admin.dash.refreshTip" data-i18n="admin.dash.refresh" title="刷新数据" style="padding:2px 8px;font-size:11px">🔄 刷新</button>
       </div>
     </div>
 
@@ -178,9 +178,9 @@
     <!-- Tab: 工单中心 (v47: 替代原 messages/license/bookings 3 个 tab) -->
     <section class="tab-pane active" id="pane-tickets">
       <div class="pane-head">
-        <h2>🎫 工单中心</h2>
+        <h2 data-i18n="admin.ticket.paneTitle">🎫 工单中心</h2>
         <div class="pane-tools">
-          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderTickets">🔄 刷新</button>
+          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderTickets" data-i18n="admin.dash.refresh">🔄 刷新</button>
         </div>
       </div>
       <p class="pane-hint" data-i18n="admin.ticket.hint">统一处理所有市民事务：留言 / 酒店预订 / 驾照报名 / 赛道报名 / 玩家主动服务请求。按分类筛选 + 模糊搜索 + 状态流转 (待处理 → 处理中 → 已解决 → 关闭)。</p>
@@ -388,6 +388,7 @@
         <div class="pane-tools">
           <span class="tag tag-super">仅 SUPER</span>
           <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderAnnouncements">🔄 刷新</button>
+          <button class="btn btn-ghost btn-sm" id="annExport" data-i18n="admin.ticket.btn.export">📥 导出 CSV</button>
           <button class="btn btn-primary btn-sm" id="annCreateBtn" style="display:none">+ 发布新公告</button>
         </div>
       </div>
@@ -423,6 +424,7 @@
         <div class="pane-tools">
           <span class="tag tag-super">SUPER</span>
           <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderGallery">🔄 <span data-i18n="common.refresh">刷新</span></button>
+          <button class="btn btn-ghost btn-sm" id="galleryExport" data-i18n="admin.ticket.btn.export">📥 导出 CSV</button>
           <button class="btn btn-primary btn-sm" id="galCreateBtn" style="display:none">+ <span data-i18n="admin.gallery.add">添加图片</span></button>
         </div>
       </div>

@@ -37,7 +37,7 @@
 </header>
 
 <div class="page-back-row">
-  <a href="index.html">← 返回首页</a>
+  <a href="index.html" data-i18n="common.returnHome">← 返回首页</a>
 </div>
 
 <div class="profile-wrap" id="app">
@@ -63,11 +63,11 @@
   <div class="profile-card passkey-card" id="passkeyCard" style="display:none">
     <div class="passkey-head" data-i18n="profile.passkey.head">🔑 账号安全 · 通行密钥 (Passkey)</div>
     <div class="passkey-body">
-      <p class="passkey-desc">
+      <p class="passkey-desc" data-i18n="profile.passkey.desc">
         通行密钥用 Touch ID / Face ID / Windows Hello 登录，<b>无需输密码</b>，抗钓鱼。
       </p>
       <div id="passkeyList" class="passkey-list"></div>
-      <button id="addPasskeyBtn" type="button" class="passkey-add-btn">
+      <button id="addPasskeyBtn" type="button" class="passkey-add-btn" data-i18n="profile.passkey.addBtn">
         ➕ 添加通行密钥
       </button>
       <p id="passkeyMsg" class="passkey-msg muted"></p>
@@ -78,8 +78,8 @@
   <div class="profile-card" id="raceCard" style="display:none">
     <div class="passkey-head" data-i18n="profile.race.head">🏁 赛道成绩</div>
     <div class="passkey-body">
-      <p class="passkey-desc">上报你在国际赛车场的圈速，进入排行榜跟全城玩家 PK！</p>
-      <div id="raceContent">载入中…</div>
+      <p class="passkey-desc" data-i18n="profile.race.desc">上报你在国际赛车场的圈速，进入排行榜跟全城玩家 PK！</p>
+      <div id="raceContent" data-i18n="common.loading">载入中…</div>
     </div>
   </div>
 
@@ -87,8 +87,8 @@
   <div class="profile-card" id="examCard" style="display:none">
     <div class="passkey-head" data-i18n="profile.exam.head">📝 驾照模拟题库</div>
     <div class="passkey-body">
-      <p class="passkey-desc">考前去模拟题库里练手，错了的题自动进"错题本"反复练习。</p>
-      <div id="examContent">载入中…</div>
+      <p class="passkey-desc" data-i18n="profile.exam.desc">考前去模拟题库里练手，错了的题自动进"错题本"反复练习。</p>
+      <div id="examContent" data-i18n="common.loading">载入中…</div>
     </div>
   </div>
 
@@ -96,8 +96,8 @@
   <div class="profile-card" id="subCard" style="display:none">
     <div class="passkey-head" data-i18n="profile.sub.head">🔔 通知订阅</div>
     <div class="passkey-body">
-      <p class="passkey-desc">勾选订阅后，新公告/你的留言被回复/新私信会通过站内通知推送给你。</p>
-      <div id="subContent">载入中…</div>
+      <p class="passkey-desc" data-i18n="profile.sub.desc">勾选订阅后，新公告/你的留言被回复/新私信会通过站内通知推送给你。</p>
+      <div id="subContent" data-i18n="common.loading">载入中…</div>
     </div>
   </div>
 
@@ -105,8 +105,8 @@
   <div class="profile-card" id="citizenCard" style="display:none">
     <div class="passkey-head" data-i18n="profile.citizen.head">🪪 我的市民身份卡</div>
     <div class="passkey-body">
-      <p class="passkey-desc">点下面的按钮生成你的专属市民卡，可以下载发到 MC 服务器群跟小伙伴炫一下！</p>
-      <button id="genCardBtn" class="btn btn-primary">🎴 生成我的市民卡</button>
+      <p class="passkey-desc" data-i18n="profile.citizen.desc">点下面的按钮生成你的专属市民卡，可以下载发到 MC 服务器群跟小伙伴炫一下！</p>
+      <button id="genCardBtn" class="btn btn-primary" data-i18n="profile.citizen.genBtn">🎴 生成我的市民卡</button>
       <div id="citizenCardPreview" style="margin-top:14px"></div>
     </div>
   </div>

@@ -29,7 +29,44 @@ export async function renderAnnouncements() {
       el.querySelector('[data-act="edit"]').onclick = () => annEdit(a);
       el.querySelector('[data-act="del"]').onclick = () => annDel(id);
     });
+    // v50-N6: 公告列表导出 CSV
+    document.getElementById('annExport')?.addEventListener('click', () => exportAnnouncementsCsv(list));
   });
+}
+
+// v50-N6: 公告导出 CSV (与工单/玩家同 pattern)
+function exportAnnouncementsCsv(list) {
+  if (!list || !list.length) {
+    if (window._toast) window._toast(t('admin.ann.toast.exportEmpty', '当前列表为空，无可导出数据'), 'info');
+    return;
+  }
+  const headers = ['ID', 'Title', 'Content', 'Author', 'Created', 'Updated', 'Image URL'];
+  const esc = v => {
+    if (v == null) return '';
+    const s = String(v);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const rows = list.map(a => [
+    a.id,
+    a.title || '',
+    (a.content || '').replace(/\n/g, ' '),
+    a.admin_username || '',
+    (a.created_at || '').slice(0, 19).replace('T', ' '),
+    (a.updated_at || '').slice(0, 19).replace('T', ' '),
+    a.image_url || '',
+  ].map(esc).join(','));
+  const csv = '\ufeff' + [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a2 = document.createElement('a');
+  const ts = new Date().toISOString().slice(0, 10);
+  a2.href = url;
+  a2.download = `announcements-${ts}.csv`;
+  document.body.appendChild(a2);
+  a2.click();
+  document.body.removeChild(a2);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  if (window._toast) window._toast(t('admin.ann.toast.exported', '已导出') + ` ${list.length} ` + t('admin.ann.toast.exportedUnit', '条公告'), 'success');
 }
 
 export function annEdit(a) {
