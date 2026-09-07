@@ -68,7 +68,46 @@ export async function renderPlayers() {
       el.querySelector('[data-act="reset-pw"]')?.addEventListener('click', () => playerResetPw(id));
       el.querySelector('[data-act="rename"]')?.addEventListener('click', () => playerRename(id, p?.username));
     });
+    // v50-N6: 导出当前 filter 后的玩家列表
+    document.getElementById('playerExport')?.addEventListener('click', () => exportPlayersCsv(shown));
   });
+}
+
+// v50-N6: 玩家列表导出 CSV (与 ticket 导出同 pattern)
+function exportPlayersCsv(list) {
+  if (!list || !list.length) {
+    if (window._toast) window._toast(t('admin.players.toast.exportEmpty', '当前列表为空，无可导出数据'), 'info');
+    return;
+  }
+  const headers = ['ID', 'Username', 'Email', 'Game ID', 'Status', 'Created', 'Last Session', 'Bio'];
+  const esc = v => {
+    if (v == null) return '';
+    const s = String(v);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const STATUS_EN = { pending: 'Pending', active: 'Active', rejected: 'Rejected' };
+  const rows = list.map(p => [
+    p.id,
+    p.username || '',
+    p.email || '',
+    p.game_id || '',
+    STATUS_EN[p.status] || p.status || '',
+    (p.created_at || '').slice(0, 19).replace('T', ' '),
+    (p.last_session || '').slice(0, 19).replace('T', ' '),
+    (p.bio || '').replace(/\n/g, ' '),
+  ].map(esc).join(','));
+  const csv = '\ufeff' + [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `players-${ts}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  if (window._toast) window._toast(t('admin.players.toast.exported', '已导出') + ` ${list.length} ` + t('admin.players.toast.exportedUnit', '名玩家'), 'success');
 }
 
 export async function playerAction(id, act) {

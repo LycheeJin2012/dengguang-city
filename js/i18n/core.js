@@ -399,6 +399,9 @@ const DICT = {
   'admin.ticket.toast.exportEmpty':  { 'zh-CN': '当前列表为空，无可导出数据', 'en': 'List is empty. Nothing to export.' },
   'admin.ticket.toast.exported':     { 'zh-CN': '已导出',           'en': 'Exported' },
   'admin.ticket.toast.exportedUnit': { 'zh-CN': '条工单',           'en': 'tickets' },
+  'admin.players.toast.exportEmpty':  { 'zh-CN': '当前列表为空，无可导出数据', 'en': 'List is empty. Nothing to export.' },
+  'admin.players.toast.exported':     { 'zh-CN': '已导出',           'en': 'Exported' },
+  'admin.players.toast.exportedUnit': { 'zh-CN': '名玩家',           'en': 'players' },
   // hero
   'hero.tag':         { 'zh-CN': '灯光市人民政府 · 官方站点', 'en': 'Light City Hall · Official Site' },
   'hero.welcome':     { 'zh-CN': '欢 迎 来 到', 'en': 'WELCOME TO' },
