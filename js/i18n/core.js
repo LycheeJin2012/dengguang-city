@@ -386,6 +386,23 @@ const DICT = {
   'admin.stat.licensePending':  { 'zh-CN': '待审驾照',  'en': 'Pending Licenses' },
   'admin.stat.kartPending':     { 'zh-CN': '待审赛道',  'en': 'Pending Karts' },
   'admin.stat.playerActive':    { 'zh-CN': '活跃市民',  'en': 'Active Citizens' },
+  // admin 工单 status filter
+  'admin.ticket.filter.all':       { 'zh-CN': '📌 全部状态',  'en': '📌 All Status' },
+  'admin.ticket.filter.open':      { 'zh-CN': '⏳ 待处理',   'en': '⏳ Open' },
+  'admin.ticket.filter.inProgress':{ 'zh-CN': '🔄 处理中',   'en': '🔄 In Progress' },
+  'admin.ticket.filter.resolved':  { 'zh-CN': '✓ 已解决',    'en': '✓ Resolved' },
+  'admin.ticket.filter.closed':    { 'zh-CN': '✕ 已关闭',    'en': '✕ Closed' },
+  // admin 工单 category filter
+  'admin.ticket.cat.all':       { 'zh-CN': '📂 全部类型',  'en': '📂 All Types' },
+  'admin.ticket.cat.message':   { 'zh-CN': '💬 留言',     'en': '💬 Message' },
+  'admin.ticket.cat.comment':   { 'zh-CN': '💭 评论',     'en': '💭 Comment' },
+  'admin.ticket.cat.license':   { 'zh-CN': '🚗 驾照',     'en': '🚗 License' },
+  'admin.ticket.cat.hotel':     { 'zh-CN': '🏨 酒店',     'en': '🏨 Hotel' },
+  'admin.ticket.cat.race':      { 'zh-CN': '🏁 赛车',     'en': '🏁 Race' },
+  'admin.ticket.cat.kart':      { 'zh-CN': '🛞 卡丁车',   'en': '🛞 Kart' },
+  'admin.ticket.cat.service':   { 'zh-CN': '🛎️ 服务',     'en': '🛎️ Service' },
+  'admin.ticket.hint':     { 'zh-CN': '统一处理所有市民事务：留言 / 酒店预订 / 驾照报名 / 赛道报名 / 玩家主动服务请求。按分类筛选 + 模糊搜索 + 状态流转 (待处理 → 处理中 → 已解决 → 关闭)。',
+                              'en': 'Unified inbox for all citizen requests: messages, hotel bookings, license signups, race signups, and direct service requests. Filter by category, fuzzy-search, and move tickets through the workflow (Open → In Progress → Resolved → Closed).' },
   'hotel.intro':            { 'zh-CN': '树上酒店（筹建）。选址、规模、定价、运营方由市民大会与合作社讨论后公布。当前展示房型为草案，待合作社定稿后正式上线。',
                                'en': 'Treehouse Hotel (under construction). Site, scale, pricing, and operator will be decided by the Citizens Assembly and the cooperative. Room listings shown are drafts and will go live once finalized.' },
   // 公告卡 UI 标签

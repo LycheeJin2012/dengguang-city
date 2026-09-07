@@ -178,24 +178,24 @@
           <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderTickets">🔄 刷新</button>
         </div>
       </div>
-      <p class="pane-hint">统一处理所有市民事务：留言 / 酒店预订 / 驾照报名 / 赛道报名 / 玩家主动服务请求。按分类筛选 + 模糊搜索 + 状态流转 (待处理 → 处理中 → 已解决 → 关闭)。</p>
+      <p class="pane-hint" data-i18n="admin.ticket.hint">统一处理所有市民事务：留言 / 酒店预订 / 驾照报名 / 赛道报名 / 玩家主动服务请求。按分类筛选 + 模糊搜索 + 状态流转 (待处理 → 处理中 → 已解决 → 关闭)。</p>
       <div class="msg-filter" style="flex-wrap:wrap;gap:8px">
         <select id="ticketCat" style="padding:6px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-family:inherit;font-size:13px">
-          <option value="">📂 全部类型</option>
-          <option value="message">💬 留言</option>
-          <option value="comment">💭 评论</option>
-          <option value="license">🚗 驾照</option>
-          <option value="hotel">🏨 酒店</option>
-          <option value="race">🏁 赛车</option>
-          <option value="kart">🛞 卡丁车</option>
-          <option value="service">🛎️ 服务</option>
+          <option value="" data-i18n="admin.ticket.cat.all">📂 全部类型</option>
+          <option value="message" data-i18n="admin.ticket.cat.message">💬 留言</option>
+          <option value="comment" data-i18n="admin.ticket.cat.comment">💭 评论</option>
+          <option value="license" data-i18n="admin.ticket.cat.license">🚗 驾照</option>
+          <option value="hotel" data-i18n="admin.ticket.cat.hotel">🏨 酒店</option>
+          <option value="race" data-i18n="admin.ticket.cat.race">🏁 赛车</option>
+          <option value="kart" data-i18n="admin.ticket.cat.kart">🛞 卡丁车</option>
+          <option value="service" data-i18n="admin.ticket.cat.service">🛎️ 服务</option>
         </select>
         <select id="ticketStatus" style="padding:6px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-family:inherit;font-size:13px">
-          <option value="">📌 全部状态</option>
-          <option value="open">⏳ 待处理</option>
-          <option value="in_progress">🔄 处理中</option>
-          <option value="resolved">✓ 已解决</option>
-          <option value="closed">✕ 已关闭</option>
+          <option value="" data-i18n="admin.ticket.filter.all">📌 全部状态</option>
+          <option value="open" data-i18n="admin.ticket.filter.open">⏳ 待处理</option>
+          <option value="in_progress" data-i18n="admin.ticket.filter.inProgress">🔄 处理中</option>
+          <option value="resolved" data-i18n="admin.ticket.filter.resolved">✓ 已解决</option>
+          <option value="closed" data-i18n="admin.ticket.filter.closed">✕ 已关闭</option>
         </select>
         <input type="search" id="ticketSearch" placeholder="🔍 搜索标题/内容" data-i18n-placeholder="ph.ticketSearch" style="flex:1;min-width:200px;padding:6px 10px;border:2px solid var(--c-stone);background:var(--c-bg-1);font-family:inherit;font-size:13px" />
       </div>
