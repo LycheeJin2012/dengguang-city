@@ -98,18 +98,18 @@ function bindLoginSubmit() {
       data = await res.json();
       if (res.ok && data.ok) {
         if (data.role && data.role !== 'player') {
-          msg.textContent = '这是管理员账号，请去 /admin.html 登录';
+          msg.textContent = t('auth.err.isAdmin', '这是管理员账号，请去 /admin.html 登录');
           submit.disabled = false;
-          submit.textContent = loginMode === 'login' ? '登录' : '注册并登录';
+          submit.textContent = loginMode === 'login' ? t('auth.login.submit', '登录') : t('auth.register.submit', '注册并登录');
           return;
         }
         if (data.user && data.user.status === 'pending') {
-          msg.textContent = '✓ ' + (data.message || '注册申请已提交，等审批');
+          msg.textContent = '✓ ' + (data.message || t('auth.register.pendingMsg', '注册申请已提交，等审批'));
           msg.style.color = 'var(--c-gold, #d6a300)';
           setTimeout(() => { closeLoginModal(); msg.style.color = ''; form.reset(); }, 1800);
           return;
         }
-        msg.textContent = '✓ 成功！';
+        msg.textContent = t('auth.success', '✓ 成功！');
         msg.style.color = 'var(--c-emerald)';
         setTimeout(async () => {
           closeLoginModal();
@@ -117,13 +117,13 @@ function bindLoginSubmit() {
           await postLogin();
         }, 600);
       } else {
-        msg.textContent = '✗ ' + (data.error || '失败');
+        msg.textContent = '✗ ' + (data.error || t('common.fail', '失败'));
       }
     } catch (err) {
-      msg.textContent = '网络错误：' + err.message;
+      msg.textContent = t('auth.err.network', '网络错误：') + err.message;
     } finally {
       submit.disabled = false;
-      submit.textContent = loginMode === 'login' ? '登录' : '注册并登录';
+      submit.textContent = loginMode === 'login' ? t('auth.login.submit', '登录') : t('auth.register.submit', '注册并登录');
     }
   });
 }
@@ -166,20 +166,20 @@ function bindPasskeyLogin() {
   if (!btn) return;
   if (!window.PublicKeyCredential) {
     btn.disabled = true;
-    btn.textContent = '⚠ 当前浏览器不支持通行密钥';
-    btn.title = '请用最新版 Chrome / Safari / Edge 桌面端主浏览器';
+    btn.textContent = t('passkey.btn.unsupported', '⚠ 当前浏览器不支持通行密钥');
+    btn.title = t('passkey.tip.unsupported', '请用最新版 Chrome / Safari / Edge 桌面端主浏览器');
   } else if (!window.isSecureContext) {
     btn.disabled = true;
-    btn.textContent = '⚠ 需要 HTTPS 安全连接';
-    btn.title = '请直接在 https://dengguang-city.pages.dev 打开 (非内嵌)';
+    btn.textContent = t('passkey.btn.needHttps', '⚠ 需要 HTTPS 安全连接');
+    btn.title = t('passkey.tip.needHttps', '请直接在 https://dengguang-city.pages.dev 打开 (非内嵌)');
   }
   btn.addEventListener('click', async () => {
     if (!window.PublicKeyCredential) {
-      alert('您的浏览器不支持通行密钥 (WebAuthn)。\n\n请用最新版 Chrome / Safari / Edge 桌面端。');
+      alert(t('passkey.alert.unsupported', '您的浏览器不支持通行密钥 (WebAuthn)。\n\n请用最新版 Chrome / Safari / Edge 桌面端。'));
       return;
     }
     if (!window.isSecureContext) {
-      alert('通行密钥需要 HTTPS 安全连接。');
+      alert(t('passkey.alert.needHttps', '通行密钥需要 HTTPS 安全连接。'));
       return;
     }
     // v47.2: username 可选 — 填了走精确模式 (只列该用户的密钥), 不填走 usernameless
@@ -187,7 +187,7 @@ function bindPasskeyLogin() {
     const username = $('#loginUsername')?.value.trim() || '';
     btn.disabled = true;
     const origText = btn.textContent;
-    btn.textContent = '⏳ 准备中...';
+    btn.textContent = t('passkey.btn.preparing', '⏳ 准备中...');
     const msg = $('#loginMsg');
     let timeoutId = setTimeout(() => {
       btn.disabled = false;
