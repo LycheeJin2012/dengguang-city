@@ -80,7 +80,7 @@ async function renderComments(mid, box) {
     } else {
       box.innerHTML = list.map((c, i) => {
         const floor = i + 1;
-        const author = escHtml(c.author_name || c.player_username || '匿名');
+        const author = escHtml(c.author_name || c.player_username || t('common.anonymous', '匿名'));
         const timeAgo = relativeTime(c.created_at);
         return `<div class="comment-item">
           <div class="comment-head">
@@ -105,7 +105,7 @@ async function renderComments(mid, box) {
         await POST('/api/comments', { message_id: mid, content });
         box.querySelector('input[name=content]').value = '';
         await renderComments(mid, box);
-      } catch (err) { if (window._toast) window._toast('发送失败: ' + err.message, 'error'); }
+      } catch (err) { if (window._toast) window._toast(t('common.sendFail', '发送失败: ') + err.message, 'error'); }
     };
   } catch (e) {
     box.innerHTML = `<div class="empty-state"><p>${t('common.error.load', '加载失败')}: ${escHtml(e.message)}</p></div>`;
