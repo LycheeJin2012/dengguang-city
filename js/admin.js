@@ -20,6 +20,7 @@
 // 这里导出所有需要的全局函数
 import { $, POST, GET, safeRender, fileToDataURLP, cacheClear } from './admin/core.js?v=v46-fix-modules';
 import { renderDash, _ensureTabRendered, bindFilterRadios, showView, _PANE_REFRESH } from './admin/dash.js?v=v46-fix-modules';
+import { t } from './i18n/core.js?v=n5';
 
 // ---------- Boot ----------
 async function boot() {
@@ -61,11 +62,11 @@ async function doLogin() {
   if (errEl) errEl.textContent = '';
   const u = $('#loginUser').value.trim();
   const p = $('#loginPass').value;
-  if (!u || !p) { if (errEl) errEl.textContent = '请输入账号和密码'; return; }
+  if (!u || !p) { if (errEl) errEl.textContent = t('admin.login.err.empty', '请输入账号和密码'); return; }
   try {
     const d = await POST('/api/login', { username: u, password: p });
-    if (!d.ok) throw new Error(d.error || '登录失败');
-    if (d.role === 'player') throw new Error('这是玩家账号');
+    if (!d.ok) throw new Error(d.error || t('admin.login.err.fail', '登录失败'));
+    if (d.role === 'player') throw new Error(t('admin.login.err.isPlayer', '这是玩家账号'));
     const me = await GET('/api/login');
     window._me = me.user;
     $('#loginUser').value = ''; $('#loginPass').value = '';
@@ -74,7 +75,7 @@ async function doLogin() {
       const { maybeOfferAdminPasskey } = await import('./admin/tabs/passkey.js');
       await maybeOfferAdminPasskey(me.user && me.user.id);
     } catch (e) { console.warn('[admin] passkey 引导失败', e); }
-  } catch (err) { if (errEl) errEl.textContent = '登录失败: ' + err.message; }
+  } catch (err) { if (errEl) errEl.textContent = t('admin.login.err.failPrefix', '登录失败: ') + err.message; }
 }
 window.adminDoLogin = doLogin;
 
@@ -91,32 +92,32 @@ function showAdminEnterModal(player, adminId) {
   bd.innerHTML = `
     <div class="modal" style="max-width:440px">
       <div class="modal-head">
-        <h3>🛡️ 进入管理后台</h3>
-        <button class="modal-close" id="aeClose" aria-label="关闭">✕</button>
+        <h3>🛡️ ${t('admin.enterModal.title', '进入管理后台')}</h3>
+        <button class="modal-close" id="aeClose" aria-label="${t('common.close', '关闭')}">✕</button>
       </div>
       <div class="modal-body">
         <p style="margin:0 0 16px;font-size:13px;color:var(--c-stone-dark);line-height:1.5">
-          玩家 <b style="color:var(--c-dark)">@${player.username}</b> 已绑管理员 <b style="color:var(--c-water)">#${adminId}</b>。
-          <br>选择以下任一方式验证身份进入后台:
+          ${t('admin.enterModal.bound', '玩家')} <b style="color:var(--c-dark)">@${player.username}</b> ${t('admin.enterModal.bound2', '已绑管理员')} <b style="color:var(--c-water)">#${adminId}</b>。
+          <br>${t('admin.enterModal.hint', '选择以下任一方式验证身份进入后台:')}
         </p>
         <div class="modal-form" style="margin-bottom:6px">
           <label>
-            <span>🔑 管理员密码</span>
-            <input type="password" id="aePw" placeholder="输入管理员密码" autocomplete="current-password" />
+            <span>🔑 ${t('admin.enterModal.pwLabel', '管理员密码')}</span>
+            <input type="password" id="aePw" placeholder="${t('admin.enterModal.pwPh', '输入管理员密码')}" autocomplete="current-password" />
           </label>
         </div>
         <div id="aeMsg" class="modal-msg" style="min-height:18px"></div>
         <div class="modal-actions" style="margin-bottom:18px">
-          <button class="btn btn-ghost" id="aeCancel">取消</button>
-          <button class="btn btn-primary" id="aeSave">▶ 验证进入</button>
+          <button class="btn btn-ghost" id="aeCancel">${t('common.cancel', '取消')}</button>
+          <button class="btn btn-primary" id="aeSave">▶ ${t('admin.enterModal.submit', '验证进入')}</button>
         </div>
-        <div class="modal-divider"><span>或</span></div>
+        <div class="modal-divider"><span>${t('admin.enterModal.or', '或')}</span></div>
         <button class="btn btn-ghost btn-block" id="aePasskeyBtn" style="border:2px solid var(--c-black);background:#fff">
-          🔑 用通行密钥登录 (Touch ID / Face ID)
+          🔑 ${t('admin.enterModal.passkeyBtn', '用通行密钥登录 (Touch ID / Face ID)')}
         </button>
         <div id="aePkMsg" class="modal-msg" style="min-height:18px"></div>
         <p style="margin:14px 0 0;font-size:11px;color:var(--c-stone);line-height:1.4">
-          💡 通行密钥登录需在主页先注册一次 (Touch ID/Face ID), 然后 admin 绑玩家 → 一键登 admin
+          💡 ${t('admin.enterModal.passkeyTip', '通行密钥登录需在主页先注册一次 (Touch ID/Face ID), 然后 admin 绑玩家 → 一键登 admin')}
         </p>
       </div>
     </div>`;
@@ -138,15 +139,15 @@ function showAdminEnterModal(player, adminId) {
     const btn = bd.querySelector('#aeSave');
     const msg = bd.querySelector('#aeMsg');
     const orig = btn.textContent;
-    btn.disabled = true; btn.textContent = '⏳ 验证中...';
+    btn.disabled = true; btn.textContent = t('admin.enterModal.verifying', '⏳ 验证中...');
     try {
       await POST('/api/init?action=admin-enter-password', { admin_password: bd.querySelector('#aePw').value });
       msg.style.color = 'var(--c-emerald)';
-      msg.textContent = '✓ 验证成功, 跳转中...';
+      msg.textContent = t('admin.enterModal.success', '✓ 验证成功, 跳转中...');
       setTimeout(() => { location.reload(); }, 500);
     } catch (e) {
       msg.style.color = 'var(--c-redstone)';
-      msg.textContent = '✗ ' + (e.message || '密码错误');
+      msg.textContent = '✗ ' + (e.message || t('admin.enterModal.badPw', '密码错误'));
       btn.disabled = false; btn.textContent = orig;
       bd.querySelector('#aePw')?.focus();
       bd.querySelector('#aePw')?.select();
@@ -158,8 +159,8 @@ function showAdminEnterModal(player, adminId) {
     const msg = bd.querySelector('#aePkMsg');
     const orig = btn.textContent;
     btn.disabled = true;
-    btn.textContent = '⏳ 准备中...';
-    let timer = setTimeout(() => { btn.disabled = false; btn.textContent = orig; msg.style.color = 'var(--c-redstone)'; msg.textContent = '✗ 操作超时, 请重试'; }, 30000);
+    btn.textContent = t('passkey.btn.preparing', '⏳ 准备中...');
+    let timer = setTimeout(() => { btn.disabled = false; btn.textContent = orig; msg.style.color = 'var(--c-redstone)'; msg.textContent = t('auth.err.timeout', '✗ 操作超时, 请重试'); }, 30000);
     try {
       const r1 = await fetch('/api/init?action=passkey-login-start', {
         method: 'POST', credentials: 'include',
@@ -167,23 +168,23 @@ function showAdminEnterModal(player, adminId) {
         body: JSON.stringify({})
       });
       const d1 = await r1.json();
-      if (!r1.ok || d1.error) throw new Error(d1.error || 'challenge 失败');
-      if (!d1.publicKey) throw new Error('服务器未返回 challenge');
+      if (!r1.ok || d1.error) throw new Error(d1.error || t('passkey.err.challengeFail', 'challenge 失败'));
+      if (!d1.publicKey) throw new Error(t('passkey.err.noChallenge', '服务器未返回 challenge'));
       const opts = d1.publicKey;
       opts.challenge = b64urlToBuf(opts.challenge);
       if (opts.allowCredentials) {
         opts.allowCredentials = opts.allowCredentials.map(c => ({ ...c, id: b64urlToBuf(c.id) }));
       }
-      btn.textContent = '⏳ 请触摸指纹/Face ID...';
+      btn.textContent = t('passkey.btn.touch', '⏳ 请触摸指纹/Face ID...');
       let cred;
       try {
         cred = await navigator.credentials.get({ publicKey: opts, mediation: 'optional' });
       } catch (we) {
-        if (we.name === 'NotAllowedError') throw new Error('已取消');
+        if (we.name === 'NotAllowedError') throw new Error(t('auth.err.cancelled', '已取消'));
         throw we;
       }
-      if (!cred) throw new Error('未获得凭据');
-      btn.textContent = '⏳ 验证中...';
+      if (!cred) throw new Error(t('auth.err.noCredential', '未获得凭据'));
+      btn.textContent = t('passkey.btn.verifying', '⏳ 验证中...');
       const r2 = await fetch('/api/init?action=passkey-login-finish', {
         method: 'POST', credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
@@ -204,10 +205,10 @@ function showAdminEnterModal(player, adminId) {
         }),
       });
       const d2 = await r2.json();
-      if (!r2.ok || d2.error) throw new Error(d2.error || '验证失败');
+      if (!r2.ok || d2.error) throw new Error(d2.error || t('auth.err.verifyFail', '验证失败'));
       clearTimeout(timer);
       msg.style.color = 'var(--c-emerald)';
-      msg.textContent = '✓ 验证成功, 跳转中...';
+      msg.textContent = t('admin.enterModal.success', '✓ 验证成功, 跳转中...');
       setTimeout(() => { location.reload(); }, 500);
     } catch (e) {
       clearTimeout(timer);
@@ -284,12 +285,12 @@ function bindAdminPasskey() {
   if (!btn) return;
   if (!window.PublicKeyCredential) {
     btn.disabled = true;
-    btn.textContent = '⚠ 当前浏览器不支持通行密钥';
+    btn.textContent = t('passkey.btn.unsupported', '⚠ 当前浏览器不支持通行密钥');
     return;
   }
   if (!window.isSecureContext) {
     btn.disabled = true;
-    btn.textContent = '⚠ 需要 HTTPS';
+    btn.textContent = t('passkey.btn.needHttps', '⚠ 需要 HTTPS');
     return;
   }
   btn.addEventListener('click', async () => {
@@ -297,9 +298,9 @@ function bindAdminPasskey() {
     if (errEl) errEl.textContent = '';
     const orig = btn.textContent;
     btn.disabled = true;
-    btn.textContent = '⏳ 准备中...';
+    btn.textContent = t('passkey.btn.preparing', '⏳ 准备中...');
     const showErr = (m) => { if (errEl) { errEl.textContent = '✗ ' + m; setTimeout(() => { if (errEl) errEl.textContent = ''; }, 5000); } };
-    let timer = setTimeout(() => { btn.disabled = false; btn.textContent = orig; showErr('操作超时, 请重试'); }, 30000);
+    let timer = setTimeout(() => { btn.disabled = false; btn.textContent = orig; showErr(t('auth.err.timeout', '操作超时, 请重试')); }, 30000);
     try {
       // 1) start: username 不填 → 浏览器列所有可用密钥
       const r1 = await fetch('/api/init?action=passkey-login-start', {
@@ -308,23 +309,23 @@ function bindAdminPasskey() {
         body: JSON.stringify({})
       });
       const d1 = await r1.json();
-      if (!r1.ok || d1.error) throw new Error(d1.error || 'challenge 失败');
-      if (!d1.publicKey) throw new Error('服务器未返回 challenge');
+      if (!r1.ok || d1.error) throw new Error(d1.error || t('passkey.err.challengeFail', 'challenge 失败'));
+      if (!d1.publicKey) throw new Error(t('passkey.err.noChallenge', '服务器未返回 challenge'));
       const opts = d1.publicKey;
       opts.challenge = b64urlToBuf(opts.challenge);
       if (opts.allowCredentials) {
         opts.allowCredentials = opts.allowCredentials.map(c => ({ ...c, id: b64urlToBuf(c.id) }));
       }
-      btn.textContent = '⏳ 请触摸指纹/Face ID...';
+      btn.textContent = t('passkey.btn.touch', '⏳ 请触摸指纹/Face ID...');
       let cred;
       try {
         cred = await navigator.credentials.get({ publicKey: opts, mediation: 'optional' });
       } catch (we) {
-        if (we.name === 'NotAllowedError') throw new Error('已取消, 请重试');
+        if (we.name === 'NotAllowedError') throw new Error(t('auth.err.cancelled', '已取消, 请重试'));
         throw we;
       }
-      if (!cred) throw new Error('未获得凭据');
-      btn.textContent = '⏳ 验证中...';
+      if (!cred) throw new Error(t('auth.err.noCredential', '未获得凭据'));
+      btn.textContent = t('passkey.btn.verifying', '⏳ 验证中...');
       // 2) finish: 传 target='admin' 让后端创建 admin session
       const r2 = await fetch('/api/init?action=passkey-login-finish', {
         method: 'POST', credentials: 'include',
@@ -346,14 +347,14 @@ function bindAdminPasskey() {
         }),
       });
       const d2 = await r2.json();
-      if (!r2.ok || d2.error) throw new Error(d2.error || '验证失败');
+      if (!r2.ok || d2.error) throw new Error(d2.error || t('auth.err.verifyFail', '验证失败'));
       clearTimeout(timer);
       // 成功! 后端已通过 Set-Cookie 写 lc_session cookie
-      if (errEl) { errEl.style.color = 'var(--c-emerald)'; errEl.textContent = '✓ 登录成功, 跳转中...'; }
+      if (errEl) { errEl.style.color = 'var(--c-emerald)'; errEl.textContent = t('passkey.loginSuccess', '✓ 登录成功, 跳转中...'); }
       setTimeout(() => { location.reload(); }, 500);
     } catch (e) {
       clearTimeout(timer);
-      showErr('通行密钥失败: ' + (e.message || String(e)));
+      showErr(t('passkey.loginFailPrefix', '通行密钥失败: ') + (e.message || String(e)));
     } finally {
       clearTimeout(timer);
       btn.disabled = false;
