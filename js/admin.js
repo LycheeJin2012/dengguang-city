@@ -230,20 +230,10 @@ window._switchTab = function(tab) {
   _ensureTabRendered(tab);
 };
 
-// ---------- Filter 切换 ----------
-document.addEventListener('change', e => {
-  if (e.target.matches('input[type="radio"][name$="Filter"]')) {
-    const name = e.target.name.replace('Filter', '');
-    const map = {
-      msg: 'messages', player: 'players', book: 'bookings',
-      lic: 'license', kart: 'kart', circuit: 'circuit'
-    };
-    const tab = map[name] || name;
-    if (['messages', 'players', 'bookings', 'license', 'kart', 'circuit'].includes(tab)) {
-      import(`./admin/tabs/${tab}.js`).then(m => safeRender(() => m.renderTab()));
-    }
-  }
-});
+// ---------- Filter 切换 (v50-N6 fix: 删 v47 遗留死代码)
+// 之前: import('./admin/tabs/${tab}.js').then(m => m.renderTab()) — m.renderTab 不存在 (每个 tab 模块导出的是 renderXxx)
+// 之前: map 里 messages/bookings/license 三个文件 v47 已删, 触发 import 报错
+// 修复: 删整个 handler, 实际过滤逻辑由 dash.js 的 bindFilterRadios + _FILTER_RENDER 处理 (下面修 key)
 // v50-audit-fix: 删 v47 后遗留的 #msgSearch 死代码 (messages tab 合并到 tickets, HTML 已无此 input)
 //   之前: 任何 #msgSearch input 事件 → import './admin/tabs/messages.js' (文件已不存在)
 //   修复: 删整段 listener, 避免控制台噪音

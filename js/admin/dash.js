@@ -32,11 +32,13 @@ export function _ensureTabRendered(tab) {
   if (fn) safeRender(fn);
 }
 
-// Filter 切换 (v47 简化: 只剩 playerFilter + tickets 自己内部 filter)
+// Filter 切换 (v50-N6 fix: key 改成跟 radio name.replace('Filter', '') 对得上)
+//   radio name 实际是 playerFilter / kartFilter / circuitFilter
+//   之前用 players/circuit_kart/kart_circuit 全部 miss, fn=undefined 不渲染
 const _FILTER_RENDER = {
-  players:     () => import('./tabs/players.js').then(m => m.renderPlayers()),
-  circuit_kart: () => import('./tabs/kart.js').then(m => m.renderKarts()),
-  kart_circuit: () => import('./tabs/kart.js').then(m => m.renderCircuits()),
+  player:     () => import('./tabs/players.js').then(m => m.renderPlayers()),
+  kart:       () => import('./tabs/kart.js').then(m => m.renderKarts()),
+  circuit:    () => import('./tabs/kart.js').then(m => m.renderCircuits()),
 };
 export function bindFilterRadios() {
   document.querySelectorAll('input[type="radio"][name$="Filter"]').forEach(r => {
