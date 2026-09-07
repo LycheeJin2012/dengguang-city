@@ -19,7 +19,7 @@
 // HTML 模板不变 (admin-v37.html 仍可用), 通过 inline onclick 调 window.* 全局函数
 // 这里导出所有需要的全局函数
 import { $, POST, GET, safeRender, fileToDataURLP, cacheClear } from './admin/core.js?v=v46-fix-modules';
-import { renderDash, _ensureTabRendered, bindFilterRadios, showView } from './admin/dash.js?v=v46-fix-modules';
+import { renderDash, _ensureTabRendered, bindFilterRadios, showView, _PANE_REFRESH } from './admin/dash.js?v=v46-fix-modules';
 
 // ---------- Boot ----------
 async function boot() {
@@ -257,15 +257,11 @@ document.addEventListener('click', e => {
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + name));
     setTimeout(() => _ensureTabRendered(name), 0);
   }
-  // 刷新按钮
+  // 刷新按钮 (v50-N6 fix: 改用 dynamic import, 同 dash.js 的 _PANE_REFRESH)
   if (e.target.classList.contains('pane-refresh')) {
     const target = e.target.dataset.target;
-    if (target) {
-      try {
-        const fn = new Function('return ' + target)();
-        safeRender(() => fn());
-      } catch (e) { console.error('refresh failed', e); }
-    }
+    const fn = _PANE_REFRESH[target];
+    if (fn) safeRender(fn);
   }
 });
 

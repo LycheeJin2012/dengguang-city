@@ -15,6 +15,18 @@ const _TAB_RENDER = {
   admins:     () => import('./tabs/admins.js').then(m => m.renderAdminList()),
   password:   async () => { /* 修改密码 — 留给 password.js (Stage 3) */ },
 };
+// v50-N6 fix: pane-refresh 按钮 (admin-v37.html 里的 .pane-refresh data-target="renderXxx")
+// 之前用 eval/new Function 找不到 module 导出的 renderDms 等
+// 改成 key → dynamic import, 跟 _TAB_RENDER 同 pattern
+export const _PANE_REFRESH = {
+  renderTickets:       () => import('./tabs/tickets.js').then(m => m.renderTickets()),
+  renderAdminList:     () => import('./tabs/admins.js').then(m => m.renderAdminList()),
+  renderPlayers:       () => import('./tabs/players.js').then(m => m.renderPlayers()),
+  renderKarts:         () => import('./tabs/kart.js').then(m => m.renderKarts()),
+  renderAnnouncements: () => import('./tabs/announcements.js').then(m => m.renderAnnouncements()),
+  renderDms:           () => import('./tabs/dms.js').then(m => m.renderDms()),
+  renderGallery:       () => import('./tabs/gallery.js').then(m => m.renderGallery()),
+};
 export function _ensureTabRendered(tab) {
   const fn = _TAB_RENDER[tab];
   if (fn) safeRender(fn);
@@ -45,11 +57,12 @@ export function bindFilterRadios() {
       }, 200);
     });
   });
-  // 刷新按钮
+  // 刷新按钮 (v50-N6 fix: renderDms 等是 module 导出, eval/new Function 找不到 → 改 dynamic import)
   document.querySelectorAll('.pane-refresh').forEach(b => {
     b.addEventListener('click', () => {
       const target = b.dataset.target;
-      if (target) safeRender(() => eval(target + '()'));  // 注意: 仅 trusted source
+      const fn = _PANE_REFRESH[target];
+      if (fn) safeRender(fn);
     });
   });
 }
