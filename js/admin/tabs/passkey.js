@@ -32,15 +32,15 @@ function showPasskeyOffer(adminId, dismissKey) {
   bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
   bd.innerHTML = `
     <div style="background:#fff;border:3px solid #000;box-shadow:6px 6px 0 #000;padding:24px;max-width:480px;width:100%">
-      <h3 style="margin:0 0 12px">🔑 添加通行密钥 (推荐)</h3>
+      <h3 style="margin:0 0 12px">🔑 ${t('admin.passkey.offer.title', '添加通行密钥 (推荐)')}</h3>
       <p style="font-size:14px;line-height:1.6;color:#333">
-        通行密钥 (Passkey) 用 Touch ID / Face ID / Windows Hello 登录，<b>无需输密码</b>，抗钓鱼。
+        ${t('admin.passkey.offer.desc', '通行密钥 (Passkey) 用 Touch ID / Face ID / Windows Hello 登录，<b>无需输密码</b>，抗钓鱼。')}
       </p>
-      <p style="font-size:13px;color:#888">下次登录直接指纹, 不再忘记密码。</p>
+      <p style="font-size:13px;color:#888">${t('admin.passkey.offer.sub', '下次登录直接指纹, 不再忘记密码。')}</p>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
-        <button id="pkDismiss" style="background:#888;color:#fff;border:none;padding:9px 16px;cursor:pointer;font-size:13px">7 天内不再提示</button>
-        <button id="pkLater" style="background:#aaa;color:#fff;border:none;padding:9px 16px;cursor:pointer;font-size:13px">稍后</button>
-        <button id="pkAdd" style="background:#6cf;color:#000;border:none;padding:9px 16px;cursor:pointer;font-weight:bold;font-size:13px">🔑 立即添加</button>
+        <button id="pkDismiss" style="background:#888;color:#fff;border:none;padding:9px 16px;cursor:pointer;font-size:13px">${t('admin.passkey.offer.dismiss', '7 天内不再提示')}</button>
+        <button id="pkLater" style="background:#aaa;color:#fff;border:none;padding:9px 16px;cursor:pointer;font-size:13px">${t('passkey.offer.laterBtn', '稍后')}</button>
+        <button id="pkAdd" style="background:#6cf;color:#000;border:none;padding:9px 16px;cursor:pointer;font-weight:bold;font-size:13px">🔑 ${t('admin.passkey.offer.addNow', '立即添加')}</button>
       </div>
     </div>`;
   document.body.appendChild(bd);
