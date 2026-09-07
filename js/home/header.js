@@ -2,6 +2,7 @@
 // 原 main.js L1857-1960 拆出来
 import { $, escHtml, GET } from './util.js?v=v46-fix-modules';
 import { openLoginModal } from './auth.js?v=v46-fix-modules';
+import { t } from '../i18n/core.js?v=n5';
 import { openSigninModal } from './signin.js?v=v46-fix-modules';
 const _toast = (msg, type) => window._toast && window._toast(msg, type);
 
@@ -173,23 +174,24 @@ export function bindServiceButtons() {
   if (srvRegister) {
     srvRegister.addEventListener('click', e => {
       e.preventDefault();
-      openLoginModal('新市民注册 · 填写用户名+邮箱+密码即可', 'register');
+      openLoginModal(t('service.registerPrompt', '新市民注册 · 填写用户名+邮箱+密码即可'), 'register');
     });
   }
   // v50-N6: 其余 5 个服务卡 → 跳到留言板, 预填类型
+  // v50-N6: type 现在用 i18n key, gotoContactForm 内回查 select 里的实际 value (多语言都通)
   const serviceMap = [
-    { id: 'srvLand',     type: '合作' },  // 地块认领 → 合作/咨询
-    { id: 'srvBuild',    type: '咨询' },  // 建筑报建 → 咨询
-    { id: 'srvPower',    type: '投诉' },  // 用电报装 → 投诉/咨询
-    { id: 'srvMarket',   type: '合作' },  // 市集摊位 → 合作
-    { id: 'srvFeedback', type: '建议' },  // 建议与投诉 → 建议
+    { id: 'srvLand',     typeKey: 'service.type.land' },      // 地块认领 → 合作/咨询
+    { id: 'srvBuild',    typeKey: 'service.type.build' },     // 建筑报建 → 咨询
+    { id: 'srvPower',    typeKey: 'service.type.power' },     // 用电报装 → 投诉/咨询
+    { id: 'srvMarket',   typeKey: 'service.type.market' },    // 市集摊位 → 合作
+    { id: 'srvFeedback', typeKey: 'service.type.feedback' },  // 建议与投诉 → 建议
   ];
-  serviceMap.forEach(({ id, type }) => {
+  serviceMap.forEach(({ id, typeKey }) => {
     const el = document.getElementById(id);
     if (!el) return;
     el.addEventListener('click', e => {
       e.preventDefault();
-      gotoContactForm(type);
+      gotoContactForm(t(typeKey));
     });
   });
   const srvSignin = $('#srvSignin');

@@ -360,6 +360,12 @@ const DICT = {
   'topStrip.text':     { 'zh-CN': '本站为灯光市人民政府官方网站（搭建中）。公告与新闻将由市政厅正式发布后呈现。',
                          'en': 'Official site of the Light City Hall (under construction). Announcements will be published by the city hall.' },
   'topStrip.latest':    { 'zh-CN': '最新公告',         'en': 'Latest' },
+  'service.registerPrompt': { 'zh-CN': '新市民注册 · 填写用户名+邮箱+密码即可', 'en': 'New Citizen Signup — fill in username, email, and password' },
+  'service.type.land':     { 'zh-CN': '合作',     'en': 'Partnership' },
+  'service.type.build':    { 'zh-CN': '咨询',     'en': 'Inquiry' },
+  'service.type.power':    { 'zh-CN': '投诉',     'en': 'Complaint' },
+  'service.type.market':   { 'zh-CN': '合作',     'en': 'Partnership' },
+  'service.type.feedback': { 'zh-CN': '建议',     'en': 'Feedback' },
   // 通行密钥 (WebAuthn / Passkey)
   'passkey.empty':         { 'zh-CN': '还没有通行密钥。点击下方按钮添加。', 'en': 'No passkey yet. Click the button below to add one.' },
   'passkey.lastUsed':      { 'zh-CN': '上次使用: ',       'en': 'Last used: ' },
