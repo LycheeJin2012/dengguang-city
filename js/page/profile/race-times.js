@@ -72,11 +72,13 @@ export async function renderRaceCard() {
     const timeStr = ($('#raceTime')?.value || '').trim();
     const kart = ($('#raceKart')?.value || '').trim();
     const msg = $('#raceMsg');
-    const t = parseTimeStr(timeStr);
+    // v50-N6 fix: 之前 const t = parseTimeStr(timeStr) shadow 外层 i18n t()
+    //   后面 t('race.err...') 全崩
+    const ms = parseTimeStr(timeStr);
     if (!trackId) { msg.textContent = t('race.err.noTrack', '请选择赛道'); return; }
-    if (!t) { msg.textContent = t('race.err.badTime', '用时格式不对 (例 1:23.456 或 83.456 秒)'); return; }
+    if (!ms) { msg.textContent = t('race.err.badTime', '用时格式不对 (例 1:23.456 或 83.456 秒)'); return; }
     try {
-      const r = await POST('/api/race-times', { track_id: trackId, time_ms: t, kart_name: kart });
+      const r = await POST('/api/race-times', { track_id: trackId, time_ms: ms, kart_name: kart });
       msg.style.color = 'var(--c-emerald)';
       msg.textContent = '✓ ' + t('race.recorded', '已记录') + ' ' + r.formatted + ', ' + t('race.waitVerify', '等管理员确认后入榜');
       renderRaceCard();

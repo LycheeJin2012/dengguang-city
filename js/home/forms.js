@@ -533,27 +533,28 @@ export async function loadKartSpecs() {
   if (!specEls.length && !mapImg && !priceEl) return;
   try {
     const bundle = await getBundle();
-    const tracks = (bundle.tracks || []).filter(t => t.is_active);
+    const tracks = (bundle.tracks || []).filter(tr => tr.is_active);
     if (!tracks.length) {
       specEls.forEach(el => el.textContent = t('common.empty', '暂无数据'));
-      if (priceEl) priceEl.textContent = '试车价格待公告';
+      if (priceEl) priceEl.textContent = t('track.price.tbd', '试车价格待公告');
       return;
     }
     const set = (key, val) => {
       const el = document.querySelector(`#kartSpecs [data-spec="${key}"]`);
       if (el) el.textContent = val;
     };
-    const t = tracks[0];
-    set('length', t.length_km ? t.length_km + ' km' : '—');
+    // v50-N6 fix: 之前用 `const t = tracks[0]` shadow 外层 i18n t() → 后面的 t('...') 全崩
+    const tr = tracks[0];
+    set('length', tr.length_km ? tr.length_km + ' ' + t('spec.km', 'km') : '—');
     set('lanes', '—');
     set('curves', '—');
     set('tunnel', '—');
-    set('surface', t.name && t.name.includes('冰') ? '红石冰道' : (t.name || '—'));
+    set('surface', tr.name && tr.name.includes('冰') ? t('spec.surface.ice', '红石冰道') : (tr.name || '—'));
     set('record', '—');
-    if (mapImg && t.image_url) mapImg.src = t.image_url;
+    if (mapImg && tr.image_url) mapImg.src = tr.image_url;
     if (priceEl) {
-      if (t.trial_price && t.trial_price > 0) priceEl.textContent = `试车 ¥${t.trial_price} 💎/次`;
-      else priceEl.textContent = t('spec.price.tbd');
+      if (tr.trial_price && tr.trial_price > 0) priceEl.textContent = t('track.price.perTrial', '试车 ¥{price} 💎/次').replace('{price}', tr.trial_price);
+      else priceEl.textContent = t('spec.price.tbd', '试车价格待公告');
     }
   } catch (e) {
     specEls.forEach(el => el.textContent = t('common.error.load', '加载失败'));

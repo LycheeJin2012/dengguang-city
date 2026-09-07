@@ -115,6 +115,11 @@ const DICT = {
   'license.netError':       { 'zh-CN': '网络错误，请稍后再试',    'en': 'Network error, please try again later' },
   // 赛车规格
   'spec.price.tbd':          { 'zh-CN': '试车价格待公告',       'en': 'Trial price TBD' },
+  'spec.km':                { 'zh-CN': 'km',                 'en': 'km' },
+  'spec.surface.ice':       { 'zh-CN': '红石冰道',            'en': 'Redstone Ice Track' },
+  'track.price.perTrial':   { 'zh-CN': '试车 ¥{price} 💎/次',   'en': 'Trial ¥{price} 💎/run' },
+  'track.price.tbd':        { 'zh-CN': '试车价格待公告',        'en': 'Trial price TBD' },
+  'track.price.loadFail':   { 'zh-CN': '试车价格加载失败',      'en': 'Failed to load trial price' },
   'license.grade.B':        { 'zh-CN': 'B 级（初级）',         'en': 'B (Beginner)' },
   'license.grade.A':        { 'zh-CN': 'A 级（中级）',         'en': 'A (Intermediate)' },
   'license.grade.S':        { 'zh-CN': 'S 级（高级 / 职业）',  'en': 'S (Advanced / Pro)' },
