@@ -59,24 +59,24 @@ function openNewDM() {
       if (_onThreadOpen) _onThreadOpen(username.trim());
       loadList();
     } else {
-      alert('发送失败：' + (d.error || ''));
+      alert(t('dm.sendFail', '发送失败：') + (d.error || ''));
     }
-  }).catch(e => alert('发送失败：' + e.message));
+  }).catch(e => alert(t('dm.sendFail', '发送失败：') + e.message));
 }
 
 function openAiBot() {
-  const content = prompt('给 AI 客服灯灯留言（100 字以内）：');
+  const content = prompt(t('dm.aiBot.prompt', '给 AI 客服灯灯留言（100 字以内）：'));
   if (!content || !content.trim()) return;
   const text = content.trim().slice(0, 100);
   POST('/api/social?action=dm-send', { to_username: '灯灯客服', content: text })
     .then(d => {
-      if (!d.ok) { alert('发送失败：' + (d.error || '')); return; }
+      if (!d.ok) { alert(t('dm.sendFail', '发送失败：') + (d.error || '')); return; }
       if (_onThreadOpen) _onThreadOpen('灯灯客服');
       loadList();
       // 等 1.8s 看 AI 回复
       setTimeout(async () => { await loadList(); }, 1800);
     })
-    .catch(e => alert('发送失败：' + e.message));
+    .catch(e => alert(t('dm.sendFail', '发送失败：') + e.message));
 }
 
 export function bindListActions() {

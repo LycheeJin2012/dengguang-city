@@ -109,6 +109,8 @@ const DICT = {
   'license.written':         { 'zh-CN': '笔试 - 选择题 + 简答',  'en': 'Written - Multiple choice + Short answer' },
   'license.road':            { 'zh-CN': '路考 - 实景驾驶',      'en': 'Road test - Live driving' },
   'license.upgrade':         { 'zh-CN': '升级赛 - 极限测试',    'en': 'Upgrade race - Extreme test' },
+  'license.modalTitle':      { 'zh-CN': '{grade} 级驾照报名',  'en': '{grade}-Tier License Signup' },
+  'license.gradeLabel':      { 'zh-CN': '{grade} 级',          'en': 'Tier {grade}' },
   'license.signupPrompt':    { 'zh-CN': '请先登录玩家账号再报名考试', 'en': 'Log in to sign up for the exam' },
   'license.netError':       { 'zh-CN': '网络错误，请稍后再试',    'en': 'Network error, please try again later' },
   // 赛车规格
@@ -452,6 +454,7 @@ const DICT = {
   // DM 发起新会话 (list.js)
   'dm.new.usernamePrompt': { 'zh-CN': '收件人用户名（对方必须是已激活的玩家）:', 'en': 'Recipient username (must be an active player):' },
   'dm.new.contentPrompt':  { 'zh-CN': '私信内容：',         'en': 'Message content:' },
+  'dm.aiBot.prompt':       { 'zh-CN': '给 AI 客服灯灯留言（100 字以内）：', 'en': 'Message to AI Support (max 100 chars):' },
   // admin 工单派单 modal (替代 prompt)
   'admin.ticket.modal.assignTitle': { 'zh-CN': '派单',     'en': 'Assign' },
   'admin.ticket.unassign': { 'zh-CN': '— 不派单 —',         'en': '— Unassigned —' },

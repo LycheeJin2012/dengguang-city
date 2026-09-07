@@ -202,13 +202,15 @@ function bindLicense() {
   let _type = 'written';
   const open = (type, grade) => {
     _type = type;
+    // 注意: 先把 i18n 调完, 再用 t 作为 DOM 元素 (避免 shadow)
     const typeMap = {
       written: t('license.written'),
       road: t('license.road'),
       upgrade: t('license.upgrade'),
     };
-    const t = $('#licenseTitle'); if (t) t.textContent = `${grade} 级驾照报名`;
-    const gl = $('#licenseGradeLabel'); if (gl) gl.textContent = `${grade} 级`;
+    const titleEl = $('#licenseTitle');
+    if (titleEl) titleEl.textContent = t('license.modalTitle', '{grade} 级驾照报名').replace('{grade}', grade);
+    const gl = $('#licenseGradeLabel'); if (gl) gl.textContent = t('license.gradeLabel', '{grade} 级').replace('{grade}', grade);
     const tl = $('#licenseTypeLabel'); if (tl) tl.textContent = typeMap[type] || '';
     const c = $('#licenseContact'); if (c) c.value = '';
     const n = $('#licenseNote'); if (n) n.value = '';
