@@ -141,11 +141,9 @@ export function renderRooms() {
       const id = parseInt(btn.dataset.id, 10);
       const room = ROOMS.find(x => x.id === id);
       if (!room) return;
-      // 动态 import 避免循环
-      import('./book.js').then(m => {
-        if (btn.dataset.action === 'detail') m.openRoomDetail(room);
-        else m.openBookModal(room);
-      });
+      // v50-N6 fix: detail 调本文件 openRoomDetail, book 按钮才动态 import book.js (避免循环)
+      if (btn.dataset.action === 'detail') openRoomDetail(room);
+      else import('./book.js').then(m => m.openBookModal(room));
     });
   });
 }

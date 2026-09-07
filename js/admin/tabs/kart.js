@@ -101,7 +101,7 @@ export function kartCircuitEdit(it, kind) {
   bd.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
   bd.innerHTML = `
     <div style="background:#fff;border:3px solid #000;box-shadow:6px 6px 0 #000;padding:24px;max-width:520px;width:100%">
-      <h3 style="margin:0 0 12px">✎ 编辑 ${_KIND_LABEL[kind]}</h3>
+      <h3 style="margin:0 0 12px">✎ ${t('admin.kart.editTitle', '编辑')} ${_kindLabel(kind)}</h3>
       <div style="display:grid;gap:10px">
         <label style="display:flex;flex-direction:column;gap:4px;font-size:12px">
           <span>姓名</span><input id="kcName" type="text" value="${esc(it.name)}" style="padding:6px 8px;border:1px solid #888">
