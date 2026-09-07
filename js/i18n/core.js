@@ -258,6 +258,11 @@ const DICT = {
   'dm.empty.noMsgs':   { 'zh-CN': '还没有消息，发起对话吧！', 'en': 'No messages yet. Start a conversation!' },
   'dm.slow':           { 'zh-CN': '网络好像有点慢',     'en': 'Network seems slow' },
   'dm.needLogin':      { 'zh-CN': '请先登录玩家账号',   'en': 'Please log in to a player account' },
+  'dm.inbox':          { 'zh-CN': '私信收件箱',         'en': 'DM Inbox' },
+  'dm.aibot.btn':      { 'zh-CN': '找 AI 客服灯灯聊聊',  'en': 'Chat with AI Support' },
+  'dm.aibot.hint':     { 'zh-CN': '24h 自动回复 · 100 字内', 'en': '24h auto-reply · max 100 chars' },
+  'dm.err.isAdmin':    { 'zh-CN': '当前是管理员账号, 没有关联玩家身份', 'en': 'This is an admin account, no linked player' },
+  'dm.err.timeoutShort':{ 'zh-CN': '网络超时/失败: ',    'en': 'Network timeout/failure: ' },
   // admin-v37 tab 标签
   'admin.tab.tickets':      { 'zh-CN': '工单中心',         'en': 'Tickets' },
   'admin.tab.players':      { 'zh-CN': '玩家管理',         'en': 'Players' },

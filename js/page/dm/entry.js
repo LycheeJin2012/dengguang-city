@@ -28,8 +28,8 @@ setMetaDescription('page.meta.dm', 'Light City DM - AI assistant DengDeng & play
     const d = await r.json();
     if (r.ok && d.ok && d.player && d.player.status === 'active') me = d.player;
     else if (!r.ok) errMsg = 'session ' + r.status;
-    else if (d.ok && !d.player) errMsg = '当前是管理员账号, 没有关联玩家身份';
-  } catch (e) { errMsg = '网络超时/失败: ' + (e?.message || e); }
+    else if (d.ok && !d.player) errMsg = t('dm.err.isAdmin', '当前是管理员账号, 没有关联玩家身份');
+  } catch (e) { errMsg = t('dm.err.timeoutShort', '网络超时/失败: ') + (e?.message || e); }
 
   // 3. 顶栏
   renderSubpageNav($('#navUserSlot'), me, false);
@@ -61,13 +61,13 @@ setMetaDescription('page.meta.dm', 'Light City DM - AI assistant DengDeng & play
     <div class="dm-wrap">
       <div class="dm-panel dm-list-panel">
         <div class="dm-head">
-          <span>📨 私信收件箱</span>
+          <span>📨 ${t('dm.inbox', '私信收件箱')}</span>
           <button class="dm-new-btn" id="dmNewBtn">${t('dm.newBtn')}</button>
         </div>
         <div class="dm-list" id="dmList"><div class="dm-empty">${t('dm.loading')}</div></div>
         <div class="dm-aibot-bar">
-          <button id="dmAiBotBtn" class="dm-aibot-btn">🤖 找 AI 客服灯灯聊聊</button>
-          <div class="dm-aibot-hint">24h 自动回复 · 100 字内</div>
+          <button id="dmAiBotBtn" class="dm-aibot-btn">🤖 ${t('dm.aibot.btn', '找 AI 客服灯灯聊聊')}</button>
+          <div class="dm-aibot-hint">${t('dm.aibot.hint', '24h 自动回复 · 100 字内')}</div>
         </div>
       </div>
       <div class="dm-panel dm-thread">
