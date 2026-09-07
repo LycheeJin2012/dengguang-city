@@ -418,6 +418,7 @@ const DICT = {
   'hotel.view.scenery':     { 'zh-CN': '景观',           'en': 'Scenery' },
   'admin.ann.btn.edit':     { 'zh-CN': '编辑',            'en': 'Edit' },
   'admin.ann.btn.delete':   { 'zh-CN': '删除',            'en': 'Delete' },
+  'common.backTop':         { 'zh-CN': '回到顶部',         'en': 'Back to Top' },
   // 公告卡 UI 标签
   'ann.tag.latest':         { 'zh-CN': '最新',           'en': 'Latest' },
   'ann.tag.normal':         { 'zh-CN': '公告',           'en': 'Notice' },
@@ -650,6 +651,12 @@ function applyToDOM() {
   titleEls.forEach(el => {
     const key = el.getAttribute('data-i18n-title');
     el.title = t(key, el.title);
+  });
+  // aria-label 属性也支持 (v50-N6: a11y)
+  const ariaEls = document.querySelectorAll('[data-i18n-aria]');
+  ariaEls.forEach(el => {
+    const key = el.getAttribute('data-i18n-aria');
+    el.setAttribute('aria-label', t(key, el.getAttribute('aria-label') || ''));
   });
   // placeholder 属性也支持
   const phEls = document.querySelectorAll('[data-i18n-placeholder]');
