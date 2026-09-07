@@ -202,16 +202,53 @@ function openReply(id, list) {
   setTimeout(() => bd.querySelector('#tktReply')?.focus(), 50);
 }
 
+// v50-N6: 派单用 modal + select 下拉 (替代 prompt 输入 ID, 体验更好)
 async function openAssignee(id, list) {
   const tk = list.find(x => x.id === id);
   if (!tk) return;
-  const promptText = t('admin.ticket.assignPrompt') + '\n' + t('admin.ticket.assignCurrent') + ' ' + (tk.assignee_username || '—');
-  const input = prompt(promptText, tk.assignee_id ? String(tk.assignee_id) : '');
-  if (input === null) return;
-  const aid = parseInt(input, 10) || null;
-  try {
-    await PATCH('/api/tickets?id=' + id, { assignee_id: aid });
-    if (window._toast) window._toast(t('admin.ticket.toast.assigned'), 'success');
-    renderTickets();
-  } catch (e) { if (window._toast) window._toast(t('admin.ticket.toast.fail') + e.message, 'error'); }
+  // 拉 admin 列表
+  let admins = [];
+  try { const d = await GET('/api/admin/admins'); admins = d.admins || []; } catch (e) { console.warn('[tickets] 拉 admins 失败', e); }
+  // 移除旧 modal
+  const old = document.getElementById('tktAssignBackdrop');
+  if (old) old.remove();
+  const bd = document.createElement('div');
+  bd.id = 'tktAssignBackdrop';
+  bd.className = 'modal-mask';
+  bd.innerHTML = `
+    <div class="modal" style="max-width:420px">
+      <div class="modal-head">
+        <h3>${t('admin.ticket.modal.assignTitle', '派单')} #${id}</h3>
+        <button class="modal-close" id="asnClose">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin:0 0 12px 0;color:var(--c-stone-dark)">${esc(tk.title || '')}</p>
+        <label style="display:block;margin-bottom:8px">
+          <span>${t('admin.ticket.assignLabel')}</span>
+          <select id="asnSelect" style="width:100%;padding:6px;border:2px solid var(--c-stone);font-family:inherit;background:var(--c-bg-1);margin-top:4px">
+            <option value="">${t('admin.ticket.unassign', '— 不派单 —')}</option>
+            ${admins.map(a => `<option value="${a.id}" ${a.id === tk.assignee_id ? 'selected' : ''}>${esc(a.username)}${a.role === 'super' ? ' 🛡️' : ''}</option>`).join('')}
+          </select>
+        </label>
+      </div>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" id="asnCancel">${t('admin.ticket.modal.cancel')}</button>
+        <button class="btn btn-primary" id="asnSubmit">${t('admin.ticket.modal.submit')}</button>
+      </div>
+    </div>`;
+  document.body.appendChild(bd);
+  const close = () => bd.remove();
+  bd.querySelector('#asnClose').onclick = close;
+  bd.querySelector('#asnCancel').onclick = close;
+  bd.addEventListener('click', e => { if (e.target === bd) close(); });
+  bd.querySelector('#asnSubmit').onclick = async () => {
+    const v = bd.querySelector('#asnSelect').value;
+    const aid = v ? parseInt(v, 10) : null;
+    try {
+      await PATCH('/api/tickets?id=' + id, { assignee_id: aid });
+      if (window._toast) window._toast(t('admin.ticket.toast.assigned'), 'success');
+      close();
+      renderTickets();
+    } catch (e) { if (window._toast) window._toast(t('admin.ticket.toast.fail') + e.message, 'error'); }
+  };
 }

@@ -392,6 +392,9 @@ const DICT = {
   // DM 发起新会话 (list.js)
   'dm.new.usernamePrompt': { 'zh-CN': '收件人用户名（对方必须是已激活的玩家）:', 'en': 'Recipient username (must be an active player):' },
   'dm.new.contentPrompt':  { 'zh-CN': '私信内容：',         'en': 'Message content:' },
+  // admin 工单派单 modal (替代 prompt)
+  'admin.ticket.modal.assignTitle': { 'zh-CN': '派单',     'en': 'Assign' },
+  'admin.ticket.unassign': { 'zh-CN': '— 不派单 —',         'en': '— Unassigned —' },
   // hero
   'hero.tag':         { 'zh-CN': '灯光市人民政府 · 官方站点', 'en': 'Light City Hall · Official Site' },
   'hero.welcome':     { 'zh-CN': '欢 迎 来 到', 'en': 'WELCOME TO' },
