@@ -7,7 +7,7 @@
 import { bindClouds } from './home/clouds.js';
 import { bindReveal } from './home/reveal.js';
 import { bindAll as bindHero } from './home/hero.js';
-import { loadAnnouncements } from './home/announcements.js';
+import { loadAnnouncements, loadTopStripNotice } from './home/announcements.js';
 import { loadPublicMessages } from './home/messages.js';
 import { loadGallery } from './home/gallery.js';
 import { loadHotelRooms, loadKartSpecs, loadLicenseReqs, bindAll as bindForms } from './home/forms.js';
@@ -33,6 +33,7 @@ window.openSigninModal = openSigninModal;
 
   // 2. 数据加载: 拉后端数据覆盖 hardcoded 草拟
   loadAnnouncements();
+  loadTopStripNotice();
   loadPublicMessages();
   loadGallery();
   loadHotelRooms();

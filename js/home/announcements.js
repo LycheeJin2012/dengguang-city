@@ -87,3 +87,17 @@ export function showAnnModal(ann) {
   bd.querySelector('#annClose').onclick = close;
   bd.querySelector('#annClose2').onclick = close;
 }
+
+// v50-N6: 顶 strip 同步显示最新公告标题 (有公告时) — 不破坏 fallback 文案
+export async function loadTopStripNotice() {
+  const strip = document.querySelector('.top-strip .strip-text');
+  if (!strip) return;
+  try {
+    const d = await GET('/api/announcements');
+    const list = d.announcements || [];
+    if (list.length) {
+      const latest = list[0];
+      strip.innerHTML = `📢 ${t('topStrip.latest', '最新公告')}: <b>${escHtml(latest.title)}</b>`;
+    }
+  } catch (e) { /* 失败保留 i18n fallback 文字 */ }
+}

@@ -291,6 +291,7 @@ const DICT = {
   'contact.title':     { 'zh-CN': '联系我们',  'en': 'Contact Us' },
   'topStrip.text':     { 'zh-CN': '本站为灯光市人民政府官方网站（搭建中）。公告与新闻将由市政厅正式发布后呈现。',
                          'en': 'Official site of the Light City Hall (under construction). Announcements will be published by the city hall.' },
+  'topStrip.latest':    { 'zh-CN': '最新公告',         'en': 'Latest' },
   // hero
   'hero.tag':         { 'zh-CN': '灯光市人民政府 · 官方站点', 'en': 'Light City Hall · Official Site' },
   'hero.welcome':     { 'zh-CN': '欢 迎 来 到', 'en': 'WELCOME TO' },
