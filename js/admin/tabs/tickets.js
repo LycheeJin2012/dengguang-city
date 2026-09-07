@@ -143,6 +143,8 @@ export async function renderTickets() {
       el.querySelector('[data-act="reopen"]')?.addEventListener('click', () => updateStatus(id, 'open'));
       el.querySelector('[data-act="assignee"]').onclick = () => openAssignee(id, list);
     });
+    // v50-N6: 导出 CSV 按钮
+    document.getElementById('ticketExport')?.addEventListener('click', () => exportTicketsCsv(list));
   });
 }
 
@@ -251,4 +253,46 @@ async function openAssignee(id, list) {
       renderTickets();
     } catch (e) { if (window._toast) window._toast(t('admin.ticket.toast.fail') + e.message, 'error'); }
   };
+}
+
+// v50-N6: 工单列表导出 CSV
+function exportTicketsCsv(list) {
+  if (!list || !list.length) {
+    if (window._toast) window._toast(t('admin.ticket.toast.exportEmpty', '当前列表为空，无可导出数据'), 'info');
+    return;
+  }
+  // 表头: 工单 ID / 类型 / 标题 / 状态 / 优先级 / 提交人 / 联系方式 / 派单人 / 创建时间 / 回复 / 回复时间
+  const headers = ['ID', 'Category', 'Title', 'Status', 'Priority', 'Player', 'Contact', 'Assignee', 'Created', 'Reply', 'Replied At'];
+  // CSV 转义: 含 , " \n 的字段用 " 包, 内部 " 转 ""
+  const esc = v => {
+    if (v == null) return '';
+    const s = String(v);
+    return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+  };
+  const rows = list.map(tk => [
+    tk.id,
+    tk.category || '',
+    tk.title || '',
+    tk.status || '',
+    tk.priority || '',
+    tk.player_username || '',
+    tk.contact || '',
+    tk.assignee_username || '',
+    (tk.created_at || '').slice(0, 19).replace('T', ' '),
+    (tk.admin_reply || '').replace(/\n/g, ' '),
+    (tk.replied_at || '').slice(0, 19).replace('T', ' '),
+  ].map(esc).join(','));
+  // 加 UTF-8 BOM 让 Excel 正确识别中文
+  const csv = '\ufeff' + [headers.join(','), ...rows].join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const ts = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `tickets-${ts}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  if (window._toast) window._toast(t('admin.ticket.toast.exported', '已导出') + ` ${list.length} ` + t('admin.ticket.toast.exportedUnit', '条工单'), 'success');
 }

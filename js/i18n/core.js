@@ -395,6 +395,10 @@ const DICT = {
   // admin 工单派单 modal (替代 prompt)
   'admin.ticket.modal.assignTitle': { 'zh-CN': '派单',     'en': 'Assign' },
   'admin.ticket.unassign': { 'zh-CN': '— 不派单 —',         'en': '— Unassigned —' },
+  'admin.ticket.btn.export':{ 'zh-CN': '📥 导出 CSV',         'en': '📥 Export CSV' },
+  'admin.ticket.toast.exportEmpty':  { 'zh-CN': '当前列表为空，无可导出数据', 'en': 'List is empty. Nothing to export.' },
+  'admin.ticket.toast.exported':     { 'zh-CN': '已导出',           'en': 'Exported' },
+  'admin.ticket.toast.exportedUnit': { 'zh-CN': '条工单',           'en': 'tickets' },
   // hero
   'hero.tag':         { 'zh-CN': '灯光市人民政府 · 官方站点', 'en': 'Light City Hall · Official Site' },
   'hero.welcome':     { 'zh-CN': '欢 迎 来 到', 'en': 'WELCOME TO' },
