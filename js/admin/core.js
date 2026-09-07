@@ -22,10 +22,24 @@ export const fmt = iso => {
     ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
 };
 
-// ---------- 通用标签映射 ----------
-export const STATUS_LABEL = { pending: '待审批', active: '已激活', rejected: '已拒绝' };
-export const EXAM_LABEL = { written: 'B 级笔试', road: 'A 级路考', upgrade: 'S 级升级' };
-export const EXAM_BADGE = { pending: '待审', passed: '✓ 通过', failed: '✗ 未通过' };
+// ---------- 通用标签映射 (v50-N6: 走 i18n) ----------
+//   之前 STATUS_LABEL 直接是中文, 英文面板硬编码显示中文
+//   现在是 getter 拿 t(), 跟其他模块一致
+function _statusLabel() {
+  return { pending: t('admin.statusLabel.pending'), active: t('admin.statusLabel.active'), rejected: t('admin.statusLabel.rejected') };
+}
+function _examLabel() {
+  return { written: t('admin.examLabel.written'), road: t('admin.examLabel.road'), upgrade: t('admin.examLabel.upgrade') };
+}
+function _examBadge() {
+  return { pending: t('admin.examBadge.pending'), passed: t('admin.examBadge.passed'), failed: t('admin.examBadge.failed') };
+}
+// 兼容旧用法: STATUS_LABEL[key] 仍可用 (重定义为 Proxy 会更复杂, 干脆改成 named export)
+export const STATUS_LABEL = new Proxy({}, { get: (_, k) => t('admin.statusLabel.' + k) });
+export const EXAM_LABEL = new Proxy({}, { get: (_, k) => t('admin.examLabel.' + k) });
+export const EXAM_BADGE = new Proxy({}, { get: (_, k) => t('admin.examBadge.' + k) });
+// 同时 export 函数式, 避免 Proxy 在旧调用方误用
+export { _statusLabel as getStatusLabel, _examLabel as getExamLabel, _examBadge as getExamBadge };
 
 // ---------- API wrapper (fetch + JSON + cookie) ----------
 // v47.3 修: 401 不 throw (跟 home/util.js#api 行为一致, 业务状态不是错误)
@@ -58,12 +72,12 @@ export async function safeRender(fn) {
     const _ld = document.getElementById('bootLoading');
     if (_ld) _ld.remove();
     const el = document.getElementById('loginError');
-    if (el) el.textContent = '加载失败: ' + e.message;
+    if (el) el.textContent = t('admin.common.loadFail', '加载失败: ') + e.message;
     const tab = document.querySelector('.tab-pane.active');
     if (tab) {
       tab.innerHTML = `<div class="empty-state" style="border-color:#c33;background:#fee">
         <div class="empty-icon">⚠️</div>
-        <p style="color:#c33"><b>渲染失败</b></p>
+        <p style="color:#c33"><b>${esc(t('admin.common.renderFail', '渲染失败'))}</b></p>
         <p class="empty-sub">${esc(e.message || String(e))}</p>
       </div>`;
     }
@@ -107,7 +121,7 @@ export function fileToDataURLP(input) {
     const f = input.files && input.files[0];
     if (!f) return resolve(null);
     if (f.size > 100 * 1024 * 1024) {
-      if (window._toast) window._toast('文件太大 (上限 100MB)', 'error');
+      if (window._toast) window._toast(t('admin.common.fileTooBig', '文件太大 (上限 100MB)'), 'error');
       input.value = '';
       return resolve(null);
     }
