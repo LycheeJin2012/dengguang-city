@@ -23,6 +23,10 @@ export function renderProfile(me, profile, stats) {
   if (pAvatar) pAvatar.textContent = profile.avatar_emoji || '👤';
   const bio = (profile.bio || '').trim();
   const created = (profile.created_at || '').slice(0, 10);
+  // v50-N6: 算"加入天数" — 城市归属感小细节, 从注册日到今天的天数
+  const daysSinceJoin = profile.created_at
+    ? Math.max(0, Math.floor((Date.now() - new Date(profile.created_at + 'Z').getTime()) / 86400000))
+    : 0;
   const regDateL = t('profile.regDate', '注册日期：');
   const noBioL = t('profile.noBio', '这位玩家还没有写个人简介…');
   const editL = t('profile.editBtn', '✏️ 编辑我的主页');
@@ -32,6 +36,7 @@ export function renderProfile(me, profile, stats) {
   const loginToDmL = t('profile.loginToDm', '登录后发私信');
   const msgL = t('profile.stat.messages', '留 言');
   const cmtL = t('profile.stat.comments', '评 论');
+  const dayL = t('profile.stat.days', '天');
   const actionsHtml = _isSelf
     ? `<div class="profile-actions">
          <button id="btnEdit" class="btn btn-primary">${editL}</button>
@@ -52,6 +57,7 @@ export function renderProfile(me, profile, stats) {
     <div class="profile-stats">
       <div class="profile-stat"><div class="num">${stats?.messages || 0}</div><div class="lbl">${msgL}</div></div>
       <div class="profile-stat"><div class="num">${stats?.comments || 0}</div><div class="lbl">${cmtL}</div></div>
+      <div class="profile-stat" title="${t('profile.stat.daysTip', '从注册日算起')}"><div class="num">${daysSinceJoin}</div><div class="lbl">${dayL}</div></div>
     </div>
     ${actionsHtml}`;
   if (_isSelf) {

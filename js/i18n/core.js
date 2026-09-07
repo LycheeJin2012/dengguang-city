@@ -368,6 +368,8 @@ const DICT = {
   'license.gradeSuffix':    { 'zh-CN': '级',              'en': 'Tier' },
   'license.btn.signup':     { 'zh-CN': '报名',            'en': 'Apply' },
   'license.btn.examSuffix': { 'zh-CN': '级考试',          'en': 'Exam' },
+  'profile.stat.days':      { 'zh-CN': '天',              'en': 'Days' },
+  'profile.stat.daysTip':   { 'zh-CN': '从注册日算起',     'en': 'Days since joining' },
   'hotel.intro':            { 'zh-CN': '树上酒店（筹建）。选址、规模、定价、运营方由市民大会与合作社讨论后公布。当前展示房型为草案，待合作社定稿后正式上线。',
                                'en': 'Treehouse Hotel (under construction). Site, scale, pricing, and operator will be decided by the Citizens Assembly and the cooperative. Room listings shown are drafts and will go live once finalized.' },
   // 公告卡 UI 标签
