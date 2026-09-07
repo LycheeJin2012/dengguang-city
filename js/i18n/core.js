@@ -404,6 +404,9 @@ const DICT = {
   'admin.players.toast.exportedUnit': { 'zh-CN': '名玩家',           'en': 'players' },
   'admin.dash.lastUpdate':  { 'zh-CN': '数据更新于',         'en': 'Updated at' },
   'admin.dash.refreshTip':  { 'zh-CN': '刷新数据',           'en': 'Refresh data' },
+  'wall.sort.label':        { 'zh-CN': '排序：',             'en': 'Sort:' },
+  'wall.sort.newest':       { 'zh-CN': '最新',               'en': 'Newest' },
+  'wall.sort.oldest':       { 'zh-CN': '最早',               'en': 'Oldest' },
   // hero
   'hero.tag':         { 'zh-CN': '灯光市人民政府 · 官方站点', 'en': 'Light City Hall · Official Site' },
   'hero.welcome':     { 'zh-CN': '欢 迎 来 到', 'en': 'WELCOME TO' },

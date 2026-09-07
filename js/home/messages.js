@@ -1,9 +1,11 @@
 // v45 重写: 公共市民留言墙 (公开 + 评论)
 // v50-N5 Step 15: loading/empty/error 走 i18n
+// v50-N6: 加排序 (最新/最早)
 import { $, escHtml, escHtmlBr, relativeTime, fmtDate, GET, POST, safeRender } from './util.js?v=v46-fix-modules';
 import { t } from '../i18n/core.js?v=n5';
 
 const _pubMsgCache = { data: null, ts: 0 };
+let _sort = 'newest';  // newest | oldest
 const CACHE_TTL = 30_000;
 
 export async function loadPublicMessages() {
@@ -15,7 +17,10 @@ export async function loadPublicMessages() {
       list.innerHTML = `<div class="empty-state"><div class="empty-icon">💬</div><p>${t('messages.empty', '暂无留言, 来抢沙发')}</p></div>`;
       return;
     }
-    list.innerHTML = msgs.map(m => {
+    // v50-N6: 客户端排序 (API 已经按 newest 返回, oldest 需反转)
+  const sorted = _sort === 'oldest' ? [...msgs].reverse() : msgs;
+
+  list.innerHTML = sorted.map(m => {
       const typeLabel = ({ '建议': '💡', '投诉': '⚠️', '咨询': '❓', '合作': '🤝' })[m.type] || '💬';
       const hasReply = m.admin_reply && m.admin_reply.length > 0;
       const replyTag = hasReply
@@ -112,4 +117,15 @@ export async function loadCommentCount(mid) {
     const d = await GET('/api/comments?message_id=' + mid);
     return (d.comments || []).length;
   } catch (e) { return 0; }
+}
+
+// v50-N6: 排序按钮绑定 (在 loadPublicMessages 完成后调一次, 之后切语言 / 切排序都重渲染)
+export function bindWallSort() {
+  document.querySelectorAll('.wall-sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _sort = btn.dataset.sort;
+      document.querySelectorAll('.wall-sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      loadPublicMessages();
+    });
+  });
 }

@@ -8,7 +8,7 @@ import { bindClouds } from './home/clouds.js';
 import { bindReveal } from './home/reveal.js';
 import { bindAll as bindHero } from './home/hero.js';
 import { loadAnnouncements, loadTopStripNotice } from './home/announcements.js';
-import { loadPublicMessages } from './home/messages.js';
+import { loadPublicMessages, bindWallSort } from './home/messages.js';
 import { loadGallery } from './home/gallery.js';
 import { loadHotelRooms, loadKartSpecs, loadLicenseReqs, bindAll as bindForms } from './home/forms.js';
 import { bindAll as bindHeader } from './home/header.js';
@@ -45,6 +45,7 @@ window.openSigninModal = openSigninModal;
   bindForms();
   bindHeader();
   bindAuth();
+  bindWallSort();
 
   // 4. v50-N5: 把语言切换器按钮注入到 .nav-links 末尾, 然后绑事件
   const navLinks = document.getElementById('navLinks');

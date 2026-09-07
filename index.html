@@ -230,10 +230,23 @@
         <h2 class="section-title" data-i18n="section.wall.title">💬 市民留言墙</h2>
         <p class="section-sub" data-i18n="section.wall.sub">PUBLIC WALL · 大家的留言</p>
       </div>
+      <div class="wall-toolbar">
+        <span class="wall-sort-label" data-i18n="wall.sort.label">排序：</span>
+        <button type="button" class="wall-sort-btn active" data-sort="newest" data-i18n="wall.sort.newest">最新</button>
+        <button type="button" class="wall-sort-btn" data-sort="oldest" data-i18n="wall.sort.oldest">最早</button>
+      </div>
       <p class="wall-intro">
         这里是全城市民公开的留言板。留言由市政厅存档,所有人可见。
         如需向市政厅正式提交意见,请到 <a href="#contact" class="wall-link">📬 联系我们</a> 提交。
       </p>
+      <style>
+      /* v50-N6: 留言墙排序按钮 (内联, 避免动 style.min.css) */
+      .wall-toolbar{display:flex;gap:6px;align-items:center;margin:8px 0 12px;flex-wrap:wrap}
+      .wall-sort-label{font-family:'VT323',monospace;font-size:16px;color:var(--c-stone-dark,#5a5a6a)}
+      .wall-sort-btn{background:var(--c-bg-2,#e0d6b1);border:2px solid var(--c-border,#2a2a2a);box-shadow:2px 2px 0 var(--c-border,#2a2a2a);padding:4px 12px;font-family:inherit;font-size:13px;cursor:pointer;transition:transform .08s}
+      .wall-sort-btn:hover{transform:translate(-1px,-1px);box-shadow:3px 3px 0 var(--c-border,#2a2a2a)}
+      .wall-sort-btn.active{background:var(--c-grass,#70ad34);color:#fff}
+      </style>
       <div class="wall-grid" id="publicMessageBoard">
         <div class="empty-state"><div class="empty-icon">💬</div><p>加载中...</p></div>
       </div>
