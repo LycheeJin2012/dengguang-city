@@ -145,6 +145,10 @@
       <button type="button" class="dash-stat" data-tab="players" data-key="playerActive">
         <span class="dash-stat-num">—</span><span class="dash-stat-lbl" data-i18n="admin.stat.playerActive">活跃市民</span>
       </button>
+      <div class="dash-stats-foot">
+        <span id="dashLastUpdate" class="muted" style="font-size:11px"></span>
+        <button type="button" class="btn btn-ghost btn-sm" id="dashRefresh" data-i18n-title="admin.dash.refreshTip" title="刷新数据" style="padding:2px 8px;font-size:11px">🔄</button>
+      </div>
     </div>
 
     <style>
@@ -156,6 +160,7 @@
     .dash-stat-num{font-family:'Press Start 2P',monospace;font-size:18px;color:var(--c-red,#c00);line-height:1}
     .dash-stat-lbl{font-family:'VT323',monospace;font-size:14px;color:var(--c-stone-dark,#5a5a6a);margin-top:6px;letter-spacing:1px}
     .dash-stat-num.zero{color:var(--c-grass-dark,#4a7a2a);opacity:.6}
+    .dash-stats-foot{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px dashed var(--c-stone,#8b8579);margin-top:4px}
     </style>
 
     <!-- Tab 切换 (v47: 留言/驾照/酒店 合并为 tickets 工单) -->

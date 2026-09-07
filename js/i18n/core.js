@@ -402,6 +402,8 @@ const DICT = {
   'admin.players.toast.exportEmpty':  { 'zh-CN': '当前列表为空，无可导出数据', 'en': 'List is empty. Nothing to export.' },
   'admin.players.toast.exported':     { 'zh-CN': '已导出',           'en': 'Exported' },
   'admin.players.toast.exportedUnit': { 'zh-CN': '名玩家',           'en': 'players' },
+  'admin.dash.lastUpdate':  { 'zh-CN': '数据更新于',         'en': 'Updated at' },
+  'admin.dash.refreshTip':  { 'zh-CN': '刷新数据',           'en': 'Refresh data' },
   // hero
   'hero.tag':         { 'zh-CN': '灯光市人民政府 · 官方站点', 'en': 'Light City Hall · Official Site' },
   'hero.welcome':     { 'zh-CN': '欢 迎 来 到', 'en': 'WELCOME TO' },

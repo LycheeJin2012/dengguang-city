@@ -67,6 +67,8 @@ export function renderDash() {
   showView('dash');
   // v50-N6: 拉 dashboard 数字 (角标), 失败静默
   fetchBadges().catch(() => {});
+  // v50-N6: 手动刷新按钮
+  document.getElementById('dashRefresh')?.addEventListener('click', () => fetchBadges().catch(() => {}));
   // v47: 默认 active tab 改为 tickets (替换原 bookings)
   _ensureTabRendered('tickets');
   // 仅 super 可见 DM 监管 tab
@@ -144,4 +146,13 @@ async function fetchBadges() {
       }
     });
   });
+  // v50-N6: 写入"上次刷新"时间戳
+  const upd = document.getElementById('dashLastUpdate');
+  if (upd) {
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mm = String(now.getMinutes()).padStart(2, '0');
+    const ss = String(now.getSeconds()).padStart(2, '0');
+    upd.textContent = t('admin.dash.lastUpdate', '数据更新于') + ` ${hh}:${mm}:${ss}`;
+  }
 }
