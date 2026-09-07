@@ -31,7 +31,7 @@ function prefillContactForm(player) {
   if (nameEl && !nameEl.value) {
     nameEl.value = player.username;
     nameEl.readOnly = true;
-    nameEl.title = '已用你的游戏ID自动填写（市政厅要求：留言姓名 = 注册用户名）';
+    nameEl.title = t('nav.prefillTitle', '已用你的游戏ID自动填写（市政厅要求：留言姓名 = 注册用户名）');
   }
 }
 
@@ -43,17 +43,17 @@ export async function refreshUserState() {
     if (d && d.ok && d.player) {
       const p = d.player;
       const adminLink = p.linked_admin_id
-        ? `<a href="admin.html" class="nav-logout-link nav-admin-link">🛡️ 管理后台</a>`
+        ? `<a href="admin.html" class="nav-logout-link nav-admin-link">🛡️ ${t('nav.admin', '管理后台')}</a>`
         : '';
       slot.innerHTML = `
-        <span class="nav-emerald" title="绿宝石余额">💎 <span id="navEmeraldNum">${p.emeralds || 0}</span></span>
-        <a href="#" id="navSigninBtn" class="nav-logout-link nav-signin-link" title="每日签到领绿宝石">🎁 签到</a>
+        <span class="nav-emerald" title="${t('nav.emeraldTip', '绿宝石余额')}">💎 <span id="navEmeraldNum">${p.emeralds || 0}</span></span>
+        <a href="#" id="navSigninBtn" class="nav-logout-link nav-signin-link" title="${t('nav.signinTip', '每日签到领绿宝石')}">🎁 ${t('nav.signin', '签到')}</a>
         <a href="profile.html" class="nav-user-name nav-profile-link">${escHtml(p.avatar_emoji || '👤')} ${escHtml(p.username)}</a>
         ${adminLink}
-        <a href="profile.html#myMessagesCard" id="navBell" class="nav-logout-link nav-bell" title="通知">🔔<span class="nav-bell-badge" id="navBellBadge" hidden>0</span></a>
-        <a href="dm.html" class="nav-logout-link nav-dm-link">📨 私信<span id="dmBadge" class="nav-badge nav-badge-dm">0</span></a>
-        <a href="#notice" class="nav-logout-link nav-ann-link" id="navAnn">📢<span id="annBadge" class="nav-badge nav-badge-ann">新</span></a>
-        <a href="#" id="navLogout" class="nav-logout-link">登出</a>`;
+        <a href="profile.html#myMessagesCard" id="navBell" class="nav-logout-link nav-bell" title="${t('nav.notif', '通知')}">🔔<span class="nav-bell-badge" id="navBellBadge" hidden>0</span></a>
+        <a href="dm.html" class="nav-logout-link nav-dm-link">📨 ${t('nav.dm', '私信')}<span id="dmBadge" class="nav-badge nav-badge-dm">0</span></a>
+        <a href="#notice" class="nav-logout-link nav-ann-link" id="navAnn">📢<span id="annBadge" class="nav-badge nav-badge-ann">${t('nav.annNew', '新')}</span></a>
+        <a href="#" id="navLogout" class="nav-logout-link">${t('nav.logout', '登出')}</a>`;
       prefillContactForm(p);
       // v50-N4: 主页 nav 同步拉未读通知数, 显示铃铛红点
       fetchHomeUnreadBadge().catch(() => {});
