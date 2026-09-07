@@ -192,7 +192,7 @@ function bindPasskeyLogin() {
     let timeoutId = setTimeout(() => {
       btn.disabled = false;
       btn.textContent = origText;
-      if (msg) { msg.textContent = '✗ 操作超时, 请重试'; msg.style.color = 'var(--c-red, #c33)'; }
+      if (msg) { msg.textContent = t('auth.err.timeout', '✗ 操作超时, 请重试'); msg.style.color = 'var(--c-red, #c33)'; }
       setTimeout(() => { if (msg) msg.style.color = ''; }, 4000);
     }, 30000);
     try {
@@ -209,16 +209,16 @@ function bindPasskeyLogin() {
       if (opts.allowCredentials) {
         opts.allowCredentials = opts.allowCredentials.map(c => ({ ...c, id: b64urlToBuf(c.id) }));
       }
-      btn.textContent = '⏳ 请触摸指纹/Face ID...';
+      btn.textContent = t('passkey.btn.touch', '⏳ 请触摸指纹/Face ID...');
       let cred;
       try {
         cred = await navigator.credentials.get({ publicKey: opts, mediation: 'optional' });
       } catch (we) {
-        if (we.name === 'NotAllowedError') throw new Error('已取消, 请重试');
+        if (we.name === 'NotAllowedError') throw new Error(t('auth.err.cancelled', '已取消, 请重试'));
         throw we;
       }
-      if (!cred) throw new Error('未获得凭据 (设备无注册密钥?)');
-      btn.textContent = '⏳ 验证中...';
+      if (!cred) throw new Error(t('auth.err.noCredential', '未获得凭据 (设备无注册密钥?)'));
+      btn.textContent = t('passkey.btn.verifying', '⏳ 验证中...');
       // v47.5: 玩家端默认 target='player' (不传也行, 后端默认就是 player)
       //   admin 端用 admin.js 自己的 handler 传 'admin'
       const r2 = await fetch('/api/init?action=passkey-login-finish', {
@@ -241,18 +241,18 @@ function bindPasskeyLogin() {
         }),
       });
       const d2 = await r2.json();
-      if (!r2.ok || d2.error) throw new Error(d2.error || '验证失败');
+      if (!r2.ok || d2.error) throw new Error(d2.error || t('auth.err.verifyFail', '验证失败'));
       clearTimeout(timeoutId);
-      if (msg) { msg.textContent = '✓ 通行密钥登录成功！'; msg.style.color = 'var(--c-emerald)'; }
+      if (msg) { msg.textContent = t('passkey.loginSuccess', '✓ 通行密钥登录成功！'); msg.style.color = 'var(--c-emerald)'; }
       // 强制 reload (Set-Cookie 必须 reload 才生效)
       setTimeout(() => { location.reload(); }, 600);
     } catch (e) {
       clearTimeout(timeoutId);
-      const m = e.name === 'NotAllowedError' ? '已取消' :
-                e.name === 'SecurityError' ? '环境不安全 (需要 HTTPS)' :
-                e.name === 'NetworkError' ? '网络错误' :
+      const m = e.name === 'NotAllowedError' ? t('auth.err.cancelled', '已取消') :
+                e.name === 'SecurityError' ? t('auth.err.insecureCtx', '环境不安全 (需要 HTTPS)') :
+                e.name === 'NetworkError' ? t('auth.err.network', '网络错误：').replace(/：$/, '') :
                 (e.message || String(e));
-      if (msg) { msg.textContent = '✗ 通行密钥失败: ' + m; msg.style.color = 'var(--c-red, #c33)'; }
+      if (msg) { msg.textContent = t('passkey.loginFailPrefix', '✗ 通行密钥失败: ') + m; msg.style.color = 'var(--c-red, #c33)'; }
       setTimeout(() => { if (msg) msg.style.color = ''; }, 5000);
     } finally {
       clearTimeout(timeoutId);
@@ -291,14 +291,14 @@ function showPasskeyOffer(userId, dismissKey) {
       <div class="passkey-toast-head">
         <span class="passkey-toast-icon">🔑</span>
         <div class="passkey-toast-body">
-          <b class="passkey-toast-title">欢迎！要不要顺便注册通行密钥？</b>
-          <div class="passkey-toast-sub">下次可指纹 / Face ID 一键登录，不用记密码</div>
+          <b class="passkey-toast-title">${esc(t('passkey.offer.title', '欢迎！要不要顺便注册通行密钥？'))}</b>
+          <div class="passkey-toast-sub">${esc(t('passkey.offer.sub', '下次可指纹 / Face ID 一键登录，不用记密码'))}</div>
         </div>
         <button type="button" id="pkoClose" class="passkey-toast-close">×</button>
       </div>
       <div class="passkey-toast-actions">
-        <button type="button" id="pkoAdd" class="passkey-toast-btn-add">✅ 立即添加到通行密钥</button>
-        <button type="button" id="pkoLater" class="passkey-toast-btn-later">⏭ 下次再说</button>
+        <button type="button" id="pkoAdd" class="passkey-toast-btn-add">${esc(t('passkey.offer.addBtn', '✅ 立即添加到通行密钥'))}</button>
+        <button type="button" id="pkoLater" class="passkey-toast-btn-later">${esc(t('passkey.offer.laterBtn', '⏭ 下次再说'))}</button>
       </div>
       <div id="pkoMsg" class="passkey-toast-msg"></div>
     </div>`;
@@ -313,13 +313,13 @@ function showPasskeyOffer(userId, dismissKey) {
     const addBtn = bd.querySelector('#pkoAdd');
     const msg = bd.querySelector('#pkoMsg');
     addBtn.disabled = true;
-    addBtn.textContent = '⏳ 请触摸指纹/Face ID...';
+    addBtn.textContent = t('passkey.btn.touch', '⏳ 请触摸指纹/Face ID...');
     msg.textContent = '';
     let timeoutId = setTimeout(() => {
       addBtn.disabled = false;
-      addBtn.textContent = '✅ 立即添加到通行密钥';
+      addBtn.textContent = t('passkey.offer.addBtn', '✅ 立即添加到通行密钥');
       msg.style.color = '#f99';
-      msg.textContent = '✗ 操作超时, 请重试';
+      msg.textContent = t('auth.err.timeout', '✗ 操作超时, 请重试');
     }, 30000);
     try {
       const r1 = await fetch('/api/init?action=passkey-register-start', {
@@ -356,18 +356,18 @@ function showPasskeyOffer(userId, dismissKey) {
       if (!r2.ok || d2.error) throw new Error(d2.error || '保存失败');
       clearTimeout(timeoutId);
       msg.style.color = '#9f9';
-      msg.textContent = '✓ 已添加！下次直接用指纹/Face ID 登录。';
+      msg.textContent = t('passkey.offer.added', '✓ 已添加！下次直接用指纹/Face ID 登录。');
       setTimeout(() => close(), 1800);
       try { localStorage.setItem(dismissKey, String(Date.now())); } catch (e) {}
     } catch (e) {
       clearTimeout(timeoutId);
       addBtn.disabled = false;
-      addBtn.textContent = '✅ 立即添加到通行密钥';
+      addBtn.textContent = t('passkey.offer.addBtn', '✅ 立即添加到通行密钥');
       msg.style.color = '#f99';
       if (e.name === 'NotAllowedError') {
-        msg.textContent = '已取消 (没添加成功, 下次可再来)';
+        msg.textContent = t('passkey.offer.cancelled', '已取消 (没添加成功, 下次可再来)');
       } else {
-        msg.textContent = '✗ ' + (e.message || '失败');
+        msg.textContent = '✗ ' + (e.message || t('common.fail', '失败'));
       }
     }
   };
