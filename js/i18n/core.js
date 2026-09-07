@@ -416,6 +416,8 @@ const DICT = {
   'hotel.guests.3':         { 'zh-CN': '3+ 人',          'en': '3+ guests' },
   'hotel.view.window':      { 'zh-CN': '窗外',           'en': 'Window' },
   'hotel.view.scenery':     { 'zh-CN': '景观',           'en': 'Scenery' },
+  'admin.ann.btn.edit':     { 'zh-CN': '编辑',            'en': 'Edit' },
+  'admin.ann.btn.delete':   { 'zh-CN': '删除',            'en': 'Delete' },
   // 公告卡 UI 标签
   'ann.tag.latest':         { 'zh-CN': '最新',           'en': 'Latest' },
   'ann.tag.normal':         { 'zh-CN': '公告',           'en': 'Notice' },

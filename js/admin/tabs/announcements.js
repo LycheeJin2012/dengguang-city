@@ -18,8 +18,8 @@ export async function renderAnnouncements() {
         </div><div class="msg-time">${fmt(a.created_at)}${a.updated_at ? ' · <span style="color:#a6a">' + t('admin.ann.edited', '已编辑') + '</span>' : ''}</div></div>
         <div class="msg-content">${esc(a.content.slice(0, 200))}${a.content.length > 200 ? '…' : ''}</div>
         <div class="msg-actions book-actions">
-          <button class="btn btn-primary btn-sm" data-act="edit">✎ 编辑</button>
-          <button class="btn btn-ghost btn-sm btn-danger" data-act="del">删除</button>
+          <button class="btn btn-primary btn-sm" data-act="edit">✎ ${t('admin.ann.btn.edit', '编辑')}</button>
+          <button class="btn btn-ghost btn-sm btn-danger" data-act="del">${t('admin.ann.btn.delete', '删除')}</button>
         </div>
       </article>
     `).join('');
