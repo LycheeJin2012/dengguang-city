@@ -115,15 +115,15 @@ function openEditModal() {
         <button class="modal-close" id="mClose">×</button>
       </div>
       <div class="modal-body">
-        <label>头像（一个 emoji）</label>
+        <label>${t('profile.editModal.avatarLabel', '头像（一个 emoji）')}</label>
         <input type="text" id="mAvatar" maxlength="4" value="${escHtml(_profile.avatar_emoji || '👤')}">
-        <div class="hint">提示：1-4 个字符，建议是 emoji（如 🏎️ 🐱 🎮）</div>
-        <label>个人简介</label>
-        <textarea id="mBio" rows="5" maxlength="500" placeholder="介绍一下自己…">${escHtml(_profile.bio || '')}</textarea>
-        <div class="hint">最多 500 字。市政厅不对内容做审核，请文明发言。</div>
+        <div class="hint">${t('profile.editModal.avatarHint', '提示：1-4 个字符，建议是 emoji（如 🏎️ 🐱 🎮）')}</div>
+        <label>${t('profile.editModal.bioLabel', '个人简介')}</label>
+        <textarea id="mBio" rows="5" maxlength="500" placeholder="${t('profile.editModal.bioPh', '介绍一下自己…')}">${escHtml(_profile.bio || '')}</textarea>
+        <div class="hint">${t('profile.editModal.bioHint', '最多 500 字。市政厅不对内容做审核，请文明发言。')}</div>
         <div class="modal-actions">
-          <button class="btn btn-ghost" id="mCancel">取消</button>
-          <button class="btn btn-primary" id="mSave">保存</button>
+          <button class="btn btn-ghost" id="mCancel">${t('common.cancel', '取消')}</button>
+          <button class="btn btn-primary" id="mSave">${t('common.save', '保存')}</button>
         </div>
       </div>
     </div>`;
@@ -133,13 +133,13 @@ function openEditModal() {
   $('#mCancel').addEventListener('click', close);
   $('#mSave').addEventListener('click', async () => {
     const btn = $('#mSave');
-    btn.disabled = true; btn.textContent = '保存中…';
+    btn.disabled = true; btn.textContent = t('common.saving', '保存中…');
     try {
       const d = await PATCH('/api/social?action=me', {
         avatar_emoji: $('#mAvatar').value,
         bio: $('#mBio').value
       });
-      if (!d.ok) { alert('保存失败：' + (d.error || '')); btn.disabled = false; btn.textContent = '保存'; return; }
+      if (!d.ok) { alert(t('profile.editModal.saveFail', '保存失败：') + (d.error || '')); btn.disabled = false; btn.textContent = t('common.save', '保存'); return; }
       location.reload();
     } catch (e) {
       alert('保存失败：' + e.message);
