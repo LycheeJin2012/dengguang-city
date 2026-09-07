@@ -1,5 +1,7 @@
 // v47: profile 赛道成绩卡 (上报 + 我的成绩 + 排行榜)
+// v50-N6: 全 i18n
 import { $, esc, GET, POST } from '../util.js?v=v46-fix-modules';
+import { t } from '../../i18n/core.js?v=n5';
 
 export async function renderRaceCard() {
   const card = $('#raceCard');
@@ -24,43 +26,43 @@ export async function renderRaceCard() {
 
   box.innerHTML = `
     <div class="race-form">
-      <h4 style="margin:0 0 8px 0">📤 上报新成绩</h4>
+      <h4 style="margin:0 0 8px 0">📤 ${t('race.submitTitle', '上报新成绩')}</h4>
       <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
-        <label style="flex:1;min-width:140px">赛道
+        <label style="flex:1;min-width:140px">${t('race.track', '赛道')}
           <select id="raceTrack" style="width:100%;padding:6px;border:2px solid var(--c-stone);font-family:inherit;background:var(--c-bg-1)">
-            ${tracks.length ? tracks.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('') : '<option value="">(暂无可用赛道)</option>'}
+            ${tracks.length ? tracks.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('') : `<option value="">(${t('race.noTracks', '暂无可用赛道')})</option>`}
           </select>
         </label>
-        <label style="flex:1;min-width:100px">用时 (mm:ss.fff)
-          <input id="raceTime" placeholder="如 1:23.456" style="width:100%;padding:6px;border:2px solid var(--c-stone);font-family:inherit;background:var(--c-bg-1)" />
+        <label style="flex:1;min-width:100px">${t('race.time', '用时 (mm:ss.fff)')}
+          <input id="raceTime" placeholder="${t('race.timePh', '如 1:23.456')}" style="width:100%;padding:6px;border:2px solid var(--c-stone);font-family:inherit;background:var(--c-bg-1)" />
         </label>
-        <label style="flex:1;min-width:100px">卡丁/车型
-          <input id="raceKart" placeholder="如 MK4" style="width:100%;padding:6px;border:2px solid var(--c-stone);font-family:inherit;background:var(--c-bg-1)" />
+        <label style="flex:1;min-width:100px">${t('race.kart', '卡丁/车型')}
+          <input id="raceKart" placeholder="${t('race.kartPh', '如 MK4')}" style="width:100%;padding:6px;border:2px solid var(--c-stone);font-family:inherit;background:var(--c-bg-1)" />
         </label>
-        <button id="raceSubmit" class="btn btn-primary">提交</button>
+        <button id="raceSubmit" class="btn btn-primary">${t('race.btn.submit', '提交')}</button>
       </div>
       <p id="raceMsg" style="font-size:12px;color:var(--c-stone-dark);margin-top:6px"></p>
     </div>
-    <h4 style="margin:16px 0 8px 0">📊 我的成绩 (${mine.length})</h4>
+    <h4 style="margin:16px 0 8px 0">📊 ${t('race.myTimes', '我的成绩')} (${mine.length})</h4>
     <div class="race-mine">
-      ${mine.length === 0 ? '<p class="muted">还没有成绩, 上报一个试试</p>' :
+      ${mine.length === 0 ? `<p class="muted">${t('race.noMine', '还没有成绩, 上报一个试试')}</p>` :
         `<table style="width:100%;border-collapse:collapse;font-size:13px">
-          <thead><tr style="background:var(--c-bg-2)"><th>赛道</th><th>用时</th><th>车型</th><th>状态</th><th>日期</th></tr></thead>
+          <thead><tr style="background:var(--c-bg-2)"><th>${t('race.col.track', '赛道')}</th><th>${t('race.col.time', '用时')}</th><th>${t('race.col.kart', '车型')}</th><th>${t('race.col.status', '状态')}</th><th>${t('race.col.date', '日期')}</th></tr></thead>
           <tbody>${mine.slice(0, 10).map(r => `<tr style="border-top:1px solid var(--c-stone)">
             <td>${esc(r.track_name || ('#' + r.track_id))}</td>
             <td><b>${esc(r.formatted)}</b></td>
             <td>${esc(r.kart_name || '—')}</td>
-            <td>${r.verified ? '<span style="color:var(--c-emerald)">✓ 已认证</span>' : '<span style="color:var(--c-gold)">⏳ 待认证</span>'}</td>
+            <td>${r.verified ? `<span style="color:var(--c-emerald)">✓ ${t('race.verified', '已认证')}</span>` : `<span style="color:var(--c-gold)">⏳ ${t('race.pending', '待认证')}</span>`}</td>
             <td>${esc((r.recorded_at || '').slice(0, 10))}</td>
           </tr>`).join('')}</tbody>
         </table>`}
     </div>
-    <h4 style="margin:16px 0 8px 0">🏆 排行榜 (选赛道查看)</h4>
+    <h4 style="margin:16px 0 8px 0">🏆 ${t('race.leaderboard', '排行榜')} (${t('race.lbHint', '选赛道查看')})</h4>
     <div id="raceLeaderboard">
       <select id="lbTrack" style="padding:6px;border:2px solid var(--c-stone);font-family:inherit;background:var(--c-bg-1)">
-        ${tracks.length ? tracks.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('') : '<option value="">(暂无可用赛道)</option>'}
+        ${tracks.length ? tracks.map(t => `<option value="${t.id}">${esc(t.name)}</option>`).join('') : `<option value="">(${t('race.noTracks', '暂无可用赛道')})</option>`}
       </select>
-      <div id="lbList" style="margin-top:8px"><p class="muted">选赛道后查看</p></div>
+      <div id="lbList" style="margin-top:8px"><p class="muted">${t('race.lbSelect', '选赛道后查看')}</p></div>
     </div>
   `;
 
@@ -71,12 +73,12 @@ export async function renderRaceCard() {
     const kart = ($('#raceKart')?.value || '').trim();
     const msg = $('#raceMsg');
     const t = parseTimeStr(timeStr);
-    if (!trackId) { msg.textContent = '请选择赛道'; return; }
-    if (!t) { msg.textContent = '用时格式不对 (例 1:23.456 或 83.456 秒)'; return; }
+    if (!trackId) { msg.textContent = t('race.err.noTrack', '请选择赛道'); return; }
+    if (!t) { msg.textContent = t('race.err.badTime', '用时格式不对 (例 1:23.456 或 83.456 秒)'); return; }
     try {
       const r = await POST('/api/race-times', { track_id: trackId, time_ms: t, kart_name: kart });
       msg.style.color = 'var(--c-emerald)';
-      msg.textContent = '✓ 已记录 ' + r.formatted + ', 等管理员确认后入榜';
+      msg.textContent = '✓ ' + t('race.recorded', '已记录') + ' ' + r.formatted + ', ' + t('race.waitVerify', '等管理员确认后入榜');
       renderRaceCard();
     } catch (e) { msg.style.color = 'var(--c-redstone)'; msg.textContent = '✗ ' + e.message; }
   });
@@ -86,16 +88,16 @@ export async function renderRaceCard() {
     const tid = parseInt(e.target.value || 0, 10);
     if (!tid) return;
     const lb = $('#lbList');
-    lb.innerHTML = '<p class="muted">载入中…</p>';
+    lb.innerHTML = `<p class="muted">${t('common.loading', '载入中…')}</p>`;
     try {
       const d = await GET('/api/race-times?track_id=' + tid + '&limit=20');
       const list = d.leaderboard || [];
-      if (!list.length) { lb.innerHTML = '<p class="muted">该赛道暂无认证成绩</p>'; return; }
+      if (!list.length) { lb.innerHTML = `<p class="muted">${t('race.lbEmpty', '该赛道暂无认证成绩')}</p>`; return; }
       lb.innerHTML = `<table style="width:100%;border-collapse:collapse;font-size:13px">
-        <thead><tr style="background:var(--c-bg-2)"><th>#</th><th>玩家</th><th>用时</th><th>车型</th><th>驾照</th><th>日期</th></tr></thead>
+        <thead><tr style="background:var(--c-bg-2)"><th>#</th><th>${t('race.col.player', '玩家')}</th><th>${t('race.col.time', '用时')}</th><th>${t('race.col.kart', '车型')}</th><th>${t('race.col.license', '驾照')}</th><th>${t('race.col.date', '日期')}</th></tr></thead>
         <tbody>${list.map(r => `<tr style="border-top:1px solid var(--c-stone)">
           <td>${r.rank <= 3 ? ['🥇','🥈','🥉'][r.rank-1] : r.rank}</td>
-          <td>${esc(r.avatar_emoji || '👤')} ${esc(r.player_username || '玩家#'+r.player_id)}</td>
+          <td>${esc(r.avatar_emoji || '👤')} ${esc(r.player_username || (t('race.player') + '#' + r.player_id))}</td>
           <td><b>${esc(r.formatted)}</b></td>
           <td>${esc(r.kart_name || '—')}</td>
           <td>${esc(r.license_grade || '—')}</td>
