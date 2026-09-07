@@ -206,19 +206,19 @@
         <button type="button" class="btn btn-ghost btn-sm" id="ticketExport" data-i18n="admin.ticket.btn.export">📥 导出 CSV</button>
       </div>
       <div class="ticket-categories" style="display:flex;flex-wrap:wrap;gap:8px;margin:8px 0;font-size:13px">
-        <span>💬 留言 <span id="ticketCount_message">0</span></span>
-        <span>🚗 驾照 <span id="ticketCount_license">0</span></span>
-        <span>🏨 酒店 <span id="ticketCount_hotel">0</span></span>
-        <span>🏁 赛车 <span id="ticketCount_race">0</span></span>
-        <span>🛞 卡丁车 <span id="ticketCount_kart">0</span></span>
-        <span>🛎️ 服务 <span id="ticketCount_service">0</span></span>
+        <span data-i18n="admin.ticket.cat.message">💬 留言</span> <span id="ticketCount_message">0</span>
+        <span data-i18n="admin.ticket.cat.license">🚗 驾照</span> <span id="ticketCount_license">0</span>
+        <span data-i18n="admin.ticket.cat.hotel">🏨 酒店</span> <span id="ticketCount_hotel">0</span>
+        <span data-i18n="admin.ticket.cat.race">🏁 赛车</span> <span id="ticketCount_race">0</span>
+        <span data-i18n="admin.ticket.cat.kart">🛞 卡丁车</span> <span id="ticketCount_kart">0</span>
+        <span data-i18n="admin.ticket.cat.service">🛎️ 服务</span> <span id="ticketCount_service">0</span>
       </div>
       <div id="ticketList" class="msg-list v49-stagger">
         <!-- JS 渲染 -->
       </div>
       <div id="ticketEmpty" class="empty-state" style="display:none">
         <div class="empty-icon">🎫</div>
-        <p>暂无工单</p>
+        <p data-i18n="admin.ticket.empty">暂无工单</p>
       </div>
     </section>
 
@@ -285,7 +285,7 @@
     <!-- Tab: 酒店预订 (v47 删: 合并到 tickets 工单) -->
     <section class="tab-pane" id="pane-bookings" style="display:none">
       <div class="pane-head">
-        <h2>🎫 Tickets</h2>
+        <h2 data-i18n="admin.ticket.paneTitle">🎫 工单中心</h2>
         <div class="pane-tools">
           <button class="btn btn-ghost btn-sm" onclick="document.querySelector('[data-tab=tickets]').click()" data-i18n="admin.jumpToTickets">🎫 跳到工单</button>
         </div>
@@ -296,7 +296,7 @@
     <!-- Tab: 驾照考试 (v47 删: 合并到 tickets 工单) -->
     <section class="tab-pane" id="pane-license" style="display:none">
       <div class="pane-head">
-        <h2>🎫 Tickets</h2>
+        <h2 data-i18n="admin.ticket.paneTitle">🎫 工单中心</h2>
         <div class="pane-tools">
           <button class="btn btn-ghost btn-sm" onclick="document.querySelector('[data-tab=tickets]').click()" data-i18n="admin.jumpToTickets">🎫 跳到工单</button>
         </div>
@@ -316,7 +316,7 @@
       <nav class="subtabs" data-pane="kart">
         <button class="subtab active" data-sub="signup">📋 <span data-i18n="admin.kart.signup">赛道报名</span></button>
         <button class="subtab" data-sub="circuit">🏎️ <span data-i18n="admin.kart.circuit">国际试车</span></button>
-        <button class="subtab" data-sub="manage" data-super-only>🏁 <span data-i18n="admin.kart.manage">赛车场管理 (SUPER)</span></button>
+        <button class="subtab" data-sub="manage" data-super-only>🏁 <span data-i18n="admin.kart.manage">赛车场管理</span> <span class="tag tag-super" style="font-size:10px" data-i18n="admin.super.only">SUPER</span></button>
       </nav>
       <div class="subview" data-subview="kart-signup">
         <div class="msg-filter">
@@ -326,10 +326,10 @@
           <label><input type="radio" name="kartFilter" value="rejected" /> <span data-i18n="admin.kart.status.rejected">已拒绝</span> <span id="kartCntRejected">0</span></label>
           <select id="kartSessionFilter">
             <option value="" data-i18n="admin.kart.session.all">全部场次</option>
-            <option>周六 14:00 计时赛</option>
-            <option>周六 20:00 接力赛</option>
-            <option>周日 10:00 教学场</option>
-            <option>其他时间</option>
+            <option data-i18n="admin.kart.session.timingSat">周六 14:00 计时赛</option>
+            <option data-i18n="admin.kart.session.relaySat">周六 20:00 接力赛</option>
+            <option data-i18n="admin.kart.session.teachSun">周日 10:00 教学场</option>
+            <option data-i18n="admin.kart.session.other">其他时间</option>
           </select>
         </div>
         <div id="kartList" class="msg-list v49-stagger">
@@ -359,16 +359,16 @@
           <label><input type="radio" name="circuitFilter" value="rejected" /> <span data-i18n="admin.kart.status.rejected">已拒绝</span> <span id="circuitCntRejected">0</span></label>
           <select id="circuitSessionFilter">
             <option value="" data-i18n="admin.kart.session.all">全部场次</option>
-            <option>排位赛 周三 20:00</option>
-            <option>正赛 周六 15:00</option>
-            <option>国际邀请赛 月初</option>
-            <option>自由练习</option>
+            <option data-i18n="admin.circuit.session.pole">排位赛 周三 20:00</option>
+            <option data-i18n="admin.circuit.session.raceSat">正赛 周六 15:00</option>
+            <option data-i18n="admin.circuit.session.invite">国际邀请赛 月初</option>
+            <option data-i18n="admin.circuit.session.practice">自由练习</option>
           </select>
           <select id="circuitLicenseFilter">
             <option value="" data-i18n="admin.circuit.license.all">全部驾照</option>
-            <option>B 级（初级）</option>
-            <option>A 级（中级）</option>
-            <option>S 级（高级 / 职业）</option>
+            <option value="B" data-i18n="license.grade.B">B 级（初级）</option>
+            <option value="A" data-i18n="license.grade.A">A 级（中级）</option>
+            <option value="S" data-i18n="license.grade.S">S 级（高级 / 职业）</option>
           </select>
         </div>
         <div id="circuitList" class="msg-list v49-stagger">
@@ -384,15 +384,15 @@
     <!-- Tab: 公告管理 (仅 super) -->
     <section class="tab-pane" id="pane-announcements">
       <div class="pane-head">
-        <h2>📢 市政公告管理</h2>
+        <h2 data-i18n="admin.announcements.title">📢 市政公告管理</h2>
         <div class="pane-tools">
-          <span class="tag tag-super">仅 SUPER</span>
-          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderAnnouncements">🔄 刷新</button>
+          <span class="tag tag-super" data-i18n="admin.super.only">仅 SUPER</span>
+          <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderAnnouncements" data-i18n="admin.dash.refresh">🔄 刷新</button>
           <button class="btn btn-ghost btn-sm" id="annExport" data-i18n="admin.ticket.btn.export">📥 导出 CSV</button>
-          <button class="btn btn-primary btn-sm" id="annCreateBtn" style="display:none">+ 发布新公告</button>
+          <button class="btn btn-primary btn-sm" id="annCreateBtn" data-i18n="admin.announcements.createBtn" style="display:none">+ 发布新公告</button>
         </div>
       </div>
-      <p class="pane-hint">公告会出现在首页"市政公告"栏目, 所有人可见。仅 super 管理员可发布/编辑/删除。</p>
+      <p class="pane-hint" data-i18n="admin.announcements.hint">公告会出现在首页"市政公告"栏目, 所有人可见。仅 super 管理员可发布/编辑/删除。</p>
       <div id="annList"></div>
       <div id="annEmpty" class="empty-state" style="display:none">
         <div class="empty-icon">📢</div>
@@ -405,7 +405,7 @@
       <div class="pane-head">
         <h2>💬 <span data-i18n="admin.dms.title">私信监管</span></h2>
         <div class="pane-tools">
-          <span class="tag tag-super">SUPER</span>
+          <span class="tag tag-super" data-i18n="admin.super.only">SUPER</span>
           <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderDms">🔄 <span data-i18n="common.refresh">刷新</span></button>
         </div>
       </div>
@@ -422,10 +422,10 @@
       <div class="pane-head">
         <h2>🖼️ <span data-i18n="admin.gallery.title">首页图集管理</span></h2>
         <div class="pane-tools">
-          <span class="tag tag-super">SUPER</span>
+          <span class="tag tag-super" data-i18n="admin.super.only">SUPER</span>
           <button class="btn btn-ghost btn-sm pane-refresh" data-target="renderGallery">🔄 <span data-i18n="common.refresh">刷新</span></button>
           <button class="btn btn-ghost btn-sm" id="galleryExport" data-i18n="admin.ticket.btn.export">📥 导出 CSV</button>
-          <button class="btn btn-primary btn-sm" id="galCreateBtn" style="display:none">+ <span data-i18n="admin.gallery.add">添加图片</span></button>
+          <button class="btn btn-primary btn-sm" id="galCreateBtn" data-i18n="admin.gallery.createBtn" style="display:none">+ 添加图片</button>
         </div>
       </div>
       <p class="pane-hint" data-i18n="admin.gallery.hint">管理首页"城市风貌"和"实景图集"栏目用的所有图片。修改后, 首页 index.html 会立即拉新版本。</p>
@@ -473,7 +473,7 @@
     <div class="modal">
       <div class="modal-head">
         <h3 id="modalTitle">—</h3>
-        <button class="modal-close" id="modalClose">✕</button>
+        <button class="modal-close" id="modalClose" data-i18n="admin.modal.close">✕</button>
       </div>
       <div class="modal-body" id="modalBody">
         <!-- JS 渲染 -->
