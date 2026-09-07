@@ -140,6 +140,7 @@ const DICT = {
   'admin.status.approved':{ 'zh-CN': '已批准',       'en': 'Approved' },
   'admin.status.rejected': { 'zh-CN': '已拒绝',       'en': 'Rejected' },
   'admin.kart.edit':       { 'zh-CN': '✎ 编辑',      'en': '✎ Edit' },
+  'admin.kart.editTitle':  { 'zh-CN': '编辑',         'en': 'Edit' },
   'admin.kart.save':       { 'zh-CN': '保存状态',     'en': 'Save' },
   'admin.kart.delete':     { 'zh-CN': '删除',         'en': 'Delete' },
   'admin.kart.confirmDel': { 'zh-CN': '删除该报名？',  'en': 'Delete this signup?' },
@@ -630,6 +631,8 @@ const DICT = {
   // 列表 3 态文案 (N5 Step 15: loading/empty/error 全 i18n)
   'common.refresh':       { 'zh-CN': '刷新',             'en': 'Refresh' },
   'common.error.render':  { 'zh-CN': '渲染失败',         'en': 'Render failed' },
+  'common.error.load':    { 'zh-CN': '加载失败',         'en': 'Load failed' },
+  'auth.needLogin':        { 'zh-CN': '请先登录',         'en': 'Please log in first' },
   'common.empty':         { 'zh-CN': '暂无数据',         'en': 'No data' },
   'hotel.empty.filtered': { 'zh-CN': '没有符合条件的房型，试试调整筛选条件。', 'en': 'No matching rooms. Try adjusting filters.' },
   'messages.empty':       { 'zh-CN': '暂无留言, 来抢沙发', 'en': 'No messages yet. Be the first!' },
