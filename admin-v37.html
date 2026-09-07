@@ -249,6 +249,24 @@
           <button class="btn btn-ghost btn-sm" id="playerExport" data-i18n="admin.ticket.btn.export">📥 导出 CSV</button>
         </div>
       </div>
+      <!-- v50-N6: 批量操作工具条 (选中后才显示) -->
+      <div class="batch-bar" id="playerBatchBar" style="display:none">
+        <span><b id="playerBatchCount">0</b> <span data-i18n="admin.players.batch.selected">已选</span></span>
+        <label class="batch-select-all"><input type="checkbox" id="playerSelectAll" /> <span data-i18n="admin.players.batch.selectAll">全选当前页</span></label>
+        <div class="batch-actions">
+          <button type="button" class="btn btn-primary btn-sm" id="playerBatchApprove" data-i18n="admin.players.batch.approve">✓ 批量批准</button>
+          <button type="button" class="btn btn-ghost btn-sm btn-danger" id="playerBatchReject" data-i18n="admin.players.batch.reject">✕ 批量拒绝</button>
+          <button type="button" class="btn btn-ghost btn-sm" id="playerBatchClear" data-i18n="admin.players.batch.clear">取消选择</button>
+        </div>
+      </div>
+      <style>
+      /* v50-N6: 玩家批量操作条 (内联, 避免动 style.min.css) */
+      .batch-bar{display:flex;gap:16px;align-items:center;flex-wrap:wrap;padding:8px 12px;margin:0 0 8px;background:var(--c-bg-2,#e0d6b1);border:2px dashed var(--c-border,#2a2a2a);font-size:13px}
+      .batch-bar b{color:var(--c-red,#c00);font-family:'Press Start 2P',monospace}
+      .batch-select-all{display:flex;align-items:center;gap:4px;cursor:pointer}
+      .batch-actions{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+      .msg-item .pk-check{width:16px;height:16px;cursor:pointer;margin-right:6px;vertical-align:middle}
+      </style>
       <div class="msg-filter">
         <label><input type="radio" name="playerFilter" value="pending" checked /> <span data-i18n="admin.players.pending">待审批</span> <span id="cntPlayerPending">0</span></label>
         <label><input type="radio" name="playerFilter" value="active" /> <span data-i18n="admin.players.active">已激活</span> <span id="cntPlayerActive">0</span></label>

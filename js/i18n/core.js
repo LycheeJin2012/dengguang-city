@@ -407,6 +407,17 @@ const DICT = {
   'wall.sort.label':        { 'zh-CN': '排序：',             'en': 'Sort:' },
   'wall.sort.newest':       { 'zh-CN': '最新',               'en': 'Newest' },
   'wall.sort.oldest':       { 'zh-CN': '最早',               'en': 'Oldest' },
+  // admin 玩家批量操作
+  'admin.players.batch.selected':  { 'zh-CN': '已选',          'en': 'selected' },
+  'admin.players.batch.selectAll': { 'zh-CN': '全选当前页',     'en': 'Select all on this page' },
+  'admin.players.batch.approve':   { 'zh-CN': '✓ 批量批准',     'en': '✓ Batch Approve' },
+  'admin.players.batch.reject':    { 'zh-CN': '✕ 批量拒绝',     'en': '✕ Batch Reject' },
+  'admin.players.batch.clear':     { 'zh-CN': '取消选择',        'en': 'Clear Selection' },
+  'admin.players.batch.approveName': { 'zh-CN': '批准',         'en': 'approve' },
+  'admin.players.batch.rejectName':  { 'zh-CN': '拒绝',         'en': 'reject' },
+  'admin.players.batch.confirm':    { 'zh-CN': '确认批量{act} {n} 个玩家？', 'en': 'Confirm to {act} {n} player(s)?' },
+  'admin.players.batch.successUnit':{ 'zh-CN': '已',            'en': 'successfully' },
+  'admin.players.batch.failUnit':   { 'zh-CN': '失败',          'en': 'failed' },
   // hero
   'hero.tag':         { 'zh-CN': '灯光市人民政府 · 官方站点', 'en': 'Light City Hall · Official Site' },
   'hero.welcome':     { 'zh-CN': '欢 迎 来 到', 'en': 'WELCOME TO' },

@@ -41,6 +41,7 @@ export async function renderPlayers() {
       const bioL = p.bio ? esc(p.bio) : '<i>' + t('admin.players.noBio') + '</i>';
       return `<article class="msg-item" data-id="${p.id}">
         <div class="msg-head"><div class="msg-head-left">
+          <input type="checkbox" class="pk-check" data-id="${p.id}" />
           <b class="msg-name">${esc(p.avatar_emoji || '👤')} ${esc(p.username)}</b>
           <span style="color:var(--c-stone-dark);font-size:12px;margin-left:6px">${esc(p.email)}</span>
           <span class="msg-player-tag">${STATUS_LABEL[p.status] || p.status}</span>
@@ -67,10 +68,53 @@ export async function renderPlayers() {
       el.querySelector('[data-act="reject"]')?.addEventListener('click', () => playerAction(id, 'reject'));
       el.querySelector('[data-act="reset-pw"]')?.addEventListener('click', () => playerResetPw(id));
       el.querySelector('[data-act="rename"]')?.addEventListener('click', () => playerRename(id, p?.username));
+      el.querySelector('.pk-check')?.addEventListener('change', updateBatchBar);
     });
     // v50-N6: 导出当前 filter 后的玩家列表
     document.getElementById('playerExport')?.addEventListener('click', () => exportPlayersCsv(shown));
+    // v50-N6: 批量操作
+    document.getElementById('playerSelectAll')?.addEventListener('change', e => {
+      const checked = e.target.checked;
+      document.querySelectorAll('.pk-check').forEach(cb => cb.checked = checked);
+      updateBatchBar();
+    });
+    document.getElementById('playerBatchApprove')?.addEventListener('click', () => batchAction('approve'));
+    document.getElementById('playerBatchReject')?.addEventListener('click', () => batchAction('reject'));
+    document.getElementById('playerBatchClear')?.addEventListener('click', () => {
+      document.querySelectorAll('.pk-check').forEach(cb => cb.checked = false);
+      const sa = document.getElementById('playerSelectAll'); if (sa) sa.checked = false;
+      updateBatchBar();
+    });
+    updateBatchBar();
   });
+}
+
+// v50-N6: 批量操作 — 选中后更新工具条显示 + 计数
+function updateBatchBar() {
+  const checked = Array.from(document.querySelectorAll('.pk-check:checked'));
+  const bar = document.getElementById('playerBatchBar');
+  const cnt = document.getElementById('playerBatchCount');
+  if (!bar || !cnt) return;
+  cnt.textContent = String(checked.length);
+  bar.style.display = checked.length ? 'flex' : 'none';
+}
+
+// v50-N6: 批量 approve / reject — 并发跑, 单个失败不阻断其他
+async function batchAction(act) {
+  const ids = Array.from(document.querySelectorAll('.pk-check:checked')).map(cb => +cb.dataset.id);
+  if (!ids.length) return;
+  const actName = act === 'approve' ? t('admin.players.batch.approveName', '批准') : t('admin.players.batch.rejectName', '拒绝');
+  if (!confirm(t('admin.players.batch.confirm', '确认批量{act} {n} 个玩家？').replace('{act}', actName).replace('{n}', String(ids.length)))) return;
+  const results = await Promise.allSettled(ids.map(id => PATCH('/api/admin/players?id=' + id + '&action=' + act)));
+  const ok = results.filter(r => r.status === 'fulfilled').length;
+  const fail = results.length - ok;
+  if (window._toast) window._toast(
+    (ok > 0 ? `✓ ${t('admin.players.batch.successUnit', '已')} ${actName} ${ok} ` : '') +
+    (fail > 0 ? ` ✗ ${fail} ${t('admin.players.batch.failUnit', '失败')}` : ''),
+    fail > 0 && ok === 0 ? 'error' : (fail > 0 ? 'info' : 'success')
+  );
+  cacheClear('players:');
+  renderPlayers();
 }
 
 // v50-N6: 玩家列表导出 CSV (与 ticket 导出同 pattern)
