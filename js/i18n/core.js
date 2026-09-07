@@ -405,6 +405,17 @@ const DICT = {
                               'en': 'Unified inbox for all citizen requests: messages, hotel bookings, license signups, race signups, and direct service requests. Filter by category, fuzzy-search, and move tickets through the workflow (Open → In Progress → Resolved → Closed).' },
   'hotel.intro':            { 'zh-CN': '树上酒店（筹建）。选址、规模、定价、运营方由市民大会与合作社讨论后公布。当前展示房型为草案，待合作社定稿后正式上线。',
                                'en': 'Treehouse Hotel (under construction). Site, scale, pricing, and operator will be decided by the Citizens Assembly and the cooperative. Room listings shown are drafts and will go live once finalized.' },
+  // hotel 排序 + 人数/景观 filter
+  'hotel.sort.label':       { 'zh-CN': '排序：',         'en': 'Sort:' },
+  'hotel.sort.default':     { 'zh-CN': '默认',           'en': 'Default' },
+  'hotel.sort.priceAsc':    { 'zh-CN': '价格升序',        'en': 'Price ↑' },
+  'hotel.sort.priceDesc':   { 'zh-CN': '价格降序',        'en': 'Price ↓' },
+  'hotel.sort.guestsDesc':  { 'zh-CN': '容量降序',        'en': 'Guests ↓' },
+  'hotel.guests.1':         { 'zh-CN': '1 人',           'en': '1 guest' },
+  'hotel.guests.2':         { 'zh-CN': '2 人',           'en': '2 guests' },
+  'hotel.guests.3':         { 'zh-CN': '3+ 人',          'en': '3+ guests' },
+  'hotel.view.window':      { 'zh-CN': '窗外',           'en': 'Window' },
+  'hotel.view.scenery':     { 'zh-CN': '景观',           'en': 'Scenery' },
   // 公告卡 UI 标签
   'ann.tag.latest':         { 'zh-CN': '最新',           'en': 'Latest' },
   'ann.tag.normal':         { 'zh-CN': '公告',           'en': 'Notice' },

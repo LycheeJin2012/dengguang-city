@@ -73,17 +73,24 @@
           <label data-i18n="hotel.guests">入住人数：</label>
           <select id="fGuests">
             <option value="0" data-i18n="hotel.filter.all">不限</option>
-            <option value="1">1 人</option>
-            <option value="2">2 人</option>
-            <option value="3">3+ 人</option>
+            <option value="1" data-i18n="hotel.guests.1">1 人</option>
+            <option value="2" data-i18n="hotel.guests.2">2 人</option>
+            <option value="3" data-i18n="hotel.guests.3">3+ 人</option>
           </select>
           <label data-i18n="hotel.view">景观：</label>
           <select id="fView">
             <option value="all" data-i18n="hotel.filter.all">全部</option>
-            <option value="窗外">窗外</option>
-            <option value="景观">景观</option>
+            <option value="窗外" data-i18n="hotel.view.window">窗外</option>
+            <option value="景观" data-i18n="hotel.view.scenery">景观</option>
           </select>
           <button type="button" class="filter-reset" id="fReset" data-i18n="hotel.filter.reset">重置筛选</button>
+        </div>
+        <div class="hotel-sort">
+          <span data-i18n="hotel.sort.label">排序：</span>
+          <button type="button" class="sort-btn active" data-sort="default" data-i18n="hotel.sort.default">默认</button>
+          <button type="button" class="sort-btn" data-sort="price-asc" data-i18n-title="hotel.sort.priceAsc" title="价格 ↑">💎↑</button>
+          <button type="button" class="sort-btn" data-sort="price-desc" data-i18n-title="hotel.sort.priceDesc" title="价格 ↓">💎↓</button>
+          <button type="button" class="sort-btn" data-sort="guests-desc" data-i18n-title="hotel.sort.guestsDesc" title="容量 ↓">👥↓</button>
         </div>
         <div class="hotel-count" id="hotelCount">—</div>
       </div>

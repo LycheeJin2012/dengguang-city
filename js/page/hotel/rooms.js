@@ -75,10 +75,10 @@ export async function loadRooms() {
   }
 }
 
-const filters = { status: 'all', guests: 0, view: 'all' };
+const filters = { status: 'all', guests: 0, view: 'all', sort: 'default' };
 
 function applyFilters() {
-  return ROOMS.filter(r => {
+  const list = ROOMS.filter(r => {
     // v50-N6: 用 canonical statusKey 比较, 不受 i18n 影响
     if (filters.status !== 'all' && r.statusKey !== filters.status) return false;
     if (filters.guests > 0) {
@@ -88,6 +88,15 @@ function applyFilters() {
     if (filters.view !== 'all' && r.view !== filters.view) return false;
     return true;
   });
+  // v50-N6: 排序 (在 filter 完的 list 上做, 不影响原始 ROOMS 顺序)
+  if (filters.sort === 'price-asc') {
+    list.sort((a, b) => (a.price || 0) - (b.price || 0));
+  } else if (filters.sort === 'price-desc') {
+    list.sort((a, b) => (b.price || 0) - (a.price || 0));
+  } else if (filters.sort === 'guests-desc') {
+    list.sort((a, b) => (b.guests || 0) - (a.guests || 0));
+  }
+  return list;
 }
 
 export function renderRooms() {
@@ -149,11 +158,20 @@ export function bindFilters() {
   if (fStatus) fStatus.addEventListener('change', () => { filters.status = fStatus.value; renderRooms(); });
   if (fGuests) fGuests.addEventListener('change', () => { filters.guests = parseInt(fGuests.value, 10); renderRooms(); });
   if (fView) fView.addEventListener('change', () => { filters.view = fView.value; renderRooms(); });
+  // v50-N6: 排序按钮组
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      filters.sort = btn.dataset.sort;
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderRooms();
+    });
+  });
   if (fReset) fReset.addEventListener('click', () => {
-    filters.status = 'all'; filters.guests = 0; filters.view = 'all';
+    filters.status = 'all'; filters.guests = 0; filters.view = 'all'; filters.sort = 'default';
     if (fStatus) fStatus.value = 'all';
     if (fGuests) fGuests.value = '0';
     if (fView) fView.value = 'all';
+    document.querySelectorAll('.sort-btn').forEach((b, i) => b.classList.toggle('active', i === 0));
     renderRooms();
   });
 }
