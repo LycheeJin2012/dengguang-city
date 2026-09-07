@@ -3,6 +3,7 @@
 // 关联: openLoginModal 会被 header.js / forms.js / messages.js 等调用
 import { $, escHtml, POST, GET } from './util.js?v=v46-fix-modules';
 import { invalidatePlayerCache, refreshUserState } from './header.js?v=v46-fix-modules';
+import { t } from '../i18n/core.js?v=n5';
 
 const _toast = (msg, type) => window._toast && window._toast(msg, type);
 
@@ -11,22 +12,23 @@ let loginMode = 'login';
 
 function setLoginMode(m) {
   loginMode = m;
-  const t = $('#loginTitle');
+  // v50-N6 fix: 之前 const t = $('#loginTitle') shadow 外层 i18n t()
+  const titleEl = $('#loginTitle');
   const eRow = $('#loginEmailRow');
   const submit = $('#loginSubmit');
   const mLogin = $('#loginModeLogin');
   const mReg = $('#loginModeRegister');
   const msg = $('#loginMsg');
   if (m === 'login') {
-    if (t) t.textContent = '玩家登录';
+    if (titleEl) titleEl.textContent = t('auth.login.title', '玩家登录');
     if (eRow) eRow.style.display = 'none';
-    if (submit) submit.textContent = '登录';
+    if (submit) submit.textContent = t('auth.login.submit', '登录');
     if (mLogin) mLogin.style.display = 'none';
     if (mReg) mReg.style.display = '';
   } else {
-    if (t) t.textContent = '注册玩家账号';
+    if (titleEl) titleEl.textContent = t('auth.register.title', '注册玩家账号');
     if (eRow) eRow.style.display = '';
-    if (submit) submit.textContent = '注册并登录';
+    if (submit) submit.textContent = t('auth.register.submit', '注册并登录');
     if (mLogin) mLogin.style.display = '';
     if (mReg) mReg.style.display = 'none';
   }
@@ -70,10 +72,10 @@ function bindLoginSubmit() {
     e.preventDefault();
     const username = $('#loginUsername')?.value.trim();
     const password = $('#loginPassword')?.value;
-    if (!username || !password) { $('#loginMsg').textContent = '请填写用户名和密码'; return; }
+    if (!username || !password) { $('#loginMsg').textContent = t('auth.err.empty', '请填写用户名和密码'); return; }
     const submit = $('#loginSubmit');
     submit.disabled = true;
-    submit.textContent = loginMode === 'login' ? '登录中...' : '注册中...';
+    submit.textContent = loginMode === 'login' ? t('auth.login.loading', '登录中...') : t('auth.register.loading', '注册中...');
     const msg = $('#loginMsg');
     msg.textContent = '';
     try {
@@ -86,7 +88,7 @@ function bindLoginSubmit() {
         });
       } else {
         const email = $('#loginEmail')?.value.trim();
-        if (!email) { msg.textContent = '请填写邮箱'; submit.disabled = false; submit.textContent = '注册并登录'; return; }
+        if (!email) { msg.textContent = t('auth.err.email', '请填写邮箱'); submit.disabled = false; submit.textContent = t('auth.register.submit', '注册并登录'); return; }
         res = await fetch('/api/register', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           credentials: 'include',
