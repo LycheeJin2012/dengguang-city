@@ -6,6 +6,8 @@
 // 3. 帮助 modal Esc 关闭
 // 4. 中文页和英文页都显示同一套快捷键 (单键 a-z 触发, 跟 GitHub/Twitter 一致)
 
+import { t } from '../i18n/core.js?v=n5';
+
 // 注入 modal 样式 (避免依赖外部 CSS 文件, 减少 build 复杂度)
 (function injectKbdCss() {
   if (document.getElementById('kbdHelpCss')) return;
@@ -28,13 +30,13 @@
 })();
 
 const SHORTCUTS = [
-  { key: 'g', sel: '#contact',  desc: '留言区',       descEn: 'Guestbook' },
-  { key: 'h', sel: '#home',     desc: '回到顶部',     descEn: 'Top' },
-  { key: 'n', sel: '#notice',   desc: '公告',         descEn: 'Notice' },
-  { key: 'd', sel: '#data',     desc: '城市数据',     descEn: 'City Data' },
-  { key: 's', sel: '#service',  desc: '市民服务',     descEn: 'Services' },
-  { key: 'b', sel: '#scenery',  desc: '城市风貌',     descEn: 'Scenery' },
-  { key: '?', desc: '__help__', desc: '显示帮助',     descEn: 'Show Help' },
+  { key: 'g', sel: '#contact',  descKey: 'kbd.contact' },
+  { key: 'h', sel: '#home',     descKey: 'kbd.home' },
+  { key: 'n', sel: '#notice',   descKey: 'kbd.notice' },
+  { key: 'd', sel: '#data',     descKey: 'kbd.data' },
+  { key: 's', sel: '#service',  descKey: 'kbd.service' },
+  { key: 'b', sel: '#scenery',  descKey: 'kbd.scenery' },
+  { key: '?', desc: '__help__', descKey: 'kbd.help' },
 ];
 
 function isInputFocused() {
@@ -55,13 +57,12 @@ function closeHelp() {
 
 function showHelp() {
   closeHelp();
-  const lang = localStorage.getItem('lc_lang') || 'zh-CN';
-  const isEn = lang === 'en';
   const rows = SHORTCUTS.map(s => {
+    const label = t(s.descKey);
     if (s.sel === '__help__') {
-      return `<div class="kbd-row"><kbd>Shift</kbd>+<kbd>/</kbd> <span>${isEn ? s.descEn : s.desc}</span></div>`;
+      return `<div class="kbd-row"><kbd>Shift</kbd>+<kbd>/</kbd> <span>${label}</span></div>`;
     }
-    return `<div class="kbd-row"><kbd>${s.key.toUpperCase()}</kbd> <span>${isEn ? s.descEn : s.desc}</span></div>`;
+    return `<div class="kbd-row"><kbd>${s.key.toUpperCase()}</kbd> <span>${label}</span></div>`;
   }).join('');
 
   const modal = document.createElement('div');
@@ -72,12 +73,12 @@ function showHelp() {
   modal.innerHTML = `
     <div class="kbd-help-modal">
       <div class="kbd-help-head">
-        <h3>⌨️ ${isEn ? 'Keyboard Shortcuts' : '键盘快捷键'}</h3>
-        <button class="kbd-help-close" id="kbdHelpClose" aria-label="关闭">✕</button>
+        <h3>⌨️ ${t('kbd.title', '键盘快捷键')}</h3>
+        <button class="kbd-help-close" id="kbdHelpClose" aria-label="${t('common.close', '关闭')}">✕</button>
       </div>
       <div class="kbd-help-body">${rows}</div>
       <div class="kbd-help-foot">
-        <small>${isEn ? 'Shortcuts are disabled while typing in input fields.' : '在输入框/留言框中按键时, 快捷键不会触发。'}</small>
+        <small>${t('kbd.tip', '在输入框/留言框中按键时, 快捷键不会触发。')}</small>
       </div>
     </div>
   `;
