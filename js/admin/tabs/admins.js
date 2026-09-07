@@ -40,46 +40,46 @@ export async function renderAdminList() {
 }
 
 export async function adminReset(id) {
-  const newPw = prompt(t('admin.admins.resetPw.prompt'));
+  const newPw = prompt(t('admin.admins.resetPw.prompt', '输入新密码 (至少 8 位):'));
   if (!newPw || newPw.length < 8) {
-    if (window._toast) window._toast(t('admin.admins.resetPw.prompt'), 'error');
+    if (window._toast) window._toast(t('admin.admins.pwMin', '密码至少 8 位'), 'error');
     return;
   }
   try {
     await PATCH('/api/admin/admins?id=' + id, { new_password: newPw });
-    if (window._toast) window._toast(t('admin.admins.resetPw.success'), 'success');
-  } catch (e) { if (window._toast) window._toast(t('admin.admins.fail') + ': ' + e.message, 'error'); }
+    if (window._toast) window._toast(t('admin.admins.resetPw.success', '密码已重置'), 'success');
+  } catch (e) { if (window._toast) window._toast(t('admin.admins.fail', '失败') + ': ' + e.message, 'error'); }
 }
 export async function adminDel(id, kind) {
   if (kind === 'unlink') {
-    if (!confirm(t('admin.admins.unlink.confirm'))) return;
+    if (!confirm(t('admin.admins.unlink.confirm', '解绑该玩家？'))) return;
     try {
       await POST('/api/init?action=admin-unmerge-account', { admin_id: id, player_id: 0 });
       cacheClear('admins:');
       renderAdminList();
-    } catch (e) { if (window._toast) window._toast(t('admin.admins.fail') + ': ' + e.message, 'error'); }
+    } catch (e) { if (window._toast) window._toast(t('admin.admins.fail', '失败') + ': ' + e.message, 'error'); }
     return;
   }
-  if (!confirm(t('admin.admins.delete.confirm'))) return;
+  if (!confirm(t('admin.admins.delete.confirm', '删除该管理员？'))) return;
   try {
     await DEL('/api/admin/admins?id=' + id);
     cacheClear('admins:');
     renderAdminList();
-  } catch (e) { if (window._toast) window._toast(t('admin.admins.fail') + ': ' + e.message, 'error'); }
+  } catch (e) { if (window._toast) window._toast(t('admin.admins.fail', '失败') + ': ' + e.message, 'error'); }
 }
 export function adminLink(id) {
-  const pid = prompt(t('admin.admins.link.prompt'));
+  const pid = prompt(t('admin.admins.link.prompt', '输入要绑定的玩家 ID:'));
   if (!pid) return;
   const pId = parseInt(pid, 10);
   if (!pId) return;
   showMergePlayerModal(id, pId);
 }
 export function showMergePlayerModal(adminId, playerId) {
-  const msg = t('admin.admins.merge.confirm')
+  const msg = t('admin.admins.merge.confirm', '确认将管理员 #{adminId} 绑定到玩家 #{playerId}?')
     .replace('#{adminId}', adminId)
     .replace('#{playerId}', playerId);
   if (!confirm(msg)) return;
   POST('/api/init?action=admin-merge-account', { admin_id: adminId, player_id: playerId })
     .then(() => { cacheClear('admins:'); renderAdminList(); })
-    .catch(e => { if (window._toast) window._toast(t('admin.admins.fail') + ': ' + e.message, 'error'); });
+    .catch(e => { if (window._toast) window._toast(t('admin.admins.fail', '失败') + ': ' + e.message, 'error'); });
 }

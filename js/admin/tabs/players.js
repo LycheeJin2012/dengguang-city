@@ -159,7 +159,7 @@ export async function playerAction(id, act) {
     await PATCH('/api/admin/players?id=' + id + '&action=' + act);
     cacheClear('players:');
     renderPlayers();
-  } catch (e) { if (window._toast) window._toast('失败: ' + e.message, 'error'); }
+  } catch (e) { if (window._toast) window._toast(t('common.fail', '失败') + ': ' + e.message, 'error'); }
 }
 export async function playerResetPw(id) {
   const newPw = prompt(t('admin.players.pwPrompt', '输入新密码 (至少 8 位):'));
