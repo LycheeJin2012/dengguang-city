@@ -71,22 +71,22 @@ function renderCardSvg(p) {
   <rect x="10" y="10" width="340" height="200" fill="none" stroke="#fff" stroke-width="1" stroke-dasharray="4 2"/>
   <!-- 顶部金条 -->
   <rect x="10" y="10" width="340" height="22" fill="#ffaa00" stroke="#000" stroke-width="2"/>
-  <text x="180" y="26" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" letter-spacing="2">🎮 灯光市 · 市民卡</text>
+  <text x="180" y="26" text-anchor="middle" font-size="12" font-weight="bold" fill="#000" letter-spacing="2">🎮 ${t('citizen.card.title', '灯光市 · 市民卡')}</text>
   <!-- 头像 -->
   <rect x="20" y="44" width="60" height="60" fill="#f7f0d8" stroke="#000" stroke-width="3"/>
   <text x="50" y="86" text-anchor="middle" font-size="40">${esc(avatar)}</text>
   <!-- 名字 -->
   <text x="92" y="64" font-size="16" font-weight="bold" fill="#fff">${esc(username)}</text>
   <text x="92" y="82" font-size="10" fill="#ffaa00">#${String(id).padStart(4, '0')}</text>
-  <text x="92" y="98" font-size="9" fill="#fff">入驻: ${esc(created || '—')}</text>
+  <text x="92" y="98" font-size="9" fill="#fff">${t('citizen.card.joined', '入驻: ')}${esc(created || '—')}</text>
   <!-- 数据 -->
   <g transform="translate(20, 120)">
     <rect width="320" height="80" fill="#1a2a0a" stroke="#ffaa00" stroke-width="2"/>
-    <text x="10" y="20" font-size="10" fill="#ffaa00" font-weight="bold">💎 绿宝石</text>
+    <text x="10" y="20" font-size="10" fill="#ffaa00" font-weight="bold">💎 ${t('citizen.card.emeralds', '绿宝石')}</text>
     <text x="10" y="40" font-size="20" font-weight="bold" fill="#fff">${emeralds}</text>
-    <text x="110" y="20" font-size="10" fill="#ffaa00" font-weight="bold">📅 服务年数</text>
+    <text x="110" y="20" font-size="10" fill="#ffaa00" font-weight="bold">📅 ${t('citizen.card.years', '服务年数')}</text>
     <text x="110" y="40" font-size="20" font-weight="bold" fill="#fff">${yearOfService}</text>
-    <text x="210" y="20" font-size="10" fill="#ffaa00" font-weight="bold">🎫 身份</text>
+    <text x="210" y="20" font-size="10" fill="#ffaa00" font-weight="bold">🎫 ${t('citizen.card.role', '身份')}</text>
     <text x="210" y="40" font-size="14" font-weight="bold" fill="#fff">${esc(p.status || 'active')}</text>
     <text x="10" y="70" font-size="9" fill="#9f9">dengguang-city.pages.dev</text>
   </g>
