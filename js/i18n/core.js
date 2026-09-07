@@ -147,6 +147,7 @@ const DICT = {
   'admin.players.resetPw':   { 'zh-CN': '🔑 重置密码',    'en': '🔑 Reset Password' },
   'admin.players.pwPrompt':  { 'zh-CN': '输入新密码 (至少 8 位):', 'en': 'Enter new password (min 8 chars):' },
   'admin.players.pwMin':    { 'zh-CN': '密码至少 8 位',    'en': 'Password must be at least 8 characters' },
+  'admin.players.renamePrompt':{ 'zh-CN': '改玩家账号名 (2-32 字符, 不含 @):', 'en': 'Rename player (2-32 chars, no @):' },
   'admin.players.pwReset':   { 'zh-CN': '密码已重置',      'en': 'Password reset' },
   'admin.players.createTitle':{ 'zh-CN': '🆕 代注册玩家账号', 'en': '🆕 Register Player Account' },
   'admin.players.createDesc': { 'zh-CN': '由 super 管理员直接创建账号，无需玩家本人注册和审批。账号立即激活可用。', 'en': 'Super admins create accounts directly. No player registration or approval needed. Account is active immediately.' },

@@ -162,15 +162,15 @@ export async function playerAction(id, act) {
   } catch (e) { if (window._toast) window._toast('失败: ' + e.message, 'error'); }
 }
 export async function playerResetPw(id) {
-  const newPw = prompt(t('admin.players.pwPrompt'));
-  if (!newPw || newPw.length < 8) { if (window._toast) window._toast(t('admin.players.pwMin'), 'error'); return; }
+  const newPw = prompt(t('admin.players.pwPrompt', '输入新密码 (至少 8 位):'));
+  if (!newPw || newPw.length < 8) { if (window._toast) window._toast(t('admin.players.pwMin', '密码至少 8 位'), 'error'); return; }
   try {
     await PATCH('/api/admin/players?id=' + id + '&action=reset', { new_password: newPw });
-    if (window._toast) window._toast(t('admin.players.pwReset'), 'success');
-  } catch (e) { if (window._toast) window._toast('失败: ' + e.message, 'error'); }
+    if (window._toast) window._toast(t('admin.players.pwReset', '密码已重置'), 'success');
+  } catch (e) { if (window._toast) window._toast(t('common.fail', '失败') + ': ' + e.message, 'error'); }
 }
 export async function playerRename(id, currentName) {
-  const newName = prompt('改玩家账号名 (2-32 字符, 不含 @):', currentName);
+  const newName = prompt(t('admin.players.renamePrompt', '改玩家账号名 (2-32 字符, 不含 @):'), currentName);
   if (!newName || newName === currentName) return;
   try {
     await PATCH('/api/admin/players?id=' + id + '&action=rename', { new_username: newName });
