@@ -266,7 +266,7 @@ function bindLicense() {
     } catch (err) {
       if (err.message && /登录|会话/.test(err.message)) {
         close();
-        openLoginModal(err.message || '请先登录玩家账号');
+        openLoginModal(err.message || t('auth.needLogin', '请先登录玩家账号'));
       } else {
         msg.textContent = '✗ ' + err.message;
         msg.style.color = 'var(--c-redstone)';
