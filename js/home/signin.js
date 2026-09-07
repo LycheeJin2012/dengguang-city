@@ -1,11 +1,12 @@
 // v45 重写: 每日签到 modal + 签到状态 badge
 // 原 main.js L1625-1778 拆出来
 import { $, escHtml, GET, POST } from './util.js?v=v46-fix-modules';
+import { t } from '../i18n/core.js?v=n5';
 const _toast = (msg, type) => window._toast && window._toast(msg, type);
 
 export async function fetchSigninStatus() {
   const d = await GET('/api/init?action=signin-status');
-  if (!d.ok) throw new Error(d.error || '签到状态查询失败');
+  if (!d.ok) throw new Error(d.error || t('signin.err.statusFail', '签到状态查询失败'));
   return d;
 }
 
@@ -40,7 +41,7 @@ export function updateSigninBadge(d) {
   const numEl = $('#signinStreakNum');
   if (!badge || !numEl) return;
   if (d.signed_today) {
-    numEl.innerHTML = '<span class="signin-badge-done">✓ 今日已签</span>';
+    numEl.innerHTML = `<span class="signin-badge-done">${t('signin.badge.signedToday', '✓ 今日已签')}</span>`;
     badge.style.display = '';
   } else if (d.current_streak > 0) {
     numEl.textContent = d.current_streak;
@@ -70,8 +71,8 @@ export async function openSigninModal() {
     // v46: 增加英文/简中关键词匹配, 避免未登录时显示误导的"网络错误"
     const isAuth = /登录|会话|未登录|Not logged in|logged in|expired|401/i.test(em);
     const msg = isAuth
-      ? '请先在右上角登录市民账号, 再来签到'
-      : '网络错误: ' + em;
+      ? t('signin.err.needLogin', '请先在右上角登录市民账号, 再来签到')
+      : t('signin.err.network', '网络错误: ') + em;
     _toast(msg, 'error');
     return;
   }
@@ -82,31 +83,31 @@ export async function openSigninModal() {
   backdrop.innerHTML = `
     <div class="signin-modal">
       <div class="signin-modal-head">
-        <h3>🎁 每日签到</h3>
+        <h3>🎁 ${t('signin.title', '每日签到')}</h3>
         <button class="signin-close">×</button>
       </div>
       <div class="signin-stat-row">
         <div class="signin-stat-icon">💎</div>
         <div class="signin-stat-main">
-          <div class="signin-stat-label">当前绿宝石</div>
+          <div class="signin-stat-label">${t('signin.emeralds', '当前绿宝石')}</div>
           <div class="signin-stat-value">${d.emeralds}</div>
         </div>
         <div class="signin-stat-side">
-          <div class="signin-stat-label">连续 / 总</div>
-          <div class="signin-stat-streak">🔥 ${d.current_streak} <span class="signin-stat-streak-sub">/ ${d.total_days} 天</span></div>
+          <div class="signin-stat-label">${t('signin.streak', '连续 / 总')}</div>
+          <div class="signin-stat-streak">🔥 ${d.current_streak} <span class="signin-stat-streak-sub">/ ${d.total_days} ${t('signin.days', '天')}</span></div>
         </div>
       </div>
       <div class="signin-week-wrap">
-        <div class="signin-week-label">最近 7 天</div>
+        <div class="signin-week-label">${t('signin.recent7', '最近 7 天')}</div>
         <div class="signin-week">${renderRecentDays(d)}</div>
       </div>
       <div class="signin-rules">
-        奖励规则: 7 天一个循环<br>
-        第 1 天 +1 💎 · 第 2 天 +2 · ... · 第 7 天 +7 💎<br>
-        第 8 天重新从 +1 开始 (一周循环往复)
+        ${t('signin.rules.title', '奖励规则: 7 天一个循环')}<br>
+        ${t('signin.rules.detail', '第 1 天 +1 💎 · 第 2 天 +2 · ... · 第 7 天 +7 💎')}<br>
+        ${t('signin.rules.cycle', '第 8 天重新从 +1 开始 (一周循环往复)')}
       </div>
       <button class="btn btn-primary btn-block" id="signinBtn" ${d.signed_today ? 'disabled' : ''}>
-        ${d.signed_today ? '✓ 今日已签, 明天再来' : '🎁 签到领绿宝石'}
+        ${d.signed_today ? t('signin.btn.signedToday', '✓ 今日已签, 明天再来') : t('signin.btn.doSignin', '🎁 签到领绿宝石')}
       </button>
       <div id="signinMsg" class="signin-msg"></div>
     </div>`;
@@ -121,17 +122,17 @@ export async function openSigninModal() {
       btn.disabled = true;
       const msg = $('#signinMsg');
       msg.className = 'signin-msg signin-msg-loading';
-      msg.textContent = '签到中…';
+      msg.textContent = t('signin.loading', '签到中…');
       try {
         const rd = await POST('/api/init?action=signin', {});
-        if (!rd.ok) throw new Error(rd.error || '签到失败');
+        if (!rd.ok) throw new Error(rd.error || t('signin.err.fail', '签到失败'));
         msg.className = 'signin-msg signin-msg-ok';
-        msg.textContent = rd.message + (rd.bonus ? ' (连签奖励!)' : '');
+        msg.textContent = rd.message + (rd.bonus ? t('signin.streakBonus', ' (连签奖励!)') : '');
         const emeraldEl = backdrop.querySelector('.signin-stat-value');
         if (emeraldEl) emeraldEl.textContent = rd.emeralds;
         const navE = $('#navEmeraldNum');
         if (navE) navE.textContent = rd.emeralds;
-        btn.textContent = '✓ 今日已签, 明天再来';
+        btn.textContent = t('signin.btn.signedToday', '✓ 今日已签, 明天再来');
         const fresh = await fetchSigninStatus();
         const weekEl = backdrop.querySelector('.signin-week');
         if (weekEl) weekEl.innerHTML = renderRecentDays(fresh);
