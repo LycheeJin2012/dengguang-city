@@ -379,6 +379,13 @@ const DICT = {
   'profile.badge.settled.tip': { 'zh-CN': '加入满 30 天',   'en': '30 days in the city' },
   'profile.badge.veteran.tip': { 'zh-CN': '加入满 100 天',  'en': '100 days in the city' },
   'profile.badge.pioneer.tip': { 'zh-CN': '加入满 365 天',  'en': '365 days in the city' },
+  // admin 后台概览 stat 卡
+  'admin.stat.playerPending':   { 'zh-CN': '待审玩家',  'en': 'Pending Players' },
+  'admin.stat.msgUnread':       { 'zh-CN': '未读留言',  'en': 'Unread Messages' },
+  'admin.stat.bookPending':     { 'zh-CN': '待审酒店',  'en': 'Pending Bookings' },
+  'admin.stat.licensePending':  { 'zh-CN': '待审驾照',  'en': 'Pending Licenses' },
+  'admin.stat.kartPending':     { 'zh-CN': '待审赛道',  'en': 'Pending Karts' },
+  'admin.stat.playerActive':    { 'zh-CN': '活跃市民',  'en': 'Active Citizens' },
   'hotel.intro':            { 'zh-CN': '树上酒店（筹建）。选址、规模、定价、运营方由市民大会与合作社讨论后公布。当前展示房型为草案，待合作社定稿后正式上线。',
                                'en': 'Treehouse Hotel (under construction). Site, scale, pricing, and operator will be decided by the Citizens Assembly and the cooperative. Room listings shown are drafts and will go live once finalized.' },
   // 公告卡 UI 标签

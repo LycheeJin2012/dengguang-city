@@ -97,7 +97,7 @@ export function showView(name) {
   }
 }
 
-// v50-N6: 拉 dashboard 数字, 1 次 GET 更新 4 个 tab 角标 (替代每个 tab 自己 fetch)
+// v50-N6: 拉 dashboard 数字, 1 次 GET 更新 4 个 tab 角标 + 6 个 stat 卡片 (替代每个 tab 自己 fetch)
 async function fetchBadges() {
   const d = await GET('/api/admin/dashboard');
   if (!d || !d.ok) return;
@@ -117,4 +117,31 @@ async function fetchBadges() {
   const tt = d.msg_unread || 0;
   const ttEl = document.getElementById('ticketTotalBadge');
   if (ttEl) ttEl.textContent = tt > 0 ? `(${tt})` : '';
+  // v50-N6: 后台概览 6 个 stat 卡片
+  // data-key → 从 dashboard 响应里找对应数字
+  const keyMap = {
+    playerPending:   d.players?.pending || 0,
+    playerActive:    d.players?.active || 0,
+    msgUnread:       d.messages?.unread || 0,
+    bookPending:     d.bookings?.pending || 0,
+    licensePending:  d.license?.pending || 0,
+    kartPending:     (d.kart?.pending || 0) + (d.circuit?.pending || 0),  // 赛道+国际赛车合并显示
+  };
+  document.querySelectorAll('.dash-stat').forEach(btn => {
+    const key = btn.dataset.key;
+    const n = keyMap[key] || 0;
+    const numEl = btn.querySelector('.dash-stat-num');
+    if (numEl) {
+      numEl.textContent = n;
+      numEl.classList.toggle('zero', n === 0);
+    }
+    // 点击 stat 卡 → 跳对应 tab
+    btn.addEventListener('click', () => {
+      const tab = btn.dataset.tab;
+      if (tab) {
+        const tabEl = document.querySelector(`.tab[data-tab="${tab}"]`);
+        if (tabEl) tabEl.click();
+      }
+    });
+  });
 }

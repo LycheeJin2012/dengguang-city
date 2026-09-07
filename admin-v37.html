@@ -125,6 +125,39 @@
       </div>
     </div>
 
+    <!-- v50-N6: 后台数据概览 (6 个 stat 卡片, 一眼看到全部待办) -->
+    <div class="dash-stats" id="dashStats">
+      <button type="button" class="dash-stat" data-tab="players" data-key="playerPending">
+        <span class="dash-stat-num">—</span><span class="dash-stat-lbl" data-i18n="admin.stat.playerPending">待审玩家</span>
+      </button>
+      <button type="button" class="dash-stat" data-tab="tickets" data-key="msgUnread">
+        <span class="dash-stat-num">—</span><span class="dash-stat-lbl" data-i18n="admin.stat.msgUnread">未读留言</span>
+      </button>
+      <button type="button" class="dash-stat" data-tab="tickets" data-key="bookPending">
+        <span class="dash-stat-num">—</span><span class="dash-stat-lbl" data-i18n="admin.stat.bookPending">待审酒店</span>
+      </button>
+      <button type="button" class="dash-stat" data-tab="tickets" data-key="licensePending">
+        <span class="dash-stat-num">—</span><span class="dash-stat-lbl" data-i18n="admin.stat.licensePending">待审驾照</span>
+      </button>
+      <button type="button" class="dash-stat" data-tab="kart" data-key="kartPending">
+        <span class="dash-stat-num">—</span><span class="dash-stat-lbl" data-i18n="admin.stat.kartPending">待审赛道</span>
+      </button>
+      <button type="button" class="dash-stat" data-tab="players" data-key="playerActive">
+        <span class="dash-stat-num">—</span><span class="dash-stat-lbl" data-i18n="admin.stat.playerActive">活跃市民</span>
+      </button>
+    </div>
+
+    <style>
+    /* v50-N6: 后台概览 stat 卡片条 (内联, 避免动 style.min.css) */
+    .dash-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;padding:12px 16px;background:var(--c-bg-1,#f3e9c8);border-bottom:2px solid var(--c-border,#2a2a2a)}
+    .dash-stat{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:10px 6px;background:var(--c-bg-2,#e0d6b1);border:2px solid var(--c-border,#2a2a2a);box-shadow:3px 3px 0 var(--c-border,#2a2a2a);cursor:pointer;font-family:inherit;transition:transform .08s,box-shadow .08s;min-height:64px}
+    .dash-stat:hover{transform:translate(-1px,-1px);box-shadow:4px 4px 0 var(--c-border,#2a2a2a)}
+    .dash-stat:active{transform:translate(1px,1px);box-shadow:2px 2px 0 var(--c-border,#2a2a2a)}
+    .dash-stat-num{font-family:'Press Start 2P',monospace;font-size:18px;color:var(--c-red,#c00);line-height:1}
+    .dash-stat-lbl{font-family:'VT323',monospace;font-size:14px;color:var(--c-stone-dark,#5a5a6a);margin-top:6px;letter-spacing:1px}
+    .dash-stat-num.zero{color:var(--c-grass-dark,#4a7a2a);opacity:.6}
+    </style>
+
     <!-- Tab 切换 (v47: 留言/驾照/酒店 合并为 tickets 工单) -->
     <nav class="admin-tabs">
       <button class="tab active" data-tab="tickets">🎫 <span data-i18n="admin.tab.tickets">工单中心</span> <span class="tab-count" id="ticketTotalBadge"></span></button>
