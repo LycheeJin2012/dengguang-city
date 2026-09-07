@@ -138,8 +138,11 @@ function bindCircuit() {
     getBundle().then(b => {
       const tracks = b.tracks || [];
       if (!tracks.length) { sel.innerHTML = `<option value="">(${t('track.empty', '暂无开放赛道')})</option>`; return; }
-      sel.innerHTML = tracks.map(t =>
-        `<option value="${t.id}">${escHtml(t.name)} - ${t.trial_price || 0}💎/${t('common.perTrial', '次')}</option>`
+      // v50-N6 fix: tracks.map(t => ...) 里的 t 是 track 对象, shadow 外层 i18n t()
+      //   之前 ${t('common.perTrial', '次')} → trackObj(...) → TypeError
+      const perTrial = t('common.perTrial', '次');
+      sel.innerHTML = tracks.map(tr =>
+        `<option value="${tr.id}">${escHtml(tr.name)} - ${tr.trial_price || 0}💎/${perTrial}</option>`
       ).join('');
     });
   }
