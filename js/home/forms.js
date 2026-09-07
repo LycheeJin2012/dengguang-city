@@ -139,7 +139,7 @@ function bindCircuit() {
       const tracks = b.tracks || [];
       if (!tracks.length) { sel.innerHTML = `<option value="">(${t('track.empty', '暂无开放赛道')})</option>`; return; }
       sel.innerHTML = tracks.map(t =>
-        `<option value="${t.id}">${escHtml(t.name)} - ${t.trial_price || 0}💎/次</option>`
+        `<option value="${t.id}">${escHtml(t.name)} - ${t.trial_price || 0}💎/${t('common.perTrial', '次')}</option>`
       ).join('');
     });
   }
@@ -282,7 +282,7 @@ function openBookModal(roomId) {
   const r = ROOMS.find(x => String(x.id) === String(roomId));
   if (!r) return;
   bookRoom = r;
-  const t = $('#bookTitle'); if (t) t.textContent = `预订 · ${r.name}`;
+  const titleEl = $('#bookTitle'); if (titleEl) titleEl.textContent = `${t('hotel.btn.book')} · ${r.name}`;
   const s = $('#bookSummary');
   if (s) s.innerHTML = `
     <div><b>${r.icon} ${r.name}</b><br/><span class="book-sub">${r.bed} · ${r.guests}</span></div>
@@ -505,14 +505,15 @@ export async function loadLicenseReqs() {
     const GRADE_CLASS = { S: 'license-grade-s' };
     grid.innerHTML = reqs.map(r => {
       const g = (r.exam_type || '').toUpperCase();
+      const gradeLabel = t('license.gradeSuffix');  // "级" / "Tier"
       return `
         <div class="license-card">
           <div class="license-grade ${GRADE_CLASS[g] || ''}">${escHtml(g)}</div>
-          <h3>${escHtml(r.title || gradeLabels[g] || g + ' 级')}</h3>
+          <h3>${escHtml(r.title || gradeLabels[g] || g + ' ' + gradeLabel)}</h3>
           <p>${escHtml(r.description || '')}</p>
           <p style="font-size:12px;color:var(--c-stone-dark);margin-top:4px;">${escHtml(r.requirements || '').replace(/\n/g, ' · ')}</p>
-          <p style="font-size:12px;color:var(--c-stone-dark);">⏱ ${r.duration_minutes || 30} 分钟 · 最低 ${r.min_age || 16} 岁</p>
-          <button class="btn btn-primary btn-large" data-license="${examTypes[g] || 'written'}" data-grade="${escHtml(g)}">${gradeIcons[g] || '📝'} 报名 ${escHtml(g)} 级考试</button>
+          <p style="font-size:12px;color:var(--c-stone-dark);">⏱ ${r.duration_minutes || 30} ${t('common.minutes', '分钟')} · ${t('common.minAge', '最低')} ${r.min_age || 16} ${t('common.yearsOld', '岁')}</p>
+          <button class="btn btn-primary btn-large" data-license="${examTypes[g] || 'written'}" data-grade="${escHtml(g)}">${gradeIcons[g] || '📝'} ${t('license.btn.signup', '报名')} ${escHtml(g)} ${t('license.btn.examSuffix', '级考试')}</button>
         </div>`;
     }).join('');
   } catch (e) {
