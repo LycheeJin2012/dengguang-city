@@ -65,7 +65,7 @@ setMetaDescription('page.meta.profile', 'Light City Player Profile - My messages
     const r = await fetchProfile(viewUsername);
     profile = r.profile; stats = r.stats;
   } catch (e) {
-    pBody.innerHTML = `<div class="profile-login-hint"><h2>${e.message || '载入失败'}</h2><p>该玩家可能不存在或账号未激活</p></div>`;
+    pBody.innerHTML = `<div class="profile-login-hint"><h2>${e.message || t('profile.error.loadFailed', '载入失败')}</h2><p>${t('profile.error.playerNotFound', '该玩家可能不存在或账号未激活')}</p></div>`;
     return;
   }
   setProfile(profile);

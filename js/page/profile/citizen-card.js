@@ -1,6 +1,7 @@
 // v47: 市民身份卡生成器 (纯前端 SVG, 不依赖后端)
 // 风格: 像素风卡片, 含玩家信息/绿宝石/驾照等级/签到天数/通行密钥
 import { $, esc } from '../util.js?v=v46-fix-modules';
+import { t } from '../../i18n/core.js?v=n5';
 
 let _meCache = null;
 
@@ -24,24 +25,24 @@ export function bindCitizenCard() {
 
 async function generateCard() {
   const me = await getMe();
-  if (!me) { if (window._toast) window._toast('请先登录', 'error'); return; }
+  if (!me) { if (window._toast) window._toast(t('auth.needLogin', '请先登录'), 'error'); return; }
   const preview = $('#citizenCardPreview');
   const svg = renderCardSvg(me);
   preview.innerHTML = `
     <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start">
       <div style="flex:0 0 360px;max-width:100%">${svg}</div>
       <div style="flex:1;min-width:200px;display:flex;flex-direction:column;gap:8px">
-        <p style="margin:0;font-size:13px;color:var(--c-stone-dark)">右键下方"下载"按钮保存为 SVG 文件 (可粘贴到 MC 群或转 PNG)。</p>
-        <button id="dlCardBtn" class="btn btn-primary">⬇️ 下载 SVG</button>
-        <button id="copyCardBtn" class="btn btn-ghost">📋 复制 SVG 源码</button>
+        <p style="margin:0;font-size:13px;color:var(--c-stone-dark)">${t('profile.citizen.downloadTip', '右键下方"下载"按钮保存为 SVG 文件（可粘贴到 MC 群或转 PNG）。')}</p>
+        <button id="dlCardBtn" class="btn btn-primary">${t('profile.citizen.downloadBtn', '⬇️ 下载 SVG')}</button>
+        <button id="copyCardBtn" class="btn btn-ghost">${t('profile.citizen.copyBtn', '📋 复制 SVG 源码')}</button>
       </div>
     </div>
   `;
   // 实际插入的 svg 是 string, 取出来当 DOM
   preview.querySelector('#dlCardBtn')?.addEventListener('click', () => downloadSvg(svg, me.username + '_citizen_card.svg'));
   preview.querySelector('#copyCardBtn')?.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(svg); if (window._toast) window._toast('已复制', 'success'); }
-    catch (e) { if (window._toast) window._toast('复制失败: ' + e.message, 'error'); }
+    try { await navigator.clipboard.writeText(svg); if (window._toast) window._toast(t('profile.citizen.copied', '已复制'), 'success'); }
+    catch (e) { if (window._toast) window._toast(t('profile.citizen.copyFailed', '复制失败: ') + e.message, 'error'); }
   });
 }
 
