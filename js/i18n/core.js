@@ -382,6 +382,16 @@ const DICT = {
   'sub.read':              { 'zh-CN': '已读',              'en': 'Read' },
   'sub.readAll':           { 'zh-CN': '全部标为已读',      'en': 'Mark All as Read' },
   'common.fail':           { 'zh-CN': '失败',              'en': 'Failed' },
+  // 酒店预订 (book.js)
+  'hotel.book.badDate':    { 'zh-CN': '请选择有效日期',     'en': 'Please pick valid dates' },
+  'hotel.book.outBeforeIn':{ 'zh-CN': '退房日期必须晚于入住日期', 'en': 'Check-out date must be after check-in date' },
+  'hotel.book.fillAll':    { 'zh-CN': '请填写姓名和联系方式', 'en': 'Please fill in name and contact' },
+  'hotel.book.submitting': { 'zh-CN': '提交中…',           'en': 'Submitting…' },
+  'hotel.book.submitted':  { 'zh-CN': '已提交（跨设备同步，管理员会确认）', 'en': 'Submitted (synced, admin will confirm)' },
+  'hotel.book.loginFirst': { 'zh-CN': '请先登录玩家账号再预订', 'en': 'Please log in to a player account first' },
+  // DM 发起新会话 (list.js)
+  'dm.new.usernamePrompt': { 'zh-CN': '收件人用户名（对方必须是已激活的玩家）:', 'en': 'Recipient username (must be an active player):' },
+  'dm.new.contentPrompt':  { 'zh-CN': '私信内容：',         'en': 'Message content:' },
   // hero
   'hero.tag':         { 'zh-CN': '灯光市人民政府 · 官方站点', 'en': 'Light City Hall · Official Site' },
   'hero.welcome':     { 'zh-CN': '欢 迎 来 到', 'en': 'WELCOME TO' },

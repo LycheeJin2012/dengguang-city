@@ -47,9 +47,9 @@ export async function loadList() {
 }
 
 function openNewDM() {
-  const username = prompt('收件人用户名（对方必须是已激活的玩家）:');
+  const username = prompt(t('dm.new.usernamePrompt', '收件人用户名（对方必须是已激活的玩家）:'));
   if (!username || !username.trim()) return;
-  const content = prompt('私信内容:');
+  const content = prompt(t('dm.new.contentPrompt', '私信内容:'));
   if (!content || !content.trim()) return;
   POST('/api/social?action=dm-send', {
     to_username: username.trim(),
