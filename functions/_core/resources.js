@@ -18,6 +18,7 @@ const bool={
 export const resources={
   hotels:{
     table:'hotels',key:'hotels',fields:{
+      owner_id:{type:'nullable-id'},
       name:str(100,true),address:str(),description:str(2000),image_url:{
         type:'url'
       }
@@ -81,6 +82,7 @@ export function validated(fields,data,partial=false){
       required:rule.required
     }
     );
+    if(rule.type==='nullable-id')v=v?integer(v,key):null;
     if(rule.type==='number'){
       if(v==null)fail(400,`${key} 必填`);
       if(rule.decimal){
@@ -130,6 +132,7 @@ export function resource(name){
     }
     const input=await body(request);if(name==='gallery'){if(input.title===undefined&&input.label!==undefined)input.title=input.label;if(input.image_url===undefined&&input.file_url!==undefined)input.image_url=input.file_url;if(input.is_active===undefined&&input.is_published!==undefined)input.is_active=input.is_published?1:0;}
     const values=validated(def.fields,input,request.method==='PATCH');if(!Object.keys(values).length)fail(400,'没有可更新的字段');
+    if(values.owner_id&&!await env.DB.prepare("SELECT id FROM hotel_owners WHERE id=? AND status='active'").bind(values.owner_id).first())fail(404,'酒店老板账户不存在或已停用');
     const publicImage=values.image_url?await validatePublicImage(context,values.image_url,admin):null; if(name==='hotel-rooms'&&values.hotel_id&&!await env.DB.prepare('SELECT id FROM hotels WHERE id=?').bind(values.hotel_id).first())fail(404,'酒店不存在'); if(name==='announcements'&&request.method==='POST')values.created_by=admin.id; if(name==='gallery'){
       if('title' in values)values.label=values.title;
       if('image_url' in values)values.file_url=values.image_url;

@@ -7,13 +7,13 @@ export async function uploadActor(c) {
   try { return {kind:'player',user:await identity(c)}; }
   catch(e) { if(e.status!==401&&e.status!==403)throw e;return {kind:'admin',user:await identity(c,'admin')}; }
 }
-export const ownerColumn = actor => actor.kind==='admin'?'owner_admin_id':'owner_player_id';
+export const ownerColumn = actor => actor.kind==='admin'?'owner_admin_id':actor.kind==='hotel_owner'?'owner_hotel_id':'owner_player_id';
 export const ownedBy = (upload, actor) => upload[ownerColumn(actor)]===actor.user.id;
 export async function ticketOwner(c, reference) {
   const legacy=String(reference).startsWith('m:');const id=integer(legacy?String(reference).slice(2):reference);
-  const ticket=await c.env.DB.prepare(`SELECT id,player_id FROM ${legacy?'messages':'tickets'} WHERE id=?`).bind(id).first();
+  const ticket=await c.env.DB.prepare(`SELECT id,player_id,target_admin_id,target_player_id FROM ${legacy?'messages':'tickets'} WHERE id=?`).bind(id).first();
   if(!ticket)fail(404,'工单不存在');
-  try { await identity(c,'admin'); }
+  try { const admin=await identity(c,'admin');if(c.request.method!=='GET'&&(ticket.target_admin_id===admin.id||ticket.target_player_id&&ticket.target_player_id===admin.linked_player_id))fail(403,'被投诉人不能处理该工单');if(admin.role!=='super'&&(ticket.target_admin_id||ticket.target_player_id===admin.linked_player_id))fail(403,'此投诉仅限超管处理'); }
   catch(e) { if(e.status!==401&&e.status!==403)throw e;const p=await identity(c);if(ticket.player_id!==p.id)fail(404,'工单不存在'); }
   return ticket;
 }
@@ -42,5 +42,5 @@ export async function validatePublicImage(c, value, admin) {
   const id=imageUploadId(value);if(!id)return null;
   const file=await c.env.DB.prepare('SELECT * FROM media_uploads WHERE id=?').bind(id).first();
   if(!file||file.status!=='ready'||file.purpose!=='public-image'||!file.mime.startsWith('image/'))fail(400,'图片尚未上传完成');
-  if(!file.public_access&&file.owner_admin_id!==admin.id)fail(403,'不能使用其他人的未发布图片');return id;
+  if(!file.public_access&&(admin.kind==='hotel_owner'?file.owner_hotel_id!==admin.id:file.owner_admin_id!==admin.id))fail(403,'不能使用其他人的未发布图片');return id;
 }

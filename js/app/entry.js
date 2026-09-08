@@ -1,5 +1,5 @@
 import {shell,session,renderAccount,toast,region,state} from './core.js';
-const pages={home:()=>import('./home.js'),hotel:()=>import('./hotel.js'),profile:()=>import('./profile.js'),dm:()=>import('./social.js'),notifications:()=>import('./social.js'),leaderboard:()=>import('./social.js'),admin:()=>import('./admin.js')};
+const pages={'hotel-owner':()=>import('./hotel-owner.js'),home:()=>import('./home.js'),hotel:()=>import('./hotel.js'),profile:()=>import('./profile.js'),dm:()=>import('./social.js'),notifications:()=>import('./social.js'),leaderboard:()=>import('./social.js'),admin:()=>import('./admin.js')};
 shell();
 const auth=session().then(renderAccount).catch(e=>toast(e.message,true));
 state.authPending=auth;

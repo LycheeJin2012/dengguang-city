@@ -1,3 +1,4 @@
+import {linkedBusinessEvents} from './ticket-policy.js';
 import {
   endpoint,identity,body,string,integer,fail,reply
 }
@@ -73,7 +74,7 @@ export function adminSubmissions(kind){
       }
       );
     }
-    const id=integer(url.searchParams.get('id'));const row=await env.DB.prepare(`SELECT * FROM ${table} WHERE id=?`).bind(id).first();if(!row)fail(404,'记录不存在');if(request.method==='DELETE')fail(409,'请更新状态以保留历史记录');if(request.method!=='PATCH')fail(405,'不支持此方法');const b=await body(request),s=b.status||url.searchParams.get('status');const states=kind==='bookings'?['pending','confirmed','completed','cancelled']:kind==='license'?['pending','passed','failed']:['pending','approved','rejected'];if(!states.includes(s))fail(400,'状态无效');const ticketStatus=s==='pending'?'open':['rejected','failed','cancelled'].includes(s)?'closed':s==='confirmed'||s==='approved'?'in_progress':'resolved'; await env.DB.batch([env.DB.prepare(`UPDATE ${table} SET status=? WHERE id=?`).bind(s,id),env.DB.prepare("UPDATE tickets SET status=?,updated_at=datetime('now') WHERE source_table=? AND source_id=?").bind(ticketStatus,table,id)]);return reply({
+    const id=integer(url.searchParams.get('id'));const row=await env.DB.prepare(`SELECT * FROM ${table} WHERE id=?`).bind(id).first();if(!row)fail(404,'记录不存在');if(request.method==='DELETE')fail(409,'请更新状态以保留历史记录');if(request.method!=='PATCH')fail(405,'不支持此方法');const b=await body(request),s=b.status||url.searchParams.get('status');const states=kind==='bookings'?['pending','confirmed','completed','cancelled']:kind==='license'?['pending','passed','failed']:['pending','approved','rejected'];if(!states.includes(s))fail(400,'状态无效');const ticketStatus=s==='pending'?'open':['rejected','failed','cancelled'].includes(s)?'closed':s==='confirmed'||s==='approved'?'in_progress':'resolved'; await env.DB.batch([env.DB.prepare(`UPDATE ${table} SET status=? WHERE id=?`).bind(s,id),env.DB.prepare("UPDATE tickets SET status=CASE WHEN assignee_id IS NOT NULL AND status!='resolved' AND ?='resolved' THEN 'in_progress' ELSE ? END,updated_at=datetime('now') WHERE source_table=? AND source_id=?").bind(ticketStatus,ticketStatus,table,id),...await linkedBusinessEvents(c,table,id,s)]);return reply({
       id,status:s
     }
     );

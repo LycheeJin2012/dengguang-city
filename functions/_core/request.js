@@ -51,6 +51,7 @@ export async function identity(context,role='player'){
   if(!env.DB)fail(503,'数据库尚未连接');
   const s=await getSession(env,readToken(request));
   if(!s)fail(401,'请先登录');
+  if(role==='hotel_owner'){const owner=s.hotel_owner_id?await env.DB.prepare("SELECT id,username,linked_player_id FROM hotel_owners WHERE id=? AND status='active'").bind(s.hotel_owner_id).first():s.player_id?await env.DB.prepare("SELECT o.id,o.username,o.linked_player_id FROM hotel_owners o JOIN players p ON p.id=o.linked_player_id WHERE o.linked_player_id=? AND o.status='active' AND p.status='active'").bind(s.player_id).first():null;if(!owner)fail(403,'没有酒店经营权限');return owner;}
   if(role==='player'){
     if(!s.player_id)fail(401,'需要市民账号');
     const p=await env.DB.prepare("SELECT id,username,email,status,emeralds FROM players WHERE id=? AND status='active'").bind(s.player_id).first();
@@ -58,7 +59,7 @@ export async function identity(context,role='player'){
     return p;
   }
   if(!s.admin_id)fail(403,'需要管理员权限');
-  const a=await env.DB.prepare('SELECT id,username,role FROM admins WHERE id=?').bind(s.admin_id).first();
+  const a=await env.DB.prepare('SELECT id,username,role,linked_player_id FROM admins WHERE id=?').bind(s.admin_id).first();
   if(!a)fail(401,'管理员账号已失效');
   if(role==='super'&&a.role!=='super')fail(403,'此操作仅限 SUPER 管理员');
   return a;

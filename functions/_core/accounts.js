@@ -1,3 +1,4 @@
+import {claimPendingRewards} from './ticket-policy.js';
 import {
   endpoint,identity,body,string,integer,reply,fail
 }
@@ -65,7 +66,7 @@ export const accountAction=c=>endpoint(async()=>{
   else if(admin.linked_player_id!==playerId||player.linked_admin_id!==adminId)fail(409,'账号绑定关系已变化，请刷新'); const queries=[c.env.DB.prepare('UPDATE admins SET linked_player_id=? WHERE id=?').bind(linking?playerId:null,adminId),c.env.DB.prepare('UPDATE players SET linked_admin_id=? WHERE id=?').bind(linking?adminId:null,playerId)]; if(!linking){
     queries.push(c.env.DB.prepare('UPDATE passkeys SET admin_id=NULL WHERE player_id=? AND admin_id=?').bind(playerId,adminId),c.env.DB.prepare('DELETE FROM sessions WHERE player_id=? AND admin_id=?').bind(playerId,adminId));
   }
-  await c.env.DB.batch(queries);return reply({
+  await c.env.DB.batch(queries);if(linking)await claimPendingRewards(c.env.DB,adminId,playerId);return reply({
     linked:linking,admin_id:adminId,player_id:playerId
   }
   );
@@ -77,7 +78,7 @@ export const adminAccounts=c=>endpoint(async()=>{
   }
   =c;const me=await identity(c,request.method==='GET'?'admin':'super'),u=new URL(request.url);if(request.method==='GET'){
     return reply({
-      admins:(await env.DB.prepare('SELECT a.id,a.username,a.role,a.created_at,a.linked_player_id,p.username AS linked_player_username FROM admins a LEFT JOIN players p ON p.id=a.linked_player_id ORDER BY a.id').all()).results
+      admins:(await env.DB.prepare('SELECT a.id,a.username,a.role,a.specialties,a.created_at,a.linked_player_id,p.username AS linked_player_username FROM admins a LEFT JOIN players p ON p.id=a.linked_player_id ORDER BY a.id').all()).results
     }
     );
   }
@@ -89,14 +90,14 @@ export const adminAccounts=c=>endpoint(async()=>{
   }
   const b=await body(request),v={
   }
-  ;if(b.username!==undefined)v.username=username(b.username);if(b.role!==undefined){
+  ;if(b.specialties!==undefined)v.specialties=string(b.specialties,'职责',300,{required:false});if(b.username!==undefined)v.username=username(b.username);if(b.role!==undefined){
     if(!['admin','super'].includes(b.role))fail(400,'角色无效');if(id===me.id&&b.role!=='super')fail(400,'不能降低自己的权限');v.role=b.role;
   }
   if(request.method==='POST'){
     if(!v.username)fail(400,'账号必填');v.role=v.role||'admin';const {
       hash,salt
     }
-    =await hashPassword(password(b.password));v.password_hash=hash;v.salt=salt;const r=await env.DB.prepare('INSERT INTO admins(username,role,password_hash,salt) VALUES(?,?,?,?)').bind(v.username,v.role,hash,salt).run();return reply({
+    =await hashPassword(password(b.password));v.password_hash=hash;v.salt=salt;const r=await env.DB.prepare('INSERT INTO admins(username,role,password_hash,salt,specialties) VALUES(?,?,?,?,?)').bind(v.username,v.role,hash,salt,v.specialties||'').run();return reply({
       id:r.meta.last_row_id
     }
     ,201);

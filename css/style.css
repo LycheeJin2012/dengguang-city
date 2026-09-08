@@ -850,3 +850,5 @@ td.wrap {
 @media(max-width:700px){.upload-row{flex-wrap:wrap}.upload-actions{margin-left:76px}.attachment-grid{grid-template-columns:1fr}.admin-content>.tabs{margin-top:16px}.modal .actions{position:sticky;bottom:0;background:var(--paper);padding:12px 0}}
 @media(prefers-reduced-motion:reduce){#admin-view,.modal{animation:none!important}button,.button,.upload-drop{transition:none!important}}
 @media(max-width:700px){.toolbar{display:grid;grid-template-columns:1fr 1fr;align-items:end}.toolbar .field{min-width:0}.toolbar .field:has(input[type=search]){grid-column:1/-1}.toolbar>.tabs{grid-column:1/-1;margin:0}.toolbar button{width:100%}}
+.ticket-history{margin-top:24px;border-top:2px dashed #b8ad83;padding-top:20px}.ticket-history .row{padding-left:14px;border-left:3px solid var(--green)}
+.modal details>summary{cursor:pointer;font-weight:700;color:var(--green);padding:12px 0}.modal details .field{margin:12px 0}

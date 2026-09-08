@@ -1,3 +1,4 @@
+import {renderTicketCenter} from './ticket-center.js';
 import {createTicket} from './ticket-form.js';
 import {
   $, $$, api, post, del, region, tr, esc, text, empty, field, modal, requirePlayer, imageUrl, toast, action, date, state, session, renderAccount
@@ -78,7 +79,7 @@ async function comments(message){
   );
 }
 export async function render(el){
-  el.innerHTML=`<section class="hero" id="home"><div class="hero-copy"><p class="eyebrow">WELCOME TO LIGHT CITY</p><h1>${tr('欢迎来到<br>灯光市','Welcome to<br>Light City')}</h1><p>${tr('一座由市民共同建设的 Minecraft 城市。在这里了解市政动态，办理市民事务，记录属于我们的城市生活。','A Minecraft city built together. Discover city news, access citizen services, and take part in our shared story.')}</p><div class="actions"><a class="button primary" href="#notice">${tr('查看市政公告','City announcements')} ↗</a><button id="signin">🎁 ${tr('每日签到','Check in')}</button></div></div><img src="/assets/backgrounds/bg-pixel-hero.jpg" alt="${tr('灯光市 Minecraft 城市实景','Light City Minecraft panorama')}"></section><div id="city-stats"></div>${section('notice','📜 市政公告','📜 Announcements')}${section('gallery','📸 城市风貌','📸 Around the city')}${section('wall','💬 市民留言墙','💬 Citizen wall')}${section('racing','🏁 赛道与驾照','🏁 Racing & licenses')}${section('hotel','🏨 树上酒店','🏨 Treehouse hotel')}<div class="actions"><a class="button" href="/hotel.html">${tr('查看全部房型','Browse all rooms')} →</a></div>${section('contact','📮 联系市政厅','📮 Contact City Hall')}`;
+  el.innerHTML=`<section class="hero" id="home"><div class="hero-copy"><p class="eyebrow">WELCOME TO LIGHT CITY</p><h1>${tr('欢迎来到<br>灯光市','Welcome to<br>Light City')}</h1><p>${tr('一座由市民共同建设的 Minecraft 城市。在这里了解市政动态，办理市民事务，记录属于我们的城市生活。','A Minecraft city built together. Discover city news, access citizen services, and take part in our shared story.')}</p><div class="actions"><a class="button primary" href="#notice">${tr('查看市政公告','City announcements')} ↗</a><button id="signin">🎁 ${tr('每日签到','Check in')}</button></div></div><img src="/assets/backgrounds/bg-pixel-hero.jpg" alt="${tr('灯光市 Minecraft 城市实景','Light City Minecraft panorama')}"></section><div id="city-stats"></div>${section('notice','📜 市政公告','📜 Announcements')}${section('gallery','📸 城市风貌','📸 Around the city')}${section('contact','💬 留言与工单','💬 Messages & tickets')}${section('racing','🏁 赛道与驾照','🏁 Racing & licenses')}${section('hotel','🏨 树上酒店','🏨 Treehouse hotel')}<div class="actions"><a class="button" href="/hotel.html">${tr('查看全部房型','Browse all rooms')} →</a></div>`;
   $('#signin',el).onclick=e=>action(e.currentTarget,signin);
   const bundle=api('/api/homepage-bundle');
   region($('#city-stats',el),()=>bundle,(d,box)=>box.innerHTML=`<div class="stats"><div class="stat"><strong>${d.bundle.playerCount??0}</strong><span>${tr('注册市民','Citizens')}</span></div><div class="stat"><strong>${d.bundle.hotels.length}</strong><span>${tr('酒店项目','Hotel projects')}</span></div><div class="stat"><strong>${d.bundle.tracks.length}</strong><span>${tr('赛道项目','Track projects')}</span></div><div class="stat"><strong>2026</strong><span>${tr('建市年份','Founded')}</span></div></div>`);
@@ -96,11 +97,7 @@ export async function render(el){
     );
   }
   );
-  const loadWall=()=>region($('#wall-body',el),()=>api('/api/messages?public=1'),(d,box)=>{
-    box.innerHTML=(d.messages||[]).map(m=>`<article class="panel"><div class="row-head"><b>${esc(m.name)}</b><small>${date(m.created_at)}</small></div><p>${text(m.content)}</p>${m.admin_reply?`<div class="notice"><b>${tr('市政厅回复','City Hall reply')}</b><p>${text(m.admin_reply)}</p></div>`:''}<button data-comments="${m.id}">${tr('评论','Comments')}</button></article>`).join('')||empty();$$('[data-comments]',box).forEach(b=>b.onclick=()=>comments(d.messages.find(m=>m.id===+b.dataset.comments)));
-  }
-  );
-  loadWall();
+  renderTicketCenter($('#contact-body',el));
   region($('#racing-body',el),()=>bundle,(d,box)=>{
     box.innerHTML=`<div class="cards">${[['kart','🛞 卡丁车','🛞 Karting'],['circuit','🏎️ 国际赛车场','🏎️ Circuit'],['license','🚗 驾照考试','🚗 Driving licenses']].map(([k,zh,en])=>`<article class="card"><h3>${tr(zh,en)}</h3><p>${k==='license'?tr('查看考试要求并提交报名。','Read the requirements and apply.') : tr('选择场次和车型，向市政厅提交试跑申请。','Choose your session and vehicle to apply.')}</p><div class="actions"><button data-signup="${k}" class="primary">${tr('报名','Apply')}</button></div></article>`).join('')}</div><div class="panel" style="margin-top:24px"><h3>${tr('赛道信息与考试要求','Tracks and exam requirements')}</h3>${d.bundle.tracks.map(t=>`<p><b>${esc(t.name)}</b> · ${t.length_km??'—'} km · 💎 ${t.trial_price} ${tr('/次','/trial')}</p>`).join('')}${d.bundle.licenseReqs.map(r=>`<div class="row"><b>${esc(r.title)}</b><p>${text(r.requirements||r.description)}</p></div>`).join('')||''}</div>`;$$('[data-signup]',box).forEach(b=>b.onclick=e=>action(e.currentTarget,()=>signup(b.dataset.signup,d.bundle)));
   }
@@ -109,22 +106,6 @@ export async function render(el){
     limit:3
   }
   ));
-  $('#contact-body',el).innerHTML=`<div class="panel"><form id="contact-form"><div class="form-grid">${field('name',tr('游戏 ID','Game ID'),'text',state.session?.player?.username||'')}${field('contact',tr('联系方式','Contact'),'text',state.session?.player?.email||'')}${field('type',tr('事项类型','Category'),'select','建议',{
-    options:['建议','投诉','咨询','合作']
-  }
-  )}${field('content',tr('留言内容','Message'),'textarea')}</div><p class="form-error" role="alert"></p><div class="actions"><button class="primary">${tr('提交留言','Submit message')}</button></div></form></div>`;
-  $('#contact-body',el).insertAdjacentHTML('afterbegin',`<div class="notice"><b>${tr('反馈 Bug 或举报违规','Report a bug or misconduct')}</b><p>${tr('需要附图或视频？提交私密工单，材料由管理员处理。','Need to include images or video? Submit a private ticket for administrators.')}</p><div class="actions"><button id="report-bug">${tr('反馈 Bug','Report a bug')}</button><button id="report-misconduct">${tr('举报违规','Report misconduct')}</button></div></div>`);
-  $('#report-bug',el).onclick=()=>createTicket({kind:'bug'}).catch(e=>toast(e.message,true));
-  $('#report-misconduct',el).onclick=()=>createTicket({kind:'report'}).catch(e=>toast(e.message,true));
-  $('#contact-form',el).onsubmit=e=>{
-    e.preventDefault();
-    const form=e.currentTarget;
-    action($('button',form),async()=>{
-      await requirePlayer();await post('/api/messages',Object.fromEntries(new FormData(form)));$('[name=content]',form).value='';toast(tr('留言已提交','Message submitted'));await loadWall();
-    }
-    );
-  }
-  ;
   if(new URLSearchParams(location.search).get('action')==='login'){
     const {
       login

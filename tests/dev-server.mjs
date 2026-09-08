@@ -3,7 +3,11 @@ import http from 'node:http';import fs from 'node:fs';import path from 'node:pat
 import {database,dispatch} from './local-d1.mjs';import {ensureDatabase} from '../functions/_core/database.js';import {hashPassword} from '../functions/_shared/auth.js';
 const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'light-city-v51-')),DB=database(path.join(dir,'dev.sqlite'));await ensureDatabase(DB);
 const {hash,salt}=await hashPassword('LocalTest51!');await DB.prepare("INSERT INTO admins(username,password_hash,salt,role) VALUES('qa-admin',?,?,'super')").bind(hash,salt).run();for(const u of ['qa-citizen','qa-neighbor'])await DB.prepare("INSERT INTO players(username,email,password_hash,salt,status,emeralds,bio) VALUES(?,?,?,?,'active',100,'本地测试账号，仅用于重写验收')").bind(u,u+'@example.invalid',hash,salt).run();
+await DB.prepare('UPDATE admins SET linked_player_id=2 WHERE id=1').run();
+await DB.prepare('UPDATE players SET linked_admin_id=1 WHERE id=2').run();
+await DB.prepare("INSERT INTO hotel_owners(username,password_hash,salt,linked_player_id,created_by) VALUES('qa-owner',?,?,1,1)").bind(hash,salt).run();
 await DB.prepare("INSERT INTO hotels(name,address,description,image_url) VALUES('本地测试 · 树上酒店','樱花林车站旁','用于本地验收的测试酒店','/assets/backgrounds/bg-pixel-hero.jpg')").run();
+await DB.prepare('UPDATE hotels SET owner_id=1 WHERE id=1').run();
 for(const [name,cap,price] of [['树影双床房',2,20],['林间家庭房',4,35],['观景单人房',1,12]])await DB.prepare("INSERT INTO hotel_rooms(hotel_id,name,capacity,beds,price_per_night,description) VALUES(1,?,?,'木制床铺',?,'本地测试房型，提交不会进入线上系统')").bind(name,cap,price).run();
 await DB.prepare("INSERT INTO race_tracks(name,length_km,laps,trial_price,description) VALUES('本地测试 · 国际赛道',2.4,3,5,'双车道冰面赛道')").run();
 await DB.prepare("INSERT INTO announcements(title,content,created_by) VALUES('本地重写验收环境','此页面使用本机 SQLite 测试数据，不会向线上数据库写入。',1)").run();

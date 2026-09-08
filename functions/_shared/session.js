@@ -4,12 +4,12 @@ import { randomToken } from './auth.js';
 
 const SESSION_TTL_HOURS = 8;
 
-export async function createSession(env, playerId = null, adminId = null) {
+export async function createSession(env, playerId = null, adminId = null, hotelOwnerId = null) {
   const token = randomToken(24);
   const expires = new Date(Date.now() + SESSION_TTL_HOURS * 3600_000).toISOString();
   await env.DB.prepare(
-    'INSERT INTO sessions (token, player_id, admin_id, expires_at) VALUES (?, ?, ?, ?)'
-  ).bind(token, playerId, adminId, expires).run();
+    'INSERT INTO sessions (token, player_id, admin_id, expires_at, hotel_owner_id) VALUES (?, ?, ?, ?, ?)'
+  ).bind(token, playerId, adminId, expires, hotelOwnerId).run();
   return { token, expires_at: expires };
 }
 
@@ -51,7 +51,7 @@ export async function unmergeAccount(env, adminId, playerId) {
 export async function getSession(env, token) {
   if (!token) return null;
   const row = await env.DB.prepare(
-    'SELECT token, player_id, admin_id, expires_at FROM sessions WHERE token = ?'
+    'SELECT token, player_id, admin_id, hotel_owner_id, expires_at FROM sessions WHERE token = ?'
   ).bind(token).first();
   if (!row) return null;
   if (!Number.isFinite(+new Date(row.expires_at)) || new Date(row.expires_at) <= new Date()) {

@@ -1,3 +1,5 @@
+import {renderAudit,viewAudit} from './audit-ui.js';
+import {ticketTimeline,replyAuthor} from './ticket-form.js';
 import {attachmentPicker,renderAttachments} from './attachments.js';
 import { navigationFor, resolveNavigation } from './admin-navigation.js';
 import {
@@ -8,7 +10,7 @@ import {
   passkeyLogin,registerPasskey
 }
 from './security.js';
-const names={
+const names={owners:['🔑 酒店经营账户','🔑 Hotel owner accounts'],audit:['📒 操作留痕','📒 Operation audit'],
   dispatch:['📋 派单','📋 Dispatch'],questions:['📚 模拟题库','📚 Question bank'],tickets:['🎫 工单中心','🎫 Tickets'],players:['👥 玩家管理','👥 Citizens'],bookings:['🏨 酒店预订','🏨 Bookings'],kart:['🛞 卡丁车报名','🛞 Kart signups'],circuit:['🏁 国际试车','🏁 Circuit signups'],license:['🚗 驾照报名','🚗 License applications'],tracks:['🏎️ 赛车场管理','🏎️ Tracks'],hotels:['🏡 酒店管理','🏡 Hotels'],rooms:['🛏️ 房型管理','🛏️ Rooms'],requirements:['📝 考试要求','📝 Requirements'],announcements:['📜 公告管理','📜 Announcements'],gallery:['🖼️ 图集管理','🖼️ Gallery'],admins:['🛡️ 管理员','🛡️ Administrators'],dms:['✉️ 私信监管','✉️ DM moderation'],times:['🏆 成绩审核','🏆 Race verification'],password:['🔑 账号安全','🔑 Security']
 }
 ;
@@ -17,7 +19,7 @@ const resources={
     path:'race-tracks',key:'tracks',fields:[['name','名称'],['length_km','长度 km','number'],['laps','圈数','number'],['difficulty','难度'],['trial_price','试车价格 💎','number'],['description','介绍','textarea'],['image_url','图片 URL'],['sort_order','排序','number'],['is_active','开放','checkbox']]
   }
   ,hotels:{
-    path:'hotels',key:'hotels',fields:[['name','酒店名'],['address','地址'],['description','介绍','textarea'],['image_url','图片 URL'],['sort_order','排序','number'],['is_active','开放','checkbox']]
+    path:'hotels',key:'hotels',fields:[['owner_id','经营账户','select'],['name','酒店名'],['address','地址'],['description','介绍','textarea'],['image_url','图片 URL'],['sort_order','排序','number'],['is_active','开放','checkbox']]
   }
   ,rooms:{
     path:'hotel-rooms',key:'rooms',fields:[['hotel_id','所属酒店 ID','number'],['name','房型名'],['capacity','最大人数','number'],['beds','床型'],['price_per_night','每晚价格 💎','number'],['breakfast_included','包含早餐','checkbox'],['description','介绍','textarea'],['image_url','图片 URL'],['sort_order','排序','number'],['is_active','开放','checkbox']]
@@ -38,12 +40,13 @@ const rememberedChildren=new Map();
 let historyBound=false;
 
 const isSuper=()=>state.session?.user?.role==='super';
+const canHandleTicket=t=>t.target_admin_id!==state.session?.user?.id&&(!t.target_player_id||t.target_player_id!==state.session?.user?.linked_player_id);
 async function refreshStats() {
   await region($('#admin-stats', root), () => api('/api/admin/dashboard'), (data, box) => {
     const racePending = data.kart && data.circuit ? data.kart.pending + data.circuit.pending : null;
     const stats = [
       ['players', data.players?.pending, '待审玩家', 'Pending citizens'],
-      ['tickets', data.messages?.unread, '未读留言', 'Unread messages'],
+      ['tickets', data.tickets?.open, '待处理工单', 'Pending tickets'],
       ['bookings', data.bookings?.pending, '待审酒店', 'Pending bookings'],
       ['license', data.license?.pending, '待审驾照', 'Pending licenses'],
       ['circuit', racePending, '待审赛道', 'Pending races'],
@@ -111,6 +114,10 @@ async function resourceList(def){
       required:['name','title','content','hotel_id'].includes(key),min:type==='number'?0:undefined,step:key==='length_km'?'0.01':undefined,options:key==='cat'?[['city',tr('城市','City')],['road',tr('道路','Roads')],['kart',tr('卡丁车','Kart')],['nature',tr('自然','Nature')],['announcement',tr('公告','Announcement')]]:[['B',tr('B 级','Grade B')],['A',tr('A 级','Grade A')],['S',tr('S 级','Grade S')],['written',tr('笔试','Written')],['road',tr('路考','Road test')],['upgrade',tr('升级考试','Upgrade')]]
     }
     )).join('');
+    if(active==='hotels'){
+      const owners=await api('/api/admin/hotel-owners');
+      fields=def.fields.filter(f=>f[0]!=='owner_id').map(([key,label,type='text'])=>field(key,tr(label,key),type,item[key]??defaults[key]??'',{required:key==='name',min:0})).join('')+field('owner_id',tr('分配酒店老板','Hotel owner'),'select',item.owner_id||'',{required:false,options:[['',tr('暂未分配','Unassigned')],...owners.owners.filter(o=>o.status==='active').map(o=>[o.id,`#${o.id} · ${o.username}`])]});
+    }
     if(active==='rooms'){
       const h=await api('/api/admin/hotels');
       fields=field('hotel_id',tr('所属酒店','Hotel'),'select',item.hotel_id||h.hotels[0]?.id,{
@@ -141,6 +148,7 @@ async function resourceList(def){
     }
     )?[['is_active',tr('状态','Status'),v=>status(v?'active':'pending')]]:[]),['updated_at',tr('更新时间','Updated'),date]],rows,isSuper()?[{
       key:'edit',label:tr('编辑','Edit'),run:editor
+    },{key:'history',label:tr('操作记录','History'),run:r=>viewAudit(({hotels:'hotels','hotel-rooms':'hotel_rooms','race-tracks':'race_tracks','license-req':'license_requirements',announcements:'announcements',gallery:'gallery_items'})[def.path],r.id)
     }
     ,{
       key:'delete',label:tr('删除','Delete'),danger:true,run:async r=>{
@@ -193,7 +201,7 @@ async function players(){
   }
   );
   const load=()=>region($('#records',view),()=>api('/api/admin/players?'+params()),(d,box)=>{
-    attachExport(d.players);table(box,[['id','ID'],['username',tr('游戏 ID','Game ID')],['email',tr('邮箱','Email')],['emeralds','💎'],['status',tr('状态','Status'),status]],d.players,[{
+    attachExport(d.players);table(box,[['id','ID'],['username',tr('游戏 ID','Game ID')],['email',tr('邮箱','Email')],['emeralds','💎'],['status',tr('状态','Status'),status]],d.players,[{key:'audit',label:tr('操作记录','History'),when:isSuper,run:r=>viewAudit('players',r.id)},{
       key:'approve',label:tr('批准','Approve'),when:r=>r.status!=='active',run:async r=>{
         await patch('/api/admin/players?id='+r.id+'&action=approve');await load();refreshStats();
       }
@@ -236,13 +244,18 @@ async function tickets(){
   if(dispatching)$('[name=status]',view).value='open';
   const load=()=>region($('#records',view),async()=>{const [tickets,admins]=await Promise.all([api('/api/tickets?'+params()),api('/api/admin/admins')]);adminNames=new Map(admins.admins.map(a=>[a.id,a.username]));return tickets;},(d,box)=>{
     attachExport(d.tickets);table(box,[['id','ID'],['title',tr('标题','Title')],['player_username',tr('市民','Citizen')],['category',tr('分类','Category'),category=>esc(({message:tr('留言','Message'),hotel:tr('酒店','Hotel'),license:tr('驾照','License'),race:tr('赛车','Race'),kart:tr('卡丁车','Kart'),service:tr('服务','Service'),comment:tr('评论','Comment')})[category]||category)],['status',tr('状态','Status'),status],['attachment_count',tr('附件','Attachments'),n=>n?'📎 '+Number(n):'—'],['assignee_id',tr('承办人','Assignee'),id=>esc(id?adminNames.get(id)||'#'+id:tr('未派单','Unassigned'))]],d.tickets,[{
-      key:'assign',label:tr('派单','Assign'),run:async ticket=>{
+      key:'assign',label:tr('派单','Assign'),when:canHandleTicket,run:async ticket=>{
         const data=await api('/api/admin/admins');
         modal(tr('派单 · ','Assign · ')+ticket.title,field('assignee_id',tr('承办管理员','Assign to'),'select',ticket.assignee_id||'',{required:false,options:[['',tr('取消派单','Unassign')],...data.admins.map(a=>[a.id,a.username])]}),{label:tr('确认派单','Confirm assignment'),submit:async values=>{await patch('/api/tickets?id='+encodeURIComponent(ticket.id),{assignee_id:values.assignee_id?Number(values.assignee_id):null});toast(tr('派单已保存','Assignment saved'));await load();}});
       }
     },{
+      key:'ai',label:tr('AI 派单','AI assignment'),when:canHandleTicket,run:async ticket=>{
+        const suggestion=await api('/api/admin/dispatch-suggestion?id='+encodeURIComponent(ticket.id));
+        modal(tr('派单建议','Assignment suggestion'),`<div class="notice wide"><b>${suggestion.source==='ai'?tr('AI 推荐','AI recommendation'):tr('工作量规则推荐（AI 暂不可用）','Workload recommendation (AI unavailable)')}</b><p>${esc(suggestion.reason)}</p></div>`+field('assignee_id',tr('承办管理员','Assignee'),'select',suggestion.admin.id,{options:suggestion.candidates.map(a=>[a.id,`#${a.id} · ${a.username} (${a.workload})`])}),{label:tr('确认派单','Confirm assignment'),submit:async values=>{await patch('/api/tickets?id='+encodeURIComponent(ticket.id),{assignee_id:Number(values.assignee_id),assignment_mode:suggestion.source});await load();toast(tr('派单已保存','Assignment saved'));}});
+      }
+    },{
       key:'detail',label:tr('处理工单','Review ticket'),run:async r=>{
-        const data=await api('/api/tickets?id='+r.id),t=data.ticket;const admins=await api('/api/admin/admins');let ticketUploads;const dialog=modal(tr('工单 #','Ticket #')+r.id,`<div class="wide notice"><b>${esc(t.title)}</b><div>${ticketBody(t.body)}</div>${renderAttachments(t.attachments)}</div>`+field('status',tr('状态','Status'),'select',t.status,{
+        const data=await api('/api/tickets?id='+r.id),t=data.ticket;const admins=await api('/api/admin/admins');let ticketUploads;const dialog=modal(tr('工单 #','Ticket #')+r.id,`<div class="wide notice"><b>${esc(t.title)}</b><p>${tr('公开授权','Public consent')}：${tr(t.public_consent?'已同意':'未同意',t.public_consent?'Granted':'Not granted')}</p>${t.target_admin_id?`<p>${tr('被投诉管理员','Reported administrator')} #${t.target_admin_id}</p>`:''}${t.target_player_name?`<p>${tr('被举报玩家','Reported player')}：${esc(t.target_player_name)} ${t.target_player_id?'#'+t.target_player_id:tr('（自填）','(entered)')}</p>`:''}<div>${ticketBody(t.body)}</div>${t.replied_by?`<p><b>${esc(replyAuthor(t))}</b> · ${date(t.replied_at)}</p>`:''}${renderAttachments(t.attachments)}${t.reward?`<p class="notice">${tr('承办奖励','Handler reward')}：${t.reward.amount} 💎 · ${tr(t.reward.paid?'已发放':'待绑定玩家后发放',t.reward.paid?'Paid':'Pending linked citizen')} · ${tr('承办管理员','Assignee')} #${t.reward.admin_id}</p>`:''}${ticketTimeline(t.history)}</div>`+field('status',tr('状态','Status'),'select',t.status,{
           options:['open','in_progress','resolved','closed']
         }
         )+field('priority',tr('优先级','Priority'),'select',t.priority||'normal',{
@@ -254,18 +267,21 @@ async function tickets(){
         )+field('admin_reply',tr('回复内容','Reply'),'textarea',t.admin_reply||'',{
           required:false
         }
-        ),{
-          wide:true,submit:async values=>{
-            await patch('/api/tickets?id='+r.id,{
+        )+`<details class="wide"><summary>${tr('公开处理设置','Public processing settings')}</summary><p class="muted">${tr('只有提交者同意后才可公开。请先删除联系方式、无关个人信息等敏感内容；附件始终不公开。','Consent is required. Remove contact details and unrelated personal information; attachments remain private.')}</p>${field('public_visible',tr('发布到公开处理列表','Publish to public feed'),'checkbox',t.public_visible)}${field('public_title',tr('公开标题','Public title'),'text',t.public_title||t.title,{required:false,maxlength:120})}${field('public_body',tr('公开文字','Public text'),'textarea',t.public_body||t.body,{required:false})}${field('public_reply',tr('公开答复','Public reply'),'textarea',t.public_reply||t.admin_reply||'',{required:false})}</details>`,{
+          wide:true,submit:canHandleTicket(t)?async values=>{
+            const saved=await patch('/api/tickets?id='+r.id,{
               ...values,attachment_ids:ticketUploads?ticketUploads.ids():[],assignee_id:values.assignee_id?Number(values.assignee_id):null
             }
             );
 
-ticketUploads?.commit();await load();refreshStats();
-          }
+ticketUploads?.commit();await load();refreshStats();if(saved.reward?.amount)toast(tr('办结成功，10 绿宝石已发放至 ','Completed. 10 emeralds credited to ')+saved.reward.player_name);else if(saved.reward?.pending)toast(tr('已办结，奖励将在承办人绑定玩家账号后发放','Completed; reward is pending a linked citizen account'));else toast(tr('已保存','Saved'));
+          }:null
         }
         );
-          const remaining=5-(t.attachments||[]).length;if(remaining>0)ticketUploads=attachmentPicker(dialog,{max:remaining,existingBytes:(t.attachments||[]).reduce((sum,file)=>sum+file.size,0)});
+          $('[name=public_visible]',dialog).disabled=!t.public_consent;
+          if(canHandleTicket(t)&&t.assignee_id&&t.status!=='resolved'&&(isSuper()||t.assignee_id===state.session.user.id)){const finish=document.createElement('button');finish.type='button';finish.className='primary';finish.textContent=tr('办结工单 · 奖励 10 💎','Complete ticket · 10 💎');$('.modal-body > .actions',dialog).prepend(finish);finish.onclick=()=>{$('[name=status]',dialog).value='resolved';$('form',dialog).requestSubmit();};}
+          const remaining=5-(t.attachments||[]).length;if(canHandleTicket(t)&&remaining>0)ticketUploads=attachmentPicker(dialog,{max:remaining,existingBytes:(t.attachments||[]).reduce((sum,file)=>sum+file.size,0)});
+          if(!canHandleTicket(t)){$$('input,select,textarea',dialog).forEach(input=>input.disabled=true);$('.modal-body',dialog).insertAdjacentHTML('afterbegin',`<p class="notice">${tr('该工单涉及你本人，请由其他超管处理。','This complaint involves you; another super administrator must handle it.')}</p>`);return;}
           const draftButton=document.createElement('button');draftButton.type='button';draftButton.textContent=tr('生成回复建议','Suggest a reply');$('.actions',dialog).prepend(draftButton);
           draftButton.onclick=e=>action(e.currentTarget,async()=>{const r=await post('/api/admin/messages',{message:t.body||t.title});$('[name=admin_reply]',dialog).value=r.draft;toast(tr('请核对建议内容，再点击保存发送','Review the suggestion before saving and sending'));});
       }
@@ -290,7 +306,7 @@ async function admins(){
     )+field('role',tr('角色','Role'),'select',r.role||'admin',{
       options:['admin','super']
     }
-    ),{
+    )+field('specialties',tr('职责与擅长事项','Responsibilities / specialties'),'text',r.specialties||'',{required:false,maxlength:300}),{
       submit:async d=>{
         if(!d.new_password)delete d.new_password;await (r.id?patch('/api/admin/admins?id='+r.id,d):post('/api/admin/admins',d));await load();
       }
@@ -298,7 +314,7 @@ async function admins(){
     );
   }
   const load=()=>region($('#records',view),()=>api('/api/admin/admins'),(d,box)=>{
-    attachExport(d.admins);table(box,[['id','ID'],['username',tr('账号','Username')],['role',tr('角色','Role')],['linked_player_username',tr('绑定市民','Linked citizen')]],d.admins,[{
+    attachExport(d.admins);table(box,[['id','ID'],['username',tr('账号','Username')],['role',tr('角色','Role')],['linked_player_username',tr('绑定市民','Linked citizen')]],d.admins,[{key:'audit',label:tr('操作记录','History'),run:r=>viewAudit('admins',r.id)},{
       key:'edit',label:tr('编辑','Edit'),run:edit
     }
     ,{
@@ -438,13 +454,20 @@ async function password(){
   }
   ;
 }
+async function owners(){
+ const view=root.querySelector('#admin-view');toolbar({create:()=>edit()});
+ const load=()=>region($('#records',view),()=>api('/api/admin/hotel-owners'),(d,box)=>{attachExport(d.owners);table(box,[['id','ID'],['username',tr('经营账号','Owner account')],['player_username',tr('绑定玩家','Linked citizen')],['hotel_count',tr('酒店数量','Hotels')],['status',tr('状态','Status'),status]],d.owners,[{key:'edit',label:tr('编辑 / 停用','Edit / disable'),run:edit},{key:'audit',label:tr('操作记录','History'),run:r=>viewAudit('hotel_owners',r.id)}]);});
+ async function edit(owner={}){const d=await api('/api/admin/players');modal(tr(owner.id?'编辑酒店老板账户':'创建酒店老板账户',owner.id?'Edit hotel owner':'Create hotel owner'),field('username',tr('经营账号','Username'),'text',owner.username||'')+field(owner.id?'new_password':'password',tr(owner.id?'新密码（留空不改）':'初始密码',owner.id?'New password (optional)':'Initial password'),'password','',{required:!owner.id})+field('linked_player_id',tr('关联玩家（可选）','Linked citizen (optional)'),'select',owner.linked_player_id||'',{required:false,options:[['',tr('不关联','None')],...d.players.filter(p=>p.status==='active').map(p=>[p.id,`#${p.id} · ${p.username}`])]})+field('status',tr('状态','Status'),'select',owner.status||'active',{options:[['active',tr('启用','Active')],['disabled',tr('停用','Disabled')]]})+`<p class="muted wide">${tr('创建后，在酒店管理中将酒店分配给此经营账户。关联玩家后，该玩家首页会显示“我的酒店”。','After creation, assign hotels from Hotel management. Linked citizens will see My hotel.')}</p>`,{submit:async values=>{if(!values.new_password)delete values.new_password;await(owner.id?patch('/api/admin/hotel-owners?id='+owner.id,values):post('/api/admin/hotel-owners',values));await load();}});}
+ await load();
+}
 async function loadActive(){
   const page=active;
   try{
-    if(resources[page])await resourceList(resources[page]);
+    if(page==='audit')await renderAudit(view);
+    else if(resources[page])await resourceList(resources[page]);
     else if(['bookings','kart','circuit','license'].includes(page))await signups(page);
     else await ({
-      tickets,dispatch:tickets,players,admins,dms,times,questions,password
+      tickets,dispatch:tickets,players,admins,dms,times,questions,password,owners
     }
     [page])();
   }

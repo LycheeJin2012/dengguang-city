@@ -29,7 +29,7 @@ export async function render(el){
   const d=await api('/api/social?action=profile&username='+encodeURIComponent(username)),p=d.profile,self=p.id===state.session?.player?.id;
   const joined=+parseDate(p.created_at);
   const days=Number.isFinite(joined)?Math.max(0,Math.floor((Date.now()-joined)/86400000)):0;
-  el.innerHTML=title('市民档案','Citizen profile')+`<section class="panel"><div class="row-head"><div><span class="avatar">${esc(p.avatar_emoji||'👤')}</span><h2>${esc(p.username)}</h2></div><span class="badge">${tr('加入','Joined')} ${days} ${tr('天','days')}</span></div><p>${text(p.bio||tr('这位市民还没有填写简介。','This citizen has not added a bio.'))}</p><small>${tr('注册时间','Registered')} ${date(p.created_at)}</small><div class="stats"><div class="stat"><strong>${d.stats.messages}</strong><span>${tr('留言','Messages')}</span></div><div class="stat"><strong>${d.stats.comments}</strong><span>${tr('评论','Comments')}</span></div></div><div class="actions">${self?`<button id="edit-profile">${tr('编辑资料','Edit profile')}</button><button id="citizen-card">${tr('下载市民卡','Download citizen card')}</button><button id="daily-signin">🎁 ${tr('签到','Check in')}</button>`:`<a class="button" href="/dm.html?to=${encodeURIComponent(p.username)}">${tr('发送私信','Send a message')}</a>`}</div></section>${self?`<div class="tabs section" id="profile-tabs">${[['history','我的记录','My records'],['security','账号安全','Security'],['race','赛道成绩','Race times'],['exam','模拟考试','Practice exam'],['subscriptions','通知订阅','Subscriptions']].map(([k,zh,en])=>`<button data-tab="${k}" aria-selected="${k==='history'}">${tr(zh,en)}</button>`).join('')}</div><section id="profile-content" class="panel"></section>`:''}`;
+  el.innerHTML=title('市民档案','Citizen profile')+`<section class="panel"><div class="row-head"><div><span class="avatar">${esc(p.avatar_emoji||'👤')}</span><h2>${esc(p.username)}</h2></div><span class="badge">${tr('加入','Joined')} ${days} ${tr('天','days')}</span></div><p>${text(p.bio||tr('这位市民还没有填写简介。','This citizen has not added a bio.'))}</p><small>${tr('注册时间','Registered')} ${date(p.created_at)}</small><div class="stats"><div class="stat"><strong>${d.stats.messages}</strong><span>${tr('留言','Messages')}</span></div><div class="stat"><strong>${d.stats.comments}</strong><span>${tr('评论','Comments')}</span></div></div><div class="actions">${self?`<button id="edit-profile">${tr('编辑资料','Edit profile')}</button><button id="citizen-card">${tr('下载市民卡','Download citizen card')}</button><button id="daily-signin">🎁 ${tr('签到','Check in')}</button>`:`<a class="button" href="/dm.html?to=${encodeURIComponent(p.username)}">${tr('发送私信','Send a message')}</a>`}</div></section>${self?`<div class="tabs section" id="profile-tabs">${[['history','我的记录','My records'],['security','账号安全','Security'],['race','赛道成绩','Race times'],['exam','模拟考试','Practice exam'],['subscriptions','通知订阅','Subscriptions'],['rewards','工单奖励','Ticket rewards']].map(([k,zh,en])=>`<button data-tab="${k}" aria-selected="${k==='history'}">${tr(zh,en)}</button>`).join('')}</div><section id="profile-content" class="panel"></section>`:''}`;
   if(!self)return;
   $('#edit-profile',el).onclick=()=>modal(tr('编辑市民资料','Edit profile'),field('avatar_emoji',tr('头像表情','Avatar emoji'),'text',p.avatar_emoji)+field('bio',tr('个人简介','Bio'),'textarea',p.bio||'',{
     required:false,maxlength:500
@@ -53,7 +53,7 @@ export async function render(el){
     box.className='panel';
     old.replaceWith(box);
     await region(box,async()=>key,(k,target)=>({
-      history,security,race,exam,subscriptions
+      history,security,race,exam,subscriptions,rewards
     }
     [k])(target));
   }
@@ -172,3 +172,5 @@ async function subscriptions(el){
   }
   ));
 }
+
+async function rewards(el){await region(el,()=>api('/api/rewards?my=1'),(d,box)=>{box.innerHTML=`<h3>${tr('工单办理奖励','Ticket handling rewards')}</h3>${d.rewards.map(r=>`<div class="row"><b>+${r.amount} 💎</b> · ${tr('工单','Ticket')} #${esc(r.ticket_ref)}<p>${tr('承办管理员','Handler')} #${r.admin_id} · ${date(r.paid_at||r.created_at)}</p></div>`).join('')||empty()}`;});}

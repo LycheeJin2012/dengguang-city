@@ -1,103 +1,60 @@
 import {validateFiles,ticketFiles,uploadActor} from '../_core/uploads.js';
-import {
-  endpoint,identity,body,string,integer,fail,reply
-}
-from '../_core/request.js';
+import {endpoint,identity,body,string,integer,fail,reply} from '../_core/request.js';
+import {ticketReference,resolveTarget,assignmentCandidate,conflicts,ticketEvent,rewardOperations} from '../_core/ticket-policy.js';
 const states=['open','in_progress','resolved','closed'],priorities=['low','normal','high','urgent'];
-const union=`SELECT CAST(t.id AS TEXT) AS id,t.player_id,t.category,t.source_table,t.source_id,t.title,t.body,t.status,t.priority,t.assignee_id,t.admin_reply,t.created_at,t.replied_at,t.replied_by,p.username AS player_username FROM tickets t LEFT JOIN players p ON p.id=t.player_id
- UNION ALL SELECT 'm:'||m.id,m.player_id,'message','messages',m.id,m.name,m.content,CASE m.status WHEN 'unread' THEN 'open' WHEN 'read' THEN 'in_progress' ELSE 'resolved' END,'normal',m.assignee_id,m.admin_reply,m.created_at,m.replied_at,m.replied_by,p.username FROM messages m LEFT JOIN players p ON p.id=m.player_id WHERE NOT EXISTS(SELECT 1 FROM tickets t WHERE t.source_table='messages' AND t.source_id=m.id)`;
+const union=`SELECT CAST(t.id AS TEXT) AS id,t.player_id,t.category,t.kind,t.source_table,t.source_id,t.title,t.body,t.status,t.priority,t.assignee_id,t.admin_reply,t.created_at,t.replied_at,t.replied_by,t.contact,t.public_consent,t.public_visible,t.public_title,t.public_body,t.public_reply,t.public_reply_by,t.target_player_id,t.target_player_name,t.target_admin_id,p.username AS player_username FROM tickets t LEFT JOIN players p ON p.id=t.player_id
+UNION ALL SELECT 'm:'||m.id,m.player_id,'message','message','messages',m.id,m.name,m.content,CASE m.status WHEN 'unread' THEN 'open' WHEN 'read' THEN 'in_progress' ELSE 'resolved' END,'normal',m.assignee_id,m.admin_reply,m.created_at,m.replied_at,m.replied_by,m.contact,m.public_consent,m.public_visible,m.public_title,m.public_body,m.public_reply,m.public_reply_by,m.target_player_id,m.target_player_name,m.target_admin_id,p.username FROM messages m LEFT JOIN players p ON p.id=m.player_id WHERE NOT EXISTS(SELECT 1 FROM tickets t WHERE t.source_table='messages' AND t.source_id=m.id)`;
+const actor=admin=>({type:'admin',id:admin.id,name:admin.username});
 export const onRequestGet=c=>endpoint(async()=>{
-  const {
-    env,request
-  }
-  =c,u=new URL(request.url);const mine=u.searchParams.get('my')==='1';const who=await identity(c,mine?'player':'admin');const conditions=[],params=[];if(mine){
-    conditions.push('player_id=?');params.push(who.id);
-  }
-  let raw=u.searchParams.get('id');if(raw){
-    if(/^\d+$/.test(raw)&&Number(raw)>=1000000)raw='m:'+(Number(raw)-1000000);conditions.push('id=?');params.push(raw);
-  }
-  for(const key of ['status','category','priority'])if(u.searchParams.get(key)){
-    conditions.push(`${key}=?`);params.push(u.searchParams.get(key));
-  }
-  const assignment=u.searchParams.get('assignment');
-  if(!mine&&assignment==='unassigned')conditions.push('assignee_id IS NULL');
-  if(!mine&&assignment==='mine'){conditions.push('assignee_id=?');params.push(who.id);}
-  const q=u.searchParams.get('q');if(q){
-    conditions.push('(title LIKE ? OR body LIKE ?)');params.push('%'+q+'%','%'+q+'%');
-  }
-  const limit=integer(u.searchParams.get('limit')||200,'limit',1,500);const r=await env.DB.prepare(`SELECT q.*, (SELECT COUNT(*) FROM ticket_attachments a WHERE a.ticket_ref=q.id) AS attachment_count FROM (${union}) q ${conditions.length?'WHERE '+conditions.join(' AND '):''} ORDER BY created_at DESC LIMIT ?`).bind(...params,limit).all();if(raw){
-    if(!r.results.length)fail(404,'工单不存在');return reply({
-      ticket:{...r.results[0],attachments:await ticketFiles(env.DB,r.results[0].id)}
-    }
-    );
-  }
-  return reply({
-    tickets:r.results,limit
-  }
-  );
-}
-);
+ const {env,request}=c,u=new URL(request.url),pub=u.searchParams.get('public')==='1',mine=!pub&&u.searchParams.get('my')==='1';const who=pub?null:await identity(c,mine?'player':'admin');const where=[],args=[];
+ if(pub)where.push('q.public_visible=1 AND q.public_consent=1');
+ if(mine){where.push('q.player_id=?');args.push(who.id);}
+ if(!pub&&!mine&&who.role!=='super'){where.push('q.target_admin_id IS NULL');if(who.linked_player_id){where.push('(q.target_player_id IS NULL OR q.target_player_id!=?)');args.push(who.linked_player_id);}}
+ const raw=u.searchParams.get('id');if(raw){where.push('q.id=?');args.push(ticketReference(raw).ref);}
+ for(const key of ['status','category'])if(u.searchParams.get(key)){where.push('q.'+key+'=?');args.push(u.searchParams.get(key));}
+ if(!pub&&u.searchParams.get('priority')){where.push('q.priority=?');args.push(u.searchParams.get('priority'));}
+ if(!pub&&!mine&&u.searchParams.get('assignment')==='unassigned')where.push('q.assignee_id IS NULL');
+ if(!pub&&!mine&&u.searchParams.get('assignment')==='mine'){where.push('q.assignee_id=?');args.push(who.id);}
+ const q=u.searchParams.get('q');if(q){where.push(pub?'(COALESCE(q.public_title,q.title) LIKE ? OR COALESCE(q.public_body,q.body) LIKE ?)':'(q.title LIKE ? OR q.body LIKE ?)');args.push('%'+q+'%','%'+q+'%');}
+ const limit=integer(u.searchParams.get('limit')||100,'limit',1,500);
+ const fields=pub?`q.id,COALESCE(q.public_title,q.title) AS title,COALESCE(q.public_body,q.body) AS body,q.status,q.category,q.created_at,COALESCE(q.public_reply,CASE WHEN q.kind='message' AND q.id LIKE 'm:%' THEN q.admin_reply END) AS admin_reply,COALESCE(q.public_reply_by,q.replied_by) AS replied_by,pa.username AS reply_author_name`:`q.*,ra.username AS reply_author_name,aa.username AS assignee_name,(SELECT COUNT(*) FROM ticket_attachments x WHERE x.ticket_ref=q.id) AS attachment_count`;
+ const rows=await env.DB.prepare(`SELECT ${fields} FROM (${union}) q LEFT JOIN admins ra ON ra.id=q.replied_by LEFT JOIN admins pa ON pa.id=COALESCE(q.public_reply_by,q.replied_by) LEFT JOIN admins aa ON aa.id=q.assignee_id ${where.length?'WHERE '+where.join(' AND '):''} ORDER BY q.created_at DESC,q.id DESC LIMIT ?`).bind(...args,limit).all();
+ if(raw){if(!rows.results.length)fail(404,'工单不存在或无权查看');const ticket=rows.results[0];if(!pub){ticket.attachments=await ticketFiles(env.DB,ticket.id);ticket.history=(await env.DB.prepare('SELECT actor_type,actor_id,actor_name,action,details,created_at FROM ticket_events WHERE ticket_ref=? ORDER BY id').bind(ticket.id).all()).results;ticket.reward=await env.DB.prepare('SELECT admin_id,player_id,amount,paid,paid_at FROM ticket_rewards WHERE ticket_ref=?').bind(ticket.id).first();}return reply({ticket});}
+ return reply({tickets:rows.results,limit});
+});
 export const onRequestPost=c=>endpoint(async()=>{
- const player=await identity(c),input=await body(c.request);
- const kind=input.kind||'service';if(!['service','bug','report'].includes(kind))fail(400,'工单类型无效');
- const prefix=kind==='bug'?'[Bug 反馈] ':kind==='report'?'[举报] ':'';
- const title=prefix+string(input.title,'标题',90),content=string(input.body,'内容',2000);
- const files=await validateFiles(c,input.attachment_ids,{kind:'player',user:player});
- const queries=[c.env.DB.prepare("INSERT INTO tickets(player_id,category,title,body) VALUES(?,'service',?,?)").bind(player.id,title,content)];
- // WITHOUT ROWID attachment links keep last_insert_rowid() pointing at the ticket.
- for(const file of files)queries.push(c.env.DB.prepare('INSERT INTO ticket_attachments(upload_id,ticket_ref) VALUES(?,CAST(last_insert_rowid() AS TEXT))').bind(file.id));
- const result=await c.env.DB.batch(queries);return reply({id:result[0].meta.last_row_id,attachment_count:files.length},201);
+ const player=await identity(c),input=await body(c.request),kind=input.kind||'message';if(!['message','service','bug','report','admin_complaint'].includes(kind))fail(400,'工单类型无效');
+ const target=await resolveTarget(c.env.DB,input);if(kind==='admin_complaint'&&!target.target_admin_id)fail(400,'请选择被投诉的管理员编号');if(kind==='report'&&!target.target_player_id&&!target.target_player_name)fail(400,'请选择或输入被举报玩家');
+ const consent=input.public_consent===true||input.public_consent===1;const prefix=kind==='bug'?'[Bug 反馈] ':kind==='report'?'[举报] ':kind==='admin_complaint'?'[投诉管理员] ':'';
+ const title=prefix+string(input.title,'标题',90),content=string(input.body,'内容',2000),contact=string(input.contact||'','联系方式',200,{required:false});
+ const files=await validateFiles(c,input.attachment_ids,{kind:'player',user:player});const db=c.env.DB;
+ const queries=[db.prepare('INSERT INTO tickets(player_id,category,kind,title,body,contact,public_consent,target_player_id,target_player_name,target_admin_id) VALUES(?,?,?,?,?,?,?,?,?,?)').bind(player.id,kind==='message'?'message':'service',kind,title,content,contact,consent?1:0,target.target_player_id,target.target_player_name,target.target_admin_id)];
+ for(const file of files)queries.push(db.prepare('INSERT INTO ticket_attachments(upload_id,ticket_ref) VALUES(?,CAST(last_insert_rowid() AS TEXT))').bind(file.id));
+ queries.push(db.prepare("INSERT INTO ticket_events(ticket_ref,actor_type,actor_id,actor_name,action,details) VALUES(CAST(last_insert_rowid() AS TEXT),'player',?,?,'created',?)").bind(player.id,player.username,JSON.stringify({public_consent:consent,kind,target_player_id:target.target_player_id,target_player_name:target.target_player_name,target_admin_id:target.target_admin_id})));
+ const result=await db.batch(queries);return reply({id:result[0].meta.last_row_id,attachment_count:files.length,public_consent:consent,public_visible:false},201);
 });
 export const onRequestPatch=c=>endpoint(async()=>{
-  const admin=await identity(c,'admin'),{
-    env,request
-  }
-  =c;let raw=new URL(request.url).searchParams.get('id')||'';if(/^\d+$/.test(raw)&&+raw>=1000000)raw='m:'+(+raw-1000000);const legacy=raw.startsWith('m:');const id=integer(legacy?raw.slice(2):raw),table=legacy?'messages':'tickets',row=await env.DB.prepare(`SELECT * FROM ${table} WHERE id=?`).bind(id).first();if(!row)fail(404,'工单不存在');const b=await body(request),updates={
-  }
-  ,replyText=b.admin_reply===undefined?undefined:string(b.admin_reply,'回复',2000,{
-    required:false
-  }
-  );if(b.status!==undefined){
-    if(!states.includes(b.status))fail(400,'状态无效');updates.status=legacy?({
-      open:'unread',in_progress:'read',resolved:'done',closed:'done'
-    }
-    [b.status]):b.status;
-  }
-  if(!legacy){
-    if(b.priority!==undefined){
-      if(!priorities.includes(b.priority))fail(400,'优先级无效');updates.priority=b.priority;
-    }
-  }
-    if(b.assignee_id!==undefined){
-      updates.assignee_id=b.assignee_id?integer(b.assignee_id):null;if(updates.assignee_id&&!await env.DB.prepare('SELECT id FROM admins WHERE id=?').bind(updates.assignee_id).first())fail(404,'指派管理员不存在');
-    }
-  const files=b.attachment_ids?.length?await validateFiles(c,b.attachment_ids,await uploadActor(c)):[];
-  const changedReply=replyText!==undefined&&replyText!==row.admin_reply;if(changedReply){
-    updates.admin_reply=replyText;updates.replied_at=new Date().toISOString();updates.replied_by=admin.id;if(!b.status)updates.status=legacy?'done':'resolved';
-  }
-  if(!Object.keys(updates).length&&!files.length)fail(400,'没有可更新字段');const queries=Object.keys(updates).length?[env.DB.prepare(`UPDATE ${table} SET ${Object.keys(updates).map(k=>k+'=?').join(',')}${legacy?'':",updated_at=datetime('now')"} WHERE id=?`).bind(...Object.values(updates),id)]:[];
-  for(const file of files)queries.push(env.DB.prepare('INSERT INTO ticket_attachments(upload_id,ticket_ref) VALUES(?,?)').bind(file.id,raw));
-  if(!legacy&&row.source_table==='messages'&&row.source_id&&(updates.status!==undefined||changedReply)){
-    const mapped={
-      open:'unread',in_progress:'read',resolved:'done',closed:'done'
-    }
-    [updates.status||row.status];queries.push(env.DB.prepare('UPDATE messages SET status=?,admin_reply=?,replied_at=?,replied_by=? WHERE id=?').bind(mapped,replyText??row.admin_reply,updates.replied_at||row.replied_at,admin.id,row.source_id));
-  }
-  if(!legacy&&['bookings','license_signups','kart_signups','circuit_signups'].includes(row.source_table)&&updates.status){
-    const map=row.source_table==='bookings'?{
-      open:'pending',in_progress:'confirmed',resolved:'completed',closed:'cancelled'
-    }
-    :row.source_table==='license_signups'?{
-      open:'pending',in_progress:'pending',resolved:'passed',closed:'failed'
-    }
-    :{
-      open:'pending',in_progress:'approved',resolved:'approved',closed:'rejected'
-    }
-    ;queries.push(env.DB.prepare(`UPDATE ${row.source_table} SET status=? WHERE id=?`).bind(map[updates.status],row.source_id));
-  }
-  if(changedReply&&replyText&&row.player_id)queries.push(env.DB.prepare("INSERT INTO notification_log(player_id,type,title,body,link) VALUES(?,'message_reply',?,?,?)").bind(row.player_id,'市政厅已回复你的工单',replyText,'/profile.html')); await env.DB.batch(queries);return reply({
-    id:raw,updated:true
-  }
-  );
-}
-);
+ const ref=ticketReference(new URL(c.request.url).searchParams.get('id')),db=c.env.DB,row=await db.prepare(`SELECT * FROM ${ref.table} WHERE id=?`).bind(ref.id).first();if(!row)fail(404,'工单不存在');const input=await body(c.request);let admin;
+ try{if(new URL(c.request.url).searchParams.get('my')==='1')fail(403,'按玩家身份操作');admin=await identity(c,'admin');}catch(e){if(e.status!==401&&e.status!==403)throw e;const player=await identity(c);if(row.player_id!==player.id)fail(404,'工单不存在');if(Object.keys(input).some(k=>k!=='public_consent'))fail(403,'只能修改自己的公开授权');if(![true,false,0,1].includes(input.public_consent))fail(400,'公开授权值无效');await db.batch([db.prepare(`UPDATE ${ref.table} SET public_consent=?,public_visible=0 WHERE id=?`).bind(input.public_consent?1:0,ref.id),ticketEvent(db,ref.ref,{type:'player',id:player.id,name:player.username},'consent_changed',{consent:!!input.public_consent})]);return reply({updated:true});}
+ if(row.target_admin_id===admin.id||row.target_player_id&&row.target_player_id===admin.linked_player_id)fail(403,'被投诉或被举报人不能处理自己的工单');if(row.target_admin_id&&admin.role!=='super')fail(403,'投诉管理员的工单仅限超管处理');
+ const oldStatus=ref.legacy?({unread:'open',read:'in_progress',done:'resolved'}[row.status]||row.status):row.status;
+ const changes={},events=[];if(input.status!==undefined){if(!states.includes(input.status))fail(400,'状态无效');changes.status=ref.legacy?({open:'unread',in_progress:'read',resolved:'done',closed:'done'}[input.status]):input.status;if(input.status!==oldStatus)events.push(ticketEvent(db,ref.ref,actor(admin),'status_changed',{from:oldStatus,to:input.status}));}
+ if(input.priority!==undefined&&!ref.legacy){if(!priorities.includes(input.priority))fail(400,'优先级无效');changes.priority=input.priority;}
+ if(input.assignee_id!==undefined){const candidate=input.assignee_id?await assignmentCandidate(db,row,input.assignee_id):null;changes.assignee_id=candidate?.id||null;if(changes.assignee_id!==row.assignee_id)events.push(ticketEvent(db,ref.ref,actor(admin),'assigned',{from:row.assignee_id||null,to:changes.assignee_id,name:candidate?.username||null,mode:['ai','rules'].includes(input.assignment_mode)?input.assignment_mode:'manual'}));}
+ let replyText;if(input.admin_reply!==undefined){replyText=string(input.admin_reply,'回复',2000,{required:false});if(replyText!==row.admin_reply){changes.admin_reply=replyText;changes.replied_by=admin.id;changes.replied_at=new Date().toISOString();events.push(ticketEvent(db,ref.ref,actor(admin),'replied',{reply:replyText,previous_reply:row.admin_reply||null}));}}
+ if(input.public_visible!==undefined){if(![true,false,0,1].includes(input.public_visible))fail(400,'公开处理值无效');if(input.public_visible&&!row.public_consent)fail(409,'提交者未同意公开处理');changes.public_visible=input.public_visible?1:0;
+  if(input.public_visible){changes.public_title=string(input.public_title??row.public_title??row.title??row.name,'公开标题',120);changes.public_body=string(input.public_body??row.public_body??row.body??row.content,'公开内容',2000);changes.public_reply=string(input.public_reply??row.public_reply??replyText??row.admin_reply??'','公开答复',2000,{required:false});changes.public_reply_by=changes.public_reply===(replyText??row.admin_reply)?(changes.replied_by||row.replied_by||admin.id):admin.id;}
+  events.push(ticketEvent(db,ref.ref,actor(admin),input.public_visible?'published':'unpublished',{public_consent:!!row.public_consent}));
+ }
+ const files=input.attachment_ids?.length?await validateFiles(c,input.attachment_ids,await uploadActor(c)):[];
+ if(files.length)events.push(ticketEvent(db,ref.ref,actor(admin),'attachments_added',{names:files.map(f=>f.name)}));
+ let reward=null;const completing=input.status==='resolved'&&oldStatus!=='resolved';if(completing&&row.assignee_id){if(input.assignee_id!==undefined&&Number(input.assignee_id)!==row.assignee_id)fail(409,'请先完成派单，再由承办人办结');if(admin.id!==row.assignee_id&&admin.role!=='super')fail(403,'仅承办人或超管可办结已派工单');if(!(replyText??row.admin_reply)?.trim())fail(400,'请填写处理结果后再办结');await assignmentCandidate(db,row,row.assignee_id);reward=await rewardOperations(db,ref.ref,row.assignee_id);}
+ if(!Object.keys(changes).length&&!files.length)fail(400,'没有可更新字段');const ops=[];
+ if(Object.keys(changes).length)ops.push(db.prepare(`UPDATE ${ref.table} SET ${Object.keys(changes).map(k=>k+'=?').join(',')}${ref.legacy?'':",updated_at=datetime('now')"} WHERE id=?`).bind(...Object.values(changes),ref.id));
+ for(const file of files)ops.push(db.prepare('INSERT INTO ticket_attachments(upload_id,ticket_ref) VALUES(?,?)').bind(file.id,ref.ref));
+ if(!ref.legacy&&row.source_table==='messages'&&row.source_id&&(changes.status!==undefined||changes.admin_reply!==undefined))ops.push(db.prepare('UPDATE messages SET status=?,admin_reply=?,replied_at=?,replied_by=? WHERE id=?').bind(({open:'unread',in_progress:'read',resolved:'done',closed:'done'})[input.status||row.status],replyText??row.admin_reply,changes.replied_at||row.replied_at,changes.replied_by||row.replied_by,row.source_id));
+ if(!ref.legacy&&['bookings','license_signups','kart_signups','circuit_signups'].includes(row.source_table)&&input.status){const map=row.source_table==='bookings'?{open:'pending',in_progress:'confirmed',resolved:'completed',closed:'cancelled'}:row.source_table==='license_signups'?{open:'pending',in_progress:'pending',resolved:'passed',closed:'failed'}:{open:'pending',in_progress:'approved',resolved:'approved',closed:'rejected'};ops.push(db.prepare(`UPDATE ${row.source_table} SET status=? WHERE id=?`).bind(map[input.status],row.source_id));}
+ if(changes.admin_reply&&row.player_id)ops.push(db.prepare("INSERT INTO notification_log(player_id,type,title,body,link) VALUES(?,'message_reply','市政厅已回复你的工单',?,'/profile.html')").bind(row.player_id,changes.admin_reply));
+ ops.push(...events);const rewardIndex=ops.length;if(reward)ops.push(...reward.operations);
+ const result=await db.batch(ops);return reply({id:ref.ref,updated:true,reward:reward?{amount:result[rewardIndex+1]?.meta.changes?10:0,pending:!reward.playerId,player_name:reward.playerName||null}:null});
+});

@@ -1,3 +1,4 @@
+import {canSeeMunicipalLink,canSeeHotelOwnerLink} from './permissions.js';
 import {
   parseDate
 }
@@ -238,8 +239,8 @@ export function modal(title,content,{
     const btn=$('[type=submit]',form);
     if(btn.disabled)return;
     const data=Object.fromEntries(new FormData(form));
-    $$('input[type=checkbox]',form).forEach(c=>data[c.name]=c.checked?1:0);
-    $$('input[type=number]',form).forEach(c=>data[c.name]=c.value===''?null:Number(c.value));
+    $$('input[type=checkbox]:not(:disabled)',form).forEach(c=>data[c.name]=c.checked?1:0);
+    $$('input[type=number]:not(:disabled)',form).forEach(c=>data[c.name]=c.value===''?null:Number(c.value));
     const old=btn.textContent;
     btn.disabled=true;
     dialog.dataset.saving='true';
@@ -278,7 +279,7 @@ export async function requirePlayer(){
 }
 export function login(register=false,target='player'){
   return new Promise(resolve=>{
-    const dialog=modal(tr(register?'市民注册':'登录灯光市',register?'Join Light City':'Sign in'),field('username',tr('游戏 ID','Game ID'))+(register?field('email',tr('邮箱','Email'),'email'):'')+field('password',tr('密码','Password'),'password')+`<div class="wide actions"><button type="button" id="auth-switch">${tr(register?'已有账号？登录':'没有账号？注册',register?'Already registered?':'Create account')}</button>${register?'':`<button type="button" id="auth-passkey">${tr('使用通行密钥','Use passkey')}</button>`}</div>`,{
+    const dialog=modal(target==='hotel_owner'?tr('酒店老板登录','Hotel owner sign in'):tr(register?'市民注册':'登录灯光市',register?'Join Light City':'Sign in'),field('username',tr('游戏 ID','Game ID'))+(register?field('email',tr('邮箱','Email'),'email'):'')+field('password',tr('密码','Password'),'password')+`<div class="wide actions">${target==='player'?`<button type="button" id="auth-switch">${tr(register?'已有账号？登录':'没有账号？注册',register?'Already registered?':'Create account')}</button>`:''}${register||target==='hotel_owner'?'':`<button type="button" id="auth-passkey">${tr('使用通行密钥','Use passkey')}</button>`}</div>`,{
       label:tr(register?'提交注册':'登录',register?'Register':'Sign in'),submit:async d=>{
         await post(register?'/api/register':'/api/login',{
           ...d,target
@@ -288,10 +289,9 @@ export function login(register=false,target='player'){
         }
       }
     }
-    ); $('#auth-switch',dialog).onclick=()=>{
+    ); $('#auth-switch',dialog)?.addEventListener('click',()=>{
       dialog.close();login(!register);
-    }
-    ;$('#auth-passkey',dialog)?.addEventListener('click',e=>action(e.currentTarget,async()=>{
+    });$('#auth-passkey',dialog)?.addEventListener('click',e=>action(e.currentTarget,async()=>{
       const {
         passkeyLogin
       }
@@ -304,7 +304,14 @@ export function login(register=false,target='player'){
   }
   );
 }
+function navigationMarkup(){
+ const links=[['/','首页','Home'],['/hotel.html','酒店','Hotel'],['/leaderboard.html','榜单','Ranks'],['/notifications.html','通知','Notifications'],['/dm.html','私信','Messages']];
+ if(canSeeMunicipalLink(state.session))links.push(['/admin.html','市政后台','Admin']);
+ if(canSeeHotelOwnerLink(state.session))links.push(['/hotel-owner.html','我的酒店','My hotel']);
+ return links.map(([href,zh,en])=>`<a href="${href}" ${location.pathname===href?'aria-current="page"':''}>${tr(zh,en)}</a>`).join('');
+}
 export function renderAccount(){
+ const navigation=$('#navigation');if(navigation)navigation.innerHTML=navigationMarkup();
   const slot=$('#account');
   if(!slot)return;
   const p=state.session?.player,a=state.session?.admin||state.session?.user;
@@ -325,7 +332,7 @@ export function renderAccount(){
 export function shell(){
   document.documentElement.lang=state.language;
   document.documentElement.style.colorScheme='light';
-  $('#header').innerHTML=`<div class="header-inner"><a class="brand" href="/"><span class="grass-block" aria-hidden="true"></span><span><strong>${tr('灯光市人民政府','Light City Hall')}</strong><small>LIGHT CITY · EST. 2026</small></span></a><button id="menu" aria-expanded="false" aria-controls="navigation">☰ ${tr('菜单','Menu')}</button><nav id="navigation" aria-label="${tr('主要导航','Main navigation')}">${[['/','首页','Home'],['/hotel.html','酒店','Hotel'],['/leaderboard.html','榜单','Ranks'],['/notifications.html','通知','Notifications'],['/dm.html','私信','Messages'],['/admin.html','市政后台','Admin']].map(([h,zh,en])=>`<a href="${h}" ${location.pathname===h?'aria-current="page"':''}>${tr(zh,en)}</a>`).join('')}</nav><div id="account"></div><button id="language">${state.language==='en'?'中文':'EN'}</button></div>`;
+  $('#header').innerHTML=`<div class="header-inner"><a class="brand" href="/"><span class="grass-block" aria-hidden="true"></span><span><strong>${tr('灯光市人民政府','Light City Hall')}</strong><small>LIGHT CITY · EST. 2026</small></span></a><button id="menu" aria-expanded="false" aria-controls="navigation">☰ ${tr('菜单','Menu')}</button><nav id="navigation" aria-label="${tr('主要导航','Main navigation')}">${navigationMarkup()}</nav><div id="account"></div><button id="language">${state.language==='en'?'中文':'EN'}</button></div>`;
   $('#menu').onclick=()=>{
     const open=$('#navigation').classList.toggle('open');
     $('#menu').setAttribute('aria-expanded',open);
@@ -347,7 +354,8 @@ export function title(zh,en){
   document.title=tr(zh,en)+' · '+tr('灯光市','Light City');
   return `<div class="page-heading"><div><p class="eyebrow">LIGHT CITY / ${esc(en.toUpperCase())}</p><h1>${esc(tr(zh,en))}</h1></div></div>`;
 }
-export function download(name,content,type='text/plain'){
+export async function download(name,content,type='text/plain'){
+  try{await post('/api/ui-events',{events:[{action:'export',page:location.pathname,element:'download',label:name}]});}catch(e){toast(tr('无法记录导出操作，请重试','Could not record export. Please retry.'),true);return;}
   const url=URL.createObjectURL(new Blob([content],{
     type
   }
@@ -358,9 +366,9 @@ export function download(name,content,type='text/plain'){
   a.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-export function csv(name,rows){
+export async function csv(name,rows){
   if(!rows.length)return toast(tr('暂无可导出记录','No records to export'));
   const keys=Object.keys(rows[0]);
   const cell=v=>'"'+String(v??'').replace(/^[=+@-]/,"'$&").replace(/"/g,'""')+'"';
-  download(name,'\ufeff'+[keys,...rows.map(r=>keys.map(k=>r[k]))].map(r=>r.map(cell).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+  await download(name,'\ufeff'+[keys,...rows.map(r=>keys.map(k=>r[k]))].map(r=>r.map(cell).join(',')).join('\r\n'),'text/csv;charset=utf-8');
 }

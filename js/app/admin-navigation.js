@@ -1,10 +1,10 @@
 // Primary navigation groups preserve existing child hashes and permission boundaries.
-const superOnly = new Set(['tracks', 'hotels', 'rooms', 'requirements', 'announcements', 'gallery', 'admins', 'dms']);
+const superOnly = new Set(['tracks', 'hotels', 'rooms', 'requirements', 'announcements', 'gallery', 'admins', 'dms', 'owners', 'audit']);
 export const groups = [
   { id: 'tickets', label: ['🎫 工单中心', '🎫 Tickets'], children: ['tickets'] },
   { id: 'dispatch', label: ['📋 派单', '📋 Dispatch'], children: ['dispatch'] },
-  { id: 'accounts', label: ['👥 市民与账号', '👥 Citizens & accounts'], children: ['players', 'admins', 'password'] },
-  { id: 'hotel-business', label: ['🏨 酒店业务', '🏨 Hotel services'], children: ['bookings', 'hotels', 'rooms'] },
+  { id: 'accounts', label: ['👥 市民与账号', '👥 Citizens & accounts'], children: ['players', 'admins', 'password', 'audit'] },
+  { id: 'hotel-business', label: ['🏨 酒店业务', '🏨 Hotel services'], children: ['bookings', 'hotels', 'rooms', 'owners'] },
   { id: 'racing', label: ['🏁 赛车业务', '🏁 Racing'], children: ['kart', 'circuit', 'tracks', 'times'] },
   { id: 'driving', label: ['🚗 驾照与考试', '🚗 Licenses & exams'], children: ['license', 'requirements', 'questions'] },
   { id: 'content', label: ['📜 内容管理', '📜 Content'], children: ['announcements', 'gallery'] },

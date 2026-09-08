@@ -2,7 +2,7 @@ import {endpoint,identity,body,string,integer,reply,fail} from '../_core/request
 import {validId,uploadActor,ownerColumn,ownedBy,fileMetadata,ticketOwner} from '../_core/uploads.js';
 import {CHUNK_SIZE,MEDIA_TYPES,fileLimit,matchesSignature,decodeBase64} from '../../shared/uploads.js';
 
-async function owned(c,id){const file=await c.env.DB.prepare('SELECT * FROM media_uploads WHERE id=?').bind(validId(id)).first();if(!file)fail(404,'附件不存在');const actor=file.owner_admin_id?{kind:'admin',user:await identity(c,'admin')}:{kind:'player',user:await identity(c)};if(!ownedBy(file,actor))fail(404,'附件不存在');return {file,actor};}
+async function owned(c,id){const file=await c.env.DB.prepare('SELECT * FROM media_uploads WHERE id=?').bind(validId(id)).first();if(!file)fail(404,'附件不存在');const actor=file.owner_admin_id?{kind:'admin',user:await identity(c,'admin')}:file.owner_hotel_id?{kind:'hotel_owner',user:await identity(c,'hotel_owner')}:{kind:'player',user:await identity(c)};if(!ownedBy(file,actor))fail(404,'附件不存在');return {file,actor};}
 export const onRequestPost=c=>endpoint(async()=>{
  const input=await body(c.request);
  if(input.action==='finish'){
@@ -11,7 +11,7 @@ export const onRequestPost=c=>endpoint(async()=>{
   if(sum.n!==file.chunk_count||sum.size!==file.size)fail(409,'上传尚未完成，请重试缺失分块');
   await c.env.DB.prepare("UPDATE media_uploads SET status='ready' WHERE id=?").bind(file.id).run();return reply(fileMetadata(file));
  }
- const actor=input.purpose==='public-image'?{kind:'admin',user:await identity(c,'super')}:await uploadActor(c);
+ let actor;if(input.purpose==='public-image'){try{actor={kind:'admin',user:await identity(c,'super')};}catch(e){if(e.status!==401&&e.status!==403)throw e;actor={kind:'hotel_owner',user:await identity(c,'hotel_owner')};}}else actor=await uploadActor(c);
  const purpose=input.purpose||'ticket';if(!['ticket','public-image'].includes(purpose))fail(400,'上传用途无效');
  const mime=string(input.mime,'文件类型',100);if(!MEDIA_TYPES.includes(mime)||purpose==='public-image'&&!mime.startsWith('image/'))fail(400,'请选择支持的图片或视频');
  const size=integer(input.size,'文件大小',1,fileLimit(mime));const name=string(input.name,'文件名',180).replace(/[\x00-\x1f\x7f/\\]/g,'_');
@@ -40,7 +40,7 @@ export const onRequestPut=c=>endpoint(async()=>{
 export const onRequestGet=c=>endpoint(async()=>{
  const u=new URL(c.request.url),id=validId(u.searchParams.get('id'));const file=await c.env.DB.prepare('SELECT * FROM media_uploads WHERE id=?').bind(id).first();if(!file)fail(404,'附件不存在');
  const attachment=await c.env.DB.prepare('SELECT ticket_ref FROM ticket_attachments WHERE upload_id=?').bind(id).first();
- if(!file.public_access){let actor;try{actor=file.owner_admin_id?{kind:'admin',user:await identity(c,'admin')}:{kind:'player',user:await identity(c)};}catch(e){if(e.status!==401&&e.status!==403)throw e;}if(!actor||!ownedBy(file,actor)){if(!attachment)fail(404,'附件不存在');await ticketOwner(c,attachment.ticket_ref);}}
+ if(!file.public_access){let actor;try{actor=file.owner_admin_id?{kind:'admin',user:await identity(c,'admin')}:file.owner_hotel_id?{kind:'hotel_owner',user:await identity(c,'hotel_owner')}:{kind:'player',user:await identity(c)};}catch(e){if(e.status!==401&&e.status!==403)throw e;}if(!actor||!ownedBy(file,actor)){if(!attachment)fail(404,'附件不存在');await ticketOwner(c,attachment.ticket_ref);}}
  if(u.searchParams.get('download')!=='1'){
   const chunks=await c.env.DB.prepare('SELECT part FROM media_chunks WHERE upload_id=? ORDER BY part').bind(id).all();return reply({...fileMetadata(file),status:file.status,parts:chunks.results.map(x=>x.part),chunk_count:file.chunk_count,chunk_size:CHUNK_SIZE});
  }
