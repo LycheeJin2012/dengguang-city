@@ -54,7 +54,7 @@ export async function getSession(env, token) {
     'SELECT token, player_id, admin_id, expires_at FROM sessions WHERE token = ?'
   ).bind(token).first();
   if (!row) return null;
-  if (new Date(row.expires_at) < new Date()) {
+  if (!Number.isFinite(+new Date(row.expires_at)) || new Date(row.expires_at) <= new Date()) {
     await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
     return null;
   }

@@ -1,40 +1,17 @@
-# v18 perf: 强制 HTML 不被任何层 cache, 确保用户总拿最新版本
-# CF Pages 边缘 cache 默认 7 天, 必须显式覆盖
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Frame-Options: DENY
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https: http:; connect-src 'self'; font-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
 /*.html
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-  Expires: 0
-# API 缓存由 Functions 响应控制；默认禁止缓存登录态和个人数据。
-/api/*
   Cache-Control: no-store
 /
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-  Expires: 0
-/admin
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-/admin.html
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-/profile
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-/profile.html
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-/dm
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-/dm.html
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-/hotel
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-/hotel.html
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
-/announcements
-  Cache-Control: no-cache, no-store, must-revalidate
-  Pragma: no-cache
+  Cache-Control: no-store
+/js/*
+  Cache-Control: no-cache, must-revalidate
+/css/*
+  Cache-Control: no-cache, must-revalidate
+/sw.js
+  Cache-Control: no-cache, must-revalidate
+/api/*
+  Cache-Control: no-store

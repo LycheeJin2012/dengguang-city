@@ -1,32 +1,51 @@
-# 灯光市人民政府 · Light City Hall of MC
+# 灯光市人民政府 · v51
 
-像素风 MC 城市政府官方网站，灯光市 (`github.com/LycheeJin2012/dengguang-city`)。
+Minecraft 像素城市官网。保留原米黄色、绿色、粗边框和硬阴影风格；仅提供浅色界面。
 
-## 部署架构
+## 结构
 
-- **静态站**：HTML + CSS + JS + 22 张图，无构建步骤（直接 Pages 部署）
-- **后端**：Cloudflare Pages Functions + D1 (`dengguang-city-db`)
-  - `/api/init` - 建表 + 默认 super admin（`LycheeJin` / 默认密码 `DengGuangWhat20120619`，登录后立即改！）
-  - `/api/register` - 玩家注册
-  - `/api/login` - 玩家/管理员登录（GET=查登录态，DELETE=登出）
-  - `/api/messages` - 公开留言（GET）/ 玩家提交留言（POST）
-  - `/api/bookings` - 玩家房间预订
-  - `/api/kart` - 玩家卡丁车试跑报名
-  - `/api/circuit` - 玩家国际赛车场试车报名
-  - `/api/admin/messages` - 管理员管理留言
-  - `/api/admin/players` - 管理员看玩家列表
+- `index.html`、`hotel.html`、`profile.html`、`dm.html`、`notifications.html`、`leaderboard.html`、`admin-v37.html`：七个页面入口。
+- `js/app/`：统一页面外壳、请求、弹窗、表单及业务模块；`js/date.js` 处理 D1 UTC 与 ISO 时间。
+- `css/style.css`：统一响应式样式；`style.min.css` 保留兼容 URL，不再用破坏 URL/calc 的正则压缩。
+- `functions/_core/`：请求验证、权限、资源管理、账号、原子业务提交、数据库迁移。
+- `functions/api/`：Cloudflare Pages Functions API，保留原路径；`_middleware.js` 统一错误和写入来源检查。
+- `functions/_shared/`：密码散列、WebAuthn 字节/签名校验及 AI 适配器等安全底层。
+- `tests/`：Node 测试和真正执行 SQL 的 Python SQLite 适配器。
 
-## 本地测试
+## 功能
 
-```bash
-# 没有 wrangler / node 本地环境，部署在 Cloudflare Pages 后直接测试
-# 打开 https://dengguang-city.pages.dev/api/init
+公告、图库、留言和评论、注册审核、登录/退出、每日签到、酒店预订、卡丁车/国际试车、驾照报名、模拟考试、成绩审核、玩家资料和身份卡、密码/通行密钥、私信与通知订阅。
+
+后台包含工单、玩家、报名、赛道、酒店、房型、考试要求、模拟题库、公告、图集、管理员、私信监管和账号安全。图片可填 URL 或选择最大 1 MB 的 PNG/JPEG/WebP/GIF。
+
+管理资源删除会保护历史引用。已有房型/预订/成绩关联的酒店、房型、赛道应停用；业务记录通过审核或关闭归档，避免丢失历史。
+
+## 本地验证
+
+使用 Node 20.19+ 和 Python 3（标准库即可），不需要安装测试依赖。
+
+```sh
+npm test
+npm run build
+npm run dev:local
 ```
 
-## 数据安全
+本地测试服务会打印 `http://127.0.0.1:8874`。它在系统临时目录创建隔离 SQLite，使用明确测试账号，不读取 `.dev.vars`，不连接生产 D1。测试账号定义在 `tests/dev-server.mjs`，不能在生产环境运行该脚本。
 
-- 密码用 PBKDF2-SHA256 哈希（10 万轮，16 byte salt）
-- Session token 32 byte 随机，存 D1，TTL 8 小时
-- 公开 API 限流（生产建议加 CF Rate Limiting Rules）
-- 留言/报名/预订需玩家登录；管理员 API 需 admin_id session
+当前 macOS 的可用 Node：`$HOME/.local/node-v20.19.0-darwin-arm64/bin/node`。若 PATH 中的 Node 无法启动，可直接用此二进制运行 package.json 中的命令。
 
+## 部署和数据
+
+继续使用原 Cloudflare Pages 项目与 `wrangler.toml` 中的 D1 绑定，保持原目录部署方式。`npm run build` 校验模块和静态引用，不更改部署目录。
+
+API 首次启动执行可重入的增量迁移，补齐 v51 所需列与索引；不插入默认赛道、不清空业务表、不重新创建账号。版本记录存于 `lc_schema_versions`。迁移错误会明确返回服务错误，失败后允许重试。
+
+`bookings`、`kart_signups`、`circuit_signups`、`license_signups` 与工单使用 D1 `batch` 同步写入；试车扣费和签到奖励也在原子批次中执行。普通管理员不能重置其他管理员密码，通行密钥必须属于当前账号，跨站写入会被拒绝。
+
+保留原密码散列和 WebAuthn 协议。硬件通行密钥的 Touch ID/Face ID 仍需要在实际设备与正式域名验收。
+
+AI 密钥只使用部署环境变量。默认 OpenAI 服务地址为 `https://api.openai.com/v1`，模型可用 `OPENAI_MODEL` 配置；其他兼容服务必须显式配置 `OPENAI_BASE_URL`。未配置或服务失败时使用明确的自动客服兜底文案。
+
+## 缓存
+
+HTML、脚本和私有接口不从 Service Worker 缓存读取。SW 只缓存公共素材，激活新版时只清理本应用的 `lc-` 缓存。浏览器持久化只保存语言偏好；不保存密码、登录令牌或业务记录。

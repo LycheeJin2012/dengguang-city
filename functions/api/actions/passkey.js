@@ -86,14 +86,19 @@ export async function onRequestPost(context) {
       const _subject = await resolveSubjectFromSession(env, _sess);
       if (!_subject) return err(401, '账号不存在');
       const keys = await listPasskeys(env, _subject);
-      return ok({ passkeys: keys });
+      return ok({ passkeys: keys.results || [] });
     }
     if (action === 'passkey-delete') {
       if (!_sess) return err(401, '需要登录');
       const b = await request.json();
       const id = parseInt(b.id || 0, 10);
       if (!id) return err(400, 'id 必填');
-      await deletePasskey(env, id);
+      const subject = await resolveSubjectFromSession(env, _sess);
+      if (!subject) return err(401, '账号不存在');
+      const column = subject.kind === 'admin' ? 'admin_id' : 'player_id';
+      const owned = await env.DB.prepare(`SELECT id FROM passkeys WHERE id=? AND ${column}=?`).bind(id, subject.id).first();
+      if (!owned) return err(404, '通行密钥不存在');
+      await deletePasskey(env, subject, id);
       return ok({ id, deleted: true });
     }
     if (action === 'passkey-test-start' || action === 'passkey-test-finish') {

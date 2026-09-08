@@ -1,1 +1,1 @@
-export async function onRequest(){return new Response("Not Found",{status:404});}
+export {onRequest} from './admin.js';

@@ -1,204 +1,81 @@
-// /api/social - 玩家社交（私信 DM + 个人主页 profile）
-//
-// GET    ?action=me                       - 自己的 profile
-// GET    ?action=profile&username=X       - 公开 profile（无需登录）
-// PATCH  ?action=me          {bio, avatar} - 编辑自己的 profile
-// GET    ?action=dm-list                  - 我的私信会话列表
-// GET    ?action=dm-thread&peer=X         - 与某人的私信记录
-// POST   ?action=dm-send    {to_username, content} - 发私信
-// PATCH  ?action=dm-read&peer=X           - 标记某人来信为已读
-import { ok, err, stripHtml, isNonEmpty, readToken, getSession, aiAutoReply, getOrCreateAiBot } from '../_shared.js';
-
-export async function onRequestGet(context) {
-  const { env, request } = context;
-  if (!env.DB) return err(500, 'D1 binding DB not configured');
-  const url = new URL(request.url);
-  const action = url.searchParams.get('action') || '';
-
-  // 公开 profile — 无需登录
-  if (action === 'profile') {
-    const username = (url.searchParams.get('username') || '').trim();
-    if (!username) return err(400, 'username 必填');
-    const p = await env.DB.prepare(
-      "SELECT id, username, avatar_emoji, bio, created_at FROM players WHERE username = ? AND status = 'active'"
-    ).bind(username).first();
-    if (!p) return err(404, '玩家不存在或账号未激活');
-    // 附：最近活动统计（留言数 / 评论数 / 私信数等）
-    const msgCount = await env.DB.prepare(
-      'SELECT COUNT(*) AS n FROM messages WHERE player_id = ?'
-    ).bind(p.id).first();
-    const cmtCount = await env.DB.prepare(
-      'SELECT COUNT(*) AS n FROM message_comments WHERE player_id = ?'
-    ).bind(p.id).first();
-    return ok({
-      profile: p,
-      stats: {
-        messages: msgCount?.n || 0,
-        comments: cmtCount?.n || 0
-      }
-    });
-  }
-
-  // 其余需要登录
-  const token = readToken(request);
-  const sess = await getSession(env, token);
-  if (!sess || !sess.player_id) return err(401, '请先登录');
-
-  if (action === 'me') {
-    const me = await env.DB.prepare(
-      'SELECT id, username, email, avatar_emoji, bio, status, created_at FROM players WHERE id = ?'
-    ).bind(sess.player_id).first();
-    return ok({ profile: me });
-  }
-
-  if (action === 'dm-list') {
-    // 列出所有跟我有私信往来的会话（先取 peer_id + last_at + unread）
-    const rows = await env.DB.prepare(
-      `SELECT
-         CASE WHEN dm.from_player_id = ? THEN dm.to_player_id ELSE dm.from_player_id END AS peer_id,
-         MAX(dm.created_at) AS last_at,
-         SUM(CASE WHEN dm.to_player_id = ? AND dm.read_at IS NULL THEN 1 ELSE 0 END) AS unread
-       FROM direct_messages dm
-       WHERE dm.from_player_id = ? OR dm.to_player_id = ?
-       GROUP BY peer_id
-       ORDER BY last_at DESC LIMIT 100`
-    ).bind(sess.player_id, sess.player_id, sess.player_id, sess.player_id).all();
-    if (rows.results.length === 0) return ok({ conversations: [] });
-    const peerIds = rows.results.map(r => r.peer_id);
-    const placeholders = peerIds.map(() => '?').join(',');
-    // 1. 拉 peer 资料
-    const peers = await env.DB.prepare(
-      `SELECT id, username, avatar_emoji FROM players WHERE id IN (${placeholders})`
-    ).bind(...peerIds).all();
-    const peerMap = {};
-    for (const p of peers.results) peerMap[p.id] = p;
-    // 2. 拉每段会话的最后一条消息（用 OR 子查询 + 排序）
-    const conversations = [];
-    for (const r of rows.results) {
-      const last = await env.DB.prepare(
-        `SELECT content FROM direct_messages
-         WHERE (from_player_id = ? AND to_player_id = ?)
-            OR (from_player_id = ? AND to_player_id = ?)
-         ORDER BY created_at DESC LIMIT 1`
-      ).bind(sess.player_id, r.peer_id, r.peer_id, sess.player_id).first();
-      conversations.push({
-        peer_id: r.peer_id,
-        last_at: r.last_at,
-        unread: r.unread || 0,
-        last_content: last?.content || '',
-        peer: peerMap[r.peer_id] || { id: r.peer_id, username: '(已注销)', avatar_emoji: '❓' }
-      });
-    }
-    return ok({ conversations });
-  }
-
-  if (action === 'dm-thread') {
-    const peerUsername = (url.searchParams.get('peer') || '').trim();
-    if (!peerUsername) return err(400, 'peer 必填');
-    const peer = await env.DB.prepare(
-      "SELECT id, username, avatar_emoji FROM players WHERE username = ? AND status = 'active'"
-    ).bind(peerUsername).first();
-    if (!peer) return err(404, '对方不存在');
-    if (peer.id === sess.player_id) return err(400, '不能跟自己发私信');
-    const msgs = await env.DB.prepare(
-      `SELECT id, from_player_id, to_player_id, content, read_at, created_at
-       FROM direct_messages
-       WHERE (from_player_id = ? AND to_player_id = ?)
-          OR (from_player_id = ? AND to_player_id = ?)
-       ORDER BY created_at ASC LIMIT 200`
-    ).bind(sess.player_id, peer.id, peer.id, sess.player_id).all();
-    return ok({ peer, messages: msgs.results });
-  }
-
-  return err(400, '未知 action: ' + action);
+import {
+  endpoint,identity,body,string,reply,fail
 }
-
-export async function onRequestPost(context) {
-  const { env, request } = context;
-  if (!env.DB) return err(500, 'D1 binding DB not configured');
-  const url = new URL(request.url);
-  const action = url.searchParams.get('action') || '';
-
-  const token = readToken(request);
-  const sess = await getSession(env, token);
-  if (!sess || !sess.player_id) return err(401, '请先登录');
-
-  if (action === 'dm-send') {
-    let body = {};
-    try { body = await request.json(); } catch (e) { return err(400, 'Invalid JSON'); }
-    const toUsername = (body.to_username || '').trim();
-    const content    = stripHtml(body.content || '').trim();
-    if (!toUsername) return err(400, 'to_username 必填');
-    if (!isNonEmpty(content, 2000)) return err(400, '私信内容不能为空（1-2000 字符）');
-    const peer = await env.DB.prepare(
-      "SELECT id, username FROM players WHERE username = ? AND status = 'active'"
-    ).bind(toUsername).first();
-    if (!peer) return err(404, '收件人不存在或账号未激活');
-    if (peer.id === sess.player_id) return err(400, '不能给自己发私信');
-    const ins = await env.DB.prepare(
-      'INSERT INTO direct_messages (from_player_id, to_player_id, content) VALUES (?, ?, ?)'
-    ).bind(sess.player_id, peer.id, content).run();
-    const dmId = ins.meta.last_row_id;
-
-    // 如果发给 AI 客服 → 自动回复
-    let aiReplied = false;
-    try {
-      const bot = await getOrCreateAiBot(env);
-      if (bot && bot.id === peer.id) {
-        const draft = await aiAutoReply(env, content, 'dm');
-        if (draft) {
-          await env.DB.prepare(
-            'INSERT INTO direct_messages (from_player_id, to_player_id, content) VALUES (?, ?, ?)'
-          ).bind(bot.id, sess.player_id, '🤖 ' + draft).run();
-          aiReplied = true;
+from '../_core/request.js';
+import {
+  aiAutoReply,getOrCreateAiBot
+}
+from '../_shared/ai.js';
+async function peer(c,name){
+  const r=await c.env.DB.prepare("SELECT id,username,avatar_emoji FROM players WHERE username=? AND status='active'").bind(string(name,'游戏 ID',64)).first();
+  if(!r)fail(404,'对方不存在或未激活');
+  return r;
+}
+export const onRequestGet=c=>endpoint(async()=>{
+  const u=new URL(c.request.url),action=u.searchParams.get('action');if(action==='profile'){
+    const p=await c.env.DB.prepare("SELECT id,username,avatar_emoji,bio,created_at FROM players WHERE username=? AND status='active'").bind(string(u.searchParams.get('username'),'游戏 ID',64)).first();if(!p)fail(404,'玩家不存在');const stats=await c.env.DB.prepare('SELECT (SELECT COUNT(*) FROM messages WHERE player_id=?) AS messages,(SELECT COUNT(*) FROM message_comments WHERE player_id=?) AS comments').bind(p.id,p.id).first();return reply({
+      profile:p,stats
+    }
+    );
+  }
+  const p=await identity(c);if(action==='me')return reply({
+    profile:await c.env.DB.prepare('SELECT id,username,email,bio,avatar_emoji,created_at FROM players WHERE id=?').bind(p.id).first()
+  }
+  ); if(action==='dm-list'){
+    const rows=await c.env.DB.prepare(`WITH mine AS (SELECT *,CASE WHEN from_player_id=? THEN to_player_id ELSE from_player_id END AS peer_id FROM direct_messages WHERE from_player_id=? OR to_player_id=?),ranked AS (SELECT *,ROW_NUMBER() OVER(PARTITION BY peer_id ORDER BY id DESC) AS rn,SUM(CASE WHEN to_player_id=? AND read_at IS NULL THEN 1 ELSE 0 END) OVER(PARTITION BY peer_id) AS unread FROM mine) SELECT r.peer_id,r.created_at AS last_at,r.content AS last_content,r.unread,p.username,p.avatar_emoji FROM ranked r LEFT JOIN players p ON p.id=r.peer_id WHERE rn=1 ORDER BY r.id DESC LIMIT 100`).bind(p.id,p.id,p.id,p.id).all();return reply({
+      conversations:rows.results.map(r=>({
+        ...r,peer:{
+          id:r.peer_id,username:r.username,avatar_emoji:r.avatar_emoji
         }
       }
-    } catch (e) { /* 忽略 */ }
-
-    return ok({ id: dmId, to: peer.username, ai_replied: aiReplied });
+      ))
+    }
+    );
   }
-
-  return err(400, '未知 action: ' + action);
+  if(action==='dm-thread'){
+    const other=await peer(c,u.searchParams.get('peer'));if(other.id===p.id)fail(400,'不能给自己发私信');const r=await c.env.DB.prepare('SELECT * FROM (SELECT id,from_player_id,to_player_id,content,read_at,created_at FROM direct_messages WHERE (from_player_id=? AND to_player_id=?) OR (from_player_id=? AND to_player_id=?) ORDER BY id DESC LIMIT 200) ORDER BY id').bind(p.id,other.id,other.id,p.id).all();return reply({
+      peer:other,messages:r.results
+    }
+    );
+  }
+  fail(404,'未知功能');
 }
-
-export async function onRequestPatch(context) {
-  const { env, request } = context;
-  if (!env.DB) return err(500, 'D1 binding DB not configured');
-  const url = new URL(request.url);
-  const action = url.searchParams.get('action') || '';
-
-  const token = readToken(request);
-  const sess = await getSession(env, token);
-  if (!sess || !sess.player_id) return err(401, '请先登录');
-
-  if (action === 'me') {
-    let body = {};
-    try { body = await request.json(); } catch (e) { return err(400, 'Invalid JSON'); }
-    const bio = (body.bio !== undefined ? String(body.bio) : '').trim().slice(0, 500);
-    let avatar = (body.avatar_emoji !== undefined ? String(body.avatar_emoji) : '👤').trim().slice(0, 4);
-    avatar = avatar.replace(/[\u0000-\u001F\u007F]/g, '');
-    if (!avatar) avatar = '👤';
-    await env.DB.prepare(
-      'UPDATE players SET bio = ?, avatar_emoji = ? WHERE id = ?'
-    ).bind(bio, avatar, sess.player_id).run();
-    const me = await env.DB.prepare(
-      'SELECT id, username, email, avatar_emoji, bio, status, created_at FROM players WHERE id = ?'
-    ).bind(sess.player_id).first();
-    return ok({ profile: me });
+);
+export const onRequestPost=c=>endpoint(async()=>{
+  if(new URL(c.request.url).searchParams.get('action')!=='dm-send')fail(404,'未知功能');const p=await identity(c),b=await body(c.request),other=await peer(c,b.to_username),content=string(b.content,'消息',2000);if(other.id===p.id)fail(400,'不能给自己发私信');const queries=[c.env.DB.prepare('INSERT INTO direct_messages(from_player_id,to_player_id,content) VALUES(?,?,?)').bind(p.id,other.id,content),c.env.DB.prepare("INSERT INTO notification_log(player_id,type,title,body,link) SELECT ?,'dm',?,?,? WHERE NOT EXISTS(SELECT 1 FROM subscriptions WHERE player_id=? AND type='dm' AND enabled=0)").bind(other.id,p.username+' 发来了私信',content,'/dm.html?to='+encodeURIComponent(p.username),other.id)];const r=await c.env.DB.batch(queries);let replied=false; if(other.username==='灯灯客服'){
+    try{
+      const bot=await getOrCreateAiBot(c.env);if(bot.id===other.id){
+        const draft=await aiAutoReply(c.env,content,'dm');if(draft){
+          await c.env.DB.prepare('INSERT INTO direct_messages(from_player_id,to_player_id,content) VALUES(?,?,?)').bind(other.id,p.id,'🤖 '+draft).run();replied=true;
+        }
+      }
+    }
+    catch(e){
+      console.warn('[AI reply]',e.message);
+    }
   }
-
-  if (action === 'dm-read') {
-    const peerUsername = (url.searchParams.get('peer') || '').trim();
-    if (!peerUsername) return err(400, 'peer 必填');
-    const peer = await env.DB.prepare(
-      'SELECT id FROM players WHERE username = ?'
-    ).bind(peerUsername).first();
-    if (!peer) return err(404, '对方不存在');
-    const r = await env.DB.prepare(
-      "UPDATE direct_messages SET read_at = datetime('now') WHERE to_player_id = ? AND from_player_id = ? AND read_at IS NULL"
-    ).bind(sess.player_id, peer.id).run();
-    return ok({ marked: r.meta.changes || 0 });
+  return reply({
+    id:r[0].meta.last_row_id,ai_replied:replied
   }
-
-  return err(400, '未知 action: ' + action);
+  ,201);
 }
+);
+export const onRequestPatch=c=>endpoint(async()=>{
+  const p=await identity(c),u=new URL(c.request.url),action=u.searchParams.get('action');if(action==='me'){
+    const b=await body(c.request),bio=string(b.bio??'','简介',500,{
+      required:false
+    }
+    ),avatar=string(b.avatar_emoji||'👤','头像',32);await c.env.DB.prepare('UPDATE players SET bio=?,avatar_emoji=? WHERE id=?').bind(bio,avatar,p.id).run();return reply({
+      updated:true
+    }
+    );
+  }
+  if(action==='dm-read'){
+    const other=await peer(c,u.searchParams.get('peer'));await c.env.DB.prepare("UPDATE direct_messages SET read_at=datetime('now') WHERE to_player_id=? AND from_player_id=? AND read_at IS NULL").bind(p.id,other.id).run();return reply({
+      read:true
+    }
+    );
+  }
+  fail(404,'未知功能');
+}
+);

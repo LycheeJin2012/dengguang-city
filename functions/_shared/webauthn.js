@@ -216,7 +216,7 @@ export async function passkeyRegisterStart(env, subject, rpId) {
       pubKeyCredParams: [{ type: 'public-key', alg: -7 }],
       authenticatorSelection: {
         residentKey: 'preferred',
-        userVerification: 'preferred',
+        userVerification: 'required',
         authenticatorAttachment: 'platform',
       },
       attestation: 'none',
@@ -230,14 +230,16 @@ export async function passkeyRegisterFinish(env, body, subject, rpId, expectedOr
   const { challenge_token: challengeToken, credential, name } = body;
   if (!challengeToken || !credential) throw new Error('缺少 challenge_token 或 credential');
   const ch = await env.DB.prepare(
-    "SELECT challenge, expires_at FROM webauthn_challenges WHERE token = ? AND purpose = 'register'"
+    "SELECT challenge, player_id, expires_at FROM webauthn_challenges WHERE token = ? AND purpose = 'register'"
   ).bind(challengeToken).first();
   if (!ch) throw new Error('challenge 无效');
+  if (ch.player_id !== `${subject.kind}:${subject.id}`) throw new Error('challenge 与当前账号不匹配');
   if (new Date(ch.expires_at) < new Date()) {
     await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(challengeToken).run();
     throw new Error('challenge 已过期');
   }
-  await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(challengeToken).run();
+  const consumed = await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(challengeToken).run();
+  if (!consumed.meta.changes) throw new Error('challenge 已使用');
 
   const clientDataJSON = b64urlToBytes(credential.response.clientDataJSON);
   const attestationObject = b64urlToBytes(credential.response.attestationObject);
@@ -251,6 +253,7 @@ export async function passkeyRegisterFinish(env, body, subject, rpId, expectedOr
   const expected = await expectedRpIdHash(rpId);
   if (bytesToB64url(parsed.rpIdHash) !== bytesToB64url(expected)) throw new Error('rpIdHash 不匹配');
   if (!(parsed.flags & 0x01)) throw new Error('用户在场标志缺失');
+  if (!(parsed.flags & 0x04)) throw new Error('请完成设备身份验证');
   if (!(parsed.flags & 0x40)) throw new Error('AT 标志缺失');
 
   // v17.10.3: coseToJwk 接受 raw bytes, 这里需要从 authData 重新切出 COSE_Key bytes
@@ -333,7 +336,7 @@ export async function passkeyLoginStart(env, username, rpId) {
   const publicKey = {
     challenge: challengeB64,
     rpId,
-    userVerification: 'preferred',
+    userVerification: 'required',
     timeout: 60000,
   };
   if (allowCredentials && allowCredentials.length > 0) {
@@ -363,7 +366,8 @@ export async function passkeyLoginFinish(env, body, rpId, expectedOrigin, target
     await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(challengeToken).run();
     throw new Error('challenge 已过期');
   }
-  await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(challengeToken).run();
+  const consumed = await env.DB.prepare('DELETE FROM webauthn_challenges WHERE token = ?').bind(challengeToken).run();
+  if (!consumed.meta.changes) throw new Error('challenge 已使用');
 
   const credId = credential.id;
   const pk = await env.DB.prepare(
@@ -380,6 +384,7 @@ export async function passkeyLoginFinish(env, body, rpId, expectedOrigin, target
   const expected = await expectedRpIdHash(rpId);
   if (bytesToB64url(parsed.rpIdHash) !== bytesToB64url(expected)) throw new Error('rpIdHash 不匹配');
   if (!(parsed.flags & 0x01)) throw new Error('用户在场标志缺失');
+  if (!(parsed.flags & 0x04)) throw new Error('请完成设备身份验证');
 
   const jwk = JSON.parse(pk.public_key_jwk);
   const ok = await verifyEs256(env, pk, jwk, signature, authData, clientDataJSON);
