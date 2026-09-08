@@ -50,3 +50,24 @@ test('legacy messages and comments without type or author_name remain readable',
  const c=await dispatch(new Request('https://local.test/api/comments?message_id=1'),{DB:old});assert.equal(c.status,200);assert.equal((await c.json()).comments[0].author_name,'市民');
  }finally{old.close();}
 });
+
+test('legacy bookings and license tables without status support dashboard statistics',async()=>{
+ const old=database();try{
+ await old.prepare("CREATE TABLE bookings(id INTEGER PRIMARY KEY,player_id INTEGER,state TEXT)").run();
+ await old.prepare("CREATE TABLE license_signups(id INTEGER PRIMARY KEY,player_id INTEGER,exam_type TEXT,result TEXT)").run();
+ await old.prepare("INSERT INTO bookings(id,state) VALUES(1,'confirmed')").run();
+ await old.prepare("INSERT INTO license_signups(id,exam_type,result) VALUES(1,'written','passed'),(2,'road',NULL)").run();
+ await ensureDatabase(old);
+ await old.prepare("INSERT INTO admins(username,password_hash,salt,role) VALUES('test','x','x','super')").run();
+ await old.prepare("INSERT INTO sessions(token,admin_id,expires_at) VALUES('stats-test',1,'2099-01-01T00:00:00Z')").run();
+ const response=await dispatch(new Request('https://local.test/api/admin/dashboard',{headers:{Cookie:'lc_session=stats-test'}}),{DB:old});
+ assert.equal(response.status,200);const d=await response.json();assert.equal(d.partial,false);assert.equal(d.bookings.confirmed,1);assert.equal(d.bookings.pending,0);assert.equal(d.license.passed,1);assert.equal(d.license.pending,1);
+ }finally{old.close();}
+});
+
+test('one failed dashboard query preserves other statistics without inventing zero counts',async()=>{
+ const {onRequestGet}=await import('../functions/api/admin/dashboard.js');
+ const wrapped={prepare(sql){if(sql.includes('FROM bookings GROUP BY'))return {all:async()=>{throw new Error('test unavailable');}};return DB.prepare(sql);}};
+ const response=await onRequestGet({env:{DB:wrapped},request:new Request('https://local.test/api/admin/dashboard',{headers:{Cookie:adminCookie}})});
+ assert.equal(response.status,200);const d=await response.json();assert.equal(d.partial,true);assert.equal(d.bookings,null);assert.equal(d.players.active,2);assert.equal(d.errors.bookings.code,'STAT_QUERY_FAILED');
+});

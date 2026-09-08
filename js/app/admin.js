@@ -34,12 +34,24 @@ const resources={
 let active='tickets',view,root;
 const superOnly=new Set(['tracks','hotels','rooms','requirements','announcements','gallery','admins','dms']);
 const isSuper=()=>state.session?.user?.role==='super';
-async function refreshStats(){
-  await region($('#admin-stats',root),()=>api('/api/admin/dashboard'),(d,box)=>{
-    const stats=[['players',d.players.pending,'待审玩家','Pending citizens'],['tickets',d.messages.unread,'未读留言','Unread messages'],['bookings',d.bookings.pending,'待审酒店','Pending bookings'],['license',d.license.pending,'待审驾照','Pending licenses'],['circuit',d.kart.pending+d.circuit.pending,'待审赛道','Pending races'],['players',d.players.active,'活跃市民','Active citizens']];box.innerHTML=`<div class="stats">${stats.map(([key,n,zh,en])=>`<button class="stat" data-open="${key}"><strong>${n}</strong><span>${tr(zh,en)}</span></button>`).join('')}</div><small>${tr('更新时间','Updated')} ${date(new Date().toISOString())}</small>`;$$('[data-open]',box).forEach(b=>b.onclick=()=>switchTab(b.dataset.open));
-  }
-  );
+async function refreshStats() {
+  await region($('#admin-stats', root), () => api('/api/admin/dashboard'), (data, box) => {
+    const racePending = data.kart && data.circuit ? data.kart.pending + data.circuit.pending : null;
+    const stats = [
+      ['players', data.players?.pending, '待审玩家', 'Pending citizens'],
+      ['tickets', data.messages?.unread, '未读留言', 'Unread messages'],
+      ['bookings', data.bookings?.pending, '待审酒店', 'Pending bookings'],
+      ['license', data.license?.pending, '待审驾照', 'Pending licenses'],
+      ['circuit', racePending, '待审赛道', 'Pending races'],
+      ['players', data.players?.active, '活跃市民', 'Active citizens'],
+    ];
+    box.innerHTML = `<div class="stats">${stats.map(([key, count, zh, en]) =>
+      `<button class="stat" data-open="${key}"><strong>${count ?? '—'}</strong><span>${tr(zh, en)}</span>${count == null ? `<small>${tr('暂不可用，请重试', 'Unavailable; retry')}</small>` : ''}</button>`
+    ).join('')}</div>${data.partial ? `<p class="form-error" role="status">${tr('部分统计暂时无法读取，其余功能仍可使用。可点击“刷新概览”重试。', 'Some statistics are unavailable. Other functions remain usable. Refresh the overview to retry.')}</p>` : ''}<small>${tr('更新时间', 'Updated')} ${date(new Date().toISOString())}</small>`;
+    $$('[data-open]', box).forEach(button => button.onclick = () => switchTab(button.dataset.open));
+  });
 }
+
 function table(box,columns,rows,actions=[]){
   box.innerHTML=rows.length?`<div class="table-wrap"><table><thead><tr>${columns.map(([k,l])=>`<th>${esc(l)}</th>`).join('')}${actions.length?`<th>${tr('操作','Actions')}</th>`:''}</tr></thead><tbody>${rows.map((r,i)=>`<tr>${columns.map(([k,l,format])=>`<td class="${['title','content','name','note','body'].includes(k)?'wrap':''}">${format?format(r[k],r):esc(r[k]??'—')}</td>`).join('')}${actions.length?`<td><div class="actions compact">${actions.filter(a=>!a.when||a.when(r)).map(a=>`<button type="button" data-row="${i}" data-action="${a.key}" class="${a.danger?'danger':''}">${esc(a.label)}</button>`).join('')}</div></td>`:''}</tr>`).join('')}</tbody></table></div>`:empty();
   $$('[data-action]',box).forEach(b=>b.onclick=()=>action(b,()=>actions.find(a=>a.key===b.dataset.action).run(rows[+b.dataset.row])));

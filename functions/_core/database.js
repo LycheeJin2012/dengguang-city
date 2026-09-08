@@ -1,6 +1,6 @@
 import {SCHEMA,MIGRATIONS} from '../api/_schema.js';
 const pending=new WeakMap();
-const VERSION=53;
+const VERSION=54;
 const ADDITIONS=[
  "ALTER TABLE messages ADD COLUMN type TEXT NOT NULL DEFAULT '留言'",
  "ALTER TABLE message_comments ADD COLUMN author_name TEXT NOT NULL DEFAULT ''",
@@ -21,9 +21,17 @@ const ADDITIONS=[
 export function ensureDatabase(db){if(!db)throw new Error('DB not configured');if(pending.has(db))return pending.get(db);const run=(async()=>{
  await db.prepare('CREATE TABLE IF NOT EXISTS lc_schema_versions(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)').run();
  if(await db.prepare('SELECT version FROM lc_schema_versions WHERE version=?').bind(VERSION).first())return;
+ const oldBookingColumns=new Set((await db.prepare('PRAGMA table_info(bookings)').all()).results.map(c=>c.name));
+ const oldLicenseColumns=new Set((await db.prepare('PRAGMA table_info(license_signups)').all()).results.map(c=>c.name));
  const oldGallery=new Set((await db.prepare('PRAGMA table_info(gallery_items)').all()).results.map(c=>c.name));
  await db.batch(SCHEMA.map(sql=>db.prepare(sql)));
  for(const sql of [...MIGRATIONS,...ADDITIONS]){try{await db.prepare(sql).run();}catch(e){if(!/duplicate column name/i.test(e.message))throw e;}}
+ for(const table of ['bookings','license_signups']){
+  const columns=new Set((await db.prepare(`PRAGMA table_info(${table})`).all()).results.map(c=>c.name));
+  if(!columns.has('status')){try{await db.prepare(`ALTER TABLE ${table} ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'`).run();}catch(e){if(!/duplicate column name/i.test(e.message))throw e;}}
+ }
+ if(oldLicenseColumns.size&&!oldLicenseColumns.has('status')&&oldLicenseColumns.has('result'))await db.prepare("UPDATE license_signups SET status=CASE WHEN result='passed' THEN 'passed' WHEN result='failed' THEN 'failed' ELSE 'pending' END").run();
+ if(oldBookingColumns.size&&!oldBookingColumns.has('status')&&oldBookingColumns.has('state'))await db.prepare("UPDATE bookings SET status=CASE WHEN state IN ('pending','confirmed','completed','cancelled') THEN state ELSE 'pending' END").run();
  const galleryColumns={title:"TEXT NOT NULL DEFAULT ''",caption:'TEXT',image_url:'TEXT',is_active:'INTEGER NOT NULL DEFAULT 1',cat:"TEXT NOT NULL DEFAULT 'city'",label:"TEXT NOT NULL DEFAULT ''",file_url:"TEXT NOT NULL DEFAULT ''",is_featured:'INTEGER NOT NULL DEFAULT 0',is_published:'INTEGER NOT NULL DEFAULT 1',created_by:'INTEGER',updated_at:'TEXT'};
  const present=new Set((await db.prepare('PRAGMA table_info(gallery_items)').all()).results.map(c=>c.name));
  for(const [name,type] of Object.entries(galleryColumns))if(!present.has(name)){try{await db.prepare(`ALTER TABLE gallery_items ADD COLUMN ${name} ${type}`).run();}catch(e){if(!/duplicate column name/i.test(e.message))throw e;}}

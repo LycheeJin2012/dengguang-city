@@ -1,21 +1,38 @@
-import {
-  endpoint,identity,reply
-}
-from '../../_core/request.js';
-export const onRequestGet=c=>endpoint(async()=>{
-  await identity(c,'admin');const specs={
-    players:['pending','active','rejected'],messages:['unread','read','done'],bookings:['pending','confirmed','completed'],license:['pending','passed','failed'],kart:['pending','approved','rejected'],circuit:['pending','approved','rejected']
-  }
-  ;const tables={
-    license:'license_signups',kart:'kart_signups',circuit:'circuit_signups'
-  }
-  ;const result={
-  }
-  ; await Promise.all(Object.entries(specs).map(async([key,states])=>{
-    const rows=await c.env.DB.prepare(`SELECT status,COUNT(*) AS n FROM ${tables[key]||key} GROUP BY status`).all();result[key]=Object.fromEntries(states.map(s=>[s,0]));result[key].total=0;for(const row of rows.results){
-      result[key][row.status]=row.n;result[key].total+=row.n;
+import { endpoint, identity, reply } from '../../_core/request.js';
+
+const sections = {
+  players: { table: 'players', states: ['pending', 'active', 'rejected'] },
+  messages: { table: 'messages', states: ['unread', 'read', 'done'] },
+  bookings: { table: 'bookings', states: ['pending', 'confirmed', 'completed', 'cancelled'] },
+  license: { table: 'license_signups', states: ['pending', 'passed', 'failed'] },
+  kart: { table: 'kart_signups', states: ['pending', 'approved', 'rejected'] },
+  circuit: { table: 'circuit_signups', states: ['pending', 'approved', 'rejected'] },
+};
+
+export const onRequestGet = context => endpoint(async () => {
+  await identity(context, 'admin');
+  const result = {};
+  const errors = {};
+  // Keep independent sections visible if one query fails. Unavailable is not zero.
+  await Promise.all(Object.entries(sections).map(async ([key, section]) => {
+    try {
+      const rows = await context.env.DB.prepare(
+        `SELECT status, COUNT(*) AS n FROM ${section.table} GROUP BY status`
+      ).all();
+      const counts = Object.fromEntries(section.states.map(state => [state, 0]));
+      let total = 0;
+      for (const row of rows.results || []) {
+        const n = Number(row.n);
+        total += n;
+        if (Object.hasOwn(counts, row.status)) counts[row.status] = n;
+      }
+      result[key] = { ...counts, total };
+    } catch (error) {
+      console.error(`[dashboard:${key}]`, error);
+      result[key] = null;
+      // Only authenticated admins can see diagnostics; these queries contain no user values.
+      errors[key] = { code: 'STAT_QUERY_FAILED', detail: String(error.message || error).slice(0, 300) };
     }
-  }
-  ));return reply(result);
-}
-);
+  }));
+  return reply({ ...result, errors, partial: Object.keys(errors).length > 0 });
+});
