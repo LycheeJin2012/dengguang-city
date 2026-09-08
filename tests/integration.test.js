@@ -40,3 +40,13 @@ test('legacy production gallery columns migrate without losing images or draft s
  const created=await dispatch(request,{DB:legacy});assert.equal(created.status,201);const row=await legacy.prepare('SELECT * FROM gallery_items WHERE num=3').first();assert.equal(row.label,'新图片');assert.equal(row.file_url,'https://example.invalid/new.jpg');assert.equal(row.is_published,1);
  }finally{legacy.close();}
 });
+
+test('legacy messages and comments without type or author_name remain readable',async()=>{
+ const old=database();try{
+ await old.prepare("CREATE TABLE messages(id INTEGER PRIMARY KEY,player_id INTEGER,name TEXT,contact TEXT,content TEXT,status TEXT DEFAULT 'unread',created_at TEXT DEFAULT CURRENT_TIMESTAMP)").run();
+ await old.prepare("CREATE TABLE message_comments(id INTEGER PRIMARY KEY,message_id INTEGER,player_id INTEGER,content TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP)").run();
+ await old.prepare("INSERT INTO messages(id,name,contact,content) VALUES(1,'旧市民','private@example.invalid','历史留言')").run();await old.prepare("INSERT INTO message_comments(id,message_id,content) VALUES(1,1,'历史评论')").run();
+ await ensureDatabase(old);const r=await dispatch(new Request('https://local.test/api/messages?public=1'),{DB:old});assert.equal(r.status,200);const d=await r.json();assert.equal(d.messages[0].content,'历史留言');assert.equal(d.messages[0].comment_count,1);assert.equal(d.messages[0].contact,undefined);
+ const c=await dispatch(new Request('https://local.test/api/comments?message_id=1'),{DB:old});assert.equal(c.status,200);assert.equal((await c.json()).comments[0].author_name,'市民');
+ }finally{old.close();}
+});

@@ -1,7 +1,9 @@
 import {SCHEMA,MIGRATIONS} from '../api/_schema.js';
 const pending=new WeakMap();
-const VERSION=52;
+const VERSION=53;
 const ADDITIONS=[
+ "ALTER TABLE messages ADD COLUMN type TEXT NOT NULL DEFAULT '留言'",
+ "ALTER TABLE message_comments ADD COLUMN author_name TEXT NOT NULL DEFAULT ''",
  "ALTER TABLE daily_signin ADD COLUMN reward INTEGER NOT NULL DEFAULT 0",
  "ALTER TABLE webauthn_challenges ADD COLUMN token TEXT",
  "CREATE UNIQUE INDEX IF NOT EXISTS idx_challenge_token ON webauthn_challenges(token)",
@@ -29,5 +31,6 @@ export function ensureDatabase(db){if(!db)throw new Error('DB not configured');i
  if(oldGallery.has('file_url'))await db.prepare("UPDATE gallery_items SET image_url=file_url WHERE (image_url IS NULL OR image_url='') AND file_url IS NOT NULL").run();
  if(oldGallery.has('is_published'))await db.prepare('UPDATE gallery_items SET is_active=is_published').run();
  await db.prepare("UPDATE gallery_items SET label=title,file_url=COALESCE(image_url,''),is_published=is_active").run();
+ await db.prepare("UPDATE message_comments SET author_name=COALESCE((SELECT username FROM players WHERE players.id=message_comments.player_id),'市民') WHERE author_name IS NULL OR author_name=''").run();
  await db.prepare('INSERT OR IGNORE INTO lc_schema_versions(version) VALUES(?)').bind(VERSION).run();
  })().catch(e=>{pending.delete(db);throw e;});pending.set(db,run);return run;}

@@ -88,11 +88,11 @@ async function resourceList(def){
   }
   )=>{
     const defaults={
-      is_active:1,capacity:2,price_per_night:0,trial_price:0,sort_order:0,laps:1,num:1,duration_minutes:30,min_age:0,exam_type:'written',breakfast_included:1
+      is_active:1,capacity:2,price_per_night:0,trial_price:0,sort_order:0,laps:1,num:1,duration_minutes:30,min_age:0,exam_type:'B',breakfast_included:1
     }
     ;
     let fields=def.fields.map(([key,label,type='text'])=>field(key,tr(label,key.replaceAll('_',' ')),type,item[key]??defaults[key]??'',{
-      required:['name','title','content','hotel_id','image_url'].includes(key)&&!(key==='image_url'&&active!=='gallery'),min:type==='number'?0:undefined,step:key==='length_km'?'0.01':undefined,options:key==='cat'?[['city',tr('城市','City')],['road',tr('道路','Roads')],['kart',tr('卡丁车','Kart')],['nature',tr('自然','Nature')],['announcement',tr('公告','Announcement')]]:['written','road','upgrade']
+      required:['name','title','content','hotel_id','image_url'].includes(key)&&!(key==='image_url'&&active!=='gallery'),min:type==='number'?0:undefined,step:key==='length_km'?'0.01':undefined,options:key==='cat'?[['city',tr('城市','City')],['road',tr('道路','Roads')],['kart',tr('卡丁车','Kart')],['nature',tr('自然','Nature')],['announcement',tr('公告','Announcement')]]:[['B',tr('B 级','Grade B')],['A',tr('A 级','Grade A')],['S',tr('S 级','Grade S')],['written',tr('笔试','Written')],['road',tr('路考','Road test')],['upgrade',tr('升级考试','Upgrade')]]
     }
     )).join('');
     if(active==='rooms'){

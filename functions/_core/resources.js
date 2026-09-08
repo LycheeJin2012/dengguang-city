@@ -45,7 +45,7 @@ export const resources={
   , 'license-req':{
     table:'license_requirements',key:'requirements',fields:{
       exam_type:{
-        type:'enum',values:['written','road','upgrade'],value:'written'
+        type:'enum',values:['B','A','S','written','road','upgrade'],value:'B'
       }
       ,title:str(100,true),description:str(2000),requirements:str(2000),min_age:num(),duration_minutes:num(30,1),sort_order:num(),is_active:bool
     }
