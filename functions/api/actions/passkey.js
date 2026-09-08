@@ -1,3 +1,5 @@
+import {body,endpoint} from '../../_core/request.js';
+import {startVerification,finishVerification} from '../../_core/passkey-verification.js';
 // v45 重写: 通行密钥 (Passkey) action 群 (10 个)
 // 从 init.js LEGACY 段 L168-247 拆出
 import { ok, err, parseSession, resolveSubjectFromSession, resolveSubjectByUsername, getRpId, getOrigin } from '../_helpers.js';
@@ -11,6 +13,7 @@ export async function onRequestPost(context) {
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || '';
 
+  if(['passkey-test-start','passkey-test-finish','passkey-admin-start','passkey-admin-finish'].includes(action))return endpoint(async()=>{const input=await body(request),adminMode=action.includes('-admin-');return action.endsWith('-start')?startVerification(context,input,adminMode):finishVerification(context,input,adminMode);});
   const { sess: _sess } = await parseSession(env, request);
   const rpId = getRpId(request);
   const origin = getOrigin(request);
@@ -68,7 +71,8 @@ export async function onRequestPost(context) {
       //   admin 端用 passkey 登录时传 'admin' → 创建 admin session (即使 passkey 绑在 player 上)
       //   玩家端用 passkey 登录时传 'player' 或不传 → 创建 player session
       const b = await request.json();
-      const _target = (b.target === 'admin' || b.target === 'player') ? b.target : undefined;
+      if(b.target==='admin')return err(403,'请先登录绑定玩家，再从管理页面验证身份');
+      const _target = 'player';
       const r = await passkeyLoginFinish(env, b, rpId, expectedOriginLogin, _target);
       if (r && r.token) {
         // r.kind = 'player' | 'admin', r.{player|admin} 都有
@@ -100,10 +104,6 @@ export async function onRequestPost(context) {
       if (!owned) return err(404, '通行密钥不存在');
       await deletePasskey(env, subject, id);
       return ok({ id, deleted: true });
-    }
-    if (action === 'passkey-test-start' || action === 'passkey-test-finish') {
-      // 测试现有 passkey (用于验证密钥有效性, 不登录)
-      return err(501, 'passkey-test 暂未实现, 走 /api/admin/passkey-debug');
     }
     return err(404, '未知 passkey action');
   } catch (e) {

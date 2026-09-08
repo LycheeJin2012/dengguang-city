@@ -95,7 +95,7 @@ export function parseAuthData(authData) {
   if (authData.length < 37) throw new Error('authData 太短');
   const rpIdHash = authData.slice(0, 32);
   const flags = authData[32];
-  const signCount = (authData[33] << 24) | (authData[34] << 16) | (authData[35] << 8) | authData[36];
+  const signCount = new DataView(authData.buffer,authData.byteOffset,authData.byteLength).getUint32(33);
   let offset = 37;
   let attestedCredentialData = null;
   if (flags & 0x40) {

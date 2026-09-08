@@ -19,7 +19,7 @@ export const onRequestPost=c=>endpoint(async()=>{
  const target=['admin','hotel_owner'].includes(b.target)?b.target:'player';
  const player=target==='player'?await c.env.DB.prepare('SELECT * FROM players WHERE username=?').bind(username).first():null;
  const owner=target==='hotel_owner'?await c.env.DB.prepare('SELECT * FROM hotel_owners WHERE username=?').bind(username).first():null;
- const admin=target!=='hotel_owner'&&!player?await c.env.DB.prepare('SELECT * FROM admins WHERE username=?').bind(username).first():null;
+ const admin=target==='admin'?await c.env.DB.prepare('SELECT * FROM admins WHERE username=?').bind(username).first():null;
  const account=player||admin||owner;
  if(!account||!await verifyPassword(password,account.password_hash,account.salt)){await c.env.DB.prepare('INSERT INTO auth_attempts(fingerprint) VALUES(?)').bind(key).run();fail(401,'账号或密码错误');}
  if(player&&player.status!=='active'||owner&&owner.status!=='active')fail(403,'账号尚未激活或已停用');

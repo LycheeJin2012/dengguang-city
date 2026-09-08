@@ -109,10 +109,11 @@ export const del=p=>api(p,{
 export async function session(){
   try{
     state.session=await api('/api/login');
+    if(state.session?.admin&&typeof document!=='undefined'&&document.body?.dataset.page!=='admin'){await post('/api/init?action=admin-logout',{});state.session=await api('/api/login');}
   }
   catch(e){
-    if(e.status!==401)throw e;
     state.session=null;
+    if(e.status!==401)throw e;
   }
   return state.session;
 }
@@ -277,9 +278,9 @@ export async function requirePlayer(){
   }
   return state.session.player;
 }
-export function login(register=false,target='player'){
+export function login(register=false,target='player',options={}){
   return new Promise(resolve=>{
-    const dialog=modal(target==='hotel_owner'?tr('酒店老板登录','Hotel owner sign in'):tr(register?'市民注册':'登录灯光市',register?'Join Light City':'Sign in'),field('username',tr('游戏 ID','Game ID'))+(register?field('email',tr('邮箱','Email'),'email'):'')+field('password',tr('密码','Password'),'password')+`<div class="wide actions">${target==='player'?`<button type="button" id="auth-switch">${tr(register?'已有账号？登录':'没有账号？注册',register?'Already registered?':'Create account')}</button>`:''}${register||target==='hotel_owner'?'':`<button type="button" id="auth-passkey">${tr('使用通行密钥','Use passkey')}</button>`}</div>`,{
+    const dialog=modal(target==='hotel_owner'?tr('酒店老板登录','Hotel owner sign in'):tr(register?'市民注册':'登录灯光市',register?'Join Light City':'Sign in'),field('username',tr('游戏 ID','Game ID'))+(register?field('email',tr('邮箱','Email'),'email'):'')+field('password',tr('密码','Password'),'password')+`<div class="wide actions">${target==='player'&&!options.hideRegistration?`<button type="button" id="auth-switch">${tr(register?'已有账号？登录':'没有账号？注册',register?'Already registered?':'Create account')}</button>`:''}${register||target==='hotel_owner'?'':`<button type="button" id="auth-passkey">${tr('使用通行密钥','Use passkey')}</button>`}</div>`,{
       label:tr(register?'提交注册':'登录',register?'Register':'Sign in'),submit:async d=>{
         await post(register?'/api/register':'/api/login',{
           ...d,target

@@ -4,7 +4,7 @@ import {ticketTimeline,replyAuthor} from './ticket-form.js';
 import {attachmentPicker,renderAttachments} from './attachments.js';
 import { navigationFor, resolveNavigation } from './admin-navigation.js';
 import {
-  $, $$, api, post, patch, del, tr, esc, text, ticketBody, date, status, empty, title, field, modal, region, action, toast, state, session, login, csv
+  $, $$, api, post, patch, del, tr, esc, text, ticketBody, date, status, empty, title, field, modal, region, action, toast, state, session, login, csv, renderAccount
 }
 from './core.js';
 import {
@@ -505,23 +505,11 @@ export async function render(el){
   root=el;
   if(!historyBound){window.addEventListener('hashchange',()=>{const key=location.hash.slice(1);if(root?.isConnected&&state.session?.admin&&resolveNavigation(key,isSuper()).child!==active)switchTab(key);});historyBound=true;}
   if(!state.session?.admin){
-    el.innerHTML=title('市政管理后台','City administration')+`<div class="panel"><h2>${tr('验证管理员身份','Verify administrator identity')}</h2><p>${tr('使用管理员账号，或验证已绑定市民账号的管理员密码。','Sign in with an administrator account or verify your linked administrator password.')}</p><div class="actions"><button id="admin-login" class="primary">${tr('账号登录','Sign in')}</button><button id="admin-passkey">${tr('通行密钥','Passkey')}</button>${state.session?.player?.linked_admin_id?`<button id="admin-enter">${tr('验证管理密码','Verify admin password')}</button>`:''}</div></div>`;
-    $('#admin-login',el).onclick=async()=>{
-      await login(false,'admin');
-      await session();
-      if(state.session?.admin)render(el);
-    }
-    ;
-    $('#admin-passkey',el).onclick=e=>action(e.currentTarget,async()=>{
-      await passkeyLogin('admin');await session();render(el);
-    }
-    );
-    $('#admin-enter',el)?.addEventListener('click',()=>modal(tr('管理密码验证','Verify admin password'),field('admin_password',tr('管理密码','Admin password'),'password'),{
-      submit:async d=>{
-        await post('/api/init?action=admin-enter-password',d);await session();render(el);
-      }
-    }
-    ));
+    const player=state.session?.player,linked=!!player?.linked_admin_id;
+    el.innerHTML=title('市政管理后台','City administration')+`<div class="panel"><h2>${tr('通过绑定玩家账号辅助登录','Sign in with your linked citizen account')}</h2><p>${player?esc(player.username)+' · '+tr(linked?'已绑定管理员，可选择密码或通行密钥验证。':'此玩家尚未绑定管理员账号，请切换到已绑定账号。',linked?'Linked administrator: verify with a password or passkey.':'This citizen has no linked administrator. Switch to a linked account.'):tr('先登录已绑定管理员的玩家账号，再验证管理员身份。','Sign in to a linked citizen account, then verify administrator access.')}</p><div class="actions">${linked?`<button id="admin-enter" class="primary">${tr('使用管理员密码','Use admin password')}</button><button id="admin-passkey">${tr('使用通行密钥','Use passkey')}</button>`:`<button id="admin-player-login" class="primary">${tr('登录绑定玩家账号','Sign in to linked citizen')}</button>`}</div></div>`;
+    $('#admin-player-login',el)?.addEventListener('click',async()=>{await login(false,'player',{hideRegistration:true});await session();renderAccount();render(el);});
+    $('#admin-passkey',el)?.addEventListener('click',e=>action(e.currentTarget,async()=>{await passkeyLogin('admin');await session();renderAccount();render(el);}));
+    $('#admin-enter',el)?.addEventListener('click',()=>modal(tr('管理密码验证','Verify admin password'),field('admin_password',tr('管理密码','Admin password'),'password'),{label:tr('验证并进入','Verify and enter'),submit:async d=>{await post('/api/init?action=admin-enter-password',d);await session();renderAccount();render(el);}}));
     return;
   }
   el.innerHTML=title('市政管理后台','City administration')+`<div class="section-head"><span>👤 ${esc(state.session.user.username)} <span class="badge">${esc(state.session.user.role.toUpperCase())}</span></span><button id="refresh-stats">↻ ${tr('刷新概览','Refresh overview')}</button></div><div id="admin-stats"></div><div class="admin-layout" style="margin-top:28px"><nav class="admin-nav" aria-label="${tr('管理功能','Administration')}">${navigationFor(isSuper()).map(group=>`<button data-group="${group.id}" aria-selected="false">${tr(...group.label)}</button>`).join('')}</nav><section id="admin-section" class="admin-content"><section id="admin-view"></section></section></div>`;

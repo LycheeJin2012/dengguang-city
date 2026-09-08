@@ -1,3 +1,4 @@
+import {enterWithPassword,leaveAdministration} from './admin-session.js';
 import {claimPendingRewards} from './ticket-policy.js';
 import {
   endpoint,identity,body,string,integer,reply,fail
@@ -12,7 +13,7 @@ import {
 }
 from '../_shared/validators.js';
 import {
-  readToken,createSession,destroySession
+  readToken
 }
 from '../_shared/session.js';
 export function password(value){
@@ -39,18 +40,8 @@ export async function changePassword(c,kind){
   );
 }
 export const accountAction=c=>endpoint(async()=>{
-  const a=new URL(c.request.url).searchParams.get('action');if(a==='admin-logout'){
-    await destroySession(c.env,readToken(c.request));const r=reply({
-      logged_out:true
-    }
-    );r.headers.set('Set-Cookie','lc_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');return r;
-  }
-  if(a==='player-change-password')return changePassword(c,'player');const b=await body(c.request); if(a==='admin-enter-password'){
-    const p=await identity(c),admin=await c.env.DB.prepare('SELECT a.* FROM admins a JOIN players p ON p.linked_admin_id=a.id WHERE p.id=? AND a.linked_player_id=p.id').bind(p.id).first();if(!admin)fail(403,'未绑定有效管理员账号');if(typeof b.admin_password!=='string'||!await verifyPassword(b.admin_password,admin.password_hash,admin.salt))fail(401,'管理密码错误');const s=await createSession(c.env,p.id,admin.id);await destroySession(c.env,readToken(c.request));const r=reply({
-      combined:true
-    }
-    );r.headers.set('Set-Cookie',`lc_session=${s.token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=28800`);return r;
-  }
+  const a=new URL(c.request.url).searchParams.get('action');if(a==='admin-logout')return leaveAdministration(c);
+  if(a==='player-change-password')return changePassword(c,'player');const b=await body(c.request); if(a==='admin-enter-password')return enterWithPassword(c,b.admin_password);
   await identity(c,'super');const adminId=b.admin_id?integer(b.admin_id):null,playerId=integer(b.player_id);if(a==='admin-reset-player-password'){
     const {
       hash,salt
