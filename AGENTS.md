@@ -112,6 +112,49 @@
 - 6 种语言切换方式: 主页 nav 按钮 / 4 sub-page injectLangSwitch / 排行榜 langToggle / 通知 langToggle / localStorage 持久化 / lc:langchange 自定义事件
 - 工厂模式: STATUS_LABEL / getCatLabel() / getStatusLabel() 每次 render 取当前语言, 切换自动生效
 - canonical key + label 模式: filter/比较用 key (永不变), 显示用 i18n label (跟语言走)
+- **Proxy 模式** (新, N6-48): admin/core.js 的 STATUS_LABEL / EXAM_LABEL / EXAM_BADGE 是 `new Proxy({}, { get: (_, k) => t('admin.statusLabel.' + k) })` — 调用方 `STATUS_LABEL[key]` 语法不变, 自动走 i18n
+- **i18n 函数名 t() 极容易 shadow**: callback/forEach/map/arrow 里 `const t = Xxx` 或 `t` 作为参数, 后面的 `t('key')` 全崩 (会调成 Xxx('key') → TypeError). 修法: 局部变量改名 (`tracks.map(tr => ...)`). **绝不能给 i18n helper 起 1-2 字符短名**
+
+## v50-N7 系统性 bug 扫描 + i18n 完整化 (2026-09-07, 24 个 commit N6-40~N6-63)
+> 用户说"点完刷新然后会崩"截图 → 修出 8 个高危 bug, 顺便把全站 100+ 处硬编码中文全 i18n 化
+
+### 8 个高危 bug (N6-40 ~ N6-42)
+| # | 位置 | 现象 | 根因 | 修法 |
+|---|------|------|------|------|
+| 1 | `js/admin.js:265` + `js/admin/dash.js:52` | 刷新按钮 → `Can't find variable: renderDms` | `eval(target+ '()')` / `new Function('return '+target)()` 找不到 ES module 导出 | 改 dynamic import 查表 (dash.js 加 `_PANE_REFRESH` map, export 后给 admin.js 用) |
+| 2 | `js/admin.js:243` (change handler) | 切 filter → `m.renderTab is not a function` | v47 遗留死代码 + map 里 messages/bookings/license 已删 | 删整个 handler, bindFilterRadios 接管 |
+| 3 | `js/admin/dash.js:36-40` (`_FILTER_RENDER`) | 切 filter 没反应 | key 是 `players/circuit_kart/kart_circuit`, radio name 去掉 Filter 后是 `player/kart/circuit` — 全部 miss | 改 key 为 `player/kart/circuit` |
+| 4 | `js/admin/tabs/kart.js:104` | 编辑赛道报名 modal 崩 `_KIND_LABEL is not defined` | 实际是函数 `_kindLabel(kind)`, 写成大写对象 `_KIND_LABEL[kind]` | 改回函数调用 + 加 i18n key `admin.kart.editTitle` |
+| 5 | `js/page/hotel/rooms.js:146` | 房型详情按钮崩 `m.openRoomDetail is not a function` | `openRoomDetail` 在 rooms.js 自己, 却通过 dynamic import book.js 调它 | detail 走本文件, book 按钮才走 dynamic import |
+| 6 | `js/home/forms.js:141` | 国际赛车场报名 → 崩 | `tracks.map(t => ...)` 内 `${t('common.perTrial')}` 实际是 `trackObj('common.perTrial')` → TypeError | 局部变量改 `tr` |
+| 7 | `js/home/forms.js:546` | `loadKartSpecs` 崩首页赛车场区 | `const t = tracks[0]` shadow 外层 i18n t() | 改 `const tr = tracks[0]` |
+| 8 | `js/page/profile/race-times.js:75` | 玩家上报圈速时选 track 但 time 格式不对 → 崩 | `const t = parseTimeStr(timeStr)` shadow | 改 `const ms = parseTimeStr(...)` |
+
+### i18n 化 (N6-43 ~ N6-63, ~100+ 处)
+- **admin tabs 全套** (N6-43, N6-48, N6-50, N6-51, N6-63): tickets / players / kart / admins 全部 prompt/confirm/toast 加 fallback + i18n 化
+- **admin core** (N6-48): STATUS_LABEL/EXAM_LABEL/EXAM_BADGE 改 Proxy 自动走 i18n, safeRender / fileToDataURLP 错误文案 i18n
+- **admin.js 总入口** (N6-62): 登录页 + 二次密码 modal + admin passkey 全流程 30+ 处 i18n
+- **home/auth.js** (N6-49, N6-52, N6-53): 登录注册 + passkey 完整流程 18+12 处 i18n, **t() shadow 修复** (`const t = $('#loginTitle')` 改 `const titleEl = $('#loginTitle')`)
+- **home/header.js** (N6-56): 顶栏 nav 链接全 i18n (管理/签到/通知/私信/登出)
+- **home/signin.js** (N6-54): 签到 modal 全套 15 处 i18n
+- **home/forms.js** (N6-43, N6-44, N6-46, N6-59): 5 处硬编码中文改 i18n
+- **page/dm/entry.js** (N6-55): 收件箱 + AI 客服 4 处 i18n
+- **page/profile/info.js** (N6-60): 编辑个人主页 modal 8 处 i18n
+- **page/profile/citizen-card.js** (N6-58): SVG 模板 5 处 i18n (玩家点"生成我的市民卡")
+- **home/keyboard.js** (N6-61): 7 个快捷键描述 + 标题 + 提示 + 关闭按钮 全 i18n
+
+### DICT 状态
+- 起始: 432 key (N6-24)
+- 当前: **~520 key** (+88 个新 key: admin.enterModal.* / admin.passkey.offer.* / passkey.err.* / auth.err.* / signin.* / kbd.* / citizen.card.* / nav.* / license.* / track.* / spec.* / profile.history.* / profile.citizen.* / profile.editModal.* / dm.* / common.*)
+- Proxy 化的 3 个常量 (N6-48) 不算 key, 但调方 `STATUS_LABEL['pending']` 实际查询 `admin.statusLabel.pending`
+- 测试: `node js/i18n/core.test.js` 全过 (DICT 完整 + HTML 引用 + JS 调用 + 命名空间一致)
+
+### 这一轮的关键经验
+1. **eval/new Function 不能调 module 导出**: 必须用 dynamic import (`import('./tab.js').then(m => m.renderXxx())`)
+2. **`m.someMethod()` 必须先确认 method 真的 export**: 否则 `undefined is not a function` 崩
+3. **map/filter/forEach callback 里 `t` 参数会 shadow 外层 i18n `t()`** — **这是项目里踩了 4 次的同一个坑**
+4. **Proxy 包装常量做 i18n**: 调用方语法 `STATUS_LABEL[key]` 不变, 内部走 t() 翻译
+5. **i18n key 永远带 fallback**: 万一 key 缺失, 用户至少看到中文兜底而不是空弹窗 (`t('admin.x.fail', '失败')` 而非 `t('admin.x.fail')`)
 
 ## 跟金礼知 (荔枝) 协作约定
 - 不擅自装第三方软件 (brew install / pip install / npm install 都要先问)
