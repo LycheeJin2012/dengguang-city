@@ -1,7 +1,17 @@
 import {SCHEMA,MIGRATIONS} from '../api/_schema.js';
 const pending=new WeakMap();
-const VERSION=54;
+const VERSION=56;
 const ADDITIONS=[
+
+ "CREATE TABLE IF NOT EXISTS media_uploads(id TEXT PRIMARY KEY,owner_player_id INTEGER,owner_admin_id INTEGER,name TEXT NOT NULL,mime TEXT NOT NULL,size INTEGER NOT NULL,chunk_count INTEGER NOT NULL,purpose TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'uploading',public_access INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+ "CREATE TABLE IF NOT EXISTS media_chunks(upload_id TEXT NOT NULL,part INTEGER NOT NULL,data TEXT NOT NULL,byte_size INTEGER NOT NULL,PRIMARY KEY(upload_id,part)) WITHOUT ROWID",
+ "CREATE TABLE IF NOT EXISTS ticket_attachments(upload_id TEXT PRIMARY KEY,ticket_ref TEXT NOT NULL) WITHOUT ROWID",
+ "CREATE INDEX IF NOT EXISTS idx_ticket_attachments_ref ON ticket_attachments(ticket_ref)",
+ "CREATE TRIGGER IF NOT EXISTS limit_ticket_attachments BEFORE INSERT ON ticket_attachments WHEN (SELECT COUNT(*) FROM ticket_attachments WHERE ticket_ref=NEW.ticket_ref)>=5 BEGIN SELECT RAISE(ABORT,'ticket_attachment_limit'); END",
+ "CREATE TRIGGER IF NOT EXISTS limit_ticket_attachment_bytes BEFORE INSERT ON ticket_attachments WHEN COALESCE((SELECT SUM(u.size) FROM media_uploads u JOIN ticket_attachments a ON a.upload_id=u.id WHERE a.ticket_ref=NEW.ticket_ref),0)+(SELECT size FROM media_uploads WHERE id=NEW.upload_id)>209715200 BEGIN SELECT RAISE(ABORT,'ticket_attachment_bytes'); END",
+ "CREATE TRIGGER IF NOT EXISTS valid_ticket_attachment BEFORE INSERT ON ticket_attachments WHEN NOT EXISTS(SELECT 1 FROM media_uploads WHERE id=NEW.upload_id AND status='ready' AND purpose='ticket') BEGIN SELECT RAISE(ABORT,'ticket_attachment_missing'); END",
+ "CREATE INDEX IF NOT EXISTS idx_media_owner ON media_uploads(owner_player_id,owner_admin_id)",
+ "ALTER TABLE messages ADD COLUMN assignee_id INTEGER",
  "ALTER TABLE messages ADD COLUMN type TEXT NOT NULL DEFAULT '留言'",
  "ALTER TABLE message_comments ADD COLUMN author_name TEXT NOT NULL DEFAULT ''",
  "ALTER TABLE daily_signin ADD COLUMN reward INTEGER NOT NULL DEFAULT 0",

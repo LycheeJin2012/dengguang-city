@@ -17,3 +17,8 @@
 - 交付前运行 `node --experimental-vm-modules --test tests/*.test.js`、`node --experimental-vm-modules scripts/build.mjs`、`git diff --check`。
 - 本地功能测试用 `tests/dev-server.mjs`，打印 localhost:8874，在临时 SQLite 内操作。它不使用生产 D1。
 - 推送/部署/线上验证分别报告；不能把 GitHub 推送成功当成 Cloudflare 部署成功。
+
+- v52：一级菜单定义在 `js/app/admin-navigation.js`，工单中心、派单固定排前两位。分组必须按角色过滤，保留原子页 hash。
+- 上传策略在 `shared/uploads.js`，图片 20 MiB、视频 100 MiB、每单 5 个/200 MiB。不得把工单附件公开或重新塞进大体积 data URL。
+- `media_chunks` 和 `ticket_attachments` 使用 WITHOUT ROWID；工单创建批次依赖此特性保持 last_insert_rowid 指向工单。附件数量/总大小由数据库触发器并发兜底。
+- 文件上传和派单的真实验证仅用本地测试账号。生产验证只查看页面/元数据，不创建假举报、假工单或测试附件。

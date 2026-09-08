@@ -1,3 +1,4 @@
+import {createTicket,viewCitizenTicket} from './ticket-form.js';
 import {
   $, $$, api, post, patch, del, region, tr, esc, text, ticketBody, date, status, empty, title, field, modal, action, toast, state, login, download, imageUrl
 }
@@ -63,16 +64,11 @@ async function history(el){
   const labels=[['messages','我的留言','My messages'],['bookings','酒店预订','Bookings'],['kart','卡丁车报名','Kart signups'],['circuit','国际试车','Circuit signups'],['license','驾照报名','License applications'],['tickets','事务工单','City service tickets']];
   el.innerHTML=labels.map(([k,zh,en])=>`<section class="section"><h3>${tr(zh,en)}</h3><div id="history-${k}"></div></section>`).join('');
   await Promise.all(labels.map(([k])=>region($('#history-'+k,el),()=>api('/api/'+k+'?my=1'),(d,box)=>{
-    const rows=d[k]||d.signups||[];box.innerHTML=rows.map(r=>`<div class="row"><div class="row-head"><b>${esc(r.room_name||r.title||r.exam_type||r.session||'#'+r.id)}</b>${status(r.status)}</div><div>${r.body?ticketBody(r.body):text(r.content||r.note||'')}</div>${r.admin_reply?`<div class="notice">${text(r.admin_reply)}</div>`:''}${r.in_date?`<p>${esc(r.in_date)} → ${esc(r.out_date)}</p>`:''}<small>${date(r.created_at)}</small></div>`).join('')||empty();
+    const rows=d[k]||d.signups||[];box.innerHTML=rows.map(r=>`<div class="row"><div class="row-head"><b>${esc(r.room_name||r.title||r.exam_type||r.session||'#'+r.id)}</b>${status(r.status)}</div><div>${r.body?ticketBody(r.body):text(r.content||r.note||'')}</div>${r.admin_reply?`<div class="notice">${text(r.admin_reply)}</div>`:''}${r.in_date?`<p>${esc(r.in_date)} → ${esc(r.out_date)}</p>`:''}<small>${date(r.created_at)}</small>${k==='tickets'?`<div class="actions"><button data-ticket="${esc(r.id)}">${tr('查看详情 / 补充材料','Details / add attachments')} ${r.attachment_count?'📎 '+r.attachment_count:''}</button></div>`:''}</div>`).join('')||empty();$$('[data-ticket]',box).forEach(button=>button.onclick=()=>viewCitizenTicket(button.dataset.ticket,{onChanged:()=>history(el)}).catch(e=>toast(e.message,true)));
   }
   )));
   el.insertAdjacentHTML('beforeend',`<button id="service-ticket">${tr('提交服务工单','Create service ticket')}</button>`);
-  $('#service-ticket',el).onclick=()=>modal(tr('服务工单','Service ticket'),field('title',tr('标题','Title'))+field('body',tr('需求说明','Description'),'textarea'),{
-    submit:async d=>{
-      await post('/api/tickets',d);await history(el);
-    }
-  }
-  );
+  $('#service-ticket',el).onclick=()=>createTicket({onCreated:()=>history(el)}).catch(e=>toast(e.message,true));
 }
 async function security(el){
   el.innerHTML=`<h3>${tr('密码与通行密钥','Passwords and passkeys')}</h3><p>${tr('使用 Touch ID、Face ID 或设备 PIN 安全登录。','Sign in using Touch ID, Face ID, or your device PIN.')}</p><div class="actions"><button id="password-change">${tr('修改密码','Change password')}</button><button id="add-passkey">＋ ${tr('添加通行密钥','Add passkey')}</button></div><div id="keys" class="section"></div>`;

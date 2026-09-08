@@ -1,3 +1,5 @@
+import {attachmentPicker,renderAttachments} from './attachments.js';
+import { navigationFor, resolveNavigation } from './admin-navigation.js';
 import {
   $, $$, api, post, patch, del, tr, esc, text, ticketBody, date, status, empty, title, field, modal, region, action, toast, state, session, login, csv
 }
@@ -7,7 +9,7 @@ import {
 }
 from './security.js';
 const names={
-  questions:['📚 模拟题库','📚 Question bank'],tickets:['🎫 工单中心','🎫 Tickets'],players:['👥 玩家管理','👥 Citizens'],bookings:['🏨 酒店预订','🏨 Bookings'],kart:['🛞 卡丁车报名','🛞 Kart signups'],circuit:['🏁 国际试车','🏁 Circuit signups'],license:['🚗 驾照报名','🚗 License applications'],tracks:['🏎️ 赛车场管理','🏎️ Tracks'],hotels:['🏡 酒店管理','🏡 Hotels'],rooms:['🛏️ 房型管理','🛏️ Rooms'],requirements:['📝 考试要求','📝 Requirements'],announcements:['📜 公告管理','📜 Announcements'],gallery:['🖼️ 图集管理','🖼️ Gallery'],admins:['🛡️ 管理员','🛡️ Administrators'],dms:['✉️ 私信监管','✉️ DM moderation'],times:['🏆 成绩审核','🏆 Race verification'],password:['🔑 账号安全','🔑 Security']
+  dispatch:['📋 派单','📋 Dispatch'],questions:['📚 模拟题库','📚 Question bank'],tickets:['🎫 工单中心','🎫 Tickets'],players:['👥 玩家管理','👥 Citizens'],bookings:['🏨 酒店预订','🏨 Bookings'],kart:['🛞 卡丁车报名','🛞 Kart signups'],circuit:['🏁 国际试车','🏁 Circuit signups'],license:['🚗 驾照报名','🚗 License applications'],tracks:['🏎️ 赛车场管理','🏎️ Tracks'],hotels:['🏡 酒店管理','🏡 Hotels'],rooms:['🛏️ 房型管理','🛏️ Rooms'],requirements:['📝 考试要求','📝 Requirements'],announcements:['📜 公告管理','📜 Announcements'],gallery:['🖼️ 图集管理','🖼️ Gallery'],admins:['🛡️ 管理员','🛡️ Administrators'],dms:['✉️ 私信监管','✉️ DM moderation'],times:['🏆 成绩审核','🏆 Race verification'],password:['🔑 账号安全','🔑 Security']
 }
 ;
 const resources={
@@ -32,7 +34,9 @@ const resources={
 }
 ;
 let active='tickets',view,root;
-const superOnly=new Set(['tracks','hotels','rooms','requirements','announcements','gallery','admins','dms']);
+const rememberedChildren=new Map();
+let historyBound=false;
+
 const isSuper=()=>state.session?.user?.role==='super';
 async function refreshStats() {
   await region($('#admin-stats', root), () => api('/api/admin/dashboard'), (data, box) => {
@@ -104,7 +108,7 @@ async function resourceList(def){
     }
     ;
     let fields=def.fields.map(([key,label,type='text'])=>field(key,tr(label,key.replaceAll('_',' ')),type,item[key]??defaults[key]??'',{
-      required:['name','title','content','hotel_id','image_url'].includes(key)&&!(key==='image_url'&&active!=='gallery'),min:type==='number'?0:undefined,step:key==='length_km'?'0.01':undefined,options:key==='cat'?[['city',tr('城市','City')],['road',tr('道路','Roads')],['kart',tr('卡丁车','Kart')],['nature',tr('自然','Nature')],['announcement',tr('公告','Announcement')]]:[['B',tr('B 级','Grade B')],['A',tr('A 级','Grade A')],['S',tr('S 级','Grade S')],['written',tr('笔试','Written')],['road',tr('路考','Road test')],['upgrade',tr('升级考试','Upgrade')]]
+      required:['name','title','content','hotel_id'].includes(key),min:type==='number'?0:undefined,step:key==='length_km'?'0.01':undefined,options:key==='cat'?[['city',tr('城市','City')],['road',tr('道路','Roads')],['kart',tr('卡丁车','Kart')],['nature',tr('自然','Nature')],['announcement',tr('公告','Announcement')]]:[['B',tr('B 级','Grade B')],['A',tr('A 级','Grade A')],['S',tr('S 级','Grade S')],['written',tr('笔试','Written')],['road',tr('路考','Road test')],['upgrade',tr('升级考试','Upgrade')]]
     }
     )).join('');
     if(active==='rooms'){
@@ -117,39 +121,15 @@ async function resourceList(def){
       }
       )).join('');
     }
+    let picker;
     const dialog = modal(tr(item.id?'编辑记录':'新建记录',item.id?'Edit record':'New record'),fields,{
       submit:async d=>{
-        await (item.id?patch('/api/admin/'+def.path+'?id='+item.id,d):post('/api/admin/'+def.path,d));toast(tr('保存成功','Saved'));await load();
+        if(picker){const files=picker.files();if(files.length)d.image_url=files[0].url;}
+        await (item.id?patch('/api/admin/'+def.path+'?id='+item.id,d):post('/api/admin/'+def.path,d));picker?.commit();toast(tr('保存成功','Saved'));await load();
       }
     }
     );
-    if(def.fields.some(f=>f[0]==='image_url')){
-      const upload=document.createElement('label');
-      upload.className='field wide';
-      upload.textContent=tr('或选择图片（最大 1 MB）','Or choose an image (max 1 MB)');
-      const input=document.createElement('input');
-      input.type='file';
-      input.accept='image/png,image/jpeg,image/webp,image/gif';
-      upload.append(input);
-      $('.form-grid',dialog).append(upload);
-      input.onchange=()=>{
-        const f=input.files?.[0];
-        if(!f)return;
-        if(!/^image\/(png|jpeg|webp|gif)$/.test(f.type)||f.size>1024*1024){
-          toast(tr('请选择 1 MB 以内的图片','Choose an image under 1 MB'),true);
-          input.value='';
-          return;
-        }
-        const reader=new FileReader();
-        reader.onerror=()=>toast(tr('图片读取失败','Could not read image'),true);
-        reader.onload=()=>{
-          $('[name=image_url]',dialog).value=reader.result;
-        }
-        ;
-        reader.readAsDataURL(f);
-      }
-      ;
-    }
+    if(def.fields.some(f=>f[0]==='image_url'))picker=attachmentPicker(dialog,{purpose:'public-image',max:1});
   }
   ;
   toolbar({
@@ -244,17 +224,25 @@ async function players(){
 }
 async function tickets(){
   const view=root.querySelector('#admin-view');
+  const dispatching=active==='dispatch';
+  let adminNames=new Map();
   toolbar({
-    options:['open','in_progress','resolved','closed'],extra:field('category',tr('分类','Category'),'select','',{
+    options:['open','in_progress','resolved','closed'],extra:field('assignment',tr('派单状态','Assignment'),'select',dispatching?'unassigned':'',{required:false,options:[['',tr('全部','All')],['unassigned',tr('未派单','Unassigned')],['mine',tr('派给我','Assigned to me')]]})+field('category',tr('分类','Category'),'select','',{
       required:false,options:[['',tr('全部分类','All categories')],['message','留言'],['hotel','酒店'],['license','驾照'],['race','赛车'],['kart','卡丁车'],['service','服务']]
     }
     )
   }
   );
-  const load=()=>region($('#records',view),()=>api('/api/tickets?'+params()),(d,box)=>{
-    attachExport(d.tickets);table(box,[['id','ID'],['title',tr('标题','Title')],['player_username',tr('市民','Citizen')],['category',tr('分类','Category')],['status',tr('状态','Status'),status]],d.tickets,[{
+  if(dispatching)$('[name=status]',view).value='open';
+  const load=()=>region($('#records',view),async()=>{const [tickets,admins]=await Promise.all([api('/api/tickets?'+params()),api('/api/admin/admins')]);adminNames=new Map(admins.admins.map(a=>[a.id,a.username]));return tickets;},(d,box)=>{
+    attachExport(d.tickets);table(box,[['id','ID'],['title',tr('标题','Title')],['player_username',tr('市民','Citizen')],['category',tr('分类','Category'),category=>esc(({message:tr('留言','Message'),hotel:tr('酒店','Hotel'),license:tr('驾照','License'),race:tr('赛车','Race'),kart:tr('卡丁车','Kart'),service:tr('服务','Service'),comment:tr('评论','Comment')})[category]||category)],['status',tr('状态','Status'),status],['attachment_count',tr('附件','Attachments'),n=>n?'📎 '+Number(n):'—'],['assignee_id',tr('承办人','Assignee'),id=>esc(id?adminNames.get(id)||'#'+id:tr('未派单','Unassigned'))]],d.tickets,[{
+      key:'assign',label:tr('派单','Assign'),run:async ticket=>{
+        const data=await api('/api/admin/admins');
+        modal(tr('派单 · ','Assign · ')+ticket.title,field('assignee_id',tr('承办管理员','Assign to'),'select',ticket.assignee_id||'',{required:false,options:[['',tr('取消派单','Unassign')],...data.admins.map(a=>[a.id,a.username])]}),{label:tr('确认派单','Confirm assignment'),submit:async values=>{await patch('/api/tickets?id='+encodeURIComponent(ticket.id),{assignee_id:values.assignee_id?Number(values.assignee_id):null});toast(tr('派单已保存','Assignment saved'));await load();}});
+      }
+    },{
       key:'detail',label:tr('处理工单','Review ticket'),run:async r=>{
-        const data=await api('/api/tickets?id='+r.id),t=data.ticket;const admins=await api('/api/admin/admins');const dialog=modal(tr('工单 #','Ticket #')+r.id,`<div class="wide notice"><b>${esc(t.title)}</b><div>${ticketBody(t.body)}</div></div>`+field('status',tr('状态','Status'),'select',t.status,{
+        const data=await api('/api/tickets?id='+r.id),t=data.ticket;const admins=await api('/api/admin/admins');let ticketUploads;const dialog=modal(tr('工单 #','Ticket #')+r.id,`<div class="wide notice"><b>${esc(t.title)}</b><div>${ticketBody(t.body)}</div>${renderAttachments(t.attachments)}</div>`+field('status',tr('状态','Status'),'select',t.status,{
           options:['open','in_progress','resolved','closed']
         }
         )+field('priority',tr('优先级','Priority'),'select',t.priority||'normal',{
@@ -269,14 +257,15 @@ async function tickets(){
         ),{
           wide:true,submit:async values=>{
             await patch('/api/tickets?id='+r.id,{
-              ...values,assignee_id:values.assignee_id?Number(values.assignee_id):null
+              ...values,attachment_ids:ticketUploads?ticketUploads.ids():[],assignee_id:values.assignee_id?Number(values.assignee_id):null
             }
             );
 
-await load();refreshStats();
+ticketUploads?.commit();await load();refreshStats();
           }
         }
         );
+          const remaining=5-(t.attachments||[]).length;if(remaining>0)ticketUploads=attachmentPicker(dialog,{max:remaining,existingBytes:(t.attachments||[]).reduce((sum,file)=>sum+file.size,0)});
           const draftButton=document.createElement('button');draftButton.type='button';draftButton.textContent=tr('生成回复建议','Suggest a reply');$('.actions',dialog).prepend(draftButton);
           draftButton.onclick=e=>action(e.currentTarget,async()=>{const r=await post('/api/admin/messages',{message:t.body||t.title});$('[name=admin_reply]',dialog).value=r.draft;toast(tr('请核对建议内容，再点击保存发送','Review the suggestion before saving and sending'));});
       }
@@ -455,7 +444,7 @@ async function loadActive(){
     if(resources[page])await resourceList(resources[page]);
     else if(['bookings','kart','circuit','license'].includes(page))await signups(page);
     else await ({
-      tickets,players,admins,dms,times,questions,password
+      tickets,dispatch:tickets,players,admins,dms,times,questions,password
     }
     [page])();
   }
@@ -463,20 +452,34 @@ async function loadActive(){
     if(page===active)view.innerHTML=`<div class="empty error">${esc(e.message)}</div>`;
   }
 }
-function switchTab(key){
-  if(!names[key])key='tickets';
-  active=key;
-  location.hash=key;
-  $$('.admin-nav button',root).forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===key));
-  const next=document.createElement('section');
-  next.className='admin-content';
-  next.id='admin-view';
-  view?.replaceWith(next);
-  view=next;
+function switchTab(key) {
+  let selected = resolveNavigation(key, isSuper());
+  if(key===selected.group.id&&rememberedChildren.has(key))selected=resolveNavigation(rememberedChildren.get(key),isSuper());
+  active = selected.child;
+  rememberedChildren.set(selected.group.id,active);
+  location.hash = active;
+  $$('.admin-nav [data-group]', root).forEach(button => button.setAttribute('aria-selected', button.dataset.group === selected.group.id));
+  const section = document.createElement('section');
+  section.className = 'admin-content';
+  section.id = 'admin-section';
+  if (selected.group.children.length > 1) {
+    const tabs = document.createElement('nav');
+    tabs.className = 'tabs';
+    tabs.setAttribute('aria-label', tr(...selected.group.label));
+    tabs.innerHTML = selected.group.children.map(child => `<button data-child="${child}" aria-selected="${child === active}">${tr(...names[child])}</button>`).join('');
+    tabs.querySelectorAll('[data-child]').forEach(button => button.onclick = () => switchTab(button.dataset.child));
+    section.append(tabs);
+  }
+  const next = document.createElement('section');
+  next.id = 'admin-view';
+  section.append(next);
+  $('#admin-section', root).replaceWith(section);
+  view = next;
   loadActive();
 }
 export async function render(el){
   root=el;
+  if(!historyBound){window.addEventListener('hashchange',()=>{const key=location.hash.slice(1);if(root?.isConnected&&state.session?.admin&&resolveNavigation(key,isSuper()).child!==active)switchTab(key);});historyBound=true;}
   if(!state.session?.admin){
     el.innerHTML=title('市政管理后台','City administration')+`<div class="panel"><h2>${tr('验证管理员身份','Verify administrator identity')}</h2><p>${tr('使用管理员账号，或验证已绑定市民账号的管理员密码。','Sign in with an administrator account or verify your linked administrator password.')}</p><div class="actions"><button id="admin-login" class="primary">${tr('账号登录','Sign in')}</button><button id="admin-passkey">${tr('通行密钥','Passkey')}</button>${state.session?.player?.linked_admin_id?`<button id="admin-enter">${tr('验证管理密码','Verify admin password')}</button>`:''}</div></div>`;
     $('#admin-login',el).onclick=async()=>{
@@ -497,12 +500,12 @@ export async function render(el){
     ));
     return;
   }
-  el.innerHTML=title('市政管理后台','City administration')+`<div class="section-head"><span>👤 ${esc(state.session.user.username)} <span class="badge">${esc(state.session.user.role.toUpperCase())}</span></span><button id="refresh-stats">↻ ${tr('刷新概览','Refresh overview')}</button></div><div id="admin-stats"></div><div class="admin-layout" style="margin-top:28px"><nav class="admin-nav" aria-label="${tr('管理功能','Administration')}">${Object.entries(names).filter(([key])=>isSuper()||!superOnly.has(key)).map(([key,labels])=>`<button data-tab="${key}" aria-selected="false">${tr(...labels)}</button>`).join('')}</nav><section id="admin-view" class="admin-content"></section></div>`;
+  el.innerHTML=title('市政管理后台','City administration')+`<div class="section-head"><span>👤 ${esc(state.session.user.username)} <span class="badge">${esc(state.session.user.role.toUpperCase())}</span></span><button id="refresh-stats">↻ ${tr('刷新概览','Refresh overview')}</button></div><div id="admin-stats"></div><div class="admin-layout" style="margin-top:28px"><nav class="admin-nav" aria-label="${tr('管理功能','Administration')}">${navigationFor(isSuper()).map(group=>`<button data-group="${group.id}" aria-selected="false">${tr(...group.label)}</button>`).join('')}</nav><section id="admin-section" class="admin-content"><section id="admin-view"></section></section></div>`;
   view=$('#admin-view',el);
-  $$('[data-tab]',el).forEach(b=>b.onclick=()=>switchTab(b.dataset.tab));
+  $$('[data-group]',el).forEach(b=>b.onclick=()=>switchTab(b.dataset.group));
   $('#refresh-stats',el).onclick=refreshStats;
   refreshStats();
   let key=location.hash.slice(1);
-  if(superOnly.has(key)&&!isSuper())key='tickets';
+
   switchTab(key||'tickets');
 }

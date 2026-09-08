@@ -1,3 +1,4 @@
+import {createTicket} from './ticket-form.js';
 import {
   $, $$, api, post, del, region, tr, esc, text, empty, field, modal, requirePlayer, imageUrl, toast, action, date, state, session, renderAccount
 }
@@ -112,6 +113,9 @@ export async function render(el){
     options:['建议','投诉','咨询','合作']
   }
   )}${field('content',tr('留言内容','Message'),'textarea')}</div><p class="form-error" role="alert"></p><div class="actions"><button class="primary">${tr('提交留言','Submit message')}</button></div></form></div>`;
+  $('#contact-body',el).insertAdjacentHTML('afterbegin',`<div class="notice"><b>${tr('反馈 Bug 或举报违规','Report a bug or misconduct')}</b><p>${tr('需要附图或视频？提交私密工单，材料由管理员处理。','Need to include images or video? Submit a private ticket for administrators.')}</p><div class="actions"><button id="report-bug">${tr('反馈 Bug','Report a bug')}</button><button id="report-misconduct">${tr('举报违规','Report misconduct')}</button></div></div>`);
+  $('#report-bug',el).onclick=()=>createTicket({kind:'bug'}).catch(e=>toast(e.message,true));
+  $('#report-misconduct',el).onclick=()=>createTicket({kind:'report'}).catch(e=>toast(e.message,true));
   $('#contact-form',el).onsubmit=e=>{
     e.preventDefault();
     const form=e.currentTarget;

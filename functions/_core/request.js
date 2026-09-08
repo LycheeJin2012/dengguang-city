@@ -81,6 +81,9 @@ export async function endpoint(fn){
     return await fn();
   }
   catch(e){
+    if(/ticket_attachment_bytes/.test(e.message)){e.status=413;e.message='每个工单的附件合计不能超过 200 MB';}
+    if(/ticket_attachment_limit/.test(e.message)){e.status=400;e.message='每个工单最多 5 个附件';}
+    if(/ticket_attachment_missing/.test(e.message)){e.status=400;e.message='附件已失效，请重新上传';}
     if(e.status)return new Response(JSON.stringify({
       ok:false,error:e.message
     }

@@ -1,3 +1,4 @@
+import {validatePublicImage} from './uploads.js';
 import {
   endpoint,identity,body,integer,string,fail,reply
 }
@@ -94,7 +95,7 @@ export function validated(fields,data,partial=false){
         required:!!rule.required
       }
       );
-      if(v&&!/^https?:\/\//i.test(v)&&!/^data:image\/(png|jpeg|webp|gif);base64,/i.test(v)&&!/^\/?assets\/(?!.*\.\.)/.test(v))fail(400,'图片必须是 http(s) URL、本站资源或 PNG/JPEG/WebP/GIF 图片');
+      if(v&&!/^https?:\/\//i.test(v)&&!/^data:image\/(png|jpeg|webp|gif);base64,/i.test(v)&&!/^\/?assets\/(?!.*\.\.)/.test(v)&&!/^\/api\/uploads\?/.test(v))fail(400,'图片必须是 http(s) URL、本站资源或 PNG/JPEG/WebP/GIF 图片');
     }
     out[key]=v;
   }
@@ -128,26 +129,26 @@ export function resource(name){
       );
     }
     const input=await body(request);if(name==='gallery'){if(input.title===undefined&&input.label!==undefined)input.title=input.label;if(input.image_url===undefined&&input.file_url!==undefined)input.image_url=input.file_url;if(input.is_active===undefined&&input.is_published!==undefined)input.is_active=input.is_published?1:0;}
-    const values=validated(def.fields,input,request.method==='PATCH');if(!Object.keys(values).length)fail(400,'没有可更新的字段'); if(name==='hotel-rooms'&&values.hotel_id&&!await env.DB.prepare('SELECT id FROM hotels WHERE id=?').bind(values.hotel_id).first())fail(404,'酒店不存在'); if(name==='announcements'&&request.method==='POST')values.created_by=admin.id; if(name==='gallery'){
+    const values=validated(def.fields,input,request.method==='PATCH');if(!Object.keys(values).length)fail(400,'没有可更新的字段');
+    const publicImage=values.image_url?await validatePublicImage(context,values.image_url,admin):null; if(name==='hotel-rooms'&&values.hotel_id&&!await env.DB.prepare('SELECT id FROM hotels WHERE id=?').bind(values.hotel_id).first())fail(404,'酒店不存在'); if(name==='announcements'&&request.method==='POST')values.created_by=admin.id; if(name==='gallery'){
       if('title' in values)values.label=values.title;
       if('image_url' in values)values.file_url=values.image_url;
       if('is_active' in values)values.is_published=values.is_active;
       values.updated_at=new Date().toISOString();
       if(request.method==='POST'){values.created_by=admin.id;values.created_at=values.updated_at;}
     }
-    const keys=Object.keys(values),params=Object.values(values); if(request.method==='POST'){
-      const insert=env.DB.prepare(`INSERT INTO ${def.table}(${keys.join(',')}) VALUES(${keys.map(()=>'?').join(',')})`).bind(...params);let r; if(name==='announcements'){
-        const results=await env.DB.batch([insert,env.DB.prepare("INSERT INTO notification_log(player_id,type,title,body,link) SELECT DISTINCT s.player_id,'announcement',?,?,'/#notice' FROM subscriptions s JOIN players p ON p.id=s.player_id WHERE s.type='announcement' AND s.enabled=1 AND p.status='active'").bind(values.title,values.content.slice(0,500))]);r=results[0];
-      }
-      else r=await insert.run();return reply({
-        id:r.meta.last_row_id,created:true
-      }
-      ,201);
+    const keys=Object.keys(values),params=Object.values(values);
+    if(request.method==='POST'){
+      const operations=[env.DB.prepare(`INSERT INTO ${def.table}(${keys.join(',')}) VALUES(${keys.map(()=>'?').join(',')})`).bind(...params)];
+      if(name==='announcements')operations.push(env.DB.prepare("INSERT INTO notification_log(player_id,type,title,body,link) SELECT DISTINCT s.player_id,'announcement',?,?,'/#notice' FROM subscriptions s JOIN players p ON p.id=s.player_id WHERE s.type='announcement' AND s.enabled=1 AND p.status='active'").bind(values.title,values.content.slice(0,500)));
+      if(publicImage)operations.push(env.DB.prepare('UPDATE media_uploads SET public_access=1 WHERE id=?').bind(publicImage));
+      const results=await env.DB.batch(operations);return reply({id:results[0].meta.last_row_id,created:true},201);
     }
-    const updated=name!=='gallery'?", updated_at=datetime('now')":'';await env.DB.prepare(`UPDATE ${def.table} SET ${keys.map(k=>k+'=?').join(',')}${updated} WHERE id=?`).bind(...params,id).run();return reply({
-      id,updated:true
-    }
-    );
+    const updated=name!=='gallery'?", updated_at=datetime('now')":'';
+    const operations=[env.DB.prepare(`UPDATE ${def.table} SET ${keys.map(k=>k+'=?').join(',')}${updated} WHERE id=?`).bind(...params,id)];
+    if(publicImage)operations.push(env.DB.prepare('UPDATE media_uploads SET public_access=1 WHERE id=?').bind(publicImage));
+    await env.DB.batch(operations);return reply({id,updated:true});
+
   }
   );
 }
