@@ -59,6 +59,7 @@ export const resources={
   }
   , gallery:{
     table:'gallery_items',key:'items',fields:{
+      cat:{type:'enum',values:['city','road','kart','nature','announcement'],value:'city'},is_featured:num(0,0,1),
       num:num(1,1),title:str(100,true),caption:str(500),image_url:{
         type:'url',required:true
       }
@@ -126,7 +127,15 @@ export function resource(name){
       }
       );
     }
-    const values=validated(def.fields,await body(request),request.method==='PATCH');if(!Object.keys(values).length)fail(400,'没有可更新的字段'); if(name==='hotel-rooms'&&values.hotel_id&&!await env.DB.prepare('SELECT id FROM hotels WHERE id=?').bind(values.hotel_id).first())fail(404,'酒店不存在'); if(name==='announcements'&&request.method==='POST')values.created_by=admin.id; const keys=Object.keys(values),params=Object.values(values); if(request.method==='POST'){
+    const input=await body(request);if(name==='gallery'){if(input.title===undefined&&input.label!==undefined)input.title=input.label;if(input.image_url===undefined&&input.file_url!==undefined)input.image_url=input.file_url;if(input.is_active===undefined&&input.is_published!==undefined)input.is_active=input.is_published?1:0;}
+    const values=validated(def.fields,input,request.method==='PATCH');if(!Object.keys(values).length)fail(400,'没有可更新的字段'); if(name==='hotel-rooms'&&values.hotel_id&&!await env.DB.prepare('SELECT id FROM hotels WHERE id=?').bind(values.hotel_id).first())fail(404,'酒店不存在'); if(name==='announcements'&&request.method==='POST')values.created_by=admin.id; if(name==='gallery'){
+      if('title' in values)values.label=values.title;
+      if('image_url' in values)values.file_url=values.image_url;
+      if('is_active' in values)values.is_published=values.is_active;
+      values.updated_at=new Date().toISOString();
+      if(request.method==='POST'){values.created_by=admin.id;values.created_at=values.updated_at;}
+    }
+    const keys=Object.keys(values),params=Object.values(values); if(request.method==='POST'){
       const insert=env.DB.prepare(`INSERT INTO ${def.table}(${keys.join(',')}) VALUES(${keys.map(()=>'?').join(',')})`).bind(...params);let r; if(name==='announcements'){
         const results=await env.DB.batch([insert,env.DB.prepare("INSERT INTO notification_log(player_id,type,title,body,link) SELECT DISTINCT s.player_id,'announcement',?,?,'/#notice' FROM subscriptions s JOIN players p ON p.id=s.player_id WHERE s.type='announcement' AND s.enabled=1 AND p.status='active'").bind(values.title,values.content.slice(0,500))]);r=results[0];
       }

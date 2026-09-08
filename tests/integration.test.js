@@ -28,3 +28,15 @@ test('concurrent check-ins yield exactly one reward',async()=>{const results=awa
 
 test('concurrent license applications create only one pending request',async()=>{const data={exam_type:'written',contact:'test@example.invalid'};const results=await Promise.all([call('license','POST',data,playerCookie),call('license','POST',data,playerCookie)]);assert.equal(results.filter(r=>r.status===201).length,1);assert.equal((await DB.prepare("SELECT COUNT(*) AS n FROM license_signups WHERE player_id=1 AND exam_type='written'").first()).n,1);});
 test('enabled announcement subscriptions receive notifications',async()=>{await call('subscriptions','POST',{type:'announcement',channel:'site'},otherCookie);await call('admin/announcements','POST',{title:'订阅推送测试',content:'这条只写入本地测试库'},adminCookie);assert.equal((await DB.prepare("SELECT COUNT(*) AS n FROM notification_log WHERE player_id=2 AND type='announcement'").first()).n,1);});
+
+test('legacy production gallery columns migrate without losing images or draft status',async()=>{
+ const legacy=database();try{
+ await legacy.prepare("CREATE TABLE gallery_items(id INTEGER PRIMARY KEY AUTOINCREMENT,num INTEGER NOT NULL UNIQUE,cat TEXT NOT NULL,label TEXT NOT NULL,file_url TEXT NOT NULL,sort_order INTEGER DEFAULT 0,is_featured INTEGER DEFAULT 0,is_published INTEGER DEFAULT 1,created_by INTEGER,created_at TEXT DEFAULT CURRENT_TIMESTAMP,updated_at TEXT)").run();
+ await legacy.prepare("INSERT INTO gallery_items(num,cat,label,file_url,is_published) VALUES(1,'city','旧图集','https://example.invalid/old.jpg',1),(2,'kart','草稿','https://example.invalid/draft.jpg',0)").run();
+ await ensureDatabase(legacy);
+ const result=await dispatch(new Request('https://local.test/api/gallery'),{DB:legacy});assert.equal(result.status,200);const data=await result.json();assert.equal(data.items.length,1);assert.equal(data.items[0].title,'旧图集');assert.equal(data.items[0].image_url,'https://example.invalid/old.jpg');
+ await legacy.prepare("INSERT INTO admins(username,password_hash,salt,role) VALUES('test','test','test','super')").run();await legacy.prepare("INSERT INTO sessions(token,admin_id,expires_at) VALUES('local-gallery-test',1,'2099-01-01T00:00:00Z')").run();
+ const request=new Request('https://local.test/api/admin/gallery',{method:'POST',headers:{Cookie:'lc_session=local-gallery-test','Content-Type':'application/json'},body:JSON.stringify({num:3,title:'新图片',image_url:'https://example.invalid/new.jpg'})});
+ const created=await dispatch(request,{DB:legacy});assert.equal(created.status,201);const row=await legacy.prepare('SELECT * FROM gallery_items WHERE num=3').first();assert.equal(row.label,'新图片');assert.equal(row.file_url,'https://example.invalid/new.jpg');assert.equal(row.is_published,1);
+ }finally{legacy.close();}
+});

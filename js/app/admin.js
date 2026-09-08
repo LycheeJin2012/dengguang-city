@@ -27,7 +27,7 @@ const resources={
     path:'announcements',key:'announcements',fields:[['title','标题'],['content','正文','textarea'],['image_url','封面 URL']]
   }
   ,gallery:{
-    path:'gallery',key:'items',fields:[['num','编号','number'],['title','标题'],['caption','说明','textarea'],['image_url','图片 URL'],['sort_order','排序','number'],['is_active','显示','checkbox']]
+    path:'gallery',key:'items',fields:[['cat','分类','select'],['is_featured','精选图片','checkbox'],['num','编号','number'],['title','标题'],['caption','说明','textarea'],['image_url','图片 URL'],['sort_order','排序','number'],['is_active','显示','checkbox']]
   }
 }
 ;
@@ -92,7 +92,7 @@ async function resourceList(def){
     }
     ;
     let fields=def.fields.map(([key,label,type='text'])=>field(key,tr(label,key.replaceAll('_',' ')),type,item[key]??defaults[key]??'',{
-      required:['name','title','content','hotel_id','image_url'].includes(key)&&!(key==='image_url'&&active!=='gallery'),min:type==='number'?0:undefined,step:key==='length_km'?'0.01':undefined,options:['written','road','upgrade']
+      required:['name','title','content','hotel_id','image_url'].includes(key)&&!(key==='image_url'&&active!=='gallery'),min:type==='number'?0:undefined,step:key==='length_km'?'0.01':undefined,options:key==='cat'?[['city',tr('城市','City')],['road',tr('道路','Roads')],['kart',tr('卡丁车','Kart')],['nature',tr('自然','Nature')],['announcement',tr('公告','Announcement')]]:['written','road','upgrade']
     }
     )).join('');
     if(active==='rooms'){
