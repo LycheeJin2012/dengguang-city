@@ -18,8 +18,8 @@
 //
 // HTML 模板不变 (admin-v37.html 仍可用), 通过 inline onclick 调 window.* 全局函数
 // 这里导出所有需要的全局函数
-import { $, POST, GET, safeRender, fileToDataURLP, cacheClear } from './admin/core.js?v=v46-fix-modules';
-import { renderDash, _ensureTabRendered, bindFilterRadios, showView, _PANE_REFRESH } from './admin/dash.js?v=v46-fix-modules';
+import { $, POST, GET, safeRender, fileToDataURLP, cacheClear, esc } from './admin/core.js?v=v46-fix-modules';
+import { renderDash, _ensureTabRendered, bindFilterRadios, showView } from './admin/dash.js?v=v46-fix-modules';
 import { t } from './i18n/core.js?v=n5';
 
 // ---------- Boot ----------
@@ -97,7 +97,7 @@ function showAdminEnterModal(player, adminId) {
       </div>
       <div class="modal-body">
         <p style="margin:0 0 16px;font-size:13px;color:var(--c-stone-dark);line-height:1.5">
-          ${t('admin.enterModal.bound', '玩家')} <b style="color:var(--c-dark)">@${player.username}</b> ${t('admin.enterModal.bound2', '已绑管理员')} <b style="color:var(--c-water)">#${adminId}</b>。
+          ${t('admin.enterModal.bound', '玩家')} <b style="color:var(--c-dark)">@${esc(player.username)}</b> ${t('admin.enterModal.bound2', '已绑管理员')} <b style="color:var(--c-water)">#${adminId}</b>。
           <br>${t('admin.enterModal.hint', '选择以下任一方式验证身份进入后台:')}
         </p>
         <div class="modal-form" style="margin-bottom:6px">
@@ -248,12 +248,7 @@ document.addEventListener('click', e => {
     document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'pane-' + name));
     setTimeout(() => _ensureTabRendered(name), 0);
   }
-  // 刷新按钮 (v50-N6 fix: 改用 dynamic import, 同 dash.js 的 _PANE_REFRESH)
-  if (e.target.classList.contains('pane-refresh')) {
-    const target = e.target.dataset.target;
-    const fn = _PANE_REFRESH[target];
-    if (fn) safeRender(fn);
-  }
+  // 刷新按钮由 bindFilterRadios 绑定一次。
 });
 
 // ---------- Logout (全窗口) ----------
@@ -261,6 +256,9 @@ window.adminLogout = async function() {
   await POST('/api/init?action=admin-logout', {});
   location.reload();
 };
+$('#btnLogout')?.addEventListener('click', () => {
+  window.adminLogout().catch(e => window._toast?.(e.message, 'error'));
+});
 
 // ---------- v47.5: 管理员后台通行密钥登录 ----------
 // 玩家先在主页用 Touch ID/Face ID 注册通行密钥, admin 端绑玩家 → 即可用同一密钥登 admin
@@ -372,7 +370,7 @@ document.addEventListener('click', e => {
 
 // ---------- 编辑公告 (HTML 留了 + 按钮) ----------
 document.addEventListener('click', e => {
-  if (e.target.id === 'btnAddAnnouncement' || e.target.id === 'btnNewAnn') {
+  if (e.target.closest('#annCreateBtn, #btnAddAnnouncement, #btnNewAnn')) {
     import('./admin/tabs/announcements.js').then(m => m.annEdit(null));
   }
 });
@@ -393,7 +391,7 @@ function bindAdminLogin() {
   form.addEventListener('submit', async e => {
     e.preventDefault();
     const u = ($('#loginUser')?.value || '').trim();
-    const p = ($('#loginPass')?.value || '').trim();
+    const p = ($('#loginPass')?.value || '');
     const errEl = $('#loginError');
     const btn = $('#loginSubmitBtn');
     if (!u || !p) {
@@ -404,7 +402,7 @@ function bindAdminLogin() {
     if (errEl) errEl.textContent = '';
     try {
       const d = await POST('/api/login', { username: u, password: p });
-      if (d && d.ok && (d.user || d.player)) {
+      if (d && d.ok && d.user_id) {
         // 成功 → 重新 boot (会从 /api/login 读 session 然后渲染 admin dash)
         if (btn) btn.textContent = '✓ 登录成功';
         setTimeout(() => location.reload(), 300);
@@ -428,9 +426,9 @@ function bindChangePassword() {
   if (!form) return;
   form.addEventListener('submit', async e => {
     e.preventDefault();
-    const oldPw  = ($('#pwdOld')?.value || '').trim();
-    const newPw  = ($('#pwdNew')?.value || '').trim();
-    const newPw2 = ($('#pwdNew2')?.value || '').trim();
+    const oldPw  = ($('#pwdOld')?.value || '');
+    const newPw  = ($('#pwdNew')?.value || '');
+    const newPw2 = ($('#pwdNew2')?.value || '');
     const msg = $('#pwdMsg');
     const btn = form.querySelector('button[type="submit"]');
     const orig = btn?.textContent;

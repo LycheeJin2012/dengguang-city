@@ -7,7 +7,8 @@ export async function renderDms(query) {
     const d = await POST('/api/init?action=admin-dm-conversations', { q: query || '' });
     const list = d.conversations || [];
     const box = $('#dmList'), empty = $('#dmEmpty');
-    if (!list.length) { box.innerHTML = ''; empty.style.display = 'flex'; return; }
+    if (!list.length) { box.innerHTML = ''; box.style.display = 'none'; empty.style.display = 'flex'; return; }
+    box.style.display = '';
     empty.style.display = 'none';
     box.innerHTML = list.map(c => {
       const repliedBy = c.replied_by_admin_username || 'admin';

@@ -126,7 +126,7 @@ export async function onRequestGet(context) {
     const m = ck.match(/lc_session=([^;]+)/);
     if (!m) return err(401, '未登录');
     const sess = await env.DB.prepare('SELECT admin_id, expires_at FROM sessions WHERE token = ?').bind(m[1]).first();
-    if (!sess || new Date(sess.expires_at) <= new Date()) return err(401, '会话过期');
+    if (!sess || !sess.admin_id || new Date(sess.expires_at) <= new Date()) return err(401, '会话过期或非管理员');
     const rows = await env.DB.prepare(
       "SELECT id, username, email, status, emeralds, created_at, last_login_at FROM players ORDER BY id"
     ).all();

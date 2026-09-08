@@ -194,22 +194,6 @@
   </div>
 
   <script src="js/toast.js?v=20260829-toast"></script>
-  <script type="module" src="js/i18n/core.js?v=n5"></script>
-  <script type="module">
-    import { initI18n, bindLangSwitcher, renderLangSwitcher, setPageTitle, setMetaDescription } from './js/i18n/core.js?v=n5';
-    initI18n();
-    setPageTitle('page.title.hotel');
-    setMetaDescription('page.meta.hotel');
-    // 注入语言切换器到 .nav-links 末尾
-    const navLinks = document.getElementById('navLinks');
-    if (navLinks) {
-      const wrap = document.createElement('span');
-      wrap.className = 'nav-lang-wrap';
-      wrap.innerHTML = renderLangSwitcher();
-      navLinks.appendChild(wrap);
-      bindLangSwitcher(navLinks);
-    }
-  </script>
   <script type="module" src="js/page/hotel/entry.js?v=v46-fix-modules"></script>
 </body>
 </html>

@@ -7,7 +7,8 @@ export async function renderGallery() {
     const d = await GET('/api/gallery');
     const list = (d.items || d.gallery || []);
     const box = $('#galGrid'), empty = $('#galEmpty');
-    if (!list.length) { box.innerHTML = ''; empty.style.display = 'flex'; return; }
+    if (!list.length) { box.innerHTML = ''; box.style.display = 'none'; empty.style.display = 'flex'; return; }
+    box.style.display = '';
     empty.style.display = 'none';
     box.innerHTML = list.map(g => `
       <article class="gallery-item" data-id="${g.id}">

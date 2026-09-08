@@ -6,9 +6,10 @@
   "scripts": {
     "dev": "wrangler pages dev .",
     "deploy": "wrangler pages deploy .",
-    "test": "node --test js/i18n/core.test.js"
+    "test": "node --experimental-vm-modules --test js/i18n/core.test.js tests/*.test.js"
   },
   "devDependencies": {
     "wrangler": "^3.90.0"
-  }
+  },
+  "type": "module"
 }

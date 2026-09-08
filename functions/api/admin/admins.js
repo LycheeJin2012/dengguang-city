@@ -26,7 +26,7 @@ export async function onRequestGet(context) {
     LEFT JOIN players lp ON lp.id = a.linked_player_id
     ORDER BY a.id ASC
   `).all();
-  return ok({ admins: rows.results }, { headers: { 'Cache-Control': 'private, max-age=10' } });
+  return ok({ admins: rows.results }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function onRequestPost(context) {
@@ -60,6 +60,7 @@ export async function onRequestPatch(context) {
   if (!env.DB) return err(500, 'D1 binding DB not configured');
   const me = await requireAdmin(context);
   if (!me) return err(401, '需要管理员登录');
+  if (me.role !== 'super') return err(403, '只有 super 可管理管理员账号；修改自己的密码请使用修改密码入口');
 
   const url = new URL(request.url);
   const id = parseInt(url.searchParams.get('id') || '0', 10);

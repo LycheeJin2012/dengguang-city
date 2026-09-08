@@ -7,20 +7,22 @@ let bookRoom = null;
 
 export function openBookModal(r) {
   const mask = $('#bookMask');
-  if (!mask) return;
+  if (!mask || r.hotelDraft || r.statusKey !== 'open') return;
   bookRoom = r;
+  const submit = $('#bookForm')?.querySelector('button[type="submit"]');
+  if (submit) { submit.disabled = false; submit.textContent = t('book.confirm', '确认预订'); submit.classList.remove('btn-success'); }
   const titleEl = $('#bookTitle'); if (titleEl) titleEl.textContent = `${t('hotel.modal.book')} · ${r.name}`;
   const s = $('#bookSummary');
   if (s) s.innerHTML = `
     <div>
-      <b>${r.icon} ${r.name}</b>
+      <b>${escHtml(r.icon)} ${escHtml(r.name)}</b>
       <span class="book-room-meta">${escHtml(r.bed)} · ${r.guests}+ ${t('common.person')}${r.price ? ' · 💎 ' + r.price + '/' + t('hotel.perNight', '晚') : ''}</span>
     </div>`;
   const today = new Date();
   const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
   const dayAfter = new Date(today); dayAfter.setDate(dayAfter.getDate() + 2);
-  const bi = $('#bookIn'); if (bi) bi.value = tomorrow.toISOString().slice(0, 10);
-  const bo = $('#bookOut'); if (bo) bo.value = dayAfter.toISOString().slice(0, 10);
+  const bi = $('#bookIn'); if (bi) bi.value = [tomorrow.getFullYear(), String(tomorrow.getMonth() + 1).padStart(2, '0'), String(tomorrow.getDate()).padStart(2, '0')].join('-');
+  const bo = $('#bookOut'); if (bo) bo.value = [dayAfter.getFullYear(), String(dayAfter.getMonth() + 1).padStart(2, '0'), String(dayAfter.getDate()).padStart(2, '0')].join('-');
   const m = $('#bookMsg'); if (m) m.textContent = '';
   updateBookTotal();
   mask.style.display = '';
@@ -53,8 +55,8 @@ function updateBookTotal() {
   if (bn) bn.textContent = `${nights} ${t('hotel.perNight', '晚')} · ${persons} ${t('common.person')}${wantBf ? ' · ' + t('hotel.breakfast.yes', '含早餐') : ''}`;
   const bt = $('#bookTotal');
   if (bt) {
-    const total = (bookRoom.price || 0) * nights;
-    bt.textContent = `💎 ${total}（${nights} ${t('hotel.perNight', '晚')} × ${bookRoom.price || 0}）`;
+    const total = (bookRoom.price || 0) * nights + (wantBf ? nights * persons * 10 : 0);
+    bt.textContent = `💎 ${total}（${nights} ${t('hotel.perNight', '晚')} × ${bookRoom.price || 0}${wantBf ? ` + ${nights} × ${persons} × 10` : ''}）`;
   }
 }
 

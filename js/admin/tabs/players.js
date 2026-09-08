@@ -20,7 +20,8 @@ export async function renderPlayers() {
     if (filter !== 'all') shown = shown.filter(p => p.status === filter);
 
     const box = $('#playerList'), empty = $('#playerEmpty');
-    if (!shown.length) { box.innerHTML = ''; empty.style.display = 'flex'; return; }
+    if (!shown.length) { box.innerHTML = ''; box.style.display = 'none'; empty.style.display = 'flex'; return; }
+    box.style.display = '';
     empty.style.display = 'none';
 
     // 排序: pending 在前

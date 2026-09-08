@@ -38,11 +38,12 @@ async function renderKind(kind, prefix) {
   if (filter !== 'all') shown = shown.filter(x => x.status === filter);
 
   const box = $(`#${prefix}List`), empty = $(`#${prefix}Empty`);
-  if (!shown.length) { box.innerHTML = ''; empty.style.display = 'flex'; return; }
+  if (!shown.length) { box.innerHTML = ''; box.style.display = 'none'; empty.style.display = 'flex'; return; }
+  box.style.display = '';
   empty.style.display = 'none';
 
   box.innerHTML = shown.map(it => {
-    const opts = _statusOpts('pending', it.status) + _statusOpts('approved', it.status) + _statusOpts('rejected', it.status);
+    const opts = _statusOpts(null, it.status);
     return `<article class="msg-item" data-id="${it.id}">
       <div class="msg-head"><div class="msg-head-left">
         <span class="msg-type type-book">${_kindLabel(kind)}</span>

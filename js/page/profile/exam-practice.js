@@ -89,10 +89,15 @@ async function startQuiz(grade) {
         <div id="examResult" style="margin-top:10px"></div>
       </div>
     `;
+    let submitted = false;
     const submit = async () => {
+      if (submitted) return;
       const chosen = Array.from(quiz.querySelectorAll('input[name=examOpt]:checked')).map(i => i.value);
       if (!chosen.length) { $('#examResult').innerHTML = `<p style="color:var(--c-redstone)">${t('exam.pickFirst', '请先选答案')}</p>`; return; }
       const answer = isMulti ? chosen.join('|') : chosen[0];
+      submitted = true;
+      quiz.querySelector('#examSubmit').disabled = true;
+      quiz.querySelector('#examSkip').disabled = true;
       try {
         const r = await POST('/api/exam-questions/answer', { question_id: q.id, answer });
         if (r.is_correct) correct++;
@@ -103,7 +108,12 @@ async function startQuiz(grade) {
           <button class="btn btn-ghost btn-sm" id="examNext" style="margin-top:8px">${t('exam.btn.next', '下一题 →')}</button>
         `;
         quiz.querySelector('#examNext').onclick = () => { idx++; showOne(); };
-      } catch (e) { $('#examResult').innerHTML = '<p style="color:var(--c-redstone)">✗ ' + e.message + '</p>'; }
+      } catch (e) {
+        submitted = false;
+        quiz.querySelector('#examSubmit').disabled = false;
+        quiz.querySelector('#examSkip').disabled = false;
+        $('#examResult').innerHTML = '<p style="color:var(--c-redstone)">✗ ' + esc(e.message) + '</p>';
+      }
     };
     quiz.querySelector('#examSubmit').onclick = submit;
     quiz.querySelector('#examSkip')?.addEventListener('click', () => { idx++; showOne(); });

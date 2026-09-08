@@ -1,6 +1,6 @@
 // v50-N6 (C1): 玩家榜单页 - 4 tab 切换 + 拉 /api/leaderboard 渲染
-import { $, $$ } from '../util.js?v=v46-fix-modules';
-import { t, setPageTitle, setMetaDescription, initI18n } from '../../i18n/core.js?v=n5';
+import { $, $$, escHtml } from '../util.js?v=v46-fix-modules';
+import { t, getLang, setLang, setPageTitle, setMetaDescription, initI18n } from '../../i18n/core.js?v=n5';
 
 const TYPES = ['messages', 'bookings', 'licenses'];
 let _currentType = 'messages';
@@ -21,9 +21,9 @@ async function loadBoard(type) {
     const d = await r.json();
     if (!d.ok) throw new Error(d.error || t('common.error.load', '加载失败'));
     _cache[type] = d;
-    renderBoard(d);
+    if (_currentType === type) renderBoard(d);
   } catch (e) {
-    if (list) list.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${t('common.error.load', '加载失败')}: ${e.message}</p></div>`;
+    if (list && _currentType === type) list.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${t('common.error.load', '加载失败')}: ${escHtml(e.message)}</p></div>`;
   }
 }
 
@@ -40,10 +40,10 @@ function renderBoard(data) {
   list.innerHTML = `<ol class="board-entries">${entries.map(e => `
     <li class="board-entry ${e.rank <= 3 ? 'board-top' : ''}" data-rank="${e.rank}">
       <span class="board-rank">${e.rank <= 3 ? ['🥇','🥈','🥉'][e.rank-1] : '#' + e.rank}</span>
-      <span class="board-avatar">${e.avatar_emoji || '👤'}</span>
-      <span class="board-name">${e.username}</span>
-      ${e.grades ? `<span class="board-grades">${e.grades}</span>` : ''}
-      <span class="board-score">${e.score}${unit}</span>
+      <span class="board-avatar">${escHtml(e.avatar_emoji || '👤')}</span>
+      <span class="board-name">${escHtml(e.username)}</span>
+      ${e.grades ? `<span class="board-grades">${escHtml(e.grades)}</span>` : ''}
+      <span class="board-score">${escHtml(e.score)}${unit}</span>
     </li>`).join('')}</ol>`;
 }
 
@@ -62,24 +62,20 @@ function bindTabs() {
 function bindAll() {
   setPageTitle('page.title.leaderboard', 'Player Leaderboard · Light City');
   setMetaDescription('page.meta.leaderboard',
-    '灯光市玩家排行榜 - 留言数 / 酒店预订 / 驾照等级 3 维度, 看谁是灯光市最活跃的市民。',
     'Light City Player Leaderboard - Top contributors in messages, bookings, and licenses.');
   bindTabs();
   // v50-N6: 语言切换按钮 (leaderboard 顶栏有自己的 lang-toggle)
   const langBtn = document.getElementById('langToggle');
   if (langBtn) {
     const refresh = () => {
-      const lang = localStorage.getItem('lc_lang') || 'zh-CN';
+      const lang = getLang();
       langBtn.textContent = lang === 'zh-CN' ? '🌐 EN' : '🌐 中文';
     };
     refresh();
     langBtn.addEventListener('click', () => {
-      const cur = localStorage.getItem('lc_lang') || 'zh-CN';
+      const cur = getLang();
       const next = cur === 'zh-CN' ? 'en' : 'zh-CN';
-      localStorage.setItem('lc_lang', next);
-      document.documentElement.lang = next;
-      // 触发 data-i18n 重新应用
-      window.dispatchEvent(new CustomEvent('lc:langchange', { detail: { lang: next } }));
+      setLang(next);
       refresh();
       // 重渲染当前 tab (label/unit 跟语言走)
       loadBoard(_currentType);
@@ -88,4 +84,5 @@ function bindAll() {
   loadBoard('messages');
 }
 
-initI18n().then(bindAll);
+initI18n();
+bindAll();

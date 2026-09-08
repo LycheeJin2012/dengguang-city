@@ -1,7 +1,8 @@
+import { parseDate } from '../date.js';
 // v45 重写: 子页 (hotel/profile/dm) 共享工具
-import { $, escHtml, GET, POST, PATCH, DEL } from '../home/util.js?v=v46-fix-modules';
-import { t } from '../i18n/core.js?v=n5';
-export { $, escHtml, GET, POST, PATCH, DEL };
+import { $, $$, escHtml, escHtmlBr, GET, POST, PATCH, DEL } from '../home/util.js?v=v46-fix-modules';
+import { t, getLang, setLang } from '../i18n/core.js?v=n5';
+export { $, $$, escHtml, escHtmlBr, GET, POST, PATCH, DEL };
 // v49-fix-2: 加 'esc' 别名 export — 4 个 profile 业务文件 (race-times / exam-practice /
 // citizen-card / subscriptions) import 'esc', 改 import 不如在 util.js 加别名, 1 处改完
 export { escHtml as esc };
@@ -68,7 +69,7 @@ export function injectLangSwitch(container) {
   const btn = document.createElement('button');
   btn.id = 'navLangBtn';
   btn.type = 'button';
-  const cur = localStorage.getItem('lc_lang') || 'zh-CN';
+  const cur = getLang();
   const refresh = (lang) => {
     btn.textContent = lang === 'zh-CN' ? '🌐 EN' : '🌐 中文';
     btn.title = lang === 'zh-CN' ? '切换到 English' : 'Switch to 中文';
@@ -76,21 +77,21 @@ export function injectLangSwitch(container) {
   refresh(cur);
   btn.style.cssText = 'background:transparent;border:2px solid var(--c-border,#2a2a2a);padding:4px 10px;font-family:inherit;font-size:13px;cursor:pointer;margin-left:8px;';
   btn.addEventListener('click', () => {
-    const c = localStorage.getItem('lc_lang') || 'zh-CN';
+    const c = getLang();
     const next = c === 'zh-CN' ? 'en' : 'zh-CN';
-    localStorage.setItem('lc_lang', next);
-    document.documentElement.lang = next;
-    window.dispatchEvent(new CustomEvent('lc:langchange', { detail: { lang: next } }));
+    setLang(next);
     refresh(next);
     // 触发自定义事件, 页面可监听并重渲染需要重拉的组件
   });
+  window.addEventListener('lc:langchange', () => refresh(getLang()));
   container.appendChild(btn);
 }
 
 // 短时间 (HH:MM or MM-DD)
 export function shortTime(iso) {
   if (!iso) return '';
-  const d = new Date(iso + (iso.includes('Z') ? '' : 'Z'));
+  const d = parseDate(iso);
+  if (!Number.isFinite(d.getTime())) return '—';
   const now = new Date();
   if (d.toDateString() === now.toDateString()) return d.toTimeString().slice(0, 5);
   return d.toISOString().slice(5, 10);

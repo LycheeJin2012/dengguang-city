@@ -8,12 +8,12 @@ import { bindClouds } from './home/clouds.js';
 import { bindReveal } from './home/reveal.js';
 import { bindAll as bindHero } from './home/hero.js';
 import { loadAnnouncements, loadTopStripNotice } from './home/announcements.js';
-import { loadPublicMessages, bindWallSort } from './home/messages.js';
+import { loadPublicMessages, bindWallSort } from './home/messages.js?v=v46-fix-modules';
 import { loadGallery } from './home/gallery.js';
 import { loadHotelRooms, loadKartSpecs, loadLicenseReqs, bindAll as bindForms } from './home/forms.js';
-import { bindAll as bindHeader } from './home/header.js';
-import { bindAll as bindAuth } from './home/auth.js';
-import { loadSigninBadge, openSigninModal } from './home/signin.js';
+import { bindAll as bindHeader } from './home/header.js?v=v46-fix-modules';
+import { bindAll as bindAuth } from './home/auth.js?v=v46-fix-modules';
+import { loadSigninBadge, openSigninModal } from './home/signin.js?v=v46-fix-modules';
 import { bindKeyboardShortcuts } from './home/keyboard.js?v=n6';
 import { initI18n, bindLangSwitcher, renderLangSwitcher, setPageTitle, setMetaDescription } from './i18n/core.js?v=n5';
 

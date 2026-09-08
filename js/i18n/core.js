@@ -29,7 +29,6 @@ const DICT = {
   'nav.toggle':     { 'zh-CN': '🌐 中文/EN',  'en': '🌐 EN/中' },
   // 通用
   'common.returnHome': { 'zh-CN': '← 返回首页',  'en': '← Home' },
-  'common.loading':    { 'zh-CN': '载入中…',     'en': 'Loading…' },
   'common.back':       { 'zh-CN': '← 返回',       'en': '← Back' },
   'common.send':       { 'zh-CN': '发送',         'en': 'Send' },
   'common.sendFail':   { 'zh-CN': '发送失败: ',    'en': 'Send failed: ' },
@@ -87,6 +86,8 @@ const DICT = {
   'home.room.bedInfo':        { 'zh-CN': '适合 ',               'en': 'For ' },
   'home.room.breakfast':      { 'zh-CN': '含早餐',              'en': 'Breakfast included' },
   // 预订 modal
+  'admin.admins.pwMin': { 'zh-CN': '密码至少 8 位', 'en': 'Password must be at least 8 characters' },
+  'book.confirm': { 'zh-CN': '📅 提交预订', 'en': '📅 Submit booking' },
   'book.perNight':           { 'zh-CN': ' / 晚',              'en': ' / night' },
   'book.selectDate':          { 'zh-CN': '— 请选择有效日期',      'en': '— Select valid dates' },
   'book.nights':             { 'zh-CN': ' 晚 · ',             'en': ' nights · ' },
@@ -121,7 +122,6 @@ const DICT = {
   'spec.surface.ice':       { 'zh-CN': '红石冰道',            'en': 'Redstone Ice Track' },
   'track.price.perTrial':   { 'zh-CN': '试车 ¥{price} 💎/次',   'en': 'Trial ¥{price} 💎/run' },
   'track.price.tbd':        { 'zh-CN': '试车价格待公告',        'en': 'Trial price TBD' },
-  'track.price.loadFail':   { 'zh-CN': '试车价格加载失败',      'en': 'Failed to load trial price' },
   'license.grade.B':        { 'zh-CN': 'B 级（初级）',         'en': 'B (Beginner)' },
   'license.grade.A':        { 'zh-CN': 'A 级（中级）',         'en': 'A (Intermediate)' },
   'admin.statusLabel.pending':  { 'zh-CN': '待审批',         'en': 'Pending' },
@@ -191,7 +191,6 @@ const DICT = {
   'admin.announcements.hint':  { 'zh-CN': '公告会出现在首页"市政公告"栏目, 所有人可见。仅 super 管理员可发布/编辑/删除。', 'en': 'Announcements appear on the homepage. Everyone can see them. Only SUPER admins can publish/edit/delete.' },
   'admin.announcements.createBtn': { 'zh-CN': '+ 发布新公告', 'en': '+ New Announcement' },
   'common.cancel':       { 'zh-CN': '取消',            'en': 'Cancel' },
-  'common.close':        { 'zh-CN': '关闭',            'en': 'Close' },
   'common.save':         { 'zh-CN': '保存',            'en': 'Save' },
   'kbd.title':           { 'zh-CN': '键盘快捷键',     'en': 'Keyboard Shortcuts' },
   'kbd.tip':             { 'zh-CN': '在输入框/留言框中按键时, 快捷键不会触发。', 'en': 'Shortcuts are disabled while typing in input fields.' },
@@ -335,7 +334,6 @@ const DICT = {
   'admin.login.hint':       { 'zh-CN': '提示: 玩家账号先在主页用 Touch ID/Face ID 注册通行密钥，然后绑定到管理员账号 (admin 端有"玩家管理" → "🔗 绑管理员" 按钮)，即可一键登 admin', 'en': 'Tip: Register a passkey on the main site with Touch ID/Face ID, then link it to your admin account (Admin → "Players" → "🔗 Link") for one-click login.' },
   'admin.login.backHome2':  { 'zh-CN': '← 返回市民首页',         'en': '← Back to Home' },
   'admin.dash.logout':      { 'zh-CN': '退出登录',               'en': 'Logout' },
-  'admin.dash.refreshTip':  { 'zh-CN': '刷新数据',               'en': 'Refresh data' },
   'admin.dash.refresh':     { 'zh-CN': '🔄 刷新',                'en': '🔄 Refresh' },
   'admin.ticket.paneTitle': { 'zh-CN': '🎫 工单中心',            'en': '🎫 Ticket Center' },
   // admin 管理员账号 tab
@@ -664,13 +662,6 @@ const DICT = {
   'admin.ticket.filter.closed':    { 'zh-CN': '✕ 已关闭',    'en': '✕ Closed' },
   // admin 工单 category filter
   'admin.ticket.cat.all':       { 'zh-CN': '📂 全部类型',  'en': '📂 All Types' },
-  'admin.ticket.cat.message':   { 'zh-CN': '💬 留言',     'en': '💬 Message' },
-  'admin.ticket.cat.comment':   { 'zh-CN': '💭 评论',     'en': '💭 Comment' },
-  'admin.ticket.cat.license':   { 'zh-CN': '🚗 驾照',     'en': '🚗 License' },
-  'admin.ticket.cat.hotel':     { 'zh-CN': '🏨 酒店',     'en': '🏨 Hotel' },
-  'admin.ticket.cat.race':      { 'zh-CN': '🏁 赛车',     'en': '🏁 Race' },
-  'admin.ticket.cat.kart':      { 'zh-CN': '🛞 卡丁车',   'en': '🛞 Kart' },
-  'admin.ticket.cat.service':   { 'zh-CN': '🛎️ 服务',     'en': '🛎️ Service' },
   'admin.ticket.empty':        { 'zh-CN': '暂无工单',      'en': 'No tickets yet' },
   'admin.ticket.hint':     { 'zh-CN': '统一处理所有市民事务：留言 / 酒店预订 / 驾照报名 / 赛道报名 / 玩家主动服务请求。按分类筛选 + 模糊搜索 + 状态流转 (待处理 → 处理中 → 已解决 → 关闭)。',
                               'en': 'Unified inbox for all citizen requests: messages, hotel bookings, license signups, race signups, and direct service requests. Filter by category, fuzzy-search, and move tickets through the workflow (Open → In Progress → Resolved → Closed).' },
@@ -926,7 +917,7 @@ export function setLang(lang) {
 export function t(key, fallback) {
   const entry = DICT[key];
   if (!entry) return fallback !== undefined ? fallback : key;
-  return entry[_current] || entry[SUPPORTED[0]] || fallback || key;
+  return entry[_current] ?? entry[SUPPORTED[0]] ?? fallback ?? key;
 }
 
 // 格式化翻译 (支持 {var} 占位符)

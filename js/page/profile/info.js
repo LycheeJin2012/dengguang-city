@@ -1,3 +1,4 @@
+import { parseDate } from '../../date.js';
 // v45 重写: profile 子页 - 公开 profile 展示 + 编辑 + 改密码
 // v50-N6 B6: i18n 化
 import { $, escHtml, GET, POST, PATCH } from '../util.js?v=v46-fix-modules';
@@ -51,8 +52,9 @@ export function renderProfile(me, profile, stats) {
   const bio = (profile.bio || '').trim();
   const created = (profile.created_at || '').slice(0, 10);
   // v50-N6: 算"加入天数" — 城市归属感小细节, 从注册日到今天的天数
-  const daysSinceJoin = profile.created_at
-    ? Math.max(0, Math.floor((Date.now() - new Date(profile.created_at + 'Z').getTime()) / 86400000))
+  const joinedAt = parseDate(profile.created_at).getTime();
+  const daysSinceJoin = Number.isFinite(joinedAt)
+    ? Math.max(0, Math.floor((Date.now() - joinedAt) / 86400000))
     : 0;
   const regDateL = t('profile.regDate', '注册日期：');
   const noBioL = t('profile.noBio', '这位玩家还没有写个人简介…');

@@ -1,3 +1,4 @@
+import { parseDate } from '../date.js';
 // v45 重写: 公共页 (home) 共享工具
 // 替换 main.js 顶部的 escapeHtml / formatTime / relativeTime 等散落的 helper
 // v50-N5 Step 15: safeRender 错误文案走 i18n
@@ -19,7 +20,8 @@ export function escHtmlBr(s) {
 // ISO 时间格式化 (YYYY-MM-DD HH:MM, 本地时区)
 export function fmtDate(s) {
   if (!s) return '—';
-  const d = new Date(s);
+  const d = parseDate(s);
+  if (!Number.isFinite(d.getTime())) return '—';
   const p = n => String(n).padStart(2, '0');
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
     ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
@@ -28,8 +30,9 @@ export function fmtDate(s) {
 // 相对时间 (3 分钟前 / 2 小时前 / 昨天)
 export function relativeTime(iso) {
   if (!iso) return '';
-  const t = new Date(iso).getTime();
-  const diff = Date.now() - t;
+  const timestamp = parseDate(iso).getTime();
+  if (!Number.isFinite(timestamp)) return '—';
+  const diff = Date.now() - timestamp;
   if (diff < 60_000) return t('time.justNow', '刚刚');
   if (diff < 3600_000) return Math.floor(diff / 60_000) + t('time.minutesAgo', ' 分钟前');
   if (diff < 86400_000) return Math.floor(diff / 3600_000) + t('time.hoursAgo', ' 小时前');
@@ -46,9 +49,8 @@ export async function api(method, path, body) {
   }
   const r = await fetch(path, opts);
   const d = await r.json().catch(() => ({}));
-  // 401 是 "未登录" 业务状态, 不 throw, 让调用方处理 (d.error 也忽略)
-  // 5xx + 4xx 其他 + d.error 仍 throw (真错误)
-  if (r.status === 401) return d;
+  // GET 允许调用方识别未登录；写请求必须抛错，避免失败后显示提交成功。
+  if (r.status === 401 && method === 'GET') return d;
   if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
   return d;
 }

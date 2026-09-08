@@ -20,16 +20,17 @@ export async function onRequestPost(context) {
   if (!env.DB) return err(500, 'D1 binding DB not configured');
   const token = readToken(request);
   const sess = await getSession(env, token);
-  if (!sess) return err(401, '请先登录玩家账号');
+  if (!sess || !sess.player_id) return err(401, '请先登录玩家账号');
 
   let body;
   try { body = await request.json(); } catch (e) { return err(400, 'Invalid JSON'); }
 
-  const roomId = stripHtml(body.room_id || '').trim();
-  const roomName = stripHtml(body.room_name || '').trim();
-  const inDate = (body.in_date || '').trim();
-  const outDate = (body.out_date || '').trim();
-  const persons = parseInt(body.persons || 1, 10);
+  if (!body || typeof body !== 'object' || Array.isArray(body)) return err(400, 'Invalid JSON');
+  const roomId = Number(body.room_id);
+  if (!Number.isSafeInteger(roomId) || roomId <= 0) return err(400, '房型 ID 无效');
+  const inDate = typeof body.in_date === 'string' ? body.in_date.trim() : '';
+  const outDate = typeof body.out_date === 'string' ? body.out_date.trim() : '';
+  const persons = Number(body.persons ?? 1);
   const breakfast = body.breakfast ? 1 : 0;
   const name = stripHtml(body.name || '').trim();
   const contact = stripHtml(body.contact || '').trim();
@@ -40,18 +41,23 @@ export async function onRequestPost(context) {
   }
   const inD = new Date(inDate);
   const outD = new Date(outDate);
-  if (isNaN(inD) || isNaN(outD) || outD <= inD) return err(400, '日期无效');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(inDate) || !/^\d{4}-\d{2}-\d{2}$/.test(outDate) ||
+      isNaN(inD) || isNaN(outD) || outD <= inD ||
+      inD.toISOString().slice(0, 10) !== inDate || outD.toISOString().slice(0, 10) !== outDate) return err(400, '日期无效');
   const nights = Math.round((outD - inD) / 86400000);
-  if (persons < 1 || persons > 6) return err(400, '入住人数 1-6');
+  if (!Number.isInteger(persons) || persons < 1 || persons > 6) return err(400, '入住人数 1-6');
 
   // v49-fix-12: 服务端拒收草稿酒店 / 草稿房型 — 防止前端绕过直接 POST
   // (主页 hotel 预览 / hotel.html 都已禁用按钮, 但 API 仍要兜底)
   const roomRow = await env.DB.prepare(
-    'SELECT r.id AS room_id, r.is_active AS room_active, h.is_active AS hotel_active, h.name AS hotel_name FROM hotel_rooms r JOIN hotels h ON h.id = r.hotel_id WHERE r.id = ?'
+    'SELECT r.id AS room_id, r.name AS room_name, r.capacity, r.is_active AS room_active, h.is_active AS hotel_active, h.name AS hotel_name FROM hotel_rooms r JOIN hotels h ON h.id = r.hotel_id WHERE r.id = ?'
   ).bind(roomId).first();
   if (!roomRow) return err(404, '房型不存在');
   if (!roomRow.room_active) return err(400, '此房型暂未上线, 无法预订');
   if (!roomRow.hotel_active) return err(400, '此酒店正在筹建中, 暂不开放预订');
+
+  if (persons > roomRow.capacity) return err(400, '入住人数超过房型容量');
+  const roomName = roomRow.room_name;
 
   const ins = await env.DB.prepare(
     `INSERT INTO bookings (player_id, room_id, room_name, in_date, out_date, nights, persons, breakfast, name, contact, note)

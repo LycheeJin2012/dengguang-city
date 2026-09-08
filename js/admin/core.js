@@ -1,8 +1,10 @@
+import { parseDate } from '../date.js';
 // v44 重写: admin 共享核心 (utilities, API wrapper, helpers)
 // 所有 tab 模块都从这里 import 共享函数
 // 取代旧 admin.v2551.js 顶部的 $  / $$  / esc  / fmt  / api  / _fileToDataURL  等
 // v50-N6 B6: re-export i18n t()
-export { t } from '../i18n/core.js';
+import { t } from '../i18n/core.js?v=n5';
+export { t };
 
 // ---------- DOM helpers ----------
 export const $ = s => document.querySelector(s);
@@ -16,7 +18,8 @@ export const esc = s => String(s == null ? '' : s)
 // ---------- ISO 日期格式化 ----------
 export const fmt = iso => {
   if (!iso) return '—';
-  const d = new Date(iso);
+  const d = parseDate(iso);
+  if (!Number.isFinite(d.getTime())) return '—';
   const p = n => String(n).padStart(2, '0');
   return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) +
     ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
@@ -53,7 +56,7 @@ export async function api(method, path, body) {
   }
   const r = await fetch(path, opts);
   const d = await r.json().catch(() => ({}));
-  if (r.status === 401) return d;
+  if (r.status === 401 && method === 'GET') return d;
   if (!r.ok || d.error) throw new Error(d.error || `HTTP ${r.status}`);
   return d;
 }
@@ -95,8 +98,13 @@ export function cacheGet(key) {
 }
 export function cacheSet(key, data) { _cache.set(key, { ts: Date.now(), data }); }
 export function cacheClear(prefix) {
-  if (prefix) for (const k of _cache.keys()) if (k.startsWith(prefix)) _cache.delete(k);
-  else _cache.clear();
+  if (prefix) {
+    for (const k of _cache.keys()) {
+      if (k.startsWith(prefix)) _cache.delete(k);
+    }
+  } else {
+    _cache.clear();
+  }
 }
 
 // ---------- 通行密钥 WebAuthn helpers ----------

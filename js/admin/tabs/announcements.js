@@ -1,6 +1,6 @@
 // v44 重写: 公告 tab (super only)
 // v50-N6 B6: i18n 化
-import { $, esc, fmt, GET, POST, DELETE as DEL, safeRender, cacheClear, t } from '../core.js?v=v46-fix-modules';
+import { $, esc, fmt, GET, POST, safeRender, cacheClear, t } from '../core.js?v=v46-fix-modules';
 
 export async function renderAnnouncements() {
   await safeRender(async () => {
@@ -8,7 +8,10 @@ export async function renderAnnouncements() {
     const d = await GET('/api/announcements');
     const list = d.announcements || [];
     const box = $('#annList'), empty = $('#annEmpty');
-    if (!list.length) { box.innerHTML = ''; empty.style.display = 'flex'; return; }
+    const exportBtn = document.getElementById('annExport');
+    if (exportBtn) exportBtn.onclick = () => exportAnnouncementsCsv(list);
+    if (!list.length) { box.innerHTML = ''; box.style.display = 'none'; empty.style.display = 'flex'; return; }
+    box.style.display = '';
     empty.style.display = 'none';
     box.innerHTML = list.map(a => `
       <article class="msg-item" data-id="${a.id}">
@@ -30,7 +33,7 @@ export async function renderAnnouncements() {
       el.querySelector('[data-act="del"]').onclick = () => annDel(id);
     });
     // v50-N6: 公告列表导出 CSV
-    document.getElementById('annExport')?.addEventListener('click', () => exportAnnouncementsCsv(list));
+
   });
 }
 
@@ -128,7 +131,7 @@ export function annEdit(a) {
 export async function annDel(id) {
   if (!confirm(t('admin.ann.confirmDel', '删除该公告？'))) return;
   try {
-    await DEL('/api/init?action=announcement-delete&id=' + id);
+    await POST('/api/init?action=announcement-delete&id=' + id, {});
     cacheClear('announcements:');
     renderAnnouncements();
   } catch (e) { if (window._toast) window._toast('失败: ' + e.message, 'error'); }

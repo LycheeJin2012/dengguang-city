@@ -53,5 +53,5 @@ export async function onRequestGet(context) {
     announcements: c(announcementsTotal),
     gallery:       c(galleryTotal),
     admins:         c(adminsTotal),
-  }, { headers: { 'Cache-Control': 'private, max-age=10' } });
+  }, { headers: { 'Cache-Control': 'no-store' } });
 }

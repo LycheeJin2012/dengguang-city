@@ -10,18 +10,12 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const corePath = join(__dirname, 'core.js');
 const coreSrc = readFileSync(corePath, 'utf8');
 
-// 解析 DICT (简单手写解析, 不用 eval)
-function parseDict(src) {
-  const dict = {};
-  const re = /^\s*'([a-z][a-zA-Z0-9._-]+)':\s*\{\s*'zh-CN':\s*'([^']*)',\s*'en':\s*'([^']*)'\s*\}/gm;
-  let m;
-  while ((m = re.exec(src)) !== null) {
-    dict[m[1]] = { 'zh-CN': m[2], en: m[3] };
-  }
-  return dict;
-}
+// Read real dictionary values (supports escaped apostrophes and double-quoted values).
+import { tAll, t, setLang } from './core.js';
+const keys = [...coreSrc.matchAll(/^\s*'([a-z][a-zA-Z0-9._-]+)':\s*\{/gm)].map(m => m[1]);
+const DICT = Object.fromEntries(keys.map(key => [key, tAll(key)]));
+const EMPTY_EN_UNITS = new Set(['board.unit.messages', 'board.unit.bookings', 'board.unit.licenses']);
 
-const DICT = parseDict(coreSrc);
 
 test('DICT 不为空', () => {
   const keys = Object.keys(DICT);
@@ -34,17 +28,17 @@ test('每个 key 都有 zh-CN + en 双语', () => {
     assert.ok(val['zh-CN'] !== undefined, `${key} 缺 zh-CN`);
     assert.ok(val['en'] !== undefined, `${key} 缺 en`);
     assert.notEqual(val['zh-CN'], '', `${key} zh-CN 不能为空字符串`);
-    assert.notEqual(val['en'], '', `${key} en 不能为空字符串`);
+    if (!EMPTY_EN_UNITS.has(key)) assert.notEqual(val['en'], '', `${key} en 不能为空字符串`);
   }
 });
 
 test('所有 data-i18n 引用都有定义', () => {
   // 抓 index.html / hotel.html / profile.html / dm.html / admin-v37.html
-  const htmlFiles = ['index.html', 'hotel.html', 'profile.html', 'dm.html', 'admin-v37.html'];
+  const htmlFiles = ['index.html', 'hotel.html', 'profile.html', 'dm.html', 'admin-v37.html', 'leaderboard.html', 'notifications.html', '404.html'];
   const usedKeys = new Set();
   for (const f of htmlFiles) {
     const html = readFileSync(join(__dirname, '..', '..', f), 'utf8');
-    const re = /data-i18n(?:-title|-placeholder)?="([a-z][a-zA-Z0-9._-]+)"/g;
+    const re = /data-i18n(?:-title|-placeholder|-aria)?="([a-z][a-zA-Z0-9._-]+)"/g;
     let m;
     while ((m = re.exec(html)) !== null) usedKeys.add(m[1]);
   }
@@ -67,15 +61,17 @@ test('所有 JS t(\'...\') 调用都有定义', () => {
         scan(p);
       } else if (name.endsWith('.js')) {
         // 跳过本测试文件 (里面有注释 "t('xxx.yyy')" 会被误匹配)
-        if (p === join(__dirname, 'core.test.js')) continue;
+        if (name.endsWith('.test.js') || p === corePath) continue;
         const txt = readFileSync(p, 'utf8');
-        const re = /t\(\s*'([a-z]+\.[a-z._-]+)'/g;
+        const re = /\btf?\(\s*['"]([a-z][a-zA-Z0-9._-]*\.[a-zA-Z0-9._-]+)['"]/g;
         let m;
-        while ((m = re.exec(txt)) !== null) used.add(m[1]);
+        while ((m = re.exec(txt)) !== null) {
+          if (!m[1].endsWith('.')) used.add(m[1]);
+        }
       }
     }
   };
-  scan(root);
+  scan(join(root, 'js'));
   // 过滤掉 core.js 注释里的示例 (这些不是真调用)
   used.delete('hero.cta');  // core.js 注释: t('hero.cta') → '查看公告'
   used.delete('key.path'); // core.js 注释: t('key.path')

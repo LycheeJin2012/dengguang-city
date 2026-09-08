@@ -305,8 +305,8 @@ function openBookModal(roomId) {
   const today = new Date();
   const tomorrow = new Date(today); tomorrow.setDate(tomorrow.getDate() + 1);
   const dayAfter = new Date(today); dayAfter.setDate(dayAfter.getDate() + 2);
-  const bi = $('#bookIn'); if (bi) bi.value = tomorrow.toISOString().slice(0, 10);
-  const bo = $('#bookOut'); if (bo) bo.value = dayAfter.toISOString().slice(0, 10);
+  const bi = $('#bookIn'); if (bi) bi.value = [tomorrow.getFullYear(), String(tomorrow.getMonth() + 1).padStart(2, '0'), String(tomorrow.getDate()).padStart(2, '0')].join('-');
+  const bo = $('#bookOut'); if (bo) bo.value = [dayAfter.getFullYear(), String(dayAfter.getMonth() + 1).padStart(2, '0'), String(dayAfter.getDate()).padStart(2, '0')].join('-');
   const m = $('#bookMsg'); if (m) m.textContent = '';
   updateBookTotal();
   const mask = $('#bookMask');

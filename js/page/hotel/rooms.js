@@ -20,6 +20,7 @@ export async function loadRooms() {
     const bundle = d.bundle || {};
     const hotels = bundle.hotels || [];
     const allRooms = bundle.rooms || [];
+    ROOMS.length = 0;
     if (!hotels.length && !allRooms.length) {
       if (grid) grid.innerHTML = `<div class="empty-state"><div class="empty-icon">🏨</div><p>${t('hotel.empty', '酒店正在筹建中, 上线后会在这里显示。')}</p></div>`;
       if (count) count.textContent = tf('hotel.count', { n: 0, total: 0 });
@@ -143,7 +144,7 @@ export function renderRooms() {
       if (!room) return;
       // v50-N6 fix: detail 调本文件 openRoomDetail, book 按钮才动态 import book.js (避免循环)
       if (btn.dataset.action === 'detail') openRoomDetail(room);
-      else import('./book.js').then(m => m.openBookModal(room));
+      else import('./book.js?v=v46-fix-modules').then(m => m.openBookModal(room));
     });
   });
 }
@@ -189,14 +190,16 @@ export function openRoomDetail(r) {
       <p class="rd-line"><b>${t('hotel.guestsLabel')}:</b> ${r.guests}+ ${t('common.person')}</p>
       <p class="rd-line"><b>${t('hotel.detail.price')}:</b> ${r.price ? '💎 ' + r.price + ' / ' + t('hotel.perNight', '晚') : t('hotel.price.tbd', '待定')}</p>
       <ul class="rd-features">${r.features.map(f => `<li>${escHtml(f)}</li>`).join('')}</ul>
-      <div class="rd-cta"><button type="button" class="btn btn-primary" id="rdBook">📅 ${t('hotel.btn.book')}</button></div>
+      <div class="rd-cta">${r.statusKey === 'open' && !r.hotelDraft
+        ? `<button type="button" class="btn btn-primary" id="rdBook">📅 ${t('hotel.btn.book')}</button>`
+        : `<button type="button" class="btn btn-disabled" disabled>🚧 ${t('hotel.btn.unavailable')}</button>`}</div>
     </div>`;
   if (mask) { mask.style.display = ''; document.body.style.overflow = 'hidden'; }
   setTimeout(() => {
     const b = $('#rdBook');
     if (b) b.addEventListener('click', () => {
       closeRoomDetail();
-      import('./book.js').then(m => m.openBookModal(r));
+      import('./book.js?v=v46-fix-modules').then(m => m.openBookModal(r));
     });
   }, 0);
 }

@@ -7,7 +7,8 @@ export async function renderAdminList() {
     const d = await GET('/api/admin/admins');
     const list = d.admins || [];
     const box = $('#adminList'), empty = $('#adminListEmpty');
-    if (!list.length) { box.innerHTML = ''; empty.style.display = 'flex'; return; }
+    if (!list.length) { box.innerHTML = ''; box.style.display = 'none'; empty.style.display = 'flex'; return; }
+    box.style.display = '';
     empty.style.display = 'none';
     box.innerHTML = list.map(a => {
       const isSuper = a.role === 'super';
@@ -34,7 +35,7 @@ export async function renderAdminList() {
       el.querySelector('[data-act="reset"]').onclick = () => adminReset(id);
       el.querySelector('[data-act="del"]')?.addEventListener('click', () => adminDel(id));
       el.querySelector('[data-act="link"]')?.addEventListener('click', () => adminLink(id));
-      el.querySelector('[data-act="unlink"]')?.addEventListener('click', () => adminDel(id, 'unlink'));
+      el.querySelector('[data-act="unlink"]')?.addEventListener('click', () => adminDel(id, 'unlink', list.find(a => a.id === id)?.linked_player_id));
     });
   });
 }
@@ -50,11 +51,11 @@ export async function adminReset(id) {
     if (window._toast) window._toast(t('admin.admins.resetPw.success', '密码已重置'), 'success');
   } catch (e) { if (window._toast) window._toast(t('admin.admins.fail', '失败') + ': ' + e.message, 'error'); }
 }
-export async function adminDel(id, kind) {
+export async function adminDel(id, kind, playerId) {
   if (kind === 'unlink') {
     if (!confirm(t('admin.admins.unlink.confirm', '解绑该玩家？'))) return;
     try {
-      await POST('/api/init?action=admin-unmerge-account', { admin_id: id, player_id: 0 });
+      await POST('/api/init?action=admin-unmerge-account', { admin_id: id, player_id: playerId });
       cacheClear('admins:');
       renderAdminList();
     } catch (e) { if (window._toast) window._toast(t('admin.admins.fail', '失败') + ': ' + e.message, 'error'); }

@@ -23,7 +23,7 @@ export async function onRequestGet(context) {
      FROM kart_signups k LEFT JOIN players p ON p.id = k.player_id
      ORDER BY k.created_at DESC LIMIT 200`
   ).all();
-  return ok({ signups: rows.results }, { headers: { 'Cache-Control': 'private, max-age=10' } });
+  return ok({ signups: rows.results }, { headers: { 'Cache-Control': 'no-store' } });
 }
 
 export async function onRequestPatch(context) {

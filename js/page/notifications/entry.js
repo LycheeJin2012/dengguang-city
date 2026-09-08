@@ -1,6 +1,7 @@
+import { parseDate } from '../../date.js';
 // v50-N6 (C2): 通知中心页 - 4 filter + 全部已读
-import { $, $$ } from '../util.js?v=v46-fix-modules';
-import { t, setPageTitle, setMetaDescription, initI18n } from '../../i18n/core.js?v=n5';
+import { $, $$, escHtml } from '../util.js?v=v46-fix-modules';
+import { t, getLang, setLang, setPageTitle, setMetaDescription, initI18n } from '../../i18n/core.js?v=n5';
 
 const TYPE_ICON = {
   message_reply: '💬',
@@ -13,7 +14,8 @@ let _currentFilter = 'all';
 
 function fmt(iso) {
   if (!iso) return '—';
-  const d = new Date(iso.replace(' ', 'T') + 'Z');
+  const d = parseDate(iso);
+  if (!Number.isFinite(d.getTime())) return '—';
   const now = Date.now();
   const diff = (now - d.getTime()) / 1000;
   if (diff < 60) return t('time.justNow', '刚刚');
@@ -34,7 +36,7 @@ async function loadNotifs() {
     renderSummary(d.unread_count || 0);
     renderList();
   } catch (e) {
-    if (list) list.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${t('common.error.load', '加载失败')}: ${e.message}</p></div>`;
+    if (list) list.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>${t('common.error.load', '加载失败')}: ${escHtml(e.message)}</p></div>`;
   }
 }
 
@@ -60,15 +62,20 @@ function renderList() {
   list.innerHTML = filtered.map(n => {
     const icon = TYPE_ICON[n.type] || TYPE_ICON.default;
     const isUnread = !n.read_at;
-    return `<article class="notif-item ${isUnread ? 'notif-unread' : ''}" data-id="${n.id}" data-link="${n.link || ''}">
+    let link = '';
+    try {
+      const url = new URL(n.link, location.href);
+      if (n.link && url.origin === location.origin && /^https?:$/.test(url.protocol)) link = url.href;
+    } catch {}
+    return `<article class="notif-item ${isUnread ? 'notif-unread' : ''}" data-id="${n.id}" data-link="${escHtml(link)}">
       <div class="notif-icon">${icon}</div>
       <div class="notif-body">
-        <div class="notif-head"><b>${n.title || t('notif.untitled', '(无标题)')}</b>${isUnread ? '<span class="notif-dot"></span>' : ''}</div>
-        <p class="notif-text">${n.body || ''}</p>
+        <div class="notif-head"><b>${escHtml(n.title || t('notif.untitled', '(无标题)'))}</b>${isUnread ? '<span class="notif-dot"></span>' : ''}</div>
+        <p class="notif-text">${escHtml(n.body || '')}</p>
         <small class="notif-time">${fmt(n.created_at)}</small>
       </div>
       <div class="notif-actions">
-        ${n.link ? `<a href="${n.link}" class="btn btn-ghost btn-small" data-act="open">${t('notif.open', '查看')}</a>` : ''}
+        ${link ? `<a href="${escHtml(link)}" class="btn btn-ghost btn-small" data-act="open">${t('notif.open', '查看')}</a>` : ''}
         ${isUnread ? `<button type="button" class="btn btn-primary btn-small" data-act="read">${t('notif.read', '✓ 已读')}</button>` : ''}
       </div>
     </article>`;
@@ -79,7 +86,9 @@ function renderList() {
       const item = e.target.closest('.notif-item');
       const id = +item.dataset.id;
       try {
-        await fetch('/api/notifications?id=' + id, { method: 'PATCH', credentials: 'include' });
+        const response = await fetch('/api/notifications?id=' + id, { method: 'PATCH', credentials: 'include' });
+        const result = await response.json();
+        if (!response.ok || !result.ok) throw new Error(result.error || `HTTP ${response.status}`);
         const n = _allNotifs.find(x => x.id === id);
         if (n) n.read_at = new Date().toISOString();
         renderSummary(_allNotifs.filter(x => !x.read_at).length);
@@ -116,23 +125,20 @@ function bindFilters() {
 function bindAll() {
   setPageTitle('page.title.notifications', 'Notification Center · Light City');
   setMetaDescription('page.meta.notifications',
-    '灯光市通知中心 - 站内所有通知, 留言回复 / DM / 公告 / 订阅推送。',
     'Light City Notification Center - All in-site notifications: message replies, DMs, announcements.');
   bindFilters();
   // v50-N6: notifications 自带 lang-toggle 按钮, 绑事件
   const langBtn = document.getElementById('langToggle');
   if (langBtn) {
     const refresh = () => {
-      const lang = localStorage.getItem('lc_lang') || 'zh-CN';
+      const lang = getLang();
       langBtn.textContent = lang === 'zh-CN' ? '🌐 EN' : '🌐 中文';
     };
     refresh();
     langBtn.addEventListener('click', () => {
-      const cur = localStorage.getItem('lc_lang') || 'zh-CN';
+      const cur = getLang();
       const next = cur === 'zh-CN' ? 'en' : 'zh-CN';
-      localStorage.setItem('lc_lang', next);
-      document.documentElement.lang = next;
-      window.dispatchEvent(new CustomEvent('lc:langchange', { detail: { lang: next } }));
+      setLang(next);
       refresh();
       // 重拉通知 (时间 label / 标题跟语言走)
       loadNotifs();
@@ -141,4 +147,5 @@ function bindAll() {
   loadNotifs();
 }
 
-initI18n().then(bindAll);
+initI18n();
+bindAll();
