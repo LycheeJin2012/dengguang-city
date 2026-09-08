@@ -1,7 +1,11 @@
 import {SCHEMA,MIGRATIONS} from '../api/_schema.js';
 const pending=new WeakMap();
-const VERSION=58;
+export const SCHEMA_VERSION=59;
+const VERSION=SCHEMA_VERSION;
 const ADDITIONS=[
+ // Older player tables predate these columns; CREATE TABLE IF NOT EXISTS never adds them.
+ "ALTER TABLE players ADD COLUMN game_id TEXT",
+ "ALTER TABLE players ADD COLUMN last_login_at TEXT",
  "CREATE TABLE IF NOT EXISTS dispatch_settings(id INTEGER PRIMARY KEY CHECK(id=1),enabled INTEGER NOT NULL DEFAULT 1,urgent_admin_id INTEGER,complex_admin_id INTEGER,max_active INTEGER NOT NULL DEFAULT 12,revision INTEGER NOT NULL DEFAULT 0,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
  "INSERT OR IGNORE INTO dispatch_settings(id) VALUES(1)",
  "ALTER TABLE tickets ADD COLUMN dispatch_hold INTEGER NOT NULL DEFAULT 0",

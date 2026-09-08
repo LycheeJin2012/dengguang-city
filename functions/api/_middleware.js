@@ -1,5 +1,5 @@
 import {shouldAudit,auditResource} from '../_core/audit-policy.js';
-import {ensureDatabase} from '../_core/database.js';
+import {ensureDatabase,SCHEMA_VERSION} from '../_core/database.js';
 import {endpoint,fail} from '../_core/request.js';
 import {auditActor,auditStatement,auditedDatabase} from '../_core/audit.js';
 export async function onRequest(context){return endpoint(async()=>{
@@ -28,5 +28,5 @@ export async function onRequest(context){return endpoint(async()=>{
   if(!resourceId&&response.ok&&request.method==='POST'&&response.headers.get('Content-Type')?.includes('application/json')){try{const result=await response.clone().json();resourceId=(url.searchParams.get('action')||'').startsWith('passkey-')?null:result.id||result.user_id||result.user?.id||null;if(url.pathname==='/api/register'&&result.user)effective={type:'applicant',id:result.user.id,name:result.user.username};}catch{}}
   await auditStatement(base,effective,{...event,action,resource_type:event.resource_type,resource_id:resourceId,status:response.status,details:{action:url.searchParams.get('action')||null}}).run();
  }
- const result=new Response(response.body,response);result.headers.set('Cache-Control','no-store');result.headers.set('X-Content-Type-Options','nosniff');result.headers.set('X-Request-Id',requestId);return result;
+ const result=new Response(response.body,response);result.headers.set('Cache-Control','no-store');result.headers.set('X-Content-Type-Options','nosniff');result.headers.set('X-Request-Id',requestId);result.headers.set('X-App-Schema-Version',String(SCHEMA_VERSION));return result;
 });}

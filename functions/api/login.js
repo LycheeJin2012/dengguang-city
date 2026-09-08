@@ -24,7 +24,6 @@ export const onRequestPost=c=>endpoint(async()=>{
  if(!account||!await verifyPassword(password,account.password_hash,account.salt)){await c.env.DB.prepare('INSERT INTO auth_attempts(fingerprint) VALUES(?)').bind(key).run();fail(401,'账号或密码错误');}
  if(player&&player.status!=='active'||owner&&owner.status!=='active')fail(403,'账号尚未激活或已停用');
  await c.env.DB.prepare('DELETE FROM auth_attempts WHERE fingerprint=?').bind(key).run();const session=await createSession(c.env,player?.id||null,admin?.id||null,owner?.id||null);
- if(player)await c.env.DB.prepare("UPDATE players SET last_login_at=datetime('now') WHERE id=?").bind(player.id).run();
  const response=reply({user_id:account.id,role:admin?.role||(owner?'hotel_owner':'player')});response.headers.set('Set-Cookie',cookie(session.token));return response;
 });
 export const onRequestDelete=c=>endpoint(async()=>{await destroySession(c.env,readToken(c.request));const response=reply({logged_out:true});response.headers.set('Set-Cookie',cookie('',0));return response;});
