@@ -3,6 +3,7 @@ import http from 'node:http';import fs from 'node:fs';import path from 'node:pat
 import {database,dispatch} from './local-d1.mjs';import {ensureDatabase} from '../functions/_core/database.js';import {hashPassword} from '../functions/_shared/auth.js';
 const root=fileURLToPath(new URL('../',import.meta.url)),dir=fs.mkdtempSync(path.join(os.tmpdir(),'light-city-v51-')),DB=database(path.join(dir,'dev.sqlite'));await ensureDatabase(DB);
 const {hash,salt}=await hashPassword('LocalTest51!');await DB.prepare("INSERT INTO admins(username,password_hash,salt,role) VALUES('qa-admin',?,?,'super')").bind(hash,salt).run();for(const u of ['qa-citizen','qa-neighbor'])await DB.prepare("INSERT INTO players(username,email,password_hash,salt,status,emeralds,bio) VALUES(?,?,?,?,'active',100,'本地测试账号，仅用于重写验收')").bind(u,u+'@example.invalid',hash,salt).run();
+for(const username of ['wzc','SIM_漫画家'])await DB.prepare("INSERT INTO admins(username,password_hash,salt,role) VALUES(?,?,?,'admin')").bind(username,hash,salt).run();
 await DB.prepare('UPDATE admins SET linked_player_id=2 WHERE id=1').run();
 await DB.prepare('UPDATE players SET linked_admin_id=1 WHERE id=2').run();
 await DB.prepare("INSERT INTO hotel_owners(username,password_hash,salt,linked_player_id,created_by) VALUES('qa-owner',?,?,1,1)").bind(hash,salt).run();

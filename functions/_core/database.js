@@ -1,7 +1,15 @@
 import {SCHEMA,MIGRATIONS} from '../api/_schema.js';
 const pending=new WeakMap();
-const VERSION=57;
+const VERSION=58;
 const ADDITIONS=[
+ "CREATE TABLE IF NOT EXISTS dispatch_settings(id INTEGER PRIMARY KEY CHECK(id=1),enabled INTEGER NOT NULL DEFAULT 1,urgent_admin_id INTEGER,complex_admin_id INTEGER,max_active INTEGER NOT NULL DEFAULT 12,revision INTEGER NOT NULL DEFAULT 0,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+ "INSERT OR IGNORE INTO dispatch_settings(id) VALUES(1)",
+ "ALTER TABLE tickets ADD COLUMN dispatch_hold INTEGER NOT NULL DEFAULT 0",
+ "ALTER TABLE tickets ADD COLUMN dispatch_token TEXT",
+ "ALTER TABLE tickets ADD COLUMN dispatch_note TEXT",
+ "ALTER TABLE messages ADD COLUMN dispatch_hold INTEGER NOT NULL DEFAULT 0",
+ "ALTER TABLE messages ADD COLUMN dispatch_token TEXT",
+ "ALTER TABLE messages ADD COLUMN dispatch_note TEXT",
  "ALTER TABLE tickets ADD COLUMN contact TEXT",
  "ALTER TABLE tickets ADD COLUMN public_reply_by INTEGER",
  "ALTER TABLE messages ADD COLUMN public_reply_by INTEGER",

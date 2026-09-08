@@ -1,3 +1,4 @@
+import {renderDispatchPolicy} from './dispatch-policy.js';
 import {renderAudit,viewAudit} from './audit-ui.js';
 import {ticketTimeline,replyAuthor} from './ticket-form.js';
 import {attachmentPicker,renderAttachments} from './attachments.js';
@@ -241,7 +242,7 @@ async function tickets(){
     )
   }
   );
-  if(dispatching)$('[name=status]',view).value='open';
+  if(dispatching){$('[name=status]',view).value='open';const policy=document.createElement('section');view.prepend(policy);region(policy,()=>null,()=>renderDispatchPolicy(policy));}
   const load=()=>region($('#records',view),async()=>{const [tickets,admins]=await Promise.all([api('/api/tickets?'+params()),api('/api/admin/admins')]);adminNames=new Map(admins.admins.map(a=>[a.id,a.username]));return tickets;},(d,box)=>{
     attachExport(d.tickets);table(box,[['id','ID'],['title',tr('标题','Title')],['player_username',tr('市民','Citizen')],['category',tr('分类','Category'),category=>esc(({message:tr('留言','Message'),hotel:tr('酒店','Hotel'),license:tr('驾照','License'),race:tr('赛车','Race'),kart:tr('卡丁车','Kart'),service:tr('服务','Service'),comment:tr('评论','Comment')})[category]||category)],['status',tr('状态','Status'),status],['attachment_count',tr('附件','Attachments'),n=>n?'📎 '+Number(n):'—'],['assignee_id',tr('承办人','Assignee'),id=>esc(id?adminNames.get(id)||'#'+id:tr('未派单','Unassigned'))]],d.tickets,[{
       key:'assign',label:tr('派单','Assign'),when:canHandleTicket,run:async ticket=>{
@@ -249,9 +250,9 @@ async function tickets(){
         modal(tr('派单 · ','Assign · ')+ticket.title,field('assignee_id',tr('承办管理员','Assign to'),'select',ticket.assignee_id||'',{required:false,options:[['',tr('取消派单','Unassign')],...data.admins.map(a=>[a.id,a.username])]}),{label:tr('确认派单','Confirm assignment'),submit:async values=>{await patch('/api/tickets?id='+encodeURIComponent(ticket.id),{assignee_id:values.assignee_id?Number(values.assignee_id):null});toast(tr('派单已保存','Assignment saved'));await load();}});
       }
     },{
-      key:'ai',label:tr('AI 派单','AI assignment'),when:canHandleTicket,run:async ticket=>{
-        const suggestion=await api('/api/admin/dispatch-suggestion?id='+encodeURIComponent(ticket.id));
-        modal(tr('派单建议','Assignment suggestion'),`<div class="notice wide"><b>${suggestion.source==='ai'?tr('AI 推荐','AI recommendation'):tr('工作量规则推荐（AI 暂不可用）','Workload recommendation (AI unavailable)')}</b><p>${esc(suggestion.reason)}</p></div>`+field('assignee_id',tr('承办管理员','Assignee'),'select',suggestion.admin.id,{options:suggestion.candidates.map(a=>[a.id,`#${a.id} · ${a.username} (${a.workload})`])}),{label:tr('确认派单','Confirm assignment'),submit:async values=>{await patch('/api/tickets?id='+encodeURIComponent(ticket.id),{assignee_id:Number(values.assignee_id),assignment_mode:suggestion.source});await load();toast(tr('派单已保存','Assignment saved'));}});
+      key:'ai',label:tr('自动补派','Auto assign'),when:t=>canHandleTicket(t)&&!t.assignee_id&&!t.dispatch_hold,run:async ticket=>{
+        const result=await post('/api/admin/auto-dispatch?id='+encodeURIComponent(ticket.id),{});
+        toast(result.status==='assigned'?tr('已自动派给 ','Assigned to ')+result.admin.username:result.reason);await load();refreshStats();
       }
     },{
       key:'detail',label:tr('处理工单','Review ticket'),run:async r=>{
