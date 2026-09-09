@@ -1,3 +1,4 @@
+import {renderExamReview} from './exam-review.js';
 import {renderKnowledge} from './knowledge-admin.js';
 import {openExamAuthoring} from './exam-authoring.js';
 import {attachTicketInsights} from './ticket-insights.js';
@@ -15,7 +16,7 @@ import {
   passkeyLogin,registerPasskey
 }
 from './security.js';
-const names={knowledge:['📚 知识库','📚 Knowledge base'],support:['🎧 人工客服','🎧 Human support'],owners:['🔑 酒店经营账户','🔑 Hotel owner accounts'],audit:['📒 操作留痕','📒 Operation audit'],
+const names={examreview:['✍️ 简答复核','✍️ Exam review'],knowledge:['📚 知识库','📚 Knowledge base'],support:['🎧 人工客服','🎧 Human support'],owners:['🔑 酒店经营账户','🔑 Hotel owner accounts'],audit:['📒 操作留痕','📒 Operation audit'],
   dispatch:['📋 派单','📋 Dispatch'],questions:['📚 模拟题库','📚 Question bank'],tickets:['🎫 工单中心','🎫 Tickets'],players:['👥 玩家管理','👥 Citizens'],bookings:['🏨 酒店预订','🏨 Bookings'],kart:['🛞 卡丁车报名','🛞 Kart signups'],circuit:['🏁 国际试车','🏁 Circuit signups'],license:['🚗 驾照报名','🚗 License applications'],tracks:['🏎️ 赛车场管理','🏎️ Tracks'],hotels:['🏡 酒店管理','🏡 Hotels'],rooms:['🛏️ 房型管理','🛏️ Rooms'],requirements:['📝 考试要求','📝 Requirements'],announcements:['📜 公告管理','📜 Announcements'],gallery:['🖼️ 图集管理','🖼️ Gallery'],admins:['🛡️ 管理员','🛡️ Administrators'],dms:['✉️ 私信监管','✉️ DM moderation'],times:['🏆 成绩审核','🏆 Race verification'],password:['🔑 账号安全','🔑 Security']
 }
 ;
@@ -471,7 +472,8 @@ async function owners(){
 async function loadActive(){
   const page=active;
   try{
-    if(page==='knowledge')await renderKnowledge(view);
+    if(page==='examreview')await renderExamReview(view);
+    else if(page==='knowledge')await renderKnowledge(view);
     else if(page==='support')await tickets();
     else if(page==='audit')await renderAudit(view);
     else if(resources[page])await resourceList(resources[page]);

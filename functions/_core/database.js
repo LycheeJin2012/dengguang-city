@@ -1,8 +1,12 @@
 import {SCHEMA,MIGRATIONS} from '../api/_schema.js';
 const pending=new WeakMap();
-export const SCHEMA_VERSION=61;
+export const SCHEMA_VERSION=62;
 const VERSION=SCHEMA_VERSION;
 const ADDITIONS=[
+ "CREATE TABLE IF NOT EXISTS exam_sessions(id TEXT PRIMARY KEY,player_id INTEGER NOT NULL,grade TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'generating',paper TEXT,answers TEXT NOT NULL DEFAULT '{}',results TEXT,score INTEGER,known_score INTEGER NOT NULL DEFAULT 0,pending_count INTEGER NOT NULL DEFAULT 0,revision INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,submitted_at TEXT)",
+ "CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_active ON exam_sessions(player_id) WHERE status IN ('generating','in_progress','grading')",
+ "CREATE INDEX IF NOT EXISTS idx_exam_player ON exam_sessions(player_id,created_at)",
+ "CREATE TABLE IF NOT EXISTS exam_session_events(id INTEGER PRIMARY KEY AUTOINCREMENT,session_id TEXT NOT NULL,actor_type TEXT NOT NULL,actor_id INTEGER,actor_name TEXT NOT NULL,action TEXT NOT NULL,details TEXT NOT NULL DEFAULT '{}',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
  "CREATE TABLE IF NOT EXISTS knowledge_versions(article_id INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,actor_id INTEGER NOT NULL,actor_name TEXT NOT NULL,action TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY(article_id,revision)) WITHOUT ROWID",
  "CREATE TABLE IF NOT EXISTS knowledge_articles(id INTEGER PRIMARY KEY AUTOINCREMENT,title TEXT NOT NULL,question TEXT NOT NULL,answer TEXT NOT NULL,keywords TEXT NOT NULL DEFAULT '',audience TEXT NOT NULL DEFAULT 'public',status TEXT NOT NULL DEFAULT 'draft',source_kind TEXT NOT NULL DEFAULT 'manual',source_id INTEGER,source_hash TEXT,revision INTEGER NOT NULL DEFAULT 1,created_by INTEGER NOT NULL,reviewed_by INTEGER,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
  "CREATE UNIQUE INDEX IF NOT EXISTS idx_knowledge_source ON knowledge_articles(source_kind,source_id) WHERE source_id IS NOT NULL",

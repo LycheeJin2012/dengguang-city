@@ -1,3 +1,4 @@
+import {renderSurvey} from './exam-survey.js';
 import {auditRows} from './audit-ui.js';
 import {createTicket,viewCitizenTicket} from './ticket-form.js';
 import {
@@ -133,36 +134,7 @@ async function race(el){
   $('[name=track]',el).onchange=board;
   if(tracks.length)await board();
 }
-async function exam(el){
-  el.innerHTML=`<h3>${tr('驾照模拟考试','Practice driving test')}</h3><div class="actions">${['B','A','S'].map(g=>`<button data-grade="${g}">${g} ${tr('级练习','practice')}</button>`).join('')}</div><div id="quiz" class="section"></div><h3>${tr('错题本','Mistake notebook')}</h3><div id="wrong"></div>`;
-  await region($('#wrong',el),()=>api('/api/exam-questions?my=1'),(d,box)=>box.innerHTML=d.wrong_book.map(q=>`<div class="row">${esc(q.grade)} · ${esc(q.question)}</div>`).join('')||empty());
-  let version=0;
-  $$('[data-grade]',el).forEach(b=>b.onclick=async()=>{
-    const ticket=++version;await region($('#quiz',el),()=>api('/api/exam-questions?grade='+b.dataset.grade+'&limit=5&random=1'),(d,box)=>{
-      let index=0,score=0;function next(){
-        if(ticket!==version)return;const q=d.questions[index];if(!q){
-          box.innerHTML=`<div class="notice">${tr('本轮完成','Complete')} · ${score}/${d.questions.length}</div>`;return;
-        }
-        let opts=q.options||[];if(q.q_type==='judge')opts=[tr('正确','True'),tr('错误','False')];box.innerHTML=`<p>${index+1}/${d.questions.length} · ${q.q_type==='multi'?tr('多选','Multiple answers'):tr('单选','Single answer')}</p><h3>${esc(q.question)}</h3><form id="answer">${opts.map((o,i)=>`<label class="field check"><input type="${q.q_type==='multi'?'checkbox':'radio'}" name="answer" value="${q.q_type==='judge'?['true','false'][i]:String.fromCharCode(65+i)}">${esc(o)}</label>`).join('')}<div class="actions"><button class="primary">${tr('提交答案','Submit answer')}</button></div></form><div id="answer-result"></div>`;$('#answer',box).onsubmit=e=>{
-          e.preventDefault();const form=e.currentTarget,chosen=new FormData(form).getAll('answer');if(!chosen.length)return toast(tr('请先选择答案','Select an answer'),true);action($('button',form),async()=>{
-            const r=await post('/api/exam-questions/answer',{
-              question_id:q.id,answer:chosen.join('|')
-            }
-            );if(ticket!==version)return;if(r.is_correct)score++;form.remove();$('#answer-result',box).innerHTML=`<p class="notice">${tr(r.is_correct?'回答正确':'回答错误',r.is_correct?'Correct':'Incorrect')} · ${esc(r.correct_answer)}</p><p>${text(r.explanation)}</p><button id="next-question">${tr('下一题','Next')}</button>`;$('#next-question',box).onclick=()=>{
-              index++;next();
-            }
-            ;
-          }
-          );
-        }
-        ;
-      }
-      if(d.questions.length)next();else box.innerHTML=empty(tr('此等级暂未发布题目','No questions for this grade'));
-    }
-    );
-  }
-  );
-}
+async function exam(el){await renderSurvey(el);}
 async function subscriptions(el){
   const d=await api('/api/subscriptions?my=1');
   const labels=[['announcement','市政公告','Announcements'],['reply','我的留言回复','Replies to my messages'],['dm','新私信','New messages']];

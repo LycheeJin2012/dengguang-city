@@ -1459,3 +1459,14 @@ summary:not(:disabled):not([aria-disabled="true"]):active,
 .ai-editor { border: var(--border-thin); padding: 16px; background: var(--paper); }
 .ai-editor label { display: block; margin-top: 12px; }
 .ai-editor textarea { width: 100%; min-height: 100px; }
+
+/* Questionnaire examination: native controls, clear grouping and keyboard focus. */
+.survey-question { min-width: 0; margin: 20px 0; padding: 18px; border: 2px solid var(--line); background: var(--paper); }
+.survey-question legend { font-weight: 700; padding: 0 8px; color: var(--green); }
+.survey-question textarea { width: 100%; min-height: 130px; margin-top: 8px; }
+.survey-option { display: flex; align-items: flex-start; gap: 12px; padding: 12px; margin: 8px 0; border: 1px solid var(--line-soft); cursor: pointer; }
+.survey-option:has(input:checked) { background: #e4dba8; border-color: var(--green); }
+.survey-option input { flex: 0 0 auto; width: auto; margin-top: 3px; accent-color: var(--green); }
+.survey-option span { overflow-wrap: anywhere; }
+#exam-paper progress { width: 100%; height: 14px; accent-color: var(--green); }
+.survey-actions { flex-wrap: wrap; }
