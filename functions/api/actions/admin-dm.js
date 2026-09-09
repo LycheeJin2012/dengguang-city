@@ -1,9 +1,10 @@
+import {auditStatement} from '../../_core/audit.js';
 import {
   endpoint,identity,body,string,integer,reply,fail
 }
 from '../../_core/request.js';
 import {
-  aiAutoReply,getOrCreateAiBot
+  aiDraft,getOrCreateAiBot
 }
 from '../../_shared/ai.js';
 export const onRequestPost=c=>endpoint(async()=>{
@@ -29,10 +30,9 @@ export const onRequestPost=c=>endpoint(async()=>{
     ,201);
   }
   if(a==='admin-dm-ai-suggest'){
-    const content=string(b.content||b.context||'请礼貌回复市民的问题','上下文',4000);return reply({
-      draft:await aiAutoReply(c.env,content,'dm')
-    }
-    );
+    const content=string(b.content||b.context||'','上下文',4000,{required:false}),instructions=string(b.instructions||'','补充要求',1000,{required:false}),existing=string(b.existing||'','已有文字',2000,{required:false}),mode=b.mode||'reply';
+    if(!['reply','rewrite','summary'].includes(mode))fail(400,'草稿类型无效');if(mode==='rewrite'&&!existing)fail(400,'请先填写要修改的文字');
+    const result=await aiDraft(c.env,{message:content,instructions,existing,mode});await auditStatement(c.audit?.base||db,{type:'admin',id:admin.id,name:admin.username},{action:'ai.draft_created',resource_type:'direct_messages',status:200,details:{mode,instructions,source:result.source,sent:false}}).run();return reply(result);
   }
   if(a==='admin-dm-ai-struggle'){
     const bot=await getOrCreateAiBot(c.env);const rows=await db.prepare("SELECT * FROM direct_messages WHERE from_player_id=? AND (content LIKE '%人工%' OR content LIKE '%稍后%') ORDER BY id DESC LIMIT 100").bind(bot.id).all();return reply({

@@ -39,8 +39,14 @@ export const linkUrl = value => {
 }
 ;
 export const imageUrl = value => {
-  if(/^data:image\/(png|jpeg|gif|webp);base64,/i.test(value||''))return value;
-  return linkUrl(value);
+  // Presentation guard: a missing announcement / room image must not render as
+  // /null or /undefined. Empty / blank values short-circuit before linkUrl, so
+  // the <img> tag receives no src at all and the page layout stays clean.
+  if(value===null||value===undefined)return '';
+  const trimmed=String(value).trim();
+  if(trimmed==='')return '';
+  if(/^data:image\/(png|jpeg|gif|webp);base64,/i.test(trimmed))return trimmed;
+  return linkUrl(trimmed);
 }
 ;
 export function status(value) {
@@ -333,7 +339,7 @@ export function renderAccount(){
 export function shell(){
   document.documentElement.lang=state.language;
   document.documentElement.style.colorScheme='light';
-  $('#header').innerHTML=`<div class="header-inner"><a class="brand" href="/"><span class="grass-block" aria-hidden="true"></span><span><strong>${tr('灯光市人民政府','Light City Hall')}</strong><small>LIGHT CITY · EST. 2026</small></span></a><button id="menu" aria-expanded="false" aria-controls="navigation">☰ ${tr('菜单','Menu')}</button><nav id="navigation" aria-label="${tr('主要导航','Main navigation')}">${navigationMarkup()}</nav><div id="account"></div><button id="language">${state.language==='en'?'中文':'EN'}</button></div>`;
+  $('#header').innerHTML=`<div class="header-inner"><a class="brand" href="/"><span class="grass-block" aria-hidden="true"></span><span><strong>${tr('灯光市人民政府','Light City Hall')}</strong><small>LIGHT CITY · EST. 2023</small></span></a><button id="menu" aria-expanded="false" aria-controls="navigation">☰ ${tr('菜单','Menu')}</button><nav id="navigation" aria-label="${tr('主要导航','Main navigation')}">${navigationMarkup()}</nav><div id="account"></div><button id="language">${state.language==='en'?'中文':'EN'}</button></div>`;
   $('#menu').onclick=()=>{
     const open=$('#navigation').classList.toggle('open');
     $('#menu').setAttribute('aria-expanded',open);

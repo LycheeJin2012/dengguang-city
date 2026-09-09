@@ -37,6 +37,7 @@ export function isUsername(s) {
   // v16: 用户名 = 游戏ID，宽松规则：2-32 字符，允许中文/字母/数字/下划线/连字符/点/空格
   if (typeof s !== 'string') return false;
   const trimmed = s.trim();
+  if(trimmed==='灯灯客服'||trimmed.toUpperCase()==='AI_BOT')return false;
   if (trimmed.length < 2 || trimmed.length > 32) return false;
   if (/@/.test(trimmed)) return false;
   if (/[\n\r\t\0]/.test(trimmed)) return false;

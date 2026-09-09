@@ -1,8 +1,16 @@
 import {SCHEMA,MIGRATIONS} from '../api/_schema.js';
 const pending=new WeakMap();
-export const SCHEMA_VERSION=59;
+export const SCHEMA_VERSION=61;
 const VERSION=SCHEMA_VERSION;
 const ADDITIONS=[
+ "CREATE TABLE IF NOT EXISTS knowledge_versions(article_id INTEGER NOT NULL,revision INTEGER NOT NULL,payload TEXT NOT NULL,actor_id INTEGER NOT NULL,actor_name TEXT NOT NULL,action TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,PRIMARY KEY(article_id,revision)) WITHOUT ROWID",
+ "CREATE TABLE IF NOT EXISTS knowledge_articles(id INTEGER PRIMARY KEY AUTOINCREMENT,title TEXT NOT NULL,question TEXT NOT NULL,answer TEXT NOT NULL,keywords TEXT NOT NULL DEFAULT '',audience TEXT NOT NULL DEFAULT 'public',status TEXT NOT NULL DEFAULT 'draft',source_kind TEXT NOT NULL DEFAULT 'manual',source_id INTEGER,source_hash TEXT,revision INTEGER NOT NULL DEFAULT 1,created_by INTEGER NOT NULL,reviewed_by INTEGER,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+ "CREATE UNIQUE INDEX IF NOT EXISTS idx_knowledge_source ON knowledge_articles(source_kind,source_id) WHERE source_id IS NOT NULL",
+ "CREATE INDEX IF NOT EXISTS idx_knowledge_status ON knowledge_articles(status,audience)",
+ "ALTER TABLE direct_messages ADD COLUMN knowledge_sources TEXT",
+ "CREATE TABLE IF NOT EXISTS exam_question_drafts(id INTEGER PRIMARY KEY AUTOINCREMENT,created_by INTEGER NOT NULL,grade TEXT NOT NULL,q_type TEXT NOT NULL,payload TEXT NOT NULL,sources TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'draft',question_id INTEGER,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
+ "CREATE TABLE IF NOT EXISTS ticket_auto_replies(ticket_ref TEXT PRIMARY KEY,content TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP) WITHOUT ROWID",
+ "CREATE UNIQUE INDEX IF NOT EXISTS idx_support_active ON tickets(player_id) WHERE source_table='support' AND status IN ('open','in_progress')",
  // Older player tables predate these columns; CREATE TABLE IF NOT EXISTS never adds them.
  "ALTER TABLE players ADD COLUMN game_id TEXT",
  "ALTER TABLE players ADD COLUMN last_login_at TEXT",

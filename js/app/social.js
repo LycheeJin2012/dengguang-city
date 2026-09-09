@@ -1,3 +1,5 @@
+function knowledgeLinks(raw){try{const a=JSON.parse(raw||'[]');return Array.isArray(a)?a.filter(x=>Number.isSafeInteger(x.id)&&x.id>0).map(x=>`<a href="/knowledge.html?id=${x.id}">依据：知识 #${x.id} ${esc(x.title)} · v${Number(x.revision)||1}</a>`).join('<br>'):'';}catch{return '';}}
+import {viewCitizenTicket} from './ticket-form.js';
 import {
   $, $$, api, post, patch, region, tr, esc, text, date, empty, title, field, modal, action, toast, state, login, linkUrl
 }
@@ -56,7 +58,7 @@ async function notifications(el){
 }
 async function messages(el){
   let peer='',threadVersion=0;
-  el.innerHTML=title('市民私信','Messages')+`<div class="toolbar"><button id="new-message" class="primary">＋ ${tr('写私信','New message')}</button><button id="ai-message">🤖 ${tr('联系灯灯','Contact DengDeng')}</button></div><div class="split"><aside class="panel" id="conversations"></aside><section class="panel" id="thread">${empty(tr('选择会话或写一封新私信','Select a conversation or start a new one'))}</section></div>`;
+  el.innerHTML=title('市民私信','Messages')+`<div class="toolbar"><button id="new-message" class="primary">＋ ${tr('写私信','New message')}</button><button id="ai-message">🤖 ${tr('联系灯灯','Contact DengDeng')}</button><a class="button" href="/knowledge.html">${tr('查阅知识库','Search knowledge')}</a></div><div class="split"><aside class="panel" id="conversations"></aside><section class="panel" id="thread">${empty(tr('选择会话或写一封新私信','Select a conversation or start a new one'))}</section></div>`;
   const loadList=()=>region($('#conversations',el),()=>api('/api/social?action=dm-list'),(d,box)=>{
     box.innerHTML=(d.conversations||[]).map((c,i)=>`<button class="conversation ${c.peer.username===peer?'selected':''}" data-conversation="${i}"><b>${esc(c.peer.username)}</b> ${c.unread?`<span class="badge">${c.unread}</span>`:''}<small>${esc(c.last_content)}</small></button>`).join('')||empty();$$('[data-conversation]',box).forEach(b=>b.onclick=()=>open(d.conversations[+b.dataset.conversation].peer.username));
   }
@@ -65,7 +67,7 @@ async function messages(el){
     peer=username;
     const version=++threadVersion;
     await region($('#thread',el),()=>api('/api/social?action=dm-thread&peer='+encodeURIComponent(username)),async(d,box)=>{
-      if(version!==threadVersion)return;box.innerHTML=`<div class="row-head"><h2>${esc(d.peer.username)}</h2><a href="/profile.html?u=${encodeURIComponent(d.peer.username)}">${tr('主页','Profile')} ↗</a></div><div class="messages" aria-label="${tr('消息记录','Message history')}">${d.messages.map(m=>`<div class="bubble ${m.from_player_id===state.session.player.id?'mine':''}"><p>${text(m.content)}</p><small>${date(m.created_at)}</small></div>`).join('')||empty()}</div><form id="send-form">${field('content',tr('消息内容','Message'),'textarea')}<div class="actions"><button class="primary">${tr('发送','Send')} ↗</button></div></form>`;$('.messages',box).scrollTop=$('.messages',box).scrollHeight;$('#send-form',box).onsubmit=e=>{
+      if(version!==threadVersion)return;box.innerHTML=`<div class="row-head"><h2>${esc(d.peer.username)}</h2><a href="/profile.html?u=${encodeURIComponent(d.peer.username)}">${tr('主页','Profile')} ↗</a></div>${d.peer.username==='灯灯客服'?`<div class="notice" id="support-status"></div>`:''}<div class="messages" aria-label="${tr('消息记录','Message history')}">${d.messages.map(m=>`<div class="bubble ${m.from_player_id===state.session.player.id?'mine':''}"><p>${text(m.content)}</p>${knowledgeLinks(m.knowledge_sources)}<small>${m.replied_by_admin_id?esc(tr('管理员','Admin')+' #'+m.replied_by_admin_id+' · '+(m.reply_author_name||''))+' · ':''}${date(m.created_at)}</small></div>`).join('')||empty()}</div><form id="send-form">${field('content',tr('消息内容','Message'),'textarea')}<div class="actions"><button class="primary">${tr('发送','Send')} ↗</button></div></form>`;$('.messages',box).scrollTop=$('.messages',box).scrollHeight;$('#send-form',box).onsubmit=e=>{
         e.preventDefault();const f=e.currentTarget;action($('button',f),async()=>{
           await post('/api/social?action=dm-send',{
             to_username:d.peer.username,content:$('[name=content]',f).value
@@ -74,7 +76,15 @@ async function messages(el){
         }
         );
       }
-      ;await patch('/api/social?action=dm-read&peer='+encodeURIComponent(username));await loadList();
+      ;
+      if(d.peer.username==='灯灯客服'){
+        const result=await api('/api/support');if(version!==threadVersion||!box.isConnected)return;const ticket=result.ticket,pending=ticket&&['open','in_progress'].includes(ticket.status),bar=$('#support-status',box);
+        bar.innerHTML=`<p>${pending?tr('已转人工，自动回复已暂停。你可以继续发送补充说明；工作人员回复会显示姓名与编号。','Human support requested; automatic replies are paused. Send follow-up details here. Staff replies show name and ID.'):tr('灯灯只提供基础指引。不确定的问题可交给工作人员核实。','DengDeng provides basic guidance. Staff can verify questions that need more information.')}</p><div class="actions"><button type="button" id="handoff" ${pending?'disabled':''}>${tr(pending?(ticket.replied_at?'人工服务中':'等待人工处理'):'转人工',pending?(ticket.replied_at?'Human support active':'Awaiting staff'):'Request human support')}</button>${ticket?`<button type="button" id="support-ticket">${tr('查看工单与办理记录','View ticket & history')} #${ticket.id}</button>`:''}<button type="button" id="support-refresh">${tr('刷新回复','Refresh replies')}</button></div>`;
+        $('#support-refresh',bar).onclick=e=>action(e.currentTarget,()=>open(username));
+        if(ticket)$('#support-ticket',bar).onclick=e=>action(e.currentTarget,()=>viewCitizenTicket(ticket.id));
+        $('#handoff',bar).onclick=()=>modal(tr('灯灯转人工','Request human support'),`<p class="wide">${tr('确认后，最近 20 条灯灯对话将作为私密工单交给工作人员。不会公开，也不承诺具体接入时间。','The last 20 DengDeng messages will be shared privately with staff. No response time is guaranteed.')}</p>`+field('reason',tr('需要人工帮助的问题','What do you need help with?'),'textarea','',{maxlength:500}),{label:tr('确认转人工','Confirm request'),submit:async v=>{await post('/api/support',v);await open(username);}});
+      }
+      await patch('/api/social?action=dm-read&peer='+encodeURIComponent(username));await loadList();
     }
     );
   }
