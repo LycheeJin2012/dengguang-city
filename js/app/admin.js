@@ -1,3 +1,4 @@
+import {renderSupportChat} from './support-chat-admin.js';
 import {renderReplyFeedback} from './reply-feedback-admin.js';
 import {renderExamReview} from './exam-review.js';
 import {renderKnowledge} from './knowledge-admin.js';
@@ -477,7 +478,7 @@ async function loadActive(){
     if(page==='replyfeedback')await renderReplyFeedback(view);
     else if(page==='examreview')await renderExamReview(view);
     else if(page==='knowledge')await renderKnowledge(view);
-    else if(page==='support')await tickets();
+    else if(page==='support')await renderSupportChat(view);
     else if(page==='audit')await renderAudit(view);
     else if(resources[page])await resourceList(resources[page]);
     else if(['bookings','kart','circuit','license'].includes(page))await signups(page);

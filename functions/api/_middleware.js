@@ -23,7 +23,7 @@ export async function onRequest(context){return endpoint(async()=>{
  if(url.pathname!=='/api/ui-events'&&tracked){
   const cookie=response.headers.get('Set-Cookie');let effective=actor;
   if(cookie&&response.ok){const token=/lc_session=([^;]+)/.exec(cookie)?.[1];if(token)effective=await auditActor(base,request,token);}
-  const action=url.pathname==='/api/support'?(response.status===201?'ticket.human_requested':'ticket.human_request_checked'):url.searchParams.get('export')==='1'?'export':url.searchParams.get('action')||request.method.toLowerCase();
+  const action=url.pathname==='/api/support'?(response.status===201?'support.requested':'support.checked'):url.searchParams.get('export')==='1'?'export':url.searchParams.get('action')||request.method.toLowerCase();
   let resourceId=event.resource_id;
   if(!resourceId&&response.ok&&request.method==='POST'&&response.headers.get('Content-Type')?.includes('application/json')){try{const result=await response.clone().json();resourceId=(url.searchParams.get('action')||'').startsWith('passkey-')?null:result.id||result.user_id||result.user?.id||null;if(url.pathname==='/api/register'&&result.user)effective={type:'applicant',id:result.user.id,name:result.user.username};}catch{}}
   await auditStatement(base,effective,{...event,action,resource_type:event.resource_type,resource_id:resourceId,status:response.status,details:{action:url.searchParams.get('action')||null}}).run();

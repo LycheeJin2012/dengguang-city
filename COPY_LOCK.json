@@ -1,5 +1,5 @@
 {
-  "basis": "v63 approved response feedback, internal triage privacy, followups and score appeals",
+  "basis": "v64 approved in-chat human handoff, grounded generation and ending human waiting",
   "files": {
     "404.html": "5a6810ba2b329a14388d686638732d5e9a05b828afe85270d94c50794476bbca",
     "admin-v37.html": "09b509c6600edda3ebb56a4d81fb82505a3e1a3ee84cd8e835a68ea1038b3980",
@@ -9,7 +9,7 @@
     "hotel.html": "b5a54428372cf311c159c6f891cf2c84f2b13f274a0d0cd8db184e2e59356653",
     "index.html": "e954d077e795031c4db846f010704392f491d4852ecdc504aa587aef7e2826ac",
     "js/app/admin-navigation.js": "96307b5fc36311ebf453480407d85e3eba594e611ac660956696855948274425",
-    "js/app/admin.js": "30590eb0295d77cfe1e1c3ccf1be93a3303fb8470ff3add498127f5584e9932a",
+    "js/app/admin.js": "acc00dcd1544265bb8885c7e998df49dbdfac6c62b1f6dacef816a28aaff38fd",
     "js/app/attachments.js": "1b782e9338f66417cdc97d50d089fa2f44354f3287c915e905f6696d3716c34a",
     "js/app/audit-ui.js": "d3b07f2568b7b547a8b9fce99f8dca25f7163a412d6430418ff982520959da82",
     "js/app/core.js": "320bb2fe5d8331b5b38c188bb6ae2a3476bf77028dd23a568d5da6ed0dbf2f50",
@@ -21,9 +21,9 @@
     "js/app/permissions.js": "2bbb92b351b8de71d9b4be913cdb5bbecd4673a7d161e6e9ec1740a895958407",
     "js/app/profile.js": "0f7134747fdfaa21d9a37aac3f7d009f968bd01a0bd5c14e03e406d2bb96e8fa",
     "js/app/security.js": "bdb2b752ee1abb32ecea8c8a01abbedbf55a2875a614b7f53827874fc343215b",
-    "js/app/social.js": "1e4de6fa4f22c25a3c51c1b1ee03684b3209fef3f3bd5c4f11ab777c69ecf450",
+    "js/app/social.js": "65349c8837b677e251266e00ae8463092a86a25175f610d4ab6212a412e167a3",
     "js/app/ticket-center.js": "777e2e4516888cf6048c8c4878aabb19aa4f02c16974fe2d600f2b0fc0eb578d",
-    "js/app/ticket-form.js": "b7a08d0206e47cc1c62a229802549fd80b2dbc29d01d1fd8d8d1e92be05fc303",
+    "js/app/ticket-form.js": "9ef76f9fceee991a6894426b78dddf5ef3578f661f8d47d4f3235fc7668a1a26",
     "js/date.js": "559250fda3b36b9c6b346235012757f05ce64d67fb260063cb7cb3a95ad32e46",
     "leaderboard.html": "69760088d5d553f4811e0606f9fc0f452da67dea972c01f784291e48de9eb150",
     "notifications.html": "85496adc0c215048d009c667e254e9ca7a1b53024d7bfd84ea0922fbca45aeec",

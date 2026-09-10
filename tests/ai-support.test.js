@@ -26,20 +26,16 @@ test('legacy messages get exactly one first reply linked to their unified ticket
  const m=await call('messages','POST',{type:'建议',content:'想改善步道',contact:'local'});assert.equal(m.status,201);
  const t=await DB.prepare("SELECT id FROM tickets WHERE source_table='messages' AND source_id=?").bind(m.id).first();const detail=(await call('tickets?my=1&id='+t.id)).ticket;assert.match(detail.auto_reply,/自动受理/);assert.equal(detail.history.filter(e=>e.action==='auto_replied').length,1);
 }));
-test('human handoff is idempotent under concurrency and shares only own bot conversation privately',()=>fixture(async({call,DB})=>{
+test('human handoff creates a chat queue rather than a ticket and exposes only own bot conversation',()=>fixture(async({call,DB})=>{
  const bot=await call('ai-bot');await call('social?action=dm-send','POST',{to_username:bot.username,content:'客服问题'});await call('social?action=dm-send','POST',{to_username:'bob',content:'unrelated-private-secret'});
- const results=await Promise.all([call('support','POST',{reason:'需要人工'}),call('support','POST',{reason:'需要人工'})]);assert.ok(results.every(r=>[200,201].includes(r.status)));assert.equal(results[0].ticket.id,results[1].ticket.id);
- const id=results[0].ticket.id,t=(await call('tickets?my=1&id='+id)).ticket;assert.match(t.body,/客服问题/);assert.doesNotMatch(t.body,/unrelated-private-secret/);assert.equal(t.public_consent,0);assert.equal(t.public_visible,0);assert.equal(t.history.filter(e=>e.action==='created').length,1);assert.equal(t.history.filter(e=>e.action==='auto_replied').length,1);
- assert.equal((await call('tickets?my=1&id='+id,'GET',undefined,'bob')).status,404);assert.equal((await call('tickets?id='+id,'PATCH',{public_visible:true},'super')).status,409);
- assert.equal((await call('tickets?my=1&id='+id,'PATCH',{public_consent:true})).status,409);
- assert.equal((await DB.prepare("SELECT COUNT(*) AS n FROM tickets WHERE source_table='support'").first()).n,1);
+ const results=await Promise.all([call('support','POST',{}),call('support','POST',{})]);assert.equal(results[0].chat.id,results[1].chat.id);assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM tickets').first()).n,0);
+ const id=results[0].chat.id,detail=await call('admin/support-chat?id='+id,'GET',undefined,'staff');assert.ok(JSON.stringify(detail.messages).includes('客服问题'));assert.ok(!JSON.stringify(detail.messages).includes('unrelated-private-secret'));assert.equal((await call('support','GET',undefined,'bob')).chat,null);assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM support_chats').first()).n,1);
 }));
-test('pending support pauses the bot, keeps followups and mirrors staff reply with attribution',()=>fixture(async({call,DB})=>{
- const bot=await call('ai-bot'),t=await call('support','POST',{reason:'请帮忙'});const sent=await call('social?action=dm-send','POST',{to_username:bot.username,content:'补充复现步骤'});assert.equal(sent.ai_replied,false);
- const detail=(await call('tickets?id='+t.ticket.id,'GET',undefined,'staff')).ticket;assert.ok(detail.history.some(e=>e.action==='player_followup'&&JSON.parse(e.details).reply==='补充复现步骤'));
- assert.equal((await call('tickets?id='+t.ticket.id,'PATCH',{admin_reply:'请提供发生位置',status:'in_progress'},'staff')).status,200);
+test('pending chat pauses bot; human replies continue under the bot peer with actual staff attribution',()=>fixture(async({call,DB})=>{
+ const bot=await call('ai-bot'),t=await call('support','POST',{});const sent=await call('social?action=dm-send','POST',{to_username:bot.username,content:'补充复现步骤'});assert.equal(sent.ai_replied,false);
+ let detail=await call('admin/support-chat?id='+t.chat.id,'GET',undefined,'staff');assert.equal(detail.messages.at(-1).content,'补充复现步骤');await call('admin/support-chat','POST',{id:t.chat.id,action:'claim'},'staff');detail=await call('admin/support-chat?id='+t.chat.id,'GET',undefined,'staff');assert.equal((await call('admin/support-chat','POST',{id:t.chat.id,action:'reply',revision:detail.chat.revision,content:'请提供发生位置'},'staff')).status,200);
  const thread=await call('social?action=dm-thread&peer='+encodeURIComponent(bot.username));assert.equal(thread.messages.at(-1).reply_author_name,'staff');assert.equal(thread.messages.at(-1).replied_by_admin_id,2);assert.equal(thread.messages.at(-1).content,'请提供发生位置');
- await call('tickets?id='+t.ticket.id,'PATCH',{status:'closed'},'staff');const next=await call('support','POST',{reason:'新问题'});assert.notEqual(next.ticket.id,t.ticket.id);
+ detail=await call('admin/support-chat?id='+t.chat.id,'GET',undefined,'staff');await call('admin/support-chat','POST',{id:t.chat.id,action:'close',revision:detail.chat.revision},'staff');assert.equal((await call('support','POST',{})).chat.status,'queued');assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM tickets').first()).n,0);
 }));
 test('draft generation validates role and recusal, records origin and never sends or replaces replies',()=>fixture(async({call,DB})=>{
  const t=await call('tickets','POST',{title:'核实问题',body:'详细内容'});
@@ -73,5 +69,5 @@ test('opening a DM and its automatic read receipt do not create viewing audit re
  const before=(await DB.prepare('SELECT COUNT(*) AS n FROM audit_events').first()).n;
  await call('social?action=dm-thread&peer='+encodeURIComponent(bot.username));await call('social?action=dm-read&peer='+encodeURIComponent(bot.username),'PATCH',{});
  assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM audit_events').first()).n,before);
- assert.ok((await call('admin/audit','GET',undefined,'super')).events.some(e=>e.action==='dm.auto_replied'&&e.actor_type==='system'));
+ assert.ok((await call('admin/audit','GET',undefined,'super')).events.some(e=>e.action==='support.chat_requested'&&e.actor_type==='system'));
 }));
