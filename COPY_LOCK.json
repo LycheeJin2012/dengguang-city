@@ -1,5 +1,5 @@
 {
-  "basis": "v64 approved in-chat human handoff, grounded generation and ending human waiting",
+  "basis": "Approved human-support navigation and inbox visibility fixes",
   "files": {
     "404.html": "5a6810ba2b329a14388d686638732d5e9a05b828afe85270d94c50794476bbca",
     "admin-v37.html": "09b509c6600edda3ebb56a4d81fb82505a3e1a3ee84cd8e835a68ea1038b3980",
@@ -9,7 +9,7 @@
     "hotel.html": "b5a54428372cf311c159c6f891cf2c84f2b13f274a0d0cd8db184e2e59356653",
     "index.html": "e954d077e795031c4db846f010704392f491d4852ecdc504aa587aef7e2826ac",
     "js/app/admin-navigation.js": "96307b5fc36311ebf453480407d85e3eba594e611ac660956696855948274425",
-    "js/app/admin.js": "acc00dcd1544265bb8885c7e998df49dbdfac6c62b1f6dacef816a28aaff38fd",
+    "js/app/admin.js": "b22b7e10e91349b43e768b597ecc3687bd9ffeb65749c6f1299ff6688cf75724",
     "js/app/attachments.js": "1b782e9338f66417cdc97d50d089fa2f44354f3287c915e905f6696d3716c34a",
     "js/app/audit-ui.js": "d3b07f2568b7b547a8b9fce99f8dca25f7163a412d6430418ff982520959da82",
     "js/app/core.js": "320bb2fe5d8331b5b38c188bb6ae2a3476bf77028dd23a568d5da6ed0dbf2f50",

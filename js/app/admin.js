@@ -44,7 +44,6 @@ const resources={
 }
 ;
 let active='tickets',view,root;
-const rememberedChildren=new Map();
 let historyBound=false;
 
 const isSuper=()=>state.session?.user?.role==='super';
@@ -493,9 +492,7 @@ async function loadActive(){
 }
 function switchTab(key) {
   let selected = resolveNavigation(key, isSuper());
-  if(key===selected.group.id&&rememberedChildren.has(key))selected=resolveNavigation(rememberedChildren.get(key),isSuper());
   active = selected.child;
-  rememberedChildren.set(selected.group.id,active);
   location.hash = active;
   $$('.admin-nav [data-group]', root).forEach(button => button.setAttribute('aria-selected', button.dataset.group === selected.group.id));
   const section = document.createElement('section');
