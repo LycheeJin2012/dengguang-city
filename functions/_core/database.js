@@ -1,8 +1,11 @@
 import {SCHEMA,MIGRATIONS} from '../api/_schema.js';
 const pending=new WeakMap();
-export const SCHEMA_VERSION=62;
+export const SCHEMA_VERSION=63;
 const VERSION=SCHEMA_VERSION;
 const ADDITIONS=[
+ "CREATE TABLE IF NOT EXISTS reply_feedback(id INTEGER PRIMARY KEY AUTOINCREMENT,player_id INTEGER NOT NULL,kind TEXT NOT NULL,target_id TEXT NOT NULL,ticket_ref TEXT,helpful INTEGER NOT NULL,reason TEXT NOT NULL DEFAULT '',comment TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,UNIQUE(player_id,kind,target_id))",
+ "CREATE TABLE IF NOT EXISTS ticket_triage(ticket_ref TEXT PRIMARY KEY,priority TEXT NOT NULL,urgency TEXT NOT NULL,complexity TEXT NOT NULL,reason TEXT NOT NULL,source TEXT NOT NULL,manual INTEGER NOT NULL DEFAULT 0,token TEXT,updated_by INTEGER,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP) WITHOUT ROWID",
+ "CREATE TABLE IF NOT EXISTS exam_appeals(id INTEGER PRIMARY KEY AUTOINCREMENT,session_id TEXT NOT NULL,question_id TEXT NOT NULL,player_id INTEGER NOT NULL,original_score INTEGER NOT NULL,reason TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'pending',reply TEXT,reviewer_id INTEGER,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,resolved_at TEXT,UNIQUE(session_id,question_id))",
  "CREATE TABLE IF NOT EXISTS exam_sessions(id TEXT PRIMARY KEY,player_id INTEGER NOT NULL,grade TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'generating',paper TEXT,answers TEXT NOT NULL DEFAULT '{}',results TEXT,score INTEGER,known_score INTEGER NOT NULL DEFAULT 0,pending_count INTEGER NOT NULL DEFAULT 0,revision INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,submitted_at TEXT)",
  "CREATE UNIQUE INDEX IF NOT EXISTS idx_exam_active ON exam_sessions(player_id) WHERE status IN ('generating','in_progress','grading')",
  "CREATE INDEX IF NOT EXISTS idx_exam_player ON exam_sessions(player_id,created_at)",

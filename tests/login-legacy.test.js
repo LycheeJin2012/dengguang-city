@@ -12,7 +12,7 @@ async function legacy(fn){const DB=database();try{
 async function call(DB,path,method='GET',data,cookie){return dispatch(new Request('https://local.test/api/'+path,{method,headers:{'Content-Type':'application/json',...(cookie?{Cookie:cookie}:{})},body:data===undefined?undefined:JSON.stringify(data)}),{DB});}
 test('password login on a legacy player table completes, returns a cookie and supports profile reads',()=>legacy(async({DB,password,hash,salt})=>{
  const login=await call(DB,'login','POST',{username:'legacy-player',password});assert.equal(login.status,200);const cookie=login.headers.get('Set-Cookie')?.split(';')[0];assert.ok(cookie);
- const me=await call(DB,'login','GET',undefined,cookie);assert.equal(me.status,200);const d=await me.json();assert.equal(d.player.username,'legacy-player');assert.equal(d.player.emeralds,27);assert.equal(d.player.game_id,null);assert.equal(me.headers.get('X-App-Schema-Version'),'62');assert.equal((await DB.prepare('SELECT last_login_at FROM players WHERE id=1').first()).last_login_at,null);
+ const me=await call(DB,'login','GET',undefined,cookie);assert.equal(me.status,200);const d=await me.json();assert.equal(d.player.username,'legacy-player');assert.equal(d.player.emeralds,27);assert.equal(d.player.game_id,null);assert.equal(me.headers.get('X-App-Schema-Version'),'63');assert.equal((await DB.prepare('SELECT last_login_at FROM players WHERE id=1').first()).last_login_at,null);
  const row=await DB.prepare('SELECT password_hash,salt FROM players WHERE id=1').first();assert.equal(row.password_hash,hash);assert.equal(row.salt,salt);
  assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM audit_events').first()).n,0);
 }));

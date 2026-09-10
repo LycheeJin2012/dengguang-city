@@ -1470,3 +1470,14 @@ summary:not(:disabled):not([aria-disabled="true"]):active,
 .survey-option span { overflow-wrap: anywhere; }
 #exam-paper progress { width: 100%; height: 14px; accent-color: var(--green); }
 .survey-actions { flex-wrap: wrap; }
+
+.ticket-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); list-style: none; gap: 8px; margin: 12px 0 20px; padding: 0; }
+.ticket-progress li { border: 2px solid var(--line-soft); padding: 10px; color: var(--muted); }
+.ticket-progress li.done { border-color: var(--green); background: #e4dba8; color: var(--green-deep); font-weight: 700; }
+.reply-feedback { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line-soft); }
+.reply-feedback .actions { margin: 8px 0; }
+.reply-feedback textarea, .reply-feedback select { width: 100%; margin: 6px 0; }
+.reply-feedback [aria-pressed="true"] { background: #e4dba8; border-color: var(--green); }
+.ticket-followup { margin: 18px 0; padding: 16px; border: 2px solid var(--line-soft); }
+.ticket-followup label { display: block; margin: 8px 0; }
+@media(max-width:600px) { .ticket-progress { grid-template-columns: repeat(2, minmax(0,1fr)); } }

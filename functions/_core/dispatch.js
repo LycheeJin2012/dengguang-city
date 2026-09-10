@@ -1,3 +1,4 @@
+import {triageTicket} from './triage.js';
 import {conflicts,ticketReference} from './ticket-policy.js';
 const topic=t=>t.category==='service'?(t.kind||'service'):(t.category||'message');
 const workloadSQL=`(SELECT COUNT(*) FROM tickets t WHERE t.assignee_id=a.id AND t.status IN ('open','in_progress'))+(SELECT COUNT(*) FROM messages m WHERE m.assignee_id=a.id AND m.status IN ('unread','read') AND NOT EXISTS(SELECT 1 FROM tickets t WHERE t.source_table='messages' AND t.source_id=m.id))`;
@@ -46,6 +47,7 @@ export async function recommend(c,ticket,options={}){
 export async function autoDispatch(c,reference,retry=0,flags){
  // Raw DB is used for this explicit atomic system action; request-scoped player auditing must not misattribute it.
  const db=c.audit?.base||c.env.DB,ref=ticketReference(reference),context={...c,env:{...c.env,DB:db}};
+ if(retry===0)await triageTicket(context,ref.ref);
  const config=await settings(db);if(!config.enabled)return {status:'paused',reason:'自动派单已暂停'};
  const t=await db.prepare(`SELECT * FROM ${ref.table} WHERE id=?`).bind(ref.id).first();
  if(!t||t.assignee_id||t.dispatch_hold||!['open','in_progress','unread','read'].includes(t.status))return {status:'skipped',reason:'已人工处理、已派单或已结束'};

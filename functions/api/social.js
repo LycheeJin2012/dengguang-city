@@ -37,7 +37,7 @@ export const onRequestGet=c=>endpoint(async()=>{
     );
   }
   if(action==='dm-thread'){
-    const other=await peer(c,u.searchParams.get('peer'));if(other.id===p.id)fail(400,'不能给自己发私信');const r=await c.env.DB.prepare('SELECT * FROM (SELECT id,from_player_id,to_player_id,content,read_at,created_at,replied_by_admin_id,knowledge_sources,(SELECT username FROM admins WHERE id=direct_messages.replied_by_admin_id) AS reply_author_name FROM direct_messages WHERE (from_player_id=? AND to_player_id=?) OR (from_player_id=? AND to_player_id=?) ORDER BY id DESC LIMIT 200) ORDER BY id').bind(p.id,other.id,other.id,p.id).all();return reply({
+    const other=await peer(c,u.searchParams.get('peer'));if(other.id===p.id)fail(400,'不能给自己发私信');const r=await c.env.DB.prepare('SELECT * FROM (SELECT id,from_player_id,to_player_id,content,read_at,created_at,replied_by_admin_id,knowledge_sources,(SELECT helpful FROM reply_feedback WHERE kind=\'dm\' AND target_id=CAST(direct_messages.id AS TEXT) AND player_id=direct_messages.to_player_id) AS helpful,(SELECT username FROM admins WHERE id=direct_messages.replied_by_admin_id) AS reply_author_name FROM direct_messages WHERE (from_player_id=? AND to_player_id=?) OR (from_player_id=? AND to_player_id=?) ORDER BY id DESC LIMIT 200) ORDER BY id').bind(p.id,other.id,other.id,p.id).all();return reply({
       peer:other,messages:r.results
     }
     );

@@ -17,5 +17,5 @@ export const onRequestPost=c=>endpoint(async()=>{
  const ticket=await db.prepare("SELECT id,status FROM tickets WHERE player_id=? AND source_table='support' AND status IN ('open','in_progress')").bind(p.id).first();
  if(!ticket)fail(409,'请求状态已变化，请重试');
  const dispatch=await autoDispatchSafely(c,ticket.id);
- return reply({id:ticket.id,ticket,dispatch:{status:dispatch.status}},201);
+ return reply({id:ticket.id,ticket},201);
 });
