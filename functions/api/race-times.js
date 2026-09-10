@@ -13,13 +13,7 @@ export const onRequestGet=c=>endpoint(async()=>{
     }
     );
   }
-  const track=integer(u.searchParams.get('track_id')),limit=integer(u.searchParams.get('limit')||20,'limit',1,100),grade=u.searchParams.get('grade');if(grade&&!['B','A','S'].includes(grade))fail(400,'驾照等级无效');const r=await c.env.DB.prepare(`SELECT r.*,p.username AS player_username,p.avatar_emoji FROM race_times r JOIN players p ON p.id=r.player_id WHERE r.track_id=? AND r.verified=1 AND p.status='active' ${grade?'AND r.license_grade=?':''} ORDER BY r.time_ms,r.id LIMIT ?`).bind(...[track,...(grade?[grade]:[]),limit]).all();return reply({
-    leaderboard:r.results.map((r,i)=>({
-      ...r,rank:i+1,formatted:format(r.time_ms)
-    }
-    ))
-  }
-  );
+  fail(410,'排行榜展示已移除，请在个人主页查看自己的成绩');
 }
 );
 export const onRequestPost=c=>endpoint(async()=>{

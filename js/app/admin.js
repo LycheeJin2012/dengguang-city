@@ -1,3 +1,4 @@
+import {tableCell} from './table-layout.js';
 import {renderSupportChat} from './support-chat-admin.js';
 import {renderReplyFeedback} from './reply-feedback-admin.js';
 import {renderExamReview} from './exam-review.js';
@@ -67,7 +68,7 @@ async function refreshStats() {
 }
 
 function table(box,columns,rows,actions=[]){
-  box.innerHTML=rows.length?`<div class="table-wrap"><table><thead><tr>${columns.map(([k,l])=>`<th>${esc(l)}</th>`).join('')}${actions.length?`<th>${tr('操作','Actions')}</th>`:''}</tr></thead><tbody>${rows.map((r,i)=>`<tr>${columns.map(([k,l,format])=>`<td class="${['title','content','name','note','body'].includes(k)?'wrap':''}">${format?format(r[k],r):esc(r[k]??'—')}</td>`).join('')}${actions.length?`<td><div class="actions compact">${actions.filter(a=>!a.when||a.when(r)).map(a=>`<button type="button" data-row="${i}" data-action="${a.key}" class="${a.danger?'danger':''}">${esc(a.label)}</button>`).join('')}</div></td>`:''}</tr>`).join('')}</tbody></table></div>`:empty();
+  box.innerHTML=rows.length?`<div class="table-wrap"><table class="responsive-table" role="table"><thead><tr role="row">${columns.map(([k,l])=>`<th scope="col">${esc(l)}</th>`).join('')}${actions.length?`<th scope="col">${tr('操作','Actions')}</th>`:''}</tr></thead><tbody>${rows.map((r,i)=>`<tr role="row">${columns.map(([k,l,format])=>tableCell(l,format?format(r[k],r):esc(r[k]??'—'),['title','content','name','note','body'].includes(k)?'wrap':'')).join('')}${actions.length?`<td role="cell" class="table-actions"><span class="cell-label" aria-hidden="true">${tr('操作','Actions')}</span><div class="actions compact">${actions.filter(a=>!a.when||a.when(r)).map(a=>`<button type="button" data-row="${i}" data-action="${a.key}" class="${a.danger?'danger':''}">${esc(a.label)}</button>`).join('')}</div></td>`:''}</tr>`).join('')}</tbody></table></div>`:empty();
   $$('[data-action]',box).forEach(b=>b.onclick=()=>action(b,()=>actions.find(a=>a.key===b.dataset.action).run(rows[+b.dataset.row])));
 }
 function toolbar({

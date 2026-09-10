@@ -1481,3 +1481,104 @@ summary:not(:disabled):not([aria-disabled="true"]):active,
 .ticket-followup { margin: 18px 0; padding: 16px; border: 2px solid var(--line-soft); }
 .ticket-followup label { display: block; margin: 8px 0; }
 @media(max-width:600px) { .ticket-progress { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+
+/* Responsive layout: vertical document flow, wrapping controls and readable records. */
+html, body { width: 100%; max-width: 100%; min-width: 0; overflow-x: hidden; overflow-x: clip; }
+body { min-height: 100vh; min-height: 100dvh; overflow-wrap: anywhere; }
+main, header, footer, section, article, aside, nav, form, fieldset, .panel, .card, .toolbar, .actions, .row-head, .section-head, .split > *, .header-inner > * { min-width: 0; }
+fieldset { max-width: 100%; }
+img, video, canvas, svg { max-width: 100%; }
+pre, code, .wrap { white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+pre { max-width: 100%; }
+button, .button, summary { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+input:not([type="checkbox"]):not([type="radio"]), select, textarea { min-width: 0; max-width: 100%; }
+.actions, .row-head, .section-head { flex-wrap: wrap; }
+.row-head > *, .section-head > * { min-width: 0; }
+.brand { min-width: 0; max-width: 100%; }
+.brand > span:last-child { min-width: 0; }
+#account { min-width: 0; flex-wrap: wrap; }
+#account a { overflow-wrap: anywhere; }
+.tabs { flex-wrap: wrap; overflow: visible; }
+.tabs button { white-space: normal; flex: 0 1 auto; }
+.admin-nav { overflow-x: hidden; overflow-x: clip; }
+.table-wrap { min-width: 0; max-width: 100%; overflow-x: hidden; overflow-x: clip; }
+.responsive-table { table-layout: fixed; width: 100%; }
+.responsive-table th, .responsive-table td, .responsive-table td.wrap { min-width: 0; max-width: none; white-space: normal; overflow-wrap: anywhere; }
+.cell-label { display: none; }
+.cell-value { min-width: 0; max-width: 100%; overflow-wrap: anywhere; }
+.cell-value > * { max-width: 100%; }
+.table-actions .actions, td .actions { flex-wrap: wrap; }
+.messages { overflow-x: hidden; overflow-x: clip; overflow-y: auto; min-width: 0; }
+.bubble { min-width: 0; flex-shrink: 0; overflow-wrap: anywhere; }
+.bubble > * { min-width: 0; max-width: 100%; }
+.conversation { min-width: 0; overflow-wrap: anywhere; }
+.conversation small { max-width: 100%; white-space: normal; overflow: visible; }
+.modal { max-width: calc(100% - 16px); overflow-x: hidden; overflow-x: clip; overflow-y: auto; }
+.modal-head h2 { min-width: 0; overflow-wrap: anywhere; }
+.modal-head [data-close] { flex: 0 0 auto; }
+.chat-assistance { margin: 12px 0; padding: 14px; border: var(--border-thin); background: var(--paper); }
+.chat-assistance .reply-feedback { border: 0; margin: 0; padding: 0; }
+.chat-assistance .reply-feedback > span { font-weight: 700; }
+#support-actions { display: contents; }
+#support-status { margin: 0; padding: 0; border: 0; }
+#support-status p { margin: 8px 0 0; font-size: .9rem; color: var(--ink-soft); }
+#latest-reply-feedback .reply-context { margin: 0 0 6px; font-size: .85rem; color: var(--muted); }
+@media(max-width:1100px) {
+  .admin-layout { grid-template-columns: 170px minmax(0,1fr); gap: 16px; }
+  .admin-content .split { grid-template-columns: minmax(0,1fr); gap: 16px; }
+  .table-wrap { max-height: none; overflow: visible; }
+  .responsive-table, .responsive-table tbody { display: block; width: 100%; }
+  .responsive-table thead { position: absolute; width: 1px; height: 1px; padding: 0; overflow: hidden; clip-path: inset(50%); }
+  .responsive-table thead th { position: static; }
+  .responsive-table tbody tr { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 0; padding: 12px; border-bottom: 3px solid var(--line-soft); }
+  .responsive-table td { display: block; min-width: 0; padding: 10px; border-bottom: 1px dashed var(--line-soft); }
+  .responsive-table td.wrap, .responsive-table td.table-actions { grid-column: 1/-1; }
+  .responsive-table .cell-label { display: block; margin-bottom: 5px; color: var(--green); font-size: .82rem; font-weight: 700; }
+  .responsive-table tbody tr:last-child { border-bottom: 0; }
+}
+@media(max-width:850px) {
+  .split { grid-template-columns: minmax(0,1fr); gap: 16px; }
+  #conversations, #support-chat-list { max-height: 240px; overflow-y: auto; overflow-x: hidden; }
+  .admin-layout { display: block; }
+  .admin-nav { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); position: static; max-height: none; overflow: visible; margin-bottom: 20px; gap: 8px; }
+  .admin-nav button { min-width: 0; white-space: normal; width: 100%; padding-right: 18px; }
+  .admin-nav button[aria-selected="true"]::after { right: 6px; }
+}
+@media(max-width:700px) {
+  input, select, textarea { font-size: 16px; }
+  .toolbar { display: flex; flex-wrap: wrap; }
+  .toolbar > *, .toolbar .field, .admin-content .toolbar .field { min-width: 0; max-width: 100%; }
+  .toolbar .field { flex: 1 1 100%; width: 100%; }
+  .toolbar > button, .toolbar > .button { flex: 1 1 140px; width: auto; }
+  .toolbar > .tabs { width: 100%; }
+  .tabs { gap: 8px; }
+  .tabs button { flex: 1 1 130px; }
+  .panel, .card { padding: 14px; }
+  .messages { height: 360px; height: min(52dvh,460px); min-height: 220px; padding: 12px; }
+  .bubble { max-width: 96%; padding: 12px; }
+  .modal-head, .modal-body { padding: 14px; }
+  .modal .actions { position: static; }
+  .modal-body > .actions { position: sticky; bottom: 0; z-index: 2; }
+  .chat-assistance .actions button { flex: 1 1 125px; }
+  .chat-assistance { padding: 12px; }
+  main { padding-left: max(12px,env(safe-area-inset-left)); padding-right: max(12px,env(safe-area-inset-right)); padding-bottom: max(40px,env(safe-area-inset-bottom)); }
+}
+@media(max-width:380px) {
+  .header-inner { gap: 8px; padding: 12px; }
+  .brand strong { font-size: .9rem; }
+  .brand small { font-size: .65rem; }
+  .hero-copy { padding: 18px; }
+  .hero h1 { font-size: 2rem; }
+  .responsive-table tbody tr { grid-template-columns: minmax(0,1fr); padding: 8px; }
+}
+@media(pointer:coarse) {
+  button, .button, .modal-head [data-close], td .actions button, #menu { min-height: 44px; }
+}
+#support-status > #support-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+@media(max-width:700px) {
+  #navigation.open { overflow-y: auto; max-height: 70dvh; }
+}
+@media(max-height:500px) {
+  .modal { max-height: calc(100dvh - 12px); }
+  .modal-head, .modal-body > .actions { position: static; }
+}

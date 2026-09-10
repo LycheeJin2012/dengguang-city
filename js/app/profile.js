@@ -102,10 +102,7 @@ async function security(el){
 async function race(el){
   const b=await api('/api/homepage-bundle');
   const tracks=b.bundle.tracks.filter(t=>t.is_active);
-  el.innerHTML=`<h3>${tr('我的赛道成绩','My race times')}</h3><button id="report-race" ${tracks.length?'':'disabled'}>＋ ${tr('上报成绩','Report time')}</button><div id="race-history" class="section"></div><h3>${tr('赛道排行榜','Track leaderboard')}</h3>${field('track',tr('赛道','Track'),'select',tracks[0]?.id,{
-    options:tracks.map(t=>[t.id,t.name])
-  }
-  )}<div id="race-board" class="section"></div>`;
+  el.innerHTML=`<h3>${tr('我的赛道成绩','My race times')}</h3><button id="report-race" ${tracks.length?'':'disabled'}>＋ ${tr('上报成绩','Report time')}</button><div id="race-history" class="section"></div>`;
   $('#report-race',el).onclick=()=>modal(tr('上报圈速','Report lap time'),field('track_id',tr('赛道','Track'),'select',tracks[0].id,{
     options:tracks.map(t=>[t.id,t.name])
   }
@@ -125,9 +122,7 @@ async function race(el){
   }
   );
   region($('#race-history',el),()=>api('/api/race-times?my=1'),(d,box)=>box.innerHTML=d.times.map(r=>`<div class="row">${esc(r.track_name)} · <b>${esc(r.formatted)}</b> ${tr(r.verified?'已认证':'待认证',r.verified?'Verified':'Unverified')}</div>`).join('')||empty());
-  const board=()=>region($('#race-board',el),()=>api('/api/race-times?track_id='+$('[name=track]',el).value),(d,box)=>box.innerHTML=d.leaderboard.map(r=>`<div class="rank"><strong>${r.rank}</strong><span>${esc(r.player_username)}</span><b>${esc(r.formatted)}</b></div>`).join('')||empty());
-  $('[name=track]',el).onchange=board;
-  if(tracks.length)await board();
+
 }
 async function exam(el){await renderSurvey(el);}
 async function subscriptions(el){

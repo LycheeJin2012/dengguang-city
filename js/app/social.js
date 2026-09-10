@@ -4,7 +4,6 @@ import {
 }
 from './core.js';
 export async function render(el,page){
-  if(page==='leaderboard')return leaderboard(el);
   if(!state.session?.player){
     el.innerHTML=title(page==='dm'?'私信':'通知中心',page==='dm'?'Messages':'Notifications')+`<div class="panel"><p>${tr('请先登录市民账号','Please sign in as a citizen')}</p><button id="sign-in">${tr('登录','Sign in')}</button></div>`;
     $('#sign-in',el).onclick=async()=>{
@@ -15,19 +14,6 @@ export async function render(el,page){
     return;
   }
   return page==='dm'?messages(el):notifications(el);
-}
-async function leaderboard(el){
-  el.innerHTML=title('玩家榜单','Leaderboard')+`<div class="tabs" role="tablist">${[['messages','💬 活跃市民','💬 Active citizens'],['bookings','🏨 常住旅客','🏨 Frequent guests'],['licenses','🚗 驾照等级','🚗 License holders']].map(([k,zh,en])=>`<button role="tab" aria-selected="${k==='messages'}" data-type="${k}">${tr(zh,en)}</button>`).join('')}</div><div class="panel" id="board"></div>`;
-  let current='messages';
-  const load=()=>region($('#board',el),()=>api('/api/leaderboard?type='+current),(d,box)=>{
-    box.innerHTML=(d.entries||[]).map(e=>`<div class="rank"><strong>${e.rank}</strong><a href="/profile.html?u=${encodeURIComponent(e.username)}">${esc(e.avatar_emoji||'👤')} ${esc(e.username)}</a><span>${esc(e.grades||e.score)}</span></div>`).join('')||empty();
-  }
-  );
-  $$('[data-type]',el).forEach(b=>b.onclick=()=>{
-    current=b.dataset.type;$$('[data-type]',el).forEach(t=>t.setAttribute('aria-selected',t===b));load();
-  }
-  );
-  await load();
 }
 async function notifications(el){
   let filter='all',all=[];

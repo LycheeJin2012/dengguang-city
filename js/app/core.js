@@ -312,7 +312,7 @@ export function login(register=false,target='player',options={}){
   );
 }
 function navigationMarkup(){
- const links=[['/','首页','Home'],['/hotel.html','酒店','Hotel'],['/leaderboard.html','榜单','Ranks'],['/notifications.html','通知','Notifications'],['/dm.html','私信','Messages']];
+ const links=[['/','首页','Home'],['/hotel.html','酒店','Hotel'],['/notifications.html','通知','Notifications'],['/dm.html','私信','Messages']];
  if(canSeeMunicipalLink(state.session))links.push(['/admin.html','市政后台','Admin']);
  if(canSeeHotelOwnerLink(state.session))links.push(['/hotel-owner.html','我的酒店','My hotel']);
  return links.map(([href,zh,en])=>`<a href="${href}" ${location.pathname===href?'aria-current="page"':''}>${tr(zh,en)}</a>`).join('');

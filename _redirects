@@ -1,3 +1,6 @@
 /admin /admin-v37.html 302
 /admin.html /admin-v37.html 302
 /adm /admin-v37.html 302
+
+/leaderboard.html / 302
+/leaderboard / 302
