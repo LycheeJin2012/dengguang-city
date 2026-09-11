@@ -61,9 +61,9 @@ async function refreshStats() {
       ['circuit', racePending, '待审赛道', 'Pending races'],
       ['players', data.players?.active, '活跃市民', 'Active citizens'],
     ];
-    box.innerHTML = `${stats.map(([key, count, zh, en]) =>
-      `<button type="button" class="stat-tile" data-open="${key}"><strong>${count ?? '—'}</strong><span>${tr(zh, en)}</span>${count == null ? `<small>${tr('暂不可用，请重试', 'Unavailable; retry')}</small>` : ''}</button>`
-    ).join('')}${data.partial ? `<p class="form-error" role="status">${tr('部分统计暂时无法读取，其余功能仍可使用。可点击“刷新概览”重试。', 'Some statistics are unavailable. Other functions remain usable. Refresh the overview to retry.')}</p>` : ''}<small>${tr('更新时间', 'Updated')} ${date(new Date().toISOString())}</small>`;
+    box.innerHTML = `<div class="stats">${stats.map(([key, count, zh, en]) =>
+      `<button class="stat" data-open="${key}"><strong>${count ?? '—'}</strong><span>${tr(zh, en)}</span>${count == null ? `<small>${tr('暂不可用，请重试', 'Unavailable; retry')}</small>` : ''}</button>`
+    ).join('')}</div>${data.partial ? `<p class="form-error" role="status">${tr('部分统计暂时无法读取，其余功能仍可使用。可点击“刷新概览”重试。', 'Some statistics are unavailable. Other functions remain usable. Refresh the overview to retry.')}</p>` : ''}<small>${tr('更新时间', 'Updated')} ${date(new Date().toISOString())}</small>`;
     $$('[data-open]', box).forEach(button => button.onclick = () => switchTab(button.dataset.open));
   });
 }
@@ -78,19 +78,19 @@ function toolbar({
 ={
 }
 ){
-  view.innerHTML=`<div class="pane-head"><div class="heading-block" style="min-width:0"><h2>${tr(...names[active])}</h2></div><div class="pane-tools"><button id="reload-tab">↻ ${tr('刷新','Refresh')}</button></div></div><div class="toolbar-modern">${search?field('q',tr('搜索','Search'),'search','',{
+  view.innerHTML=`<div class="section-head"><h2>${tr(...names[active])}</h2><button id="reload-tab">↻ ${tr('刷新','Refresh')}</button></div><div class="toolbar">${search?field('q',tr('搜索','Search'),'search','',{
     required:false
   }
   ):''}${options.length?field('status',tr('状态','Status'),'select','',{
     required:false,options:[['',tr('全部','All')],...options]
   }
-  ):''}${extra}<div class="toolbar-tools">${create?`<button id="create-record" class="primary">＋ ${tr('新建','New')}</button>`:''}<button id="export">↓ CSV</button></div></div><div id="records"></div>`;
+  ):''}${create?`<button id="create-record" class="primary">＋ ${tr('新建','New')}</button>`:''}<button id="export">↓ CSV</button>${extra}</div><div id="records"></div>`;
   $('#reload-tab',view).onclick=()=>loadActive();
   $('#create-record',view)?.addEventListener('click',create);
 }
 function bindList(load){
   let timer;
-  $$('.toolbar-modern input,.toolbar-modern select',view).forEach(e=>e.addEventListener('input',()=>{
+  $$('.toolbar input,.toolbar select',view).forEach(e=>e.addEventListener('input',()=>{
     clearTimeout(timer);timer=setTimeout(load,180);
   }
   ));
@@ -101,7 +101,7 @@ function params(){
     limit:'200'
   }
   );
-  $$('.toolbar-modern [name]',view).forEach(e=>{
+  $$('.toolbar [name]',view).forEach(e=>{
     if(e.value)p.set(e.name,e.value);
   }
   );
@@ -405,7 +405,7 @@ async function questions(){
     create:()=>edit()
   }
   );
-  const aiButton=document.createElement('button');aiButton.textContent=tr('AI 出驾照题目','AI question authoring');aiButton.onclick=()=>action(aiButton,()=>openExamAuthoring(load));$('.toolbar-tools',view).append(aiButton);
+  const aiButton=document.createElement('button');aiButton.textContent=tr('AI 出驾照题目','AI question authoring');aiButton.onclick=()=>action(aiButton,()=>openExamAuthoring(load));$('.toolbar',view).append(aiButton);
   const load=()=>region($('#records',view),()=>api('/api/admin/exam-questions'),(d,box)=>{
     attachExport(d.questions);table(box,[['id','ID'],['grade',tr('等级','Grade')],['question',tr('题目','Question')],['answer',tr('答案','Answer')]],d.questions,[{
       key:'edit',label:tr('编辑','Edit'),run:edit
@@ -439,7 +439,7 @@ async function questions(){
 }
 async function password(){
   const view=root.querySelector('#admin-view');
-  view.innerHTML=`<div class="pane-head"><div class="heading-block" style="min-width:0"><h2>${tr('管理员账号安全','Administrator security')}</h2></div></div><p>${tr('修改管理密码不影响绑定的市民密码。','Changing your admin password does not change your citizen password.')}</p><div class="actions"><button id="change-password">${tr('修改密码','Change password')}</button><button id="admin-add-key">${tr('添加通行密钥','Add passkey')}</button><button id="admin-list-keys">${tr('管理通行密钥','Manage passkeys')}</button></div>`;
+  view.innerHTML=`<div class="panel"><h2>${tr('管理员账号安全','Administrator security')}</h2><p>${tr('修改管理密码不影响绑定的市民密码。','Changing your admin password does not change your citizen password.')}</p><div class="actions"><button id="change-password">${tr('修改密码','Change password')}</button><button id="admin-add-key">${tr('添加通行密钥','Add passkey')}</button><button id="admin-list-keys">${tr('管理通行密钥','Manage passkeys')}</button></div></div>`;
   $('#change-password',view).onclick=()=>modal(tr('修改管理员密码','Change admin password'),field('old_password',tr('当前密码','Current password'),'password')+field('new_password',tr('新密码','New password'),'password')+field('confirm',tr('再次输入新密码','Confirm new password'),'password'),{
     submit:async d=>{
       if(d.new_password!==d.confirm)throw new Error(tr('两次密码不一致','Passwords do not match'));await post('/api/admin/change-password',d);toast(tr('密码已修改','Password changed'));
@@ -502,17 +502,15 @@ function switchTab(key) {
   section.className = 'admin-content';
   section.id = 'admin-section';
   if (selected.group.children.length > 1) {
-    const tabs = document.createElement('div');
-    tabs.className = 'tabs-segment';
-    tabs.setAttribute('role', 'tablist');
+    const tabs = document.createElement('nav');
+    tabs.className = 'tabs';
     tabs.setAttribute('aria-label', tr(...selected.group.label));
-    tabs.innerHTML = selected.group.children.map(child => `<button type="button" role="tab" data-child="${child}" aria-selected="${child === active}">${tr(...names[child])}</button>`).join('');
+    tabs.innerHTML = selected.group.children.map(child => `<button data-child="${child}" aria-selected="${child === active}">${tr(...names[child])}</button>`).join('');
     tabs.querySelectorAll('[data-child]').forEach(button => button.onclick = () => switchTab(button.dataset.child));
     section.append(tabs);
   }
   const next = document.createElement('section');
   next.id = 'admin-view';
-  next.className = 'pane pane-pad-lg';
   section.append(next);
   $('#admin-section', root).replaceWith(section);
   view = next;
@@ -523,13 +521,13 @@ export async function render(el){
   if(!historyBound){window.addEventListener('hashchange',()=>{const key=location.hash.slice(1);if(root?.isConnected&&state.session?.admin&&resolveNavigation(key,isSuper()).child!==active)switchTab(key);});historyBound=true;}
   if(!state.session?.admin){
     const player=state.session?.player,linked=!!player?.linked_admin_id;
-    el.innerHTML=title('市政管理后台','City administration')+`<section class="pane pane-pad-lg"><div class="pane-head"><div class="heading-block" style="min-width:0"><h2>${tr('通过绑定玩家账号辅助登录','Sign in with your linked citizen account')}</h2></div></div><p>${player?esc(player.username)+' · '+tr(linked?'已绑定管理员，可选择密码或通行密钥验证。':'此玩家尚未绑定管理员账号，请切换到已绑定账号。',linked?'Linked administrator: verify with a password or passkey.':'This citizen has no linked administrator. Switch to a linked account.'):tr('先登录已绑定管理员的玩家账号，再验证管理员身份。','Sign in to a linked citizen account, then verify administrator access.')}</p><div class="actions">${linked?`<button id="admin-enter" class="primary">${tr('使用管理员密码','Use admin password')}</button><button id="admin-passkey">${tr('使用通行密钥','Use passkey')}</button>`:`<button id="admin-player-login" class="primary">${tr('登录绑定玩家账号','Sign in to linked citizen')}</button>`}</div></section>`;
+    el.innerHTML=title('市政管理后台','City administration')+`<div class="panel"><h2>${tr('通过绑定玩家账号辅助登录','Sign in with your linked citizen account')}</h2><p>${player?esc(player.username)+' · '+tr(linked?'已绑定管理员，可选择密码或通行密钥验证。':'此玩家尚未绑定管理员账号，请切换到已绑定账号。',linked?'Linked administrator: verify with a password or passkey.':'This citizen has no linked administrator. Switch to a linked account.'):tr('先登录已绑定管理员的玩家账号，再验证管理员身份。','Sign in to a linked citizen account, then verify administrator access.')}</p><div class="actions">${linked?`<button id="admin-enter" class="primary">${tr('使用管理员密码','Use admin password')}</button><button id="admin-passkey">${tr('使用通行密钥','Use passkey')}</button>`:`<button id="admin-player-login" class="primary">${tr('登录绑定玩家账号','Sign in to linked citizen')}</button>`}</div></div>`;
     $('#admin-player-login',el)?.addEventListener('click',async()=>{await login(false,'player',{hideRegistration:true});await session();renderAccount();render(el);});
     $('#admin-passkey',el)?.addEventListener('click',e=>action(e.currentTarget,async()=>{await passkeyLogin('admin');await session();renderAccount();render(el);}));
     $('#admin-enter',el)?.addEventListener('click',()=>modal(tr('管理密码验证','Verify admin password'),field('admin_password',tr('管理密码','Admin password'),'password'),{label:tr('验证并进入','Verify and enter'),submit:async d=>{await post('/api/init?action=admin-enter-password',d);await session();renderAccount();render(el);}}));
     return;
   }
-  el.innerHTML=title('市政管理后台','City administration')+`<div class="section-head"><span>👤 ${esc(state.session.user.username)} <span class="badge">${esc(state.session.user.role.toUpperCase())}</span></span><button id="refresh-stats">↻ ${tr('刷新概览','Refresh overview')}</button></div><div id="admin-stats" class="stat-grid"></div><div class="admin-layout" style="margin-top:28px"><nav class="admin-nav" aria-label="${tr('管理功能','Administration')}">${navigationFor(isSuper()).map(group=>`<button data-group="${group.id}" aria-selected="false">${tr(...group.label)}</button>`).join('')}</nav><section id="admin-section" class="admin-content"><section id="admin-view"></section></section></div>`;
+  el.innerHTML=title('市政管理后台','City administration')+`<div class="section-head"><span>👤 ${esc(state.session.user.username)} <span class="badge">${esc(state.session.user.role.toUpperCase())}</span></span><button id="refresh-stats">↻ ${tr('刷新概览','Refresh overview')}</button></div><div id="admin-stats"></div><div class="admin-layout" style="margin-top:28px"><nav class="admin-nav" aria-label="${tr('管理功能','Administration')}">${navigationFor(isSuper()).map(group=>`<button data-group="${group.id}" aria-selected="false">${tr(...group.label)}</button>`).join('')}</nav><section id="admin-section" class="admin-content"><section id="admin-view"></section></section></div>`;
   view=$('#admin-view',el);
   $$('[data-group]',el).forEach(b=>b.onclick=()=>switchTab(b.dataset.group));
   $('#refresh-stats',el).onclick=refreshStats;

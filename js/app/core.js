@@ -137,7 +137,6 @@ export function toast(message,error=false){
   toast.timer=setTimeout(()=>el.remove(),5000);
 }
 export const empty=(message=tr('暂无记录','No records yet'))=>`<div class="empty"><span aria-hidden="true">◇</span><p>${esc(message)}</p></div>`;
-
 export async function region(el,load,render){
   if(!el)return;
   const token=Symbol();
@@ -340,13 +339,7 @@ export function renderAccount(){
 export function shell(){
   document.documentElement.lang=state.language;
   document.documentElement.style.colorScheme='light';
-  // Wrap layout in `.app-shell` so the page can use a consistent flex column.
-  if(!document.body.classList.contains('app-shell'))document.body.classList.add('app-shell');
-  // Tag the page role on the body for sub-styling (admin, player, public).
-  const role=document.body.dataset.page;
-  if(role&&!document.body.classList.contains('page-'+role))document.body.classList.add('page-'+role);
-  const header=$('#header');
-  header.innerHTML=`<div class="header-inner"><a class="brand" href="/"><span class="grass-block" aria-hidden="true"></span><span><strong>${tr('灯光市人民政府','Light City Hall')}</strong><small>LIGHT CITY · EST. 2023</small></span></a><button id="menu" aria-expanded="false" aria-controls="navigation">☰ ${tr('菜单','Menu')}</button><nav id="navigation" aria-label="${tr('主要导航','Main navigation')}">${navigationMarkup()}</nav><div id="account"></div><button id="language">${state.language==='en'?'中文':'EN'}</button></div>`;
+  $('#header').innerHTML=`<div class="header-inner"><a class="brand" href="/"><span class="grass-block" aria-hidden="true"></span><span><strong>${tr('灯光市人民政府','Light City Hall')}</strong><small>LIGHT CITY · EST. 2023</small></span></a><button id="menu" aria-expanded="false" aria-controls="navigation">☰ ${tr('菜单','Menu')}</button><nav id="navigation" aria-label="${tr('主要导航','Main navigation')}">${navigationMarkup()}</nav><div id="account"></div><button id="language">${state.language==='en'?'中文':'EN'}</button></div>`;
   $('#menu').onclick=()=>{
     const open=$('#navigation').classList.toggle('open');
     $('#menu').setAttribute('aria-expanded',open);
@@ -361,18 +354,6 @@ export function shell(){
     location.reload();
   }
   ;
-  // Sticky-header shadow: only the .is-stuck class toggle. Threshold ≈ 6px so
-  // tiny mouse-wheel ticks don’t flicker the class. rAF keeps the cost low.
-  let lastStuck=false;
-  const onScroll=()=>{
-    const stuck=window.scrollY>6;
-    if(stuck===lastStuck)return;
-    lastStuck=stuck;
-    header.classList.toggle('is-stuck',stuck);
-  }
-  ;
-  window.addEventListener('scroll',()=>requestAnimationFrame(onScroll),{passive:true});
-  onScroll();
   renderAccount();
   $('#footer').innerHTML=`<div><b>${tr('灯光市 · 由市民共建','Light City · Built by citizens')}</b><p>${tr('Minecraft 城市作品展示，与 Mojang / Microsoft 无关。','A Minecraft city project, not affiliated with Mojang / Microsoft.')}</p></div><a href="/#contact">${tr('联系市政厅','Contact City Hall')} ↗</a>`;
 }
