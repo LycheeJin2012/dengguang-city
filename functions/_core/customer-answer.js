@@ -7,7 +7,7 @@ export async function smartCustomerReply(env,question,context=[],player=null){
  if(/酒店|房型|住宿|客房/.test(query)){const hotels=(await env.DB.prepare("SELECT id,name,address,description FROM hotels WHERE is_active=1 ORDER BY id LIMIT 50").all()).results;for(const h of hotels.map(h=>({...h,score:similarity(query,h.name+' 酒店 '+(h.address||'')+' '+(h.description||''))})).filter(h=>h.score>=0.1).sort((a,b)=>b.score-a.score).slice(0,3))sources.push({key:'hotel:'+h.id,kind:'hotel',id:h.id,title:h.name,url:'/hotel.html',content:JSON.stringify({name:h.name,address:h.address,description:h.description})});}
  const personal=await personalSources(env.DB,player,question);if(personal)sources.push(...personal.sources);
  if(/地图|施工|修路|车站|铁路|公路|坐标|地点|哪里|在哪|关闭|恢复/.test(query)){
- const places=(await env.DB.prepare("SELECT id,name,category,dimension,x,z,description,construction_status,construction_note,expected_end,updated_at FROM city_places WHERE published=1 ORDER BY id DESC LIMIT 200").all()).results;
+ const places=(await env.DB.prepare("SELECT id,name,category,dimension,x,z,description,construction_status,construction_note,expected_end,updated_at FROM city_places WHERE published=1 AND dimension='overworld' ORDER BY id DESC LIMIT 200").all()).results;
  for(const p of places.map(p=>({...p,score:similarity(query,p.name+' '+p.description+' '+p.construction_note)})).filter(p=>p.score>=0.1).sort((a,b)=>b.score-a.score).slice(0,5)){const {score,...record}=p;sources.push({key:'place:'+p.id,kind:'place',id:p.id,title:p.name,url:'/map.html',content:JSON.stringify(record)});}
  }
  const fallback=()=>personal?{answer:personal.fallback,sources:personal.sources.map(({content,key,...r})=>r),source:'personal_records'}:null;
