@@ -1,5 +1,5 @@
 {
-  "basis": "v70 user-authorized MiniMax frontend layout refactor, independently reviewed for copy and business preservation",
+  "basis": "v71 publish user-directed MiniMax follow-up press feedback polish",
   "files": {
     "404.html": "5a6810ba2b329a14388d686638732d5e9a05b828afe85270d94c50794476bbca",
     "admin-v37.html": "09b509c6600edda3ebb56a4d81fb82505a3e1a3ee84cd8e835a68ea1038b3980",
@@ -15,11 +15,11 @@
     "js/app/core.js": "9b674a4ccf343634e76ceb4109d252021d84ceebe2cad41e5fc0f1d6576e2f0e",
     "js/app/dispatch-policy.js": "865dcf504e1228dffbaaa7b2d844af0b031aab31ad2be7600fb03d313f2dfb07",
     "js/app/entry.js": "b7f24d4edaf00461ad6b5d15b7a401b9ce8532513d14cd2aa354dc7be190cf63",
-    "js/app/home.js": "c1913a18c3fdb7adf7e8d22289c8cbe53a165b167a6b8f481acc8f411e7b5bd4",
+    "js/app/home.js": "3b25cce5ee44c9b5c08ad7b70878dc3b68199483739ea83798e38bc09f98f062",
     "js/app/hotel-owner.js": "6470a760d1199b1ab7a1951ac86dd99a6db00f3cac380706d2b07d14b0d37511",
     "js/app/hotel.js": "3c2635666fc57e78085249ea1ed3e76ec3064549b01d72b84a5c238a3d386231",
     "js/app/permissions.js": "2bbb92b351b8de71d9b4be913cdb5bbecd4673a7d161e6e9ec1740a895958407",
-    "js/app/profile.js": "64f83c7cc52ea3d113c18b2743af085c47d9873cc10e9b99a168b650974017e1",
+    "js/app/profile.js": "32f3d4b805f3059bffaca89c48a3160c16fb0fd688b6f33d1aae3ea240625597",
     "js/app/security.js": "bdb2b752ee1abb32ecea8c8a01abbedbf55a2875a614b7f53827874fc343215b",
     "js/app/social.js": "485e88a5d0e405fa01018f16035289ab1aa6d88e353c2629213e10015fbd80be",
     "js/app/ticket-center.js": "777e2e4516888cf6048c8c4878aabb19aa4f02c16974fe2d600f2b0fc0eb578d",

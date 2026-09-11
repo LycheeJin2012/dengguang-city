@@ -962,6 +962,7 @@ td .actions button { min-height: 36px; padding: 0.3rem 0.7rem; font-size: 0.82re
   background: transparent;
   border-radius: 0;
   color: var(--ink);
+  --press-active-bg: var(--paper-warm);
   /* Apple: hover is colour, not a horizontal shift that changes line metrics. */
   transition:
     background-color var(--motion-base) var(--ease-out),
@@ -1434,10 +1435,21 @@ summary:not(:disabled):not([aria-disabled="true"]):active,
 #language:not(:disabled):not([aria-disabled="true"]):active,
 #navigation a:not(:disabled):not([aria-disabled="true"]):active,
 .tabs button:not(:disabled):not([aria-disabled="true"]):active,
+.tabs-segment button:not(:disabled):not([aria-disabled="true"]):active,
 .admin-nav button:not(:disabled):not([aria-disabled="true"]):active,
 .modal-head [data-close]:not(:disabled):not([aria-disabled="true"]):active,
 .upload-drop:not(:disabled):not([aria-disabled="true"]):active,
-.stat:not(:disabled):not([aria-disabled="true"]):active {
+.stat:not(:disabled):not([aria-disabled="true"]):active,
+.stat-tile:not(:disabled):not([aria-disabled="true"]):active,
+.feature-card[href]:not([aria-disabled="true"]):active,
+a.feature-card:not([aria-disabled="true"]):active,
+.gallery-button:not(:disabled):not([aria-disabled="true"]):active,
+.conversation:not(:disabled):not([aria-disabled="true"]):active,
+.compact-row[role="button"]:not([aria-disabled="true"]):active,
+.row-clickable:not([aria-disabled="true"]):active,
+.list-rows .row-item[role="button"]:not([aria-disabled="true"]):active,
+.pillbar .pill:not([aria-disabled="true"]):active,
+.filterbar label[aria-selected="true"]:active {
   background-color: var(--press-active-bg);
   box-shadow: var(--press-active-shadow), var(--press-indicator);
   transition-duration: var(--motion-fast);
@@ -1932,7 +1944,7 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea { min-width: 
     box-shadow var(--motion-base) var(--ease-out),
     transform var(--motion-base) var(--ease-out);
 }
-.stat-tile:hover { background: #ecdf9b; box-shadow: var(--shadow); }
+.stat-tile:hover { background: #ecdf9b; box-shadow: 3px 3px 0 var(--line); border-color: var(--green); }
 .stat-tile strong {
   font-family: var(--font-mono);
   font-size: clamp(1.8rem, 2.6vw, 2.4rem);
@@ -1976,7 +1988,7 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea { min-width: 
     box-shadow var(--motion-base) var(--ease-out),
     border-color var(--motion-base) var(--ease-out);
 }
-.feature-card:hover { background: var(--paper-warm); box-shadow: var(--shadow-lift); }
+.feature-card:hover { background: var(--paper-warm); box-shadow: 3px 3px 0 var(--line); border-color: var(--green); }
 .feature-card .feature-eyebrow {
   font-family: var(--font-mono);
   letter-spacing: 0.14em;
@@ -2159,6 +2171,18 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea { min-width: 
   display: flex;
   flex-direction: column;
   gap: 6px;
+  transition:
+    background-color var(--motion-base) var(--ease-out),
+    box-shadow var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) var(--ease-out);
+}
+.kanban .kanban-card:hover {
+  border-color: var(--green);
+  box-shadow: 3px 3px 0 var(--line);
+}
+.kanban .kanban-card[role="button"] {
+  cursor: pointer;
+  --press-active-bg: var(--paper-warm);
 }
 @media (max-width: 899px) {
   .kanban { grid-template-columns: minmax(0, 1fr); }
@@ -2254,6 +2278,9 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea { min-width: 
   box-shadow: var(--shadow-soft);
   flex-wrap: wrap;
   margin-bottom: 20px;
+  transition:
+    box-shadow var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) var(--ease-out);
 }
 .banner .banner-eyebrow { font-family: var(--font-mono); letter-spacing: 0.12em; color: var(--green); font-size: 0.85rem; }
 .banner .banner-text { flex: 1 1 200px; min-width: 0; }
@@ -2297,7 +2324,7 @@ input:not([type="checkbox"]):not([type="radio"]), select, textarea { min-width: 
     color var(--motion-base) var(--ease-out);
 }
 .pillbar .pill[aria-selected="true"] { background: var(--green); color: #fff; border-color: var(--green); }
-.pillbar .pill:hover { background: var(--paper-warm); border-color: var(--green); }
+.pillbar .pill:hover { background: var(--paper-warm); border-color: var(--green); box-shadow: 2px 2px 0 var(--line); }
 
 /* ---- Drawer (mobile admin nav fallback) ---------------------- */
 .admin-drawer {
@@ -2472,7 +2499,13 @@ body.has-drawer { overflow: hidden; }
 
 /* ---- Hover highlight for clickable rows (used in tickets) --- */
 .row-clickable { cursor: pointer; }
-.row-clickable:hover { background: var(--leaf-soft); }
+.row-clickable:hover { background: var(--leaf-soft); box-shadow: 2px 2px 0 var(--line); }
+.row-clickable, .list-rows .row-item[role="button"] {
+  --press-active-bg: var(--leaf-warm);
+  transition:
+    background-color var(--motion-base) var(--ease-out),
+    box-shadow var(--motion-base) var(--ease-out);
+}
 
 /* ---- Sticky toolbar ---------------------------------------- */
 .sticky-toolbar {
@@ -2526,4 +2559,128 @@ body.has-drawer { overflow: hidden; }
   .admin-drawer, .admin-drawer-backdrop {
     transition-duration: 0.01ms !important;
   }
+  .cta-pulse, .cta-shine { animation: none !important; }
+}
+
+/* ====================================================================
+ *  CTA · 每日签到视觉锚点
+ *  把"每日签到"按钮做成站点最有"按压感"的可交互元素：
+ *    · 静态 = 3px 金色描边 + 4px 平方阴影 + 缓慢呼吸光晕
+ *    · 悬停 = 金色加深 + 阴影升至 5px + 内部光带扫过
+ *    · 按压 = 1px 平方阴影（与全站统一 :active 规则同源）+ 深金色背景
+ *  仍由 §7 统一 :active 规则提供按压反馈；这里只覆盖 resting/hover。
+ * ==================================================================== */
+.cta-pulse {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 48px;
+  padding: 0.6rem 1.1rem;
+  font: inherit;
+  font-weight: 700;
+  color: var(--green-deep);
+  background: var(--gold-soft);
+  border: 3px solid var(--gold);
+  box-shadow: 4px 4px 0 var(--gold), 4px 4px 0 1px var(--line);
+  cursor: pointer;
+  --press-active-bg: var(--gold-deep);
+  text-decoration: none;
+  overflow: hidden;
+  isolation: isolate;
+  animation: cta-breath 3.6s var(--ease-in-out) infinite;
+  transition:
+    background-color var(--motion-base) var(--ease-out),
+    box-shadow var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) var(--ease-out),
+    color var(--motion-base) var(--ease-out);
+}
+.cta-pulse:hover {
+  background: var(--gold);
+  border-color: var(--gold-deep);
+  color: #fff;
+  box-shadow: 5px 5px 0 var(--gold), 5px 5px 0 1px var(--line);
+}
+.cta-pulse:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+/* Shine sweep: a diagonal highlight band passes every 4s. Disabled in
+   reduced-motion via the override block above.                       */
+.cta-pulse::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 35%, #fff8ddcc 50%, transparent 65%);
+  transform: translateX(-120%);
+  animation: cta-shine 4.4s var(--ease-in-out) infinite;
+  z-index: -1;
+  pointer-events: none;
+}
+.cta-pulse::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 2px var(--paper);
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes cta-breath {
+  0%, 100% { box-shadow: 4px 4px 0 var(--gold), 4px 4px 0 1px var(--line); }
+  50%      { box-shadow: 4px 4px 0 var(--gold-deep), 4px 4px 0 1px var(--line); }
+}
+@keyframes cta-shine {
+  0%   { transform: translateX(-120%); }
+  60%  { transform: translateX(120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* ---- Stat tile · 像签到按钮的"按下去"动效 ---------------------------
+   stat-tile 在按下时除了继承统一 :active 规则外，再叠加一次
+   inner inset shadow，让"被按进画里"的反馈更明显。                     */
+.stat-tile, .feature-card {
+  /* 静止状态加深边框色与 2px 平方阴影，与签到按钮风格同源。       */
+  box-shadow: 2px 2px 0 var(--line);
+}
+.stat-tile:hover, .feature-card:hover {
+  box-shadow: 3px 3px 0 var(--line);
+}
+.stat-tile:active, .feature-card:active {
+  /* 让 inset 阴影表达"按进纸面"的反馈，配合外阴影的 1px 1px。       */
+  box-shadow: var(--press-active-shadow), var(--press-indicator), inset 0 0 0 2px var(--line-soft);
+}
+
+/* Tabs segment button · 选中的 tab 在按下时仍保留绿色，按下深度 1px  */
+.tabs-segment button[aria-selected="true"] {
+  --press-active-bg: var(--green-deep);
+}
+
+/* Conversation · 选中态按下时仍保留金边，按下深度 1px                  */
+.conversation.selected {
+  --press-active-bg: var(--mint-warm);
+}
+.conversation.selected:active {
+  box-shadow: var(--press-active-shadow), inset 4px 0 0 var(--green);
+}
+
+/* Compact list row clickable · 按下时只动 bg，不改边框                    */
+.compact-list .compact-row.row-clickable {
+  --press-active-bg: var(--leaf-warm);
+}
+
+/* City map pin · 平时用 1px 1px 阴影，按下回弹 1px 0 0                 */
+.city-map .map-pin {
+  box-shadow: 1px 1px 0 var(--line);
+  transition:
+    background-color var(--motion-base) var(--ease-out),
+    box-shadow var(--motion-base) var(--ease-out),
+    transform var(--motion-base) var(--ease-out);
+}
+.city-map .map-pin:hover { box-shadow: 2px 2px 0 var(--line); }
+.city-map .map-pin:active { box-shadow: 1px 1px 0 var(--line); }
+.city-map .map-pin[aria-expanded="true"],
+.city-map .map-pin.is-active { box-shadow: 2px 2px 0 var(--gold); }
+
+/* Let the pressed shadow take effect and honor reduced motion on the shine pseudo-element. */
+.cta-pulse:active { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  .cta-pulse::before { animation: none !important; }
 }
