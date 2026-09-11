@@ -1,4 +1,4 @@
-import {$,$$,api,post,esc,text,date,empty,title,field,modal,action,toast} from './core.js';
+import {$,$$,api,post,esc,text,date,tr,empty,title,field,modal,action,toast} from './core.js';
 import {viewAudit} from './audit-ui.js';
 const categories=[['facility','公共设施'],['hotel','酒店'],['rail','铁路 / 车站'],['road','道路'],['park','绿化']];
 const states=[['open','正常开放'],['planned','计划施工'],['construction','施工中'],['closed','暂时关闭']];
@@ -6,7 +6,7 @@ const label=(list,key)=>list.find(r=>r[0]===key)?.[1]||key;
 export async function render(el){return mapView(el,false);}
 export async function renderMapAdmin(el){return mapView(el,true);}
 async function mapView(el,manage){
- el.innerHTML=title(manage?'地图与施工管理':'城市地图与施工',manage?'Map management':'City map')+`<section class="panel"><p>${manage?'由 SUPER 维护真实地点。先保存草稿，确认坐标与说明后发布；施工和恢复信息直接在地点中更新。':'主世界坐标示意图由超管维护，并非实时游戏地形。施工状态与预计恢复日期以地点说明为准。'}</p><div class="toolbar">${field('q','搜索地点','search','',{required:false})}${field('category','分类','select','',{required:false,options:[['','全部分类'],...categories]})}${field('work','施工状态','select','',{required:false,options:[['','全部状态'],...states]})}<button id="map-refresh">刷新</button>${manage?'<button id="map-add" class="primary">＋ 添加地点</button>':''}</div></section><section class="panel"><div id="map-plot" class="city-map" aria-label="地点坐标示意图"></div><p class="muted">上方为北（Z 减小），右方为东（X 增大）。图上编号对应下方地点，点击编号查看。</p></section><div id="map-list"></div>`;
+ el.innerHTML=(manage?'<div class="section-head"><h2>'+tr('地图与施工管理','Map management')+'</h2></div>':title('城市地图与施工','City map'))+`<section class="panel"><p>${manage?'由 SUPER 维护真实地点。先保存草稿，确认坐标与说明后发布；施工和恢复信息直接在地点中更新。':'主世界坐标示意图由超管维护，并非实时游戏地形。施工状态与预计恢复日期以地点说明为准。'}</p><div class="toolbar">${field('q','搜索地点','search','',{required:false})}${field('category','分类','select','',{required:false,options:[['','全部分类'],...categories]})}${field('work','施工状态','select','',{required:false,options:[['','全部状态'],...states]})}<button id="map-refresh">刷新</button>${manage?'<button id="map-add" class="primary">＋ 添加地点</button>':''}</div></section><div class="map-layout"><section class="panel"><div id="map-plot" class="city-map" aria-label="地点坐标示意图"></div><p class="muted">上方为北（Z 减小），右方为东（X 增大）。图上编号对应下方地点，点击编号查看。</p></section><div id="map-list"></div></div>`;
  let places=[];
  function draw(){const q=$('[name=q]',el).value.trim().toLowerCase(),category=$('[name=category]',el).value,work=$('[name=work]',el).value;const rows=places.filter(p=>p.dimension==='overworld'&&(!category||p.category===category)&&(!work||p.construction_status===work)&&(!q||(p.name+' '+p.description+' '+p.construction_note).toLowerCase().includes(q)));
  const xs=rows.map(p=>p.x),zs=rows.map(p=>p.z),minX=Math.min(...xs),maxX=Math.max(...xs),minZ=Math.min(...zs),maxZ=Math.max(...zs);

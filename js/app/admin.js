@@ -496,6 +496,7 @@ async function loadActive(){
 function switchTab(key) {
   let selected = resolveNavigation(key, isSuper());
   active = selected.child;
+  const menu=$('#admin-nav-toggle',root);if(menu){menu.textContent=tr(...selected.group.label);menu.setAttribute('aria-expanded','false');$('.admin-sidebar',root).classList.remove('menu-open');}
   location.hash = active;
   $$('.admin-nav [data-group]', root).forEach(button => button.setAttribute('aria-selected', button.dataset.group === selected.group.id));
   const section = document.createElement('section');
@@ -527,8 +528,9 @@ export async function render(el){
     $('#admin-enter',el)?.addEventListener('click',()=>modal(tr('管理密码验证','Verify admin password'),field('admin_password',tr('管理密码','Admin password'),'password'),{label:tr('验证并进入','Verify and enter'),submit:async d=>{await post('/api/init?action=admin-enter-password',d);await session();renderAccount();render(el);}}));
     return;
   }
-  el.innerHTML=title('市政管理后台','City administration')+`<div class="section-head"><span>👤 ${esc(state.session.user.username)} <span class="badge">${esc(state.session.user.role.toUpperCase())}</span></span><button id="refresh-stats">↻ ${tr('刷新概览','Refresh overview')}</button></div><div id="admin-stats"></div><div class="admin-layout" style="margin-top:28px"><nav class="admin-nav" aria-label="${tr('管理功能','Administration')}">${navigationFor(isSuper()).map(group=>`<button data-group="${group.id}" aria-selected="false">${tr(...group.label)}</button>`).join('')}</nav><section id="admin-section" class="admin-content"><section id="admin-view"></section></section></div>`;
+  el.innerHTML=title('市政管理后台','City administration')+`<div class="section-head"><span>👤 ${esc(state.session.user.username)} <span class="badge">${esc(state.session.user.role.toUpperCase())}</span></span><button id="refresh-stats">↻ ${tr('刷新概览','Refresh overview')}</button></div><div id="admin-stats"></div><div class="admin-layout" style="margin-top:28px"><aside class="admin-sidebar"><button type="button" id="admin-nav-toggle" aria-expanded="false" aria-controls="admin-navigation">${tr('管理功能','Administration')}</button><nav id="admin-navigation" class="admin-nav" aria-label="${tr('管理功能','Administration')}">${navigationFor(isSuper()).map(group=>`<button data-group="${group.id}" aria-selected="false">${tr(...group.label)}</button>`).join('')}</nav></aside><section id="admin-section" class="admin-content"><section id="admin-view"></section></section></div>`;
   view=$('#admin-view',el);
+  $('#admin-nav-toggle',el).onclick=()=>{const aside=$('.admin-sidebar',el),open=aside.classList.toggle('menu-open');$('#admin-nav-toggle',el).setAttribute('aria-expanded',String(open));};
   $$('[data-group]',el).forEach(b=>b.onclick=()=>switchTab(b.dataset.group));
   $('#refresh-stats',el).onclick=refreshStats;
   refreshStats();

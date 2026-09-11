@@ -315,7 +315,7 @@ function navigationMarkup(){
  const links=[['/','首页','Home'],['/hotel.html','酒店','Hotel'],['/map.html','地图','Map'],['/affairs.html','我的事务','My affairs'],['/messages.html','消息','Messages']];
  if(canSeeMunicipalLink(state.session))links.push(['/admin.html','市政后台','Admin']);
  if(canSeeHotelOwnerLink(state.session))links.push(['/hotel-owner.html','我的酒店','My hotel']);
- return links.map(([href,zh,en])=>`<a href="${href}" ${location.pathname===href?'aria-current="page"':''}>${tr(zh,en)}</a>`).join('');
+ return links.map(([href,zh,en])=>`<a href="${href}" ${location.pathname.replace(/\.html$/,'').replace(/\/$/,'').replace('/admin-v37','/admin')===href.replace(/\.html$/,'').replace(/\/$/,'')?'aria-current="page"':''}>${tr(zh,en)}</a>`).join('');
 }
 export function renderAccount(){
  const navigation=$('#navigation');if(navigation)navigation.innerHTML=navigationMarkup();

@@ -1,18 +1,18 @@
 {
-  "basis": "v68 user-requested in-page message tabs and local preview synchronization",
+  "basis": "v74 user-authorized Codex UI layout refactor from v69 runtime",
   "files": {
-    "404.html": "5a6810ba2b329a14388d686638732d5e9a05b828afe85270d94c50794476bbca",
-    "admin-v37.html": "09b509c6600edda3ebb56a4d81fb82505a3e1a3ee84cd8e835a68ea1038b3980",
+    "404.html": "fa48802a1c2af512cea6fcec6dd403716f2774d1bb4c0070362d0dcf2ec577e4",
+    "admin-v37.html": "a20d51872d612c2995fb4ccfc61d1d34486668f1a09c4f8833d728334b29be26",
     "admin.html": "f57331c72ef03327b9a37a16189cce1c046a885d385ff693b66271bd1099e501",
-    "dm.html": "ff77d8097894ba84d8b9f4b3a989a3b255d7de832d0c8ef34ee4ab4e1bff0c8b",
-    "hotel-owner.html": "4761600f45487565e86b396ea9d69bb582533e9bdc97badb48da91328cd0e811",
-    "hotel.html": "b5a54428372cf311c159c6f891cf2c84f2b13f274a0d0cd8db184e2e59356653",
-    "index.html": "e954d077e795031c4db846f010704392f491d4852ecdc504aa587aef7e2826ac",
+    "dm.html": "50a65dd82e636b54e94a8b94a8a772303c2ef07bf57e3c0bc2a6c24fd1f86dbe",
+    "hotel-owner.html": "c6fb27e4099b929624f9f95b45dff850aeab17f3732f033488685071a66f4a6d",
+    "hotel.html": "7503adab9b25275b9173ccd51418d6b8ec3414d5c58bddcab3d94efeebc58de3",
+    "index.html": "2b0cce9e3298fbf6fdf25457b643acd1581b798bf7c047d3b09d36015f36de9a",
     "js/app/admin-navigation.js": "eda731753c75511e2dc8e4154e33705e27531f1501d4074eb08aaef4ba2dc87a",
-    "js/app/admin.js": "02488a8d6a64c2e90d404c4a6c6767dabad75364e331ebf568efb8669b4a247b",
+    "js/app/admin.js": "893b4d147e8a260da0d2b3a55b39e43abb9e93a84b3427e3d56a24853d08ad6e",
     "js/app/attachments.js": "1b782e9338f66417cdc97d50d089fa2f44354f3287c915e905f6696d3716c34a",
     "js/app/audit-ui.js": "f537ef9de2c09052b237165f4c46569d41c8c0d7d93c6475f6c7a8e4428caccd",
-    "js/app/core.js": "1338079f5285da4a827779b1b313900503b31fba9d78a72b0da854d11e628cdf",
+    "js/app/core.js": "b91f8035ce8465cbb193117f51e2ccbabe60e2bb8a0fbdea9017ef8083f498d4",
     "js/app/dispatch-policy.js": "865dcf504e1228dffbaaa7b2d844af0b031aab31ad2be7600fb03d313f2dfb07",
     "js/app/entry.js": "b7f24d4edaf00461ad6b5d15b7a401b9ce8532513d14cd2aa354dc7be190cf63",
     "js/app/home.js": "186315d7497a6b449df22b273d779968f701e59713d1e1d169c772ce3275ee3f",
@@ -25,8 +25,8 @@
     "js/app/ticket-center.js": "777e2e4516888cf6048c8c4878aabb19aa4f02c16974fe2d600f2b0fc0eb578d",
     "js/app/ticket-form.js": "9ef76f9fceee991a6894426b78dddf5ef3578f661f8d47d4f3235fc7668a1a26",
     "js/date.js": "559250fda3b36b9c6b346235012757f05ce64d67fb260063cb7cb3a95ad32e46",
-    "notifications.html": "85496adc0c215048d009c667e254e9ca7a1b53024d7bfd84ea0922fbca45aeec",
-    "profile.html": "f6e94d7228c1d90fcd144997d0254b35095c3fb2803516773cacad7c5f477a83",
+    "notifications.html": "f22aee2494084ce4947e430502409ede2e5c167352b1087a2ddfc7811221bbe0",
+    "profile.html": "7ca0ef1137cb10ed5b1712b940812b5ffb02164757c01d73ddbd9d28c5698790",
     "tests/dev-server.mjs": "752175ba70027287385a49e225271dd1666b0282d13aefcd78308502be32fb58"
   }
 }
