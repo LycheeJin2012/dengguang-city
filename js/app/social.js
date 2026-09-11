@@ -4,6 +4,7 @@ import {
 }
 from './core.js';
 export async function render(el,page){
+  page=page==='messages'?(new URLSearchParams(location.search).get('tab')==='notifications'?'notifications':'dm'):page;
   if(!state.session?.player){
     el.innerHTML=title(page==='dm'?'私信':'通知中心',page==='dm'?'Messages':'Notifications')+`<div class="panel"><p>${tr('请先登录市民账号','Please sign in as a citizen')}</p><button id="sign-in">${tr('登录','Sign in')}</button></div>`;
     $('#sign-in',el).onclick=async()=>{
@@ -13,7 +14,8 @@ export async function render(el,page){
     ;
     return;
   }
-  return page==='dm'?messages(el):notifications(el);
+  el.innerHTML=title('消息','Messages')+`<div class="tabs section"><a class="button" href="/messages.html" ${page==='dm'?'aria-current="page"':''}>私信与灯灯</a><a class="button" href="/messages.html?tab=notifications" ${page==='notifications'?'aria-current="page"':''}>通知</a></div><section id="message-content"></section>`;
+  const box=$('#message-content',el);await (page==='dm'?messages(box):notifications(box));$('.page-heading',box)?.remove();document.title=tr('消息 · 灯光市','Messages · Light City');
 }
 async function notifications(el){
   let filter='all',all=[];

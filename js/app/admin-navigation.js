@@ -1,5 +1,5 @@
 // Primary navigation groups preserve existing child hashes and permission boundaries.
-const superOnly = new Set(['tracks', 'hotels', 'rooms', 'requirements', 'announcements', 'gallery', 'admins', 'dms', 'owners', 'audit', 'knowledge', 'replyfeedback']);
+const superOnly = new Set(['citymap','tracks', 'hotels', 'rooms', 'requirements', 'announcements', 'gallery', 'admins', 'dms', 'owners', 'audit', 'knowledge', 'replyfeedback']);
 export const groups = [
   { id: 'tickets', label: ['🎫 工单中心', '🎫 Tickets'], children: ['tickets'] },
   { id: 'dispatch', label: ['📋 派单', '📋 Dispatch'], children: ['dispatch'] },
@@ -10,6 +10,7 @@ export const groups = [
   { id: 'racing', label: ['🏁 赛车业务', '🏁 Racing'], children: ['kart', 'circuit', 'tracks', 'times'] },
   { id: 'driving', label: ['🚗 驾照与考试', '🚗 Licenses & exams'], children: ['license', 'requirements', 'questions', 'examreview'] },
   { id: 'knowledge', label: ['📚 灯灯问答', '📚 DengDeng answers'], children: ['knowledge'] },
+  { id: 'citymap', label: ['🗺️ 地图与施工', '🗺️ Map & works'], children: ['citymap'] },
   { id: 'content', label: ['📜 内容管理', '📜 Content'], children: ['announcements', 'gallery'] },
   { id: 'dms', label: ['✉️ 私信监管', '✉️ DM moderation'], children: ['dms'] },
 ];

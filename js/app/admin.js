@@ -1,3 +1,4 @@
+import {renderMapAdmin} from './city-map.js';
 import {tableCell} from './table-layout.js';
 import {renderSupportChat} from './support-chat-admin.js';
 import {renderReplyFeedback} from './reply-feedback-admin.js';
@@ -19,7 +20,7 @@ import {
   passkeyLogin,registerPasskey
 }
 from './security.js';
-const names={replyfeedback:['👍 回复反馈','👍 Reply feedback'],examreview:['✍️ 成绩复核','✍️ Exam review'],knowledge:['📚 知识库','📚 Knowledge base'],support:['🎧 人工客服','🎧 Human support'],owners:['🔑 酒店经营账户','🔑 Hotel owner accounts'],audit:['📒 操作留痕','📒 Operation audit'],
+const names={citymap:['🗺️ 地图与施工','🗺️ Map & works'],replyfeedback:['👍 回复反馈','👍 Reply feedback'],examreview:['✍️ 成绩复核','✍️ Exam review'],knowledge:['📚 知识库','📚 Knowledge base'],support:['🎧 人工客服','🎧 Human support'],owners:['🔑 酒店经营账户','🔑 Hotel owner accounts'],audit:['📒 操作留痕','📒 Operation audit'],
   dispatch:['📋 派单','📋 Dispatch'],questions:['📚 模拟题库','📚 Question bank'],tickets:['🎫 工单中心','🎫 Tickets'],players:['👥 玩家管理','👥 Citizens'],bookings:['🏨 酒店预订','🏨 Bookings'],kart:['🛞 卡丁车报名','🛞 Kart signups'],circuit:['🏁 国际试车','🏁 Circuit signups'],license:['🚗 驾照报名','🚗 License applications'],tracks:['🏎️ 赛车场管理','🏎️ Tracks'],hotels:['🏡 酒店管理','🏡 Hotels'],rooms:['🛏️ 房型管理','🛏️ Rooms'],requirements:['📝 考试要求','📝 Requirements'],announcements:['📜 公告管理','📜 Announcements'],gallery:['🖼️ 图集管理','🖼️ Gallery'],admins:['🛡️ 管理员','🛡️ Administrators'],dms:['✉️ 私信监管','✉️ DM moderation'],times:['🏆 成绩审核','🏆 Race verification'],password:['🔑 账号安全','🔑 Security']
 }
 ;
@@ -477,6 +478,7 @@ async function loadActive(){
   try{
     if(page==='replyfeedback')await renderReplyFeedback(view);
     else if(page==='examreview')await renderExamReview(view);
+    else if(page==='citymap')await renderMapAdmin(view);
     else if(page==='knowledge')await renderKnowledge(view);
     else if(page==='support')await renderSupportChat(view);
     else if(page==='audit')await renderAudit(view);

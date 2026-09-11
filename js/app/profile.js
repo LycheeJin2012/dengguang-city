@@ -1,3 +1,4 @@
+import {renderSessions} from './account-sessions.js';
 import {renderSurvey} from './exam-survey.js';
 import {createTicket,viewCitizenTicket} from './ticket-form.js';
 import {
@@ -30,7 +31,7 @@ export async function render(el){
   const d=await api('/api/social?action=profile&username='+encodeURIComponent(username)),p=d.profile,self=p.id===state.session?.player?.id;
   const joined=+parseDate(p.created_at);
   const days=Number.isFinite(joined)?Math.max(0,Math.floor((Date.now()-joined)/86400000)):0;
-  el.innerHTML=title('市民档案','Citizen profile')+`<section class="panel"><div class="row-head"><div><span class="avatar">${esc(p.avatar_emoji||'👤')}</span><h2>${esc(p.username)}</h2></div><span class="badge">${tr('加入','Joined')} ${days} ${tr('天','days')}</span></div><p>${text(p.bio||tr('这位市民还没有填写简介。','This citizen has not added a bio.'))}</p><small>${tr('注册时间','Registered')} ${date(p.created_at)}</small><div class="stats"><div class="stat"><strong>${d.stats.messages}</strong><span>${tr('留言','Messages')}</span></div><div class="stat"><strong>${d.stats.comments}</strong><span>${tr('评论','Comments')}</span></div></div><div class="actions">${self?`<button id="profile-passkeys">${tr('管理 / 验证通行密钥','Manage / verify passkeys')}</button><button id="edit-profile">${tr('编辑资料','Edit profile')}</button><button id="citizen-card">${tr('下载市民卡','Download citizen card')}</button><button id="daily-signin">🎁 ${tr('签到','Check in')}</button>`:`<a class="button" href="/dm.html?to=${encodeURIComponent(p.username)}">${tr('发送私信','Send a message')}</a>`}</div></section>${self?`<div class="tabs section" id="profile-tabs">${[['history','我的记录','My records'],['security','密码与通行密钥','Password & passkeys'],['race','赛道成绩','Race times'],['exam','模拟考试','Practice exam'],['subscriptions','通知订阅','Subscriptions'],['rewards','工单奖励','Ticket rewards']].map(([k,zh,en])=>`<button data-tab="${k}" aria-selected="${k==='history'}">${tr(zh,en)}</button>`).join('')}</div><section id="profile-content" class="panel"></section>`:''}`;
+  el.innerHTML=title('市民档案','Citizen profile')+`<section class="panel"><div class="row-head"><div><span class="avatar">${esc(p.avatar_emoji||'👤')}</span><h2>${esc(p.username)}</h2></div><span class="badge">${tr('加入','Joined')} ${days} ${tr('天','days')}</span></div><p>${text(p.bio||tr('这位市民还没有填写简介。','This citizen has not added a bio.'))}</p><small>${tr('注册时间','Registered')} ${date(p.created_at)}</small><div class="stats"><div class="stat"><strong>${d.stats.messages}</strong><span>${tr('留言','Messages')}</span></div><div class="stat"><strong>${d.stats.comments}</strong><span>${tr('评论','Comments')}</span></div></div><div class="actions">${self?`<a class="button" href="/affairs.html">我的事务</a><button id="profile-passkeys">${tr('管理 / 验证通行密钥','Manage / verify passkeys')}</button><button id="edit-profile">${tr('编辑资料','Edit profile')}</button><button id="citizen-card">${tr('下载市民卡','Download citizen card')}</button><button id="daily-signin">🎁 ${tr('签到','Check in')}</button>`:`<a class="button" href="/dm.html?to=${encodeURIComponent(p.username)}">${tr('发送私信','Send a message')}</a>`}</div></section>${self?`<div class="tabs section" id="profile-tabs">${[['history','我的记录','My records'],['security','账号与登录','Account & sign-in'],['race','赛道成绩','Race times'],['exam','模拟考试','Practice exam'],['subscriptions','通知订阅','Subscriptions'],['rewards','工单奖励','Ticket rewards']].map(([k,zh,en])=>`<button data-tab="${k}" aria-selected="${k==='history'}">${tr(zh,en)}</button>`).join('')}</div><section id="profile-content" class="panel"></section>`:''}`;
   if(!self)return;
   $('#edit-profile',el).onclick=()=>modal(tr('编辑市民资料','Edit profile'),field('avatar_emoji',tr('头像表情','Avatar emoji'),'text',p.avatar_emoji)+field('bio',tr('个人简介','Bio'),'textarea',p.bio||'',{
     required:false,maxlength:500
@@ -60,7 +61,7 @@ export async function render(el){
   }
   $$('[data-tab]',el).forEach(b=>b.onclick=()=>tab(b.dataset.tab));
   $('#profile-passkeys',el).onclick=()=>tab('security');
-  await tab(location.hash==='#security'?'security':'history');
+  await tab(location.hash==='#security'?'security':location.hash==='#exam'?'exam':'history');
 }
 async function history(el){
   const labels=[['messages','我的留言','My messages'],['bookings','酒店预订','Bookings'],['kart','卡丁车报名','Kart signups'],['circuit','国际试车','Circuit signups'],['license','驾照报名','License applications'],['tickets','事务工单','City service tickets']];
@@ -74,6 +75,7 @@ async function history(el){
 }
 async function security(el){
   el.innerHTML=`<h3>${tr('密码与通行密钥','Passwords and passkeys')}</h3><p>${tr('使用 Touch ID、Face ID 或设备 PIN 安全登录。','Sign in using Touch ID, Face ID, or your device PIN.')}</p><div class="actions"><button id="password-change">${tr('修改密码','Change password')}</button><button id="add-passkey">＋ ${tr('添加通行密钥','Add passkey')}</button></div><div id="keys" class="section"></div>`;
+  const sessionsBox=document.createElement('section');sessionsBox.className='section';el.append(sessionsBox);renderSessions(sessionsBox).catch(e=>{sessionsBox.textContent=e.message;});
   $('#password-change',el).onclick=()=>modal(tr('修改市民密码','Change citizen password'),field('old_password',tr('原密码','Current password'),'password')+field('new_password',tr('新密码','New password'),'password')+field('confirm',tr('确认新密码','Confirm password'),'password'),{
     submit:async d=>{
       if(d.new_password!==d.confirm)throw new Error(tr('两次密码不一致','Passwords do not match'));await post('/api/init?action=player-change-password',d);toast(tr('密码已修改','Password changed'));

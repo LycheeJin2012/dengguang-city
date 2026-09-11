@@ -11,6 +11,7 @@ import {
 from '../_shared/ai.js';
 import {ticketEvent} from '../_core/ticket-policy.js';
 async function peer(c,name){
+  if(name==='灯灯客服')await getOrCreateAiBot(c.env);
   const r=await c.env.DB.prepare("SELECT id,username,avatar_emoji FROM players WHERE username=? AND status='active'").bind(string(name,'游戏 ID',64)).first();
   if(!r)fail(404,'对方不存在或未激活');
   if(r.username==='灯灯客服')await getOrCreateAiBot(c.env);
@@ -60,12 +61,12 @@ export const onRequestPost=c=>endpoint(async()=>{
    const context=(await db.prepare('SELECT from_player_id,content FROM (SELECT id,from_player_id,content FROM direct_messages WHERE (from_player_id=? AND to_player_id=?) OR (from_player_id=? AND to_player_id=?) ORDER BY id DESC LIMIT 6) ORDER BY id').bind(p.id,other.id,other.id,p.id).all()).results.map(m=>({role:m.from_player_id===p.id?'user':'assistant',content:m.content.slice(0,1000)}));
    const explicitHuman=/人工|找.*客服|找.*工作人员/.test(content)&&!/(不要|不用|暂不|不想).{0,5}人工/.test(content);
    const preference=await db.prepare('SELECT auto_handoff FROM support_chats WHERE player_id=?').bind(p.id).first();
-   const answer=explicitHuman?null:await smartCustomerReply(c.env,content,context);
+   const answer=explicitHuman?null:await smartCustomerReply(c.env,content,context,p);
    if(!answer&&(explicitHuman||needsHuman(content)&&preference?.auto_handoff!==0)){const r=await requestChat(c,p,{reason:content.slice(0,500),mode:'automatic'});human=true;replied=!r.existing;}
    else {
     const draft=answer?.answer||(preference?.auto_handoff===0&&needsHuman(content)?'暂时没有足够的已确认资料回答这个问题。你已结束人工等待，需要时可以手动点击“转人工”。':/^(你好|您好|hi|hello)[!！。,.，\s]*$/i.test(content.trim())?'你好，我是灯灯。请告诉我你想了解什么。':await aiAutoReply(c.env,content,'dm'));
     const r=await db.prepare("INSERT INTO direct_messages(from_player_id,to_player_id,content,knowledge_sources) SELECT ?,?,?,? WHERE NOT EXISTS(SELECT 1 FROM support_chats WHERE player_id=? AND status IN ('queued','active'))").bind(other.id,p.id,'🤖 '+draft,answer?JSON.stringify(answer.sources):null,p.id).run();replied=!!r.meta.changes;
-    if(replied)await auditStatement(c.audit?.base||db,{type:'system',id:null,name:'灯灯'},{action:'dm.auto_replied',resource_type:'direct_messages',resource_id:r.meta.last_row_id,status:200,details:{source:answer?'grounded_ai':'greeting_or_basic_fact',recipient_player_id:p.id}}).run();
+    if(replied)await auditStatement(c.audit?.base||db,{type:'system',id:null,name:'灯灯'},{action:'dm.auto_replied',resource_type:'direct_messages',resource_id:r.meta.last_row_id,status:200,details:{source:answer?.source||'greeting_or_basic_fact',recipient_player_id:p.id}}).run();
    }
   }catch{supportError=true;}
  }

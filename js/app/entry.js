@@ -1,6 +1,6 @@
 import './press-motion.js';
 import {shell,session,renderAccount,toast,region,state} from './core.js';
-const pages={knowledge:()=>import('./knowledge-public.js'),'hotel-owner':()=>import('./hotel-owner.js'),home:()=>import('./home.js'),hotel:()=>import('./hotel.js'),profile:()=>import('./profile.js'),dm:()=>import('./social.js'),notifications:()=>import('./social.js'),admin:()=>import('./admin.js')};
+const pages={affairs:()=>import('./affairs.js'),map:()=>import('./city-map.js'),messages:()=>import('./social.js'),knowledge:()=>import('./knowledge-public.js'),'hotel-owner':()=>import('./hotel-owner.js'),home:()=>import('./home.js'),hotel:()=>import('./hotel.js'),profile:()=>import('./profile.js'),dm:()=>import('./social.js'),notifications:()=>import('./social.js'),admin:()=>import('./admin.js')};
 shell();
 const auth=session().then(renderAccount).catch(e=>toast(e.message,true));
 state.authPending=auth;

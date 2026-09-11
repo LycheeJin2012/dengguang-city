@@ -1,3 +1,4 @@
+import {recordSuccessfulLogin} from '../_core/login-history.js';
 import {shouldAudit,auditResource} from '../_core/audit-policy.js';
 import {ensureDatabase,SCHEMA_VERSION} from '../_core/database.js';
 import {endpoint,fail} from '../_core/request.js';
@@ -20,6 +21,7 @@ export async function onRequest(context){return endpoint(async()=>{
   }
   response=await context.next();
  }catch(error){response=await endpoint(async()=>{throw error;});}
+ try{await recordSuccessfulLogin(base,request,response);}catch(error){console.error('[login-history] security history unavailable');}
  if(url.pathname!=='/api/ui-events'&&tracked){
   const cookie=response.headers.get('Set-Cookie');let effective=actor;
   if(cookie&&response.ok){const token=/lc_session=([^;]+)/.exec(cookie)?.[1];if(token)effective=await auditActor(base,request,token);}

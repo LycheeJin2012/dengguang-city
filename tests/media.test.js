@@ -16,7 +16,7 @@ async function upload(data,{mime='image/png',purpose='ticket',cookie=alice}={}){
  const finished=await json('uploads','POST',{action:'finish',id:start.id},cookie);assert.equal(finished.status,200);return finished;
 }
 let large;
-test('grouped primary navigation starts with tickets and dispatch and retains every authorized child',()=>{const all=navigationFor(true);assert.deepEqual(all.slice(0,2).map(g=>g.id),['tickets','dispatch']);assert.equal(all.length,11);assert.equal(new Set(all.flatMap(g=>g.children)).size,24);assert.equal(resolveNavigation('rooms',true).group.id,'hotel-business');assert.equal(resolveNavigation('tracks',false).child,'tickets');assert.ok(!navigationFor(false).flatMap(g=>g.children).includes('admins'));});
+test('grouped primary navigation starts with tickets and dispatch and retains every authorized child',()=>{const all=navigationFor(true);assert.deepEqual(all.slice(0,2).map(g=>g.id),['tickets','dispatch']);assert.equal(all.length,12);assert.equal(new Set(all.flatMap(g=>g.children)).size,25);assert.equal(resolveNavigation('rooms',true).group.id,'hotel-business');assert.equal(resolveNavigation('tracks',false).child,'tickets');assert.ok(!navigationFor(false).flatMap(g=>g.children).includes('admins'));});
 test('images larger than 1 MB upload in chunks and download byte-for-byte with range support',async()=>{
  const data=png(2*1024*1024+17);large=await upload(data);
  const r=await request(`uploads?id=${large.id}&download=1`);assert.equal(r.status,200);assert.deepEqual(Buffer.from(await r.arrayBuffer()),data);
