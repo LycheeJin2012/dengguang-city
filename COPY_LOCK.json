@@ -1,5 +1,5 @@
 {
-  "basis": "v67 user-authorized affairs, map, personal assistant, session security and unified messages",
+  "basis": "v68 user-requested in-page message tabs and local preview synchronization",
   "files": {
     "404.html": "5a6810ba2b329a14388d686638732d5e9a05b828afe85270d94c50794476bbca",
     "admin-v37.html": "09b509c6600edda3ebb56a4d81fb82505a3e1a3ee84cd8e835a68ea1038b3980",
@@ -21,7 +21,7 @@
     "js/app/permissions.js": "2bbb92b351b8de71d9b4be913cdb5bbecd4673a7d161e6e9ec1740a895958407",
     "js/app/profile.js": "7835f1af796b41fd2c4388b58c4428e08d3f3e93710d16f02784cc49ea87ed0b",
     "js/app/security.js": "bdb2b752ee1abb32ecea8c8a01abbedbf55a2875a614b7f53827874fc343215b",
-    "js/app/social.js": "bd7b4ef2b581d74d9d1e8cfaf61e0ae79bd70bd0a468d8768c5664d118ba2930",
+    "js/app/social.js": "4f59f749f9230a3ab3e40d73224e35fe2e5b5b6a020ea12cc9f03a817e7baa82",
     "js/app/ticket-center.js": "777e2e4516888cf6048c8c4878aabb19aa4f02c16974fe2d600f2b0fc0eb578d",
     "js/app/ticket-form.js": "9ef76f9fceee991a6894426b78dddf5ef3578f661f8d47d4f3235fc7668a1a26",
     "js/date.js": "559250fda3b36b9c6b346235012757f05ce64d67fb260063cb7cb3a95ad32e46",
