@@ -14,7 +14,7 @@ export async function render(el,page){
     ;
     return;
   }
-  el.innerHTML=title('消息','Messages')+`<div class="tabs section" role="tablist" aria-label="消息分类"><button type="button" role="tab" id="message-tab-dm" aria-controls="message-panel-dm" data-message-tab="dm">私信与灯灯</button><button type="button" role="tab" id="message-tab-notifications" aria-controls="message-panel-notifications" data-message-tab="notifications">通知</button></div><section role="tabpanel" id="message-panel-dm" aria-labelledby="message-tab-dm" hidden></section><section role="tabpanel" id="message-panel-notifications" aria-labelledby="message-tab-notifications" hidden></section>`;
+  el.innerHTML=title('消息','Messages')+`<div class="tabs-segment" role="tablist" aria-label="消息分类"><button type="button" role="tab" id="message-tab-dm" aria-controls="message-panel-dm" data-message-tab="dm">${tr('私信与灯灯','Messages & DengDeng')}</button><button type="button" role="tab" id="message-tab-notifications" aria-controls="message-panel-notifications" data-message-tab="notifications">${tr('通知','Notifications')}</button></div><section role="tabpanel" id="message-panel-dm" aria-labelledby="message-tab-dm" hidden></section><section role="tabpanel" id="message-panel-notifications" aria-labelledby="message-tab-notifications" hidden></section>`;
   const loaded=new Map();
   async function select(key){
     $$('[data-message-tab]',el).forEach(b=>{const active=b.dataset.messageTab===key;b.setAttribute('aria-selected',String(active));b.tabIndex=active?0:-1;$('#message-panel-'+b.dataset.messageTab,el).hidden=!active;});
