@@ -2,11 +2,13 @@ import {SCHEMA,MIGRATIONS} from '../api/_schema.js';
 const pending=new WeakMap();
 export const SCHEMA_VERSION=67;
 const VERSION=SCHEMA_VERSION;
-const ADDITIONS=[
+const UPDATE_67=[
  "CREATE TABLE IF NOT EXISTS city_places(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,category TEXT NOT NULL DEFAULT 'facility',dimension TEXT NOT NULL DEFAULT 'overworld',x INTEGER NOT NULL,z INTEGER NOT NULL,description TEXT NOT NULL DEFAULT '',construction_status TEXT NOT NULL DEFAULT 'open',construction_note TEXT NOT NULL DEFAULT '',expected_end TEXT NOT NULL DEFAULT '',published INTEGER NOT NULL DEFAULT 0,revision INTEGER NOT NULL DEFAULT 1,updated_by INTEGER NOT NULL,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
  "ALTER TABLE sessions ADD COLUMN device_label TEXT NOT NULL DEFAULT '未记录设备'",
  "CREATE TABLE IF NOT EXISTS login_history(id INTEGER PRIMARY KEY AUTOINCREMENT,player_id INTEGER NOT NULL,method TEXT NOT NULL,device_label TEXT NOT NULL,created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
  "CREATE INDEX IF NOT EXISTS idx_login_history_player ON login_history(player_id,id)",
+];
+const ADDITIONS=[...UPDATE_67,
  "CREATE TABLE IF NOT EXISTS support_chats(id INTEGER PRIMARY KEY AUTOINCREMENT,player_id INTEGER NOT NULL UNIQUE,status TEXT NOT NULL DEFAULT 'queued',assigned_admin_id INTEGER,requires_super INTEGER NOT NULL DEFAULT 0,reason TEXT NOT NULL DEFAULT '',auto_handoff INTEGER NOT NULL DEFAULT 1,needs_ticket INTEGER NOT NULL DEFAULT 0,ticket_summary TEXT,linked_ticket_id INTEGER,revision INTEGER NOT NULL DEFAULT 1,requested_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
  "CREATE TABLE IF NOT EXISTS support_chat_events(id INTEGER PRIMARY KEY AUTOINCREMENT,chat_id INTEGER NOT NULL,actor_type TEXT NOT NULL,actor_id INTEGER,actor_name TEXT NOT NULL,action TEXT NOT NULL,details TEXT NOT NULL DEFAULT '{}',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)",
  "CREATE TABLE IF NOT EXISTS reply_feedback(id INTEGER PRIMARY KEY AUTOINCREMENT,player_id INTEGER NOT NULL,kind TEXT NOT NULL,target_id TEXT NOT NULL,ticket_ref TEXT,helpful INTEGER NOT NULL,reason TEXT NOT NULL DEFAULT '',comment TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,UNIQUE(player_id,kind,target_id))",
@@ -97,6 +99,13 @@ const ADDITIONS=[
 export function ensureDatabase(db){if(!db)throw new Error('DB not configured');if(pending.has(db))return pending.get(db);const run=(async()=>{
  await db.prepare('CREATE TABLE IF NOT EXISTS lc_schema_versions(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)').run();
  if(await db.prepare('SELECT version FROM lc_schema_versions WHERE version=?').bind(VERSION).first())return;
+ // A verified v64 database already has every historical table and migration.
+ // Apply only the additive v67 changes instead of replaying hundreds of remote statements.
+ if(await db.prepare('SELECT version FROM lc_schema_versions WHERE version=64').first()){
+  for(const sql of UPDATE_67){try{await db.prepare(sql).run();}catch(e){if(!/duplicate column name/i.test(e.message))throw e;}}
+  await db.prepare('INSERT OR IGNORE INTO lc_schema_versions(version) VALUES(?)').bind(VERSION).run();return;
+ }
+
  const oldBookingColumns=new Set((await db.prepare('PRAGMA table_info(bookings)').all()).results.map(c=>c.name));
  const oldLicenseColumns=new Set((await db.prepare('PRAGMA table_info(license_signups)').all()).results.map(c=>c.name));
  const oldTicketColumns=new Set((await db.prepare('PRAGMA table_info(tickets)').all()).results.map(c=>c.name));
