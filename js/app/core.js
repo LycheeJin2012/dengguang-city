@@ -1,3 +1,7 @@
+import {escapeHtml} from '../ui/html.js';
+import {formField} from '../ui/form-field.js';
+import {openDialog} from '../ui/dialog.js';
+import {mountWorkspace,pageHeading} from '../ui/workspace.js';
 import {canSeeMunicipalLink,canSeeHotelOwnerLink} from './permissions.js';
 import {
   parseDate
@@ -5,10 +9,7 @@ import {
 from '../date.js';
 export const $ = (s, root=document) => root.querySelector(s);
 export const $$ = (s, root=document) => [...root.querySelectorAll(s)];
-export const esc = value => String(value ?? '').replace(/[&<>"']/g,c=>({
-  '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-}
-[c]));
+export const esc = escapeHtml;
 export const state = {
   session:null, language:'zh-CN'
 }
@@ -200,81 +201,8 @@ export function ticketBody(value){
   ;
   return Object.entries(data).filter(([key,v])=>labels[key]&&v!==null&&v!=='').map(([key,v])=>`<p><b>${tr(...labels[key])}：</b>${text(key==='breakfast'?tr(v?'含':'不含',v?'Included':'Not included'):optionLabel(v))}</p>`).join('')||text(tr('详情请查看对应业务记录','See the related application for details'));
 }
-export function field(name,label,type='text',value='',opts={
-}
-) {
-  const attrs=`name="${esc(name)}" id="field-${esc(name)}" ${opts.required===false?'':'required'} ${opts.max!==undefined?`max="${opts.max}"`:''} ${opts.min!==undefined?`min="${opts.min}"`:''} ${opts.step?`step="${opts.step}"`:''}`;
-  const content=type==='textarea'?`<textarea ${attrs} maxlength="${opts.maxlength||2000}" rows="4">${esc(value)}</textarea>`:type==='select'?`<select ${attrs}>${(opts.options||[]).map(o=>{
-    const [v,l]=Array.isArray(o)?o:[o,optionLabel(o)];return `<option value="${esc(v)}" ${String(v)===String(value)?'selected':''}>${esc(l)}</option>`;
-  }
-  ).join('')}</select>`:type==='checkbox'?`<input type="checkbox" name="${esc(name)}" id="field-${esc(name)}" ${value?'checked':''}>`:`<input type="${esc(type)}" ${attrs} value="${esc(value)}" maxlength="${opts.maxlength||200}" ${type==='password'?'autocomplete="new-password"':''}>`;
-  return `<label class="field ${type==='textarea'?'wide':''} ${type==='checkbox'?'check':''}"><span>${esc(label)}</span>${content}</label>`;
-}
-export function modal(title,content,{
-  submit,label=tr('保存','Save'),wide=false
-}
-={
-}
-) {
-  $('#modal')?.close();
-  $('#modal')?.remove();
-  const dialog=document.createElement('dialog');
-  dialog.id='modal';
-  dialog.className=wide?'modal wide-modal':'modal';
-  dialog.innerHTML=`<div class="modal-head"><h2>${esc(title)}</h2><button type="button" class="icon-button" data-close aria-label="${tr('关闭','Close')}">✕</button></div><form class="modal-body"><div class="form-grid">${content}</div><p class="form-error" role="alert"></p><div class="actions"><button type="button" data-close>${tr('取消','Cancel')}</button>${submit?`<button class="primary" type="submit">${esc(label)}</button>`:''}</div></form>`;
-  const previous=document.activeElement;
-  document.body.append(dialog);
-  const close=()=>{if(dialog.dataset.saving!=='true')dialog.close();};
-  dialog.addEventListener('cancel',event=>{if(dialog.dataset.saving==='true')event.preventDefault();});
-  $$('[data-close]',dialog).forEach(b=>b.onclick=close);
-  dialog.addEventListener('click',e=>{
-    if(e.target===dialog){
-      const r=dialog.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)close();
-    }
-  }
-  );
-  dialog.addEventListener('close',()=>{
-    dialog.remove();previous?.focus();
-  }
-  ,{
-    once:true
-  }
-  );
-  if(submit)$('form',dialog).onsubmit=async e=>{
-    e.preventDefault();
-    const form=e.currentTarget;
-    const btn=$('[type=submit]',form);
-    if(btn.disabled)return;
-    const data=Object.fromEntries(new FormData(form));
-    $$('input[type=checkbox]:not(:disabled)',form).forEach(c=>data[c.name]=c.checked?1:0);
-    $$('input[type=number]:not(:disabled)',form).forEach(c=>data[c.name]=c.value===''?null:Number(c.value));
-    const old=btn.textContent;
-    btn.disabled=true;
-    dialog.dataset.saving='true';
-    $$('[data-close]',dialog).forEach(b=>b.disabled=true);
-    btn.textContent=tr('保存中…','Saving…');
-    $('.form-error',dialog).textContent='';
-    try{
-      await submit(data,dialog);
-      dialog.close();
-    }
-    catch(err){
-      $('.form-error',dialog).textContent=err.message;
-    }
-    finally{
-      dialog.dataset.saving='false';
-      $$('[data-close]',dialog).forEach(b=>b.disabled=false);
-      if(btn.isConnected){
-        btn.disabled=false;
-        btn.textContent=old;
-      }
-    }
-  }
-  ;
-  dialog.showModal();
-  $('input:not([type=checkbox]),textarea,select',dialog)?.focus();
-  return dialog;
-}
+export function field(name,label,type='text',value='',opts={}){return formField(name,label,type,value,{...opts,optionLabel});}
+export function modal(...args){return openDialog({$,$$,esc,tr},...args);}
 export async function requirePlayer(){
   await state.authPending;
   if(!state.session?.player){
@@ -339,9 +267,10 @@ export function renderAccount(){
 export function shell(){
   document.documentElement.lang=state.language;
   document.documentElement.style.colorScheme='light';
-  $('#header').innerHTML=`<div class="header-inner"><a class="brand" href="/"><span class="grass-block" aria-hidden="true"></span><span><strong>${tr('灯光市人民政府','Light City Hall')}</strong><small>LIGHT CITY · EST. 2023</small></span></a><button id="menu" aria-expanded="false" aria-controls="navigation">☰ ${tr('菜单','Menu')}</button><nav id="navigation" aria-label="${tr('主要导航','Main navigation')}">${navigationMarkup()}</nav><div id="account"></div><button id="language">${state.language==='en'?'中文':'EN'}</button></div>`;
+  $('#header').innerHTML=`<div class="header-inner"><a class="brand" href="/"><span class="grass-block" aria-hidden="true"></span><span><strong>${tr('灯光市人民政府','Light City Hall')}</strong><small>LIGHT CITY · EST. 2023</small></span></a><button id="menu" aria-expanded="false" aria-controls="navigation">☰ ${tr('菜单','Menu')}</button><div id="account"></div><button id="language">${state.language==='en'?'中文':'EN'}</button></div>`;
+  mountWorkspace(navigationMarkup(),tr('主要导航','Main navigation'));
   $('#menu').onclick=()=>{
-    const open=$('#navigation').classList.toggle('open');
+    const open=$('#navigation').classList.toggle('open');document.querySelector('.site-rail').classList.toggle('is-open',open);
     $('#menu').setAttribute('aria-expanded',open);
   }
   ;
@@ -359,7 +288,7 @@ export function shell(){
 }
 export function title(zh,en){
   document.title=tr(zh,en)+' · '+tr('灯光市','Light City');
-  return `<div class="page-heading"><div><p class="eyebrow">LIGHT CITY / ${esc(en.toUpperCase())}</p><h1>${esc(tr(zh,en))}</h1></div></div>`;
+  return pageHeading(tr(zh,en),'LIGHT CITY / '+en.toUpperCase());
 }
 export async function download(name,content,type='text/plain'){
   try{await post('/api/ui-events',{events:[{action:'export',page:location.pathname,element:'download',label:name}]});}catch(e){toast(tr('无法记录导出操作，请重试','Could not record export. Please retry.'),true);return;}

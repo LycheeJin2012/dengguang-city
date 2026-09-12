@@ -1,0 +1,382 @@
+/* Loading + empty -------------------------------------------------------
+   Apple: no decorative infinite animation. The loading indicator is a
+   static row of three pixel squares; the user reads the state, not the
+   spinner. When prefers-reduced-motion is active, even the optional
+   short pulse is suppressed.                                            */
+.empty {
+  text-align: center;
+  padding: 44px 20px;
+  color: var(--muted);
+  border: 2px dashed #b3aa82;
+  background: #fff9df;
+  border-radius: 0;
+}
+.empty > span {
+  display: block;
+  font-size: 2.4rem;
+  color: var(--green);
+  margin-bottom: 8px;
+  font-family: var(--font-mono);
+  line-height: 1;
+}
+.empty p { margin: 8px 0; color: var(--muted); }
+.empty .actions { justify-content: center; margin-top: 16px; }
+.empty.error {
+  color: var(--red);
+  border-color: var(--red);
+  background: #fff3f0;
+}
+.empty.error > span { color: var(--red); }
+
+.loading {
+  padding: 32px 24px;
+  text-align: center;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+.loading:before {
+  content: '';
+  width: 14px;
+  height: 14px;
+  background: var(--green);
+  box-shadow: 18px 0 0 var(--gold), 36px 0 0 var(--green-soft);
+  /* No keyframe animation. The static three-square indicator reads as
+     "loading" without spinning or bouncing. Reduced motion: identical. */
+}
+
+/* Badges ---------------------------------------------------------------- */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  border: 1px solid #9b9374;
+  padding: 2px 8px;
+  background: #ebe5cf;
+  color: var(--ink);
+  white-space: nowrap;
+  line-height: 1.4;
+  border-radius: 0;
+  /* Apple: badge state changes (e.g. pending → resolved) are colour only. */
+  transition:
+    background-color var(--motion-base) var(--ease-out),
+    color var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) var(--ease-out);
+}
+.badge.active, .badge.approved, .badge.confirmed, .badge.passed, .badge.resolved {
+  background: var(--leaf-soft);
+  color: var(--green-deep);
+  border-color: var(--green);
+}
+.badge.pending, .badge.open, .badge.unread {
+  background: var(--gold-soft);
+  color: var(--gold-deep);
+  border-color: var(--gold);
+}
+.badge.rejected, .badge.failed {
+  background: var(--red-soft);
+  color: var(--red-deep);
+  border-color: var(--red);
+}
+.badge.closed { background: #e5dec0; color: var(--ink-soft); border-color: var(--line-soft); }
+
+/* Pre-wrapped paragraphs + rows ---------------------------------------- */
+.prewrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+.row {
+  padding: 18px 0;
+  border-bottom: 2px dashed #b9af8b;
+}
+.row:first-child { padding-top: 0; }
+.row:last-child { border-bottom: 0; padding-bottom: 0; }
+.row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+.row-head h3 { margin: 0; }
+
+/* Form errors are static red blocks. Apple: no shake — colour is enough. */
+.form-error {
+  color: var(--red);
+  margin-top: 16px;
+  margin-bottom: 0;
+  font-weight: 700;
+  padding: 10px 12px;
+  background: var(--red-soft);
+  border: 1px solid var(--red);
+  display: none;
+}
+.form-error:not(:empty) { display: block; }
+
+/* Modal -----------------------------------------------------------------
+   Apple: dialogs enter with a short, restrained translation and opacity.
+   No scale (preserves spatial relationship with trigger), no overshoot,
+   no children flying in one after another. The backdrop fades in over
+   the same window. Closing is handled by <dialog> itself — we do not
+   try to fake an exit animation that the platform cannot guarantee.    */
+.modal {
+  width: min(620px, calc(100vw - 32px));
+  max-height: 90dvh;
+  padding: 0;
+  border: var(--border);
+  background: var(--paper);
+  box-shadow: 8px 8px 0 #0006;
+  color: var(--ink);
+  margin: auto;
+}
+.wide-modal { width: min(900px, calc(100vw - 32px)); }
+.modal::backdrop {
+  background: #222715a8;
+  animation: backdrop-fade var(--motion-base) var(--ease-out) both;
+}
+.modal[open] { animation: modal-in var(--motion-slow) var(--ease-out) both; }
+@keyframes backdrop-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modal-in {
+  /* ≤ 8px translateY, no scale, no overshoot. */
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+.modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 18px 24px;
+  border-bottom: var(--border);
+  background: linear-gradient(180deg, #efe8b3, #e5dfae);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.modal-head h2 { margin: 0; font-size: 1.25rem; }
+.modal-body { padding: 24px; }
+.modal-body > .form-grid > .actions,
+.modal-body > .actions {
+  border-top: 1px dashed #b9af8b;
+  padding-top: 16px;
+  margin-top: 8px;
+}
+.icon-button { min-width: 44px; }
+
+/* Icon button (modal close etc.) -- stronger hover */
+.modal-head [data-close] {
+  background: var(--paper);
+  border-color: var(--line);
+  font-size: 1rem;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 0.25rem 0.55rem;
+  /* On press the close button settles into its hover red — same red, just
+     a 1px shadow depth and instant feedback.                              */
+  --press-active-bg: var(--red-soft);
+}
+.modal-head [data-close]:hover { background: var(--red-soft); color: var(--red); border-color: var(--red); }
+
+/* Toast -----------------------------------------------------------------
+   Apple: short, restrained slide-up. ≤ 8 px, opacity only, no bounce.
+   Centring uses inset + fit-content + auto margins so it does NOT rely on
+   the animated transform. Under prefers-reduced-motion we set
+   `transform: none !important`; if centring depended on `translateX(-50%)`
+   the toast would shift to the left half of the viewport. Centring must
+   survive that override.                                                 */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  left: 16px;
+  right: 16px;
+  width: fit-content;
+  max-width: calc(100vw - 32px);
+  margin-left: auto;
+  margin-right: auto;
+  padding: 14px 22px;
+  background: var(--paper);
+  border: var(--border);
+  box-shadow: var(--shadow);
+  z-index: 100;
+  overflow-wrap: anywhere;
+  /* Initial state is visible, animation brings it in. We use 'both' so
+     reduced motion (0.01ms) instantly shows the final state.            */
+  animation: toast-in var(--motion-base) var(--ease-out) both;
+  border-left: 8px solid var(--green);
+}
+.toast.error { border-left-color: var(--red); color: var(--red-deep); }
+@keyframes toast-in {
+  /* Y-only transform: horizontal centring is done by the box itself.   */
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
+/* Tables ----------------------------------------------------------------
+   Apple: table row hover is a colour shift only, no padding change. A
+   padding shift causes a reflow that the eye reads as "jitter".        */
+.table-wrap {
+  overflow: auto;
+  border: var(--border-thin);
+  box-shadow: var(--shadow-soft);
+  background: var(--paper);
+  max-height: min(72vh, 720px);
+}
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  width: 100%;
+  background: var(--paper);
+  font-size: 0.9rem;
+}
+thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #e5dfb4;
+  color: var(--green);
+  text-align: left;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: inset 0 -2px 0 var(--line);
+}
+th, td {
+  padding: 12px 16px;
+  text-align: left;
+  border-bottom: 1px solid #c7bea0;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+tbody tr { transition: background-color var(--motion-fast) var(--ease-out); }
+tbody tr:nth-child(even) { background: rgba(255, 249, 223, 0.6); }
+tbody tr:hover { background: var(--leaf-soft); }
+tbody tr:last-child td { border-bottom: 0; }
+th { background: #e5dfb4; color: var(--green); }
+td.wrap { white-space: normal; min-width: 180px; max-width: 380px; }
+td .actions { margin-top: 0; gap: 6px; }
+td .actions button { min-height: 36px; padding: 0.3rem 0.7rem; font-size: 0.82rem; }
+
+/* Price ----------------------------------------------------------------- */
+.price {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  color: var(--green);
+  line-height: 1.2;
+  letter-spacing: 0.04em;
+}
+
+
+/* Shared visual components. Geometry lives here once, not in per-page patches. */
+[hidden],.hidden{display:none!important}
+main,section,article,aside,nav,form,fieldset,.panel,.card,.field{min-width:0}
+button,.button,summary{max-width:100%;white-space:normal;overflow-wrap:anywhere}
+input,select,textarea{min-width:0;max-width:100%}
+.panel,.card{background:var(--paper);border:var(--border-thin);padding:22px;box-shadow:var(--shadow-soft);min-width:0}
+.panel+.panel{margin-top:16px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:18px}
+.card{display:flex;flex-direction:column}
+.card img,.media{width:100%;aspect-ratio:16/10;object-fit:cover;border:var(--border-thin);background:var(--paper-soft)}
+.card .actions{margin-top:auto;padding-top:14px}
+.actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:16px}
+.actions.compact{gap:6px;margin-top:8px}
+.page-heading,.section-head,.row-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
+.page-heading{margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid var(--line)}
+.page-heading h1{font-size:clamp(2rem,4vw,3.2rem);margin:0;line-height:1.1}
+.section-head{margin-bottom:16px;align-items:baseline}
+.section-head h2{font-size:1.3rem;margin:0;color:var(--green)}
+.section-head .eyebrow{font-size:.65rem}
+.section{margin:36px 0;scroll-margin-top:20px}
+.tabs{display:flex;flex-wrap:wrap;gap:6px;padding:6px;background:var(--ground);border:var(--border-thin);margin:0 0 20px;overflow:visible}
+.tabs button{position:relative;flex:1 1 120px;padding:10px 12px;background:var(--paper);border:0;box-shadow:none;min-height:44px}
+.tabs button[aria-selected=true]{background:var(--green);color:var(--paper);box-shadow:inset 0 -3px var(--gold)}
+.toolbar{display:flex;flex-wrap:wrap;align-items:end;gap:12px;padding:16px;background:var(--paper-soft);border:var(--border-thin);margin-bottom:18px}
+.toolbar>.field{flex:1 1 160px;min-width:0}
+.toolbar>.tabs{flex:1 1 100%;margin:0}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.field{display:flex;flex-direction:column;gap:7px;font-weight:600}
+.field.wide,.wide{grid-column:1/-1}
+.check{flex-direction:row;align-items:center;font-weight:400;gap:10px}
+.check input{flex-shrink:0}
+.field textarea{width:100%;resize:vertical}
+.stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:20px 0}
+.stat{border:var(--border-thin);padding:14px;background:var(--paper);box-shadow:2px 2px var(--line);display:flex;flex-direction:column;align-items:start;gap:8px;min-width:0;--press-active-bg:#e0d294}
+.stat strong{font:clamp(1.4rem,2.7vw,2.4rem)/1.1 var(--font-mono);color:var(--green);overflow-wrap:anywhere}
+.stat span{font-size:.85rem;color:var(--muted)}
+button.stat{cursor:pointer;text-align:left}
+.split{display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;align-items:start}
+.conversation{display:block;width:100%;text-align:left;padding:14px;border:0;border-bottom:1px solid var(--line-soft);background:transparent;box-shadow:none;flex-shrink:0}
+.conversation b,.conversation small{display:block;overflow-wrap:anywhere}
+.conversation small{font-size:.82rem;color:var(--muted);margin-top:6px;white-space:normal}
+.conversation.selected{background:var(--leaf-soft);border-left:4px solid var(--green)}
+.messages{display:flex;flex-direction:column;gap:14px;height:clamp(280px,48vh,540px);padding:18px;background:var(--paper-soft);border:1px solid var(--line-soft);overflow-y:auto;overflow-x:hidden;min-width:0}
+.bubble{align-self:flex-start;max-width:88%;padding:12px 16px;background:var(--paper);border:var(--border-thin);flex-shrink:0;overflow-wrap:anywhere}
+.bubble.mine{align-self:flex-end;background:var(--leaf-soft);border-color:var(--green)}
+.bubble p{margin:0 0 8px}
+.bubble small{color:var(--muted);font-size:.76rem}
+.chat-assistance{border-left:4px solid var(--gold);background:var(--paper-soft);padding:12px;margin:14px 0}
+.chat-assistance .reply-feedback{border:0;margin:0;padding:0}
+#support-actions{display:contents}
+#support-status>#support-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#support-status p{font-size:.85rem;margin:8px 0;color:var(--muted)}
+.reply-context{font-size:.8rem;color:var(--muted);margin-bottom:8px}
+#conversations,#support-chat-list{padding:6px;max-height:65vh;overflow-y:auto;display:flex;flex-direction:column}
+#thread,#support-chat-room{padding:20px}
+#send-form{padding-top:16px;border-top:1px solid var(--line-soft);margin-top:18px}
+#send-form textarea{min-height:92px}
+#send-form>.actions{justify-content:flex-end}
+.table-wrap{max-width:100%;overflow:visible}
+.responsive-table{width:100%;table-layout:fixed}
+.responsive-table th,.responsive-table td{white-space:normal;overflow-wrap:anywhere;min-width:0}
+.cell-label{display:none}
+.table-actions .actions{flex-wrap:wrap}
+.admin-sidebar{min-width:0;position:sticky;top:16px}
+.admin-nav{display:flex;flex-direction:column;gap:4px;padding:8px;border:var(--border-thin);background:var(--paper);max-height:calc(100vh - 32px);overflow-y:auto}
+.admin-nav button{position:relative;text-align:left;padding:12px;box-shadow:none;border:0;background:transparent;min-height:44px}
+.admin-nav button[aria-selected=true]{background:var(--green);color:var(--paper);border-left:4px solid var(--gold)}
+.admin-nav button[aria-selected=true]::after{content:'';position:absolute;right:8px;top:50%;width:5px;height:5px;background:var(--gold)}
+#admin-nav-toggle{display:none}
+.admin-layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:22px;align-items:start}
+#admin-view{background:var(--paper);border:var(--border-thin);padding:22px;min-width:0}
+#admin-view>.panel{padding:0;border:0;box-shadow:none}
+#admin-view .toolbar{padding:12px;background:var(--ground)}
+.city-map{position:relative;width:100%;height:440px;background-color:var(--leaf-soft);background-image:linear-gradient(#496a2020 1px,transparent 1px),linear-gradient(90deg,#496a2020 1px,transparent 1px);background-size:28px 28px;border:var(--border-thin);overflow:hidden}
+.city-map .map-pin{position:absolute;transform:translate(-50%,-50%);min-width:44px;min-height:44px;padding:4px;background:var(--green);color:var(--paper);z-index:1}
+.city-map .map-pin:hover,.city-map .map-pin:focus-visible{z-index:3;outline:3px solid var(--gold)}
+.city-map .map-work{background:#8b4424}
+@media(max-width:1100px){
+.stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.admin-content .split{grid-template-columns:minmax(0,1fr)}
+.responsive-table,.responsive-table tbody{display:block;width:100%}
+.responsive-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.responsive-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:10px;border-bottom:2px solid var(--line-soft)}
+.responsive-table td{display:block;padding:10px;max-width:none}
+.responsive-table td.wrap,.responsive-table td.table-actions{grid-column:1/-1}
+.responsive-table .cell-label{display:block;font-size:.8rem;color:var(--green);font-weight:700;margin-bottom:5px}
+}
+@media(max-width:850px){
+.split,.admin-layout{grid-template-columns:minmax(0,1fr)}
+.admin-sidebar{position:static}
+#admin-nav-toggle{display:block;width:100%;text-align:left}
+.admin-sidebar .admin-nav{display:none;max-height:none;margin-top:10px}
+.admin-sidebar.menu-open .admin-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+#conversations,#support-chat-list{max-height:170px}
+}
+@media(max-width:700px){
+.panel,.card,#thread,#support-chat-room{padding:16px}
+.stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.stat{padding:12px}.stat strong{font-size:1.6rem}
+.form-grid{grid-template-columns:minmax(0,1fr)}
+.toolbar{padding:12px}.toolbar>.field{flex-basis:100%}.toolbar>button{flex:1 1 120px}
+.page-heading{margin-bottom:22px}.section{margin:28px 0}
+.messages{height:min(45dvh,400px);padding:10px;min-height:200px}.bubble{max-width:96%}
+#admin-view{padding:12px}.city-map{height:300px}
+.modal-head,.modal-body{padding:14px}.modal .actions{position:static}
+.modal-body>.actions{position:sticky;bottom:0;background:var(--paper);z-index:2}
+}
+@media(max-width:380px){.responsive-table tbody tr{grid-template-columns:minmax(0,1fr)}}
+@media(max-height:500px){.modal{max-height:calc(100dvh - 12px)}.modal-head,.modal-body>.actions{position:static}}
+@media(pointer:coarse){button,.button,summary{min-height:44px}}
+
+.avatar{display:inline-grid;place-items:center;width:56px;height:56px;background:var(--leaf-soft);border:var(--border-thin);font-size:2rem;}

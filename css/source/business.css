@@ -1,0 +1,213 @@
+/* Domain visuals: media, tickets, uploads and examinations. */
+/* Notice + gallery + flow ---------------------------------------------- */
+.notice {
+  border-left: 5px solid var(--gold);
+  background: #fff0b3;
+  padding: 16px 20px;
+  margin-bottom: 24px;
+  color: var(--ink);
+}
+.notice b { color: var(--green); }
+.gallery-button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  display: block;
+}
+.gallery-button img {
+  margin: 0;
+  aspect-ratio: 16/10;
+  object-fit: cover;
+  width: 100%;
+  border: var(--border-thin);
+  /* The child <img> is opaque, so a parent inset box-shadow / background
+     would be hidden by it. Press feedback has to be applied to the image
+     itself. A restrained brightness dim reads as a real press without
+     moving / resizing the thumbnail or altering image URLs / copy.       */
+  transition:
+    border-color var(--motion-base) var(--ease-out),
+    filter var(--motion-fast) var(--ease-out);
+}
+.gallery-button:hover img,
+.gallery-button:focus-visible img { border-color: var(--green); }
+/* Press: dim the image ~10% so the press is visibly apparent. The §7
+   unified :active rule for .gallery-button is in flat-controls scope
+   (inset shadow) but that shadow is masked by the child <img>; the
+   filter here is the visible part of the press.                       */
+.gallery-button:active img { filter: brightness(0.9); }
+.flow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+.flow b {
+  font-family: var(--font-mono);
+  font-size: 2rem;
+  color: var(--green);
+  line-height: 1.2;
+}
+.flow > * {
+  border: var(--border-thin);
+  padding: 18px;
+  background: var(--paper-soft);
+  box-shadow: var(--shadow-soft);
+}
+
+.hidden, [hidden] { display: none !important; }
+
+/* ------------------------------------------------------------------ *
+ * Section-specific polish (admin tables, uploads, tickets, attachments)
+ * ------------------------------------------------------------------ */
+
+.attachment-picker { margin-top: 8px; min-width: 0; }
+.upload-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  border: 2px dashed var(--green);
+  background: #f0f0d2;
+  padding: 24px 16px;
+  text-align: center;
+  cursor: pointer;
+  /* Apple: drag-over is a colour + border change only.                    */
+  transition:
+    background-color var(--motion-base) var(--ease-out),
+    border-color var(--motion-base) var(--ease-out);
+}
+.upload-drop.dragging, .upload-drop:hover {
+  background: #e2ebc5;
+  border-style: solid;
+  border-color: var(--green-deep);
+}
+.upload-drop span { font-size: 0.875rem; color: var(--muted); }
+.upload-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px dashed #b8ad83;
+  min-width: 0;
+}
+.upload-preview {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  border: var(--border-thin);
+  overflow: hidden;
+  background: var(--ground);
+}
+.upload-preview img, .upload-preview video { width: 100%; height: 100%; object-fit: cover; }
+.upload-info { flex: 1; min-width: 0; }
+.upload-info b { display: block; overflow-wrap: anywhere; }
+.upload-info small { display: block; margin: 3px 0; }
+.upload-info progress {
+  display: block;
+  width: 100%;
+  height: 12px;
+  accent-color: var(--green);
+  background: var(--paper-soft);
+  border: 1px solid var(--line-soft);
+}
+.upload-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.upload-actions button { font-size: 0.875rem; padding: 6px 10px; min-height: 36px; }
+
+.attachment-gallery { margin: 20px 0; }
+.attachment-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
+  gap: 16px;
+}
+.attachment-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+  padding: 12px;
+  background: var(--paper);
+  border: var(--border-thin);
+  /* Apple: card is stable; hover is border colour only.                    */
+  transition: border-color var(--motion-base) var(--ease-out);
+}
+.attachment-card:hover { border-color: var(--green); }
+.attachment-card img, .attachment-card video {
+  display: block;
+  width: 100%;
+  max-height: 340px;
+  object-fit: contain;
+  background: #e8dfb9;
+  border: 1px solid var(--line-soft);
+}
+.attachment-card b { overflow-wrap: anywhere; font-size: 0.9rem; }
+.attachment-card a { overflow-wrap: anywhere; }
+
+/* Ticket history gets a left rail of dots for scannability */
+.ticket-history {
+  margin-top: 24px;
+  border-top: 2px dashed #b8ad83;
+  padding-top: 20px;
+}
+.ticket-history .row {
+  padding-left: 14px;
+  border-left: 3px solid var(--green);
+  position: relative;
+}
+.ticket-history .row::before {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 22px;
+  width: 10px; height: 10px;
+  background: var(--gold);
+  border: 2px solid var(--line);
+  box-shadow: 0 0 0 2px var(--paper);
+}
+.ticket-history .row-head { margin-bottom: 4px; }
+
+/* Modal details/summary gets a hover hint */
+.modal details > summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--green);
+  padding: 12px 0;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: color var(--motion-base) var(--ease-out);
+}
+.modal details > summary::before {
+  content: '▸';
+  color: var(--green);
+  font-size: 0.85em;
+  /* Apple: rotate via transition (interruptible), not a one-shot keyframe. */
+  transition: transform var(--motion-base) var(--ease-out);
+}
+.modal details[open] > summary::before { transform: rotate(90deg); }
+.modal details > summary:hover { color: var(--green-deep); }
+.modal details > summary::-webkit-details-marker { display: none; }
+.modal details .field { margin: 12px 0; }
+
+/* Questionnaire examination: native controls, clear grouping and keyboard focus. */
+.survey-question { min-width: 0; margin: 20px 0; padding: 18px; border: 2px solid var(--line); background: var(--paper); }
+.survey-question legend { font-weight: 700; padding: 0 8px; color: var(--green); }
+.survey-question textarea { width: 100%; min-height: 130px; margin-top: 8px; }
+.survey-option { display: flex; align-items: flex-start; gap: 12px; padding: 12px; margin: 8px 0; border: 1px solid var(--line-soft); cursor: pointer; }
+.survey-option:has(input:checked) { background: #e4dba8; border-color: var(--green); }
+.survey-option input { flex: 0 0 auto; width: auto; margin-top: 3px; accent-color: var(--green); }
+.survey-option span { overflow-wrap: anywhere; }
+#exam-paper progress { width: 100%; height: 14px; accent-color: var(--green); }
+.survey-actions { flex-wrap: wrap; }
+
+.ticket-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); list-style: none; gap: 8px; margin: 12px 0 20px; padding: 0; }
+.ticket-progress li { border: 2px solid var(--line-soft); padding: 10px; color: var(--muted); }
+.ticket-progress li.done { border-color: var(--green); background: #e4dba8; color: var(--green-deep); font-weight: 700; }
+.reply-feedback { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line-soft); }
+.reply-feedback .actions { margin: 8px 0; }
+.reply-feedback textarea, .reply-feedback select { width: 100%; margin: 6px 0; }
+.reply-feedback [aria-pressed="true"] { background: #e4dba8; border-color: var(--green); }
+.ticket-followup { margin: 18px 0; padding: 16px; border: 2px solid var(--line-soft); }
+.ticket-followup label { display: block; margin: 8px 0; }
+@media(max-width:600px) { .ticket-progress { grid-template-columns: repeat(2, minmax(0,1fr)); } }
+

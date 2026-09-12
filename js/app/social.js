@@ -1,3 +1,4 @@
+import {tabsMarkup,bindTabs} from '../ui/workspace.js';
 import {renderChat} from './chat-page.js';
 import {
   $, $$, api, post, patch, region, tr, esc, text, date, empty, title, field, modal, action, toast, state, login, linkUrl
@@ -14,15 +15,15 @@ export async function render(el,page){
     ;
     return;
   }
-  el.innerHTML=title('消息','Messages')+`<div class="tabs section" role="tablist" aria-label="消息分类"><button type="button" role="tab" id="message-tab-dm" aria-controls="message-panel-dm" data-message-tab="dm">私信与灯灯</button><button type="button" role="tab" id="message-tab-notifications" aria-controls="message-panel-notifications" data-message-tab="notifications">通知</button></div><section role="tabpanel" id="message-panel-dm" aria-labelledby="message-tab-dm" hidden></section><section role="tabpanel" id="message-panel-notifications" aria-labelledby="message-tab-notifications" hidden></section>`;
+  el.innerHTML=title('消息','Messages')+tabsMarkup([{key:'dm',label:tr('私信与灯灯','Messages & DengDeng')},{key:'notifications',label:tr('通知','Notifications')}],page==='notifications'?'notifications':'dm',{id:'message-tabs',label:tr('消息分类','Message categories'),panelPrefix:'message-panel-'})+`<section role="tabpanel" id="message-panel-dm" aria-labelledby="message-tabs-dm" hidden></section><section role="tabpanel" id="message-panel-notifications" aria-labelledby="message-tabs-notifications" hidden></section>`;
   const loaded=new Map();
   async function select(key){
-    $$('[data-message-tab]',el).forEach(b=>{const active=b.dataset.messageTab===key;b.setAttribute('aria-selected',String(active));b.tabIndex=active?0:-1;$('#message-panel-'+b.dataset.messageTab,el).hidden=!active;});
+    $$('[data-tab-key]',el).forEach(b=>{const active=b.dataset.tabKey===key;b.setAttribute('aria-selected',String(active));b.tabIndex=active?0:-1;$('#message-panel-'+b.dataset.tabKey,el).hidden=!active;});
     const url=new URL(location.href);url.pathname='/messages.html';if(key==='notifications')url.searchParams.set('tab','notifications');else url.searchParams.delete('tab');history.replaceState(null,'',url.pathname+url.search+url.hash);
     if(!loaded.has(key)){const panel=$('#message-panel-'+key,el);const load=region(panel,()=>key,async()=>{await(key==='dm'?messages(panel):notifications(panel));$('.page-heading',panel)?.remove();document.title=tr('消息 · 灯光市','Messages · Light City');});loaded.set(key,load);}
     await loaded.get(key);
   }
-  const tabs=$$('[data-message-tab]',el);tabs.forEach((b,i)=>{b.onclick=()=>select(b.dataset.messageTab);b.onkeydown=e=>{const next=e.key==='ArrowRight'?(i+1)%tabs.length:e.key==='ArrowLeft'?(i+tabs.length-1)%tabs.length:e.key==='Home'?0:e.key==='End'?tabs.length-1:null;if(next!==null){e.preventDefault();tabs[next].focus();select(tabs[next].dataset.messageTab);}};});
+  bindTabs($('#message-tabs',el),select);
   await select(page==='notifications'?'notifications':'dm');
 }
 async function notifications(el){

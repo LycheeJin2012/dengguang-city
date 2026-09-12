@@ -1,3 +1,4 @@
+import {recordCard} from '../ui/card.js';
 import {
   $, $$, api, post, region, tr, esc, empty, field, modal, title, requirePlayer, imageUrl, toast
 }
@@ -45,7 +46,7 @@ export function roomCards(el,bundle,{
   const hotels=new Map(bundle.hotels.map(h=>[h.id,h]));
   const rooms=bundle.rooms.filter(r=>hotels.has(r.hotel_id)).slice(0,limit);
   el.innerHTML=rooms.length?`<div class="cards">${rooms.map(r=>{
-    const h=hotels.get(r.hotel_id),open=r.is_active&&h.is_active;return `<article class="card">${imageUrl(r.image_url||h.image_url)?`<img loading="lazy" src="${esc(imageUrl(r.image_url||h.image_url))}" alt="${esc(r.name)}">`:''}<p class="eyebrow">${esc(h.name)}</p><h3>${esc(r.name)}</h3><p>${esc(r.beds||'')} · ${Number(r.capacity)} ${tr('人','guests')}</p><p class="muted">${esc(r.description||tr('房型介绍待公布','Details coming soon'))}</p><p class="price">💎 ${Number(r.price_per_night)} / ${tr('晚','night')}</p><div class="actions"><button data-detail="${r.id}">${tr('详情','Details')}</button><button data-book="${r.id}" class="primary" ${open?'':'disabled'}>${tr(open?'预订':'筹建中',open?'Book':'Coming soon')}</button></div></article>`;
+    const h=hotels.get(r.hotel_id),open=r.is_active&&h.is_active;return recordCard({title:r.name,meta:`<p class="eyebrow">${esc(h.name)}</p>`,media:imageUrl(r.image_url||h.image_url)?`<img loading="lazy" src="${esc(imageUrl(r.image_url||h.image_url))}" alt="${esc(r.name)}">`:'',body:`<p>${esc(r.beds||'')} · ${Number(r.capacity)} ${tr('人','guests')}</p><p class="muted">${esc(r.description||tr('房型介绍待公布','Details coming soon'))}</p><p class="price">💎 ${Number(r.price_per_night)} / ${tr('晚','night')}</p>`,actions:`<button data-detail="${r.id}">${tr('详情','Details')}</button><button data-book="${r.id}" class="primary" ${open?'':'disabled'}>${tr(open?'预订':'筹建中',open?'Book':'Coming soon')}</button>`});
   }
   ).join('')}</div>`:empty();
   $$('[data-book]',el).forEach(b=>b.onclick=()=>book(rooms.find(r=>r.id===+b.dataset.book),hotels.get(rooms.find(r=>r.id===+b.dataset.book).hotel_id)).catch(e=>toast(e.message,true)));
@@ -55,7 +56,7 @@ export function roomCards(el,bundle,{
   );
 }
 export async function render(el){
-  el.innerHTML=title('树上酒店','Treehouse Hotel')+`<div class="toolbar">${field('availability',tr('状态','Status'),'select','all',{
+  el.innerHTML=title('树上酒店','Treehouse Hotel')+`<div class="service-layout"><aside class="service-filters"><div class="toolbar">${field('availability',tr('状态','Status'),'select','all',{
     options:[['all',tr('全部','All')],['open',tr('可预订','Available')],['draft',tr('筹建中','Coming soon')]]
   }
   )}${field('guests',tr('至少容纳','Minimum capacity'),'number',1,{
@@ -64,7 +65,7 @@ export async function render(el){
   )}${field('sort',tr('排序','Sort'),'select','default',{
     options:[['default',tr('默认','Default')],['asc',tr('价格从低到高','Price: low to high')],['desc',tr('价格从高到低','Price: high to low')]]
   }
-  )}</div><div id="rooms"></div>`;
+   )}</div></aside><section id="rooms" class="service-results"></section></div>`;
   await region($('#rooms',el),()=>api('/api/homepage-bundle'),(d,box)=>{
     const draw=()=>{
       const v=$('[name=availability]',el).value,cap=Number($('[name=guests]',el).value)||1,s=$('[name=sort]',el).value;const hs=new Map(d.bundle.hotels.map(h=>[h.id,h]));let rooms=d.bundle.rooms.filter(r=>r.capacity>=cap&&(v==='all'||(v==='open')===!!(r.is_active&&hs.get(r.hotel_id)?.is_active)));if(s!=='default')rooms.sort((a,b)=>(a.price_per_night-b.price_per_night)*(s==='asc'?1:-1));roomCards(box,{

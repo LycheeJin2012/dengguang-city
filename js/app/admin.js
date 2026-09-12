@@ -1,5 +1,6 @@
+import {tabsMarkup,bindTabs} from '../ui/workspace.js';
 import {renderMapAdmin} from './city-map.js';
-import {tableCell} from './table-layout.js';
+import {tableCell,tableFrame} from '../ui/table.js';
 import {renderSupportChat} from './support-chat-admin.js';
 import {renderReplyFeedback} from './reply-feedback-admin.js';
 import {renderExamReview} from './exam-review.js';
@@ -69,7 +70,7 @@ async function refreshStats() {
 }
 
 function table(box,columns,rows,actions=[]){
-  box.innerHTML=rows.length?`<div class="table-wrap"><table class="responsive-table" role="table"><thead><tr role="row">${columns.map(([k,l])=>`<th scope="col">${esc(l)}</th>`).join('')}${actions.length?`<th scope="col">${tr('操作','Actions')}</th>`:''}</tr></thead><tbody>${rows.map((r,i)=>`<tr role="row">${columns.map(([k,l,format])=>tableCell(l,format?format(r[k],r):esc(r[k]??'—'),['title','content','name','note','body'].includes(k)?'wrap':'')).join('')}${actions.length?`<td role="cell" class="table-actions"><span class="cell-label" aria-hidden="true">${tr('操作','Actions')}</span><div class="actions compact">${actions.filter(a=>!a.when||a.when(r)).map(a=>`<button type="button" data-row="${i}" data-action="${a.key}" class="${a.danger?'danger':''}">${esc(a.label)}</button>`).join('')}</div></td>`:''}</tr>`).join('')}</tbody></table></div>`:empty();
+  box.innerHTML=rows.length?tableFrame([...columns.map(([,label])=>label),...(actions.length?[tr('操作','Actions')]:[])],`${rows.map((r,i)=>`<tr role="row">${columns.map(([k,l,format])=>tableCell(l,format?format(r[k],r):esc(r[k]??'—'),['title','content','name','note','body'].includes(k)?'wrap':'')).join('')}${actions.length?`<td role="cell" class="table-actions"><span class="cell-label" aria-hidden="true">${tr('操作','Actions')}</span><div class="actions compact">${actions.filter(a=>!a.when||a.when(r)).map(a=>`<button type="button" data-row="${i}" data-action="${a.key}" class="${a.danger?'danger':''}">${esc(a.label)}</button>`).join('')}</div></td>`:''}</tr>`).join('')}`):empty();
   $$('[data-action]',box).forEach(b=>b.onclick=()=>action(b,()=>actions.find(a=>a.key===b.dataset.action).run(rows[+b.dataset.row])));
 }
 function toolbar({
@@ -503,15 +504,14 @@ function switchTab(key) {
   section.className = 'admin-content';
   section.id = 'admin-section';
   if (selected.group.children.length > 1) {
-    const tabs = document.createElement('nav');
-    tabs.className = 'tabs';
-    tabs.setAttribute('aria-label', tr(...selected.group.label));
-    tabs.innerHTML = selected.group.children.map(child => `<button data-child="${child}" aria-selected="${child === active}">${tr(...names[child])}</button>`).join('');
-    tabs.querySelectorAll('[data-child]').forEach(button => button.onclick = () => switchTab(button.dataset.child));
+    const tabs = document.createElement('div');
+    tabs.innerHTML=tabsMarkup(selected.group.children.map(key=>({key,label:tr(...names[key])})),active,{id:'admin-tabs',label:tr(...selected.group.label),panelId:'admin-view'});
+    bindTabs(tabs,switchTab);
     section.append(tabs);
   }
   const next = document.createElement('section');
   next.id = 'admin-view';
+  if(selected.group.children.length>1){next.setAttribute('role','tabpanel');next.setAttribute('aria-labelledby','admin-tabs-'+active);}
   section.append(next);
   $('#admin-section', root).replaceWith(section);
   view = next;

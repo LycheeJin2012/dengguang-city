@@ -1,0 +1,128 @@
+/* ------------------------------------------------------------------ *
+ * Reduced motion
+ * Apple App Store "Reduced motion" evaluation criteria:
+ *  · no scale / rotation / parallax
+ *  · no smooth scroll
+ *  · decorative continuous motion removed
+ *  · essential state feedback can use colour or short fade
+ *  · never leave an element with opacity:0 that the user can never see
+ * ------------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  /* Force any element that might otherwise be paused at opacity:0 to its
+     final visible state. Apple: state feedback stays accessible.          */
+  .modal[open], .toast, .modal::backdrop, .hero, .panel, .card,
+  .stat, .admin-content, .upload-row, .bubble {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* When the mobile nav is opened, the final state is the expanded nav.
+     We set it explicitly so reduced-motion users still see the menu.      */
+  #navigation { transition: none !important; }
+  #navigation.open { max-height: 70vh; opacity: 1; }
+}
+
+
+/* ------------------------------------------------------------------ *
+ * §7 · Shared press feedback (uniform feel, per-component depth & colour)
+ * ------------------------------------------------------------------ *
+ * Reference tile: the homepage citizen-count .stat collapses its outer
+ * shadow to 1px 1px 0 var(--line) with a deeper #e0d294 background on
+ * press. Every pressable control now shares a coherent pressed feel:
+ *
+ *   raised controls (button, .button, .stat, primary, danger,
+ *                   input[type=button|submit|reset], [role="button"],
+ *                   .modal-head [data-close])
+ *     resting outer shadow → 1px outer shadow on press (push-down by
+ *     collapsing the existing offset).
+ *
+ *   flat controls (.admin-nav button, .tabs button, #navigation a,
+ *                  #menu, #language, .gallery-button)
+ *     resting shadow is 0; an outer 1px shadow on press would look MORE
+ *     raised, the opposite of the requested push-down feel. These use an
+ *     inset shadow on press instead, so the surface visibly sinks inward.
+ *
+ * Selected markers preserved on press:
+ *   .tabs button[aria-selected="true"]       gold inset (inset 0 -3px 0)
+ *   .admin-nav button[aria-selected="true"] gold left bar (border-left)
+ *   #navigation a[aria-current="page"]       green underline
+ *
+ * Disabled / aria-disabled: the unified :active rule excludes them via
+ * :not(:disabled):not([aria-disabled="true"]) on every selector, so the
+ * pressed visual never applies to a non-interactive control.
+ *
+ * Apple: instant response, interruptible, no overshoot. No transform
+ * used. Reduced motion: transition-duration collapses to 0.01ms but
+ * depth + colour still apply — essential state feedback, not
+ * decorative motion.                                                  */
+
+/* Flat controls override the default outer-pressed shadow with an inset
+   one. Applied at the resting scope so the value is in scope when the
+   :active rule below looks it up.                                    */
+#navigation a,
+.admin-nav button,
+.tabs button,
+#menu,
+#language,
+.gallery-button,
+.upload-drop,
+.modal details > summary {
+  --press-active-shadow: inset 1px 1px 0 var(--line-soft);
+}
+
+/* Selected tab / admin-nav get a dark pressed background so the white
+   text keeps contrast against var(--green-deep). Their gold selected
+   markers (inset / border-left) are preserved separately.            */
+.tabs button[aria-selected="true"],
+.admin-nav button[aria-selected="true"] {
+  --press-active-bg: var(--green-deep);
+}
+
+/* Selected tab keeps its gold inset on press so the marker does not
+   vanish mid-press. (admin-nav uses border-left, not box-shadow, so it
+   is automatically preserved without an extra rule.)                */
+.tabs button[aria-selected="true"] {
+  --press-indicator: inset 0 -3px 0 var(--gold);
+}
+
+/* Unified :active for every pressable control. Each selector carries
+   the full :not(:disabled):not([aria-disabled="true"]) guard so a
+   non-interactive control never receives the pressed visual.          */
+button:not(:disabled):not([aria-disabled="true"]):active,
+.button:not(:disabled):not([aria-disabled="true"]):active,
+input[type="button"]:not(:disabled):not([aria-disabled="true"]):active,
+input[type="submit"]:not(:disabled):not([aria-disabled="true"]):active,
+input[type="reset"]:not(:disabled):not([aria-disabled="true"]):active,
+[role="button"]:not(:disabled):not([aria-disabled="true"]):active,
+summary:not(:disabled):not([aria-disabled="true"]):active,
+#menu:not(:disabled):not([aria-disabled="true"]):active,
+#language:not(:disabled):not([aria-disabled="true"]):active,
+#navigation a:not(:disabled):not([aria-disabled="true"]):active,
+.tabs button:not(:disabled):not([aria-disabled="true"]):active,
+.admin-nav button:not(:disabled):not([aria-disabled="true"]):active,
+.modal-head [data-close]:not(:disabled):not([aria-disabled="true"]):active,
+.upload-drop:not(:disabled):not([aria-disabled="true"]):active,
+.stat:not(:disabled):not([aria-disabled="true"]):active {
+  background-color: var(--press-active-bg);
+  box-shadow: var(--press-active-shadow), var(--press-indicator);
+  transition-duration: var(--motion-fast);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* Depth + colour feedback is essential; only the transition timing is
+     cut so reduced-motion users still get the same on-press visual.   */
+  button, .button, [role="button"],
+  input[type="button"], input[type="submit"], input[type="reset"],
+  summary, #menu, #language, #navigation a,
+  .tabs button, .admin-nav button,
+  .modal-head [data-close], .stat {
+    transition-duration: 0.01ms !important;
+  }
+}
+
