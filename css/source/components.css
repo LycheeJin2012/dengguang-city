@@ -156,7 +156,7 @@
   top: 0;
   z-index: 1;
 }
-.modal-head h2 { margin: 0; font-size: 1.25rem; }
+.modal-head h2 { min-width:0;overflow-wrap:anywhere;margin: 0; font-size: 1.25rem; }
 .modal-body { padding: 24px; }
 .modal-body > .form-grid > .actions,
 .modal-body > .actions {
@@ -168,6 +168,7 @@
 
 /* Icon button (modal close etc.) -- stronger hover */
 .modal-head [data-close] {
+  flex: 0 0 auto;
   background: var(--paper);
   border-color: var(--line);
   font-size: 1rem;
@@ -273,7 +274,7 @@ td .actions button { min-height: 36px; padding: 0.3rem 0.7rem; font-size: 0.82re
 main,section,article,aside,nav,form,fieldset,.panel,.card,.field{min-width:0}
 button,.button,summary{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 input,select,textarea{min-width:0;max-width:100%}
-.panel,.card{background:var(--paper);border:var(--border-thin);padding:22px;box-shadow:var(--shadow-soft);min-width:0}
+.panel,.card{overflow-wrap:anywhere;background:var(--paper);border:var(--border-thin);padding:22px;box-shadow:var(--shadow-soft);min-width:0}
 .panel+.panel{margin-top:16px}
 .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:18px}
 .card{display:flex;flex-direction:column}
