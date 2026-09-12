@@ -1,0 +1,1 @@
+export function newestTicket(items){return [...items].sort((a,b)=>String(b.created_at||'').localeCompare(String(a.created_at||''))||Number(String(b.id).replace('m:',''))-Number(String(a.id).replace('m:','')))[0]||null;}

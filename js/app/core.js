@@ -199,7 +199,7 @@ export function ticketBody(value){
     name:['姓名','Name'],contact:['联系方式','Contact'],room_name:['房型','Room'],in_date:['入住','Check-in'],out_date:['退房','Check-out'],nights:['晚数','Nights'],persons:['入住人数','Guests'],breakfast:['早餐','Breakfast'],session:['场次','Session'],exam_session:['考试场次','Exam session'],exam_type:['考试','Exam'],exam_date:['考试日期','Exam date'],car:['车型','Vehicle'],license:['驾照','License'],note:['备注','Notes']
   }
   ;
-  return Object.entries(data).filter(([key,v])=>labels[key]&&v!==null&&v!=='').map(([key,v])=>`<p><b>${tr(...labels[key])}：</b>${text(key==='breakfast'?tr(v?'含':'不含',v?'Included':'Not included'):optionLabel(v))}</p>`).join('')||text(tr('详情请查看对应业务记录','See the related application for details'));
+  return Object.entries(data).filter(([key,v])=>Object.prototype.hasOwnProperty.call(labels,key)&&v!==null&&v!=='').map(([key,v])=>`<p><b>${tr(...labels[key])}：</b>${text(key==='breakfast'?tr(v?'含':'不含',v?'Included':'Not included'):optionLabel(v))}</p>`).join('')||text(tr('详情请查看对应业务记录','See the related application for details'));
 }
 export function field(name,label,type='text',value='',opts={}){return formField(name,label,type,value,{...opts,optionLabel});}
 export function modal(...args){return openDialog({$,$$,esc,tr},...args);}

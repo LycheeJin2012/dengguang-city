@@ -7,6 +7,7 @@ state.authPending=auth;
 const page=document.body.dataset.page;
 if(!['home','hotel'].includes(page))await auth;
 await region(document.querySelector('main'),()=>pages[page](),async(m,el)=>m.render(el,page));
+const {mountAssistantWindow}=await import('../ui/assistant-window.js');mountAssistantWindow();
 if('serviceWorker' in navigator)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 
 // Back/forward cache must not restore stale elevated account UI.
