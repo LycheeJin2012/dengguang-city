@@ -11,13 +11,13 @@ export async function sourceDocument(db,kind,id){
 }
 export async function fresh(db,row){if(row.source_kind==='manual')return true;const doc=await sourceDocument(db,row.source_kind,row.source_id);return !!doc&&await digest(doc)===row.source_hash;}
 const ignored=new Set(['请问','可以','什么','如何','怎么','一下','你好','需要','问题','这个']);
-export function terms(text){const parts=String(text||'').toLowerCase().match(/[\p{Script=Han}]+|[a-z0-9]+/gu)||[];return [...new Set(parts.flatMap(s=>/^[a-z0-9]+$/.test(s)?[s]:s.length===1?[]:Array.from({length:s.length-1},(_,i)=>s.slice(i,i+2))).filter(s=>!ignored.has(s)))].slice(0,60);}
-export function similarity(query,text){const a=terms(query),b=new Set(terms(text));return a.length?a.filter(t=>b.has(t)).length/a.length:0;}
+export function terms(text,limit=60){const parts=String(text||'').toLowerCase().match(/[\p{Script=Han}]+|[a-z0-9]+/gu)||[];return [...new Set(parts.flatMap(s=>/^[a-z0-9]+$/.test(s)?[s]:s.length===1?[]:Array.from({length:s.length-1},(_,i)=>s.slice(i,i+2))).filter(s=>!ignored.has(s)))].slice(0,limit);}
+export function similarity(query,text){const a=terms(query),b=new Set(terms(text,Infinity));return a.length?a.filter(t=>b.has(t)).length/a.length:0;}
 export async function searchKnowledge(db,query,audiences=['public'],limit=5){
- const tokens=terms(query);if(!tokens.length)return [];
- const clauses=tokens.slice(0,12).map(()=>"(title||' '||question||' '||keywords) LIKE ? ESCAPE '\\'");
- const rows=(await db.prepare(`SELECT * FROM knowledge_articles WHERE status='published' AND audience IN (${audiences.map(()=>'?').join(',')}) AND (${clauses.join(' OR ')}) ORDER BY id DESC LIMIT 300`).bind(...audiences,...tokens.slice(0,12).map(t=>'%'+t.replace(/[\\%_]/g,'\\$&')+'%')).all()).results;
- const ranked=rows.map(r=>({...r,score:similarity(query,r.title+' '+r.question+' '+r.keywords)})).filter(r=>r.score>=0.25).sort((a,b)=>b.score-a.score||a.id-b.id),result=[];
+ const tokens=terms(query).slice(0,30);if(!tokens.length)return [];
+ const clauses=tokens.map(()=>"(COALESCE(title,'')||' '||COALESCE(question,'')||' '||COALESCE(keywords,'')||' '||COALESCE(answer,'')) LIKE ? ESCAPE '\\'");
+ const rows=(await db.prepare(`SELECT * FROM knowledge_articles WHERE status='published' AND audience IN (${audiences.map(()=>'?').join(',')}) AND (${clauses.join(' OR ')}) ORDER BY id DESC LIMIT 300`).bind(...audiences,...tokens.map(t=>'%'+t.replace(/[\\%_]/g,'\\$&')+'%')).all()).results;
+ const ranked=rows.map(r=>({...r,score:similarity(query,[r.title,r.question,r.keywords,r.answer].filter(Boolean).join(' '))})).filter(r=>r.score>=0.25).sort((a,b)=>b.score-a.score||a.id-b.id),result=[];
  for(const r of ranked){if(await fresh(db,r))result.push(r);if(result.length===limit)break;}
  return result;
 }

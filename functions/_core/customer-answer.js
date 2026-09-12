@@ -2,7 +2,10 @@ import {personalSources} from './personal-assistant.js';
 import {searchKnowledge,similarity,citation} from './knowledge.js';
 import {modelJson} from './model-json.js';
 export async function smartCustomerReply(env,question,context=[],player=null){
- const query=[...context.filter(m=>m.role==='user').slice(-2).map(m=>m.content),question].join(' ').slice(-1500),articles=await searchKnowledge(env.DB,query,['public'],4);
+ const previous=context.filter(m=>m.role==='user'&&m.content!==question).at(-1)?.content;
+ const followUp=/^(?:那|那么|这个|那个|它|那里|还有呢|为什么|多少钱|在哪|怎么去)/.test(question.trim());
+ const query=(followUp&&previous?previous.slice(-600)+' '+question:question).slice(-1500);
+ const articles=await searchKnowledge(env.DB,query,['public'],4);
  const sources=articles.map(r=>({key:'knowledge:'+r.id,...citation(r),kind:'knowledge',content:r.answer}));
  if(/酒店|房型|住宿|客房/.test(query)){const hotels=(await env.DB.prepare("SELECT id,name,address,description FROM hotels WHERE is_active=1 ORDER BY id LIMIT 50").all()).results;for(const h of hotels.map(h=>({...h,score:similarity(query,h.name+' 酒店 '+(h.address||'')+' '+(h.description||''))})).filter(h=>h.score>=0.1).sort((a,b)=>b.score-a.score).slice(0,3))sources.push({key:'hotel:'+h.id,kind:'hotel',id:h.id,title:h.name,url:'/hotel.html',content:JSON.stringify({name:h.name,address:h.address,description:h.description})});}
  const personal=await personalSources(env.DB,player,question);if(personal)sources.push(...personal.sources);

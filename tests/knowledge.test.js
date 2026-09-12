@@ -12,3 +12,25 @@ test('invalid sources, duplicate questions and malformed answers cannot enter dr
 test('customer reply is generated from approved sources instead of copying them and pauses after handoff',()=>fixture(async({call,DB,env,create})=>{const id=await create();env.OPENAI_API_KEY='mock';const original=globalThis.fetch;try{globalThis.fetch=async()=>Response.json({choices:[{message:{content:JSON.stringify({needs_human:false,answer:'你可以上传符合大小限制的图片附件。',source_keys:['knowledge:'+id]})}}]});const bot=await call('ai-bot','GET',undefined,'alice');await call('social?action=dm-send','POST',{to_username:bot.username,content:'附件上传大小限制'},'alice');const thread=await call('social?action=dm-thread&peer='+encodeURIComponent(bot.username),'GET',undefined,'alice');assert.equal(JSON.parse(thread.messages.at(-1).knowledge_sources)[0].id,id);assert.ok(thread.messages.at(-1).content.includes('你可以上传'));assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM tickets').first()).n,0);await call('support','POST',{},'alice');assert.equal((await call('social?action=dm-send','POST',{to_username:bot.username,content:'附件上传大小限制'},'alice')).ai_replied,false);}finally{globalThis.fetch=original;}}));
 test('knowledge versions preserve previous content and publish/retract history',()=>fixture(async({call,create})=>{const id=await create();await call('admin/knowledge?id='+id,'PATCH',{revision:2,answer:'新规则草稿'});const history=await call('admin/knowledge?action=history&id='+id);assert.deepEqual(history.versions.map(v=>v.revision),[3,2,1]);assert.equal(JSON.parse(history.versions[0].payload).answer,'新规则草稿');assert.match(JSON.parse(history.versions[1].payload).answer,/20MB/);assert.equal((await call('knowledge?id='+id,'GET',undefined,'alice')).http,404);}));
 test('exam draft cannot be published after its source was edited',()=>fixture(async({call,DB,env,create})=>{const id=await create('exam');env.OPENAI_API_KEY='mock';const original=globalThis.fetch;try{globalThis.fetch=async()=>Response.json({choices:[{message:{content:JSON.stringify({questions:[{grade:'B',q_type:'choice',question:'依据规则选择',options:['规则一','规则二'],answer:'A',explanation:'测试规则说明',source_ids:[id]}]})}}]});const gen=await call('admin/exam-ai','POST',{grade:'B',count:1,knowledge_ids:[id]});await call('admin/knowledge?id='+id,'PATCH',{revision:2,answer:'更新后的考试资料'});const d=gen.drafts[0];const saved=await call('admin/exam-ai','POST',{action:'save',draft_id:d.id,confirm_review:true,question:d.payload});assert.equal(saved.http,409);assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM exam_questions').first()).n,0);}finally{globalThis.fetch=original;}}));
+
+test('public retrieval searches the full reviewed body, including facts after long introductions',()=>fixture(async({DB,create,call})=>{
+ const answer=Array.from({length:90},(_,i)=>'intro'+i).join(' ')+'。樱花公园位于河畔。';
+ const id=await create('public',{title:'城市综合指南',question:'城市介绍',keywords:'',answer});
+ await create('staff',{title:'内部值班表',question:'内部资料',answer:'樱花公园 PRIVATE_STAFF'});
+ await call('admin/knowledge','POST',{title:'未审核资料',question:'公园位置',answer:'樱花公园 DRAFT',audience:'public'});
+ const rows=await searchKnowledge(DB,'樱花公园在哪里');
+ assert.deepEqual(rows.map(r=>r.id),[id]);
+ assert.doesNotMatch(JSON.stringify(rows),/PRIVATE_STAFF|DRAFT/);
+}));
+
+test('a new question is retrieved independently from unrelated chat and appears only once in model input',()=>fixture(async({DB,env,call,create})=>{
+ const id=await create('public',{title:'城市资料',question:'城市资料',keywords:'',answer:'樱花公园位于河畔。'});
+ const bot=await call('ai-bot','GET',undefined,'alice');const botRow=await DB.prepare('SELECT id FROM players WHERE username=?').bind(bot.username).first();
+ await DB.prepare('INSERT INTO direct_messages(from_player_id,to_player_id,content) VALUES(1,?,?)').bind(botRow.id,'此前讨论账号密码修改、绿宝石余额、考试成绩复核申请、铁路施工与酒店预订的各种细节').run();
+ env.OPENAI_API_KEY='mock';const original=globalThis.fetch;let input;
+ try{globalThis.fetch=async(url,init)=>{input=JSON.parse(JSON.parse(init.body).messages[1].content);return Response.json({choices:[{message:{content:JSON.stringify({needs_human:false,answer:'樱花公园在河畔。',source_keys:['knowledge:'+id]})}}]});};
+ const r=await call('social?action=dm-send','POST',{to_username:bot.username,content:'樱花公园在哪里'},'alice');
+ assert.equal(r.support_error,false);assert.equal(r.ai_replied,true);assert.equal(r.human_support,false);
+ assert.ok(input.sources.some(s=>s.key==='knowledge:'+id));assert.ok(input.context.every(m=>m.content!=='樱花公园在哪里'));
+ }finally{globalThis.fetch=original;}
+}));

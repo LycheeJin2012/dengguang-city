@@ -58,7 +58,7 @@ export const onRequestPost=c=>endpoint(async()=>{
   const active=await db.prepare("SELECT id FROM support_chats WHERE player_id=? AND status IN ('queued','active')").bind(p.id).first();
   if(active)human=true;
   else try{
-   const context=(await db.prepare('SELECT from_player_id,content FROM (SELECT id,from_player_id,content FROM direct_messages WHERE (from_player_id=? AND to_player_id=?) OR (from_player_id=? AND to_player_id=?) ORDER BY id DESC LIMIT 6) ORDER BY id').bind(p.id,other.id,other.id,p.id).all()).results.map(m=>({role:m.from_player_id===p.id?'user':'assistant',content:m.content.slice(0,1000)}));
+   const context=(await db.prepare('SELECT from_player_id,content FROM (SELECT id,from_player_id,content FROM direct_messages WHERE ((from_player_id=? AND to_player_id=?) OR (from_player_id=? AND to_player_id=?)) AND id<? ORDER BY id DESC LIMIT 6) ORDER BY id').bind(p.id,other.id,other.id,p.id,saved[0].meta.last_row_id).all()).results.map(m=>({role:m.from_player_id===p.id?'user':'assistant',content:m.content.slice(0,1000)}));
    const explicitHuman=/人工|找.*客服|找.*工作人员/.test(content)&&!/(不要|不用|暂不|不想).{0,5}人工/.test(content);
    const preference=await db.prepare('SELECT auto_handoff FROM support_chats WHERE player_id=?').bind(p.id).first();
    const answer=explicitHuman?null:await smartCustomerReply(c.env,content,context,p);
