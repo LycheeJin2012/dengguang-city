@@ -34,3 +34,22 @@ test('a new question is retrieved independently from unrelated chat and appears 
  assert.ok(input.sources.some(s=>s.key==='knowledge:'+id));assert.ok(input.context.every(m=>m.content!=='樱花公园在哪里'));
  }finally{globalThis.fetch=original;}
 }));
+
+test('customer can answer maintenance from live public announcements without a knowledge copy',()=>fixture(async({DB,env,call})=>{
+ await DB.prepare("INSERT INTO announcements(id,title,content) VALUES(4,'灯光火车站进入升级改造期间','4号站台正处于维修状态，目前已经重新开放。'),(6,'灯光暂时维护','灯光市将开展为时24小时的维护')").run();
+ const bot=await call('ai-bot','GET',undefined,'alice');env.OPENAI_API_KEY='mock';const original=globalThis.fetch;let input;
+ try{globalThis.fetch=async(url,init)=>{input=JSON.parse(JSON.parse(init.body).messages[1].content);return Response.json({choices:[{message:{content:JSON.stringify({needs_human:false,answer:'根据“灯光暂时维护”公告，本次维护计划持续24小时；公告未注明明确开始和结束时间。',source_keys:['announcement:6']})}}]});};
+ const sent=await call('social?action=dm-send','POST',{to_username:bot.username,content:'目前公告里的维修情况怎么样'},'alice');
+ assert.equal(sent.ai_replied,true);assert.equal(sent.human_support,false);assert.equal(sent.support_error,false);
+ assert.deepEqual(input.sources.filter(s=>s.key.startsWith('announcement:')).map(s=>s.key),['announcement:6','announcement:4']);
+ const thread=await call('social?action=dm-thread&peer='+encodeURIComponent(bot.username),'GET',undefined,'alice');
+ assert.equal(JSON.parse(thread.messages.at(-1).knowledge_sources)[0].kind,'announcement');
+ assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM knowledge_articles').first()).n,0);
+ // Edits and deletions apply on the next retrieval, with no stale imported copy.
+ const {announcementSources}=await import('../functions/_core/announcement-sources.js');
+ await DB.prepare("UPDATE announcements SET content='维护取消，正常开放' WHERE id=6").run();
+ assert.match((await announcementSources(DB,'目前维护情况'))[0].content,/维护取消/);
+ await DB.prepare('DELETE FROM announcements WHERE id=6').run();
+ assert.ok((await announcementSources(DB,'目前维修情况')).every(s=>s.id!==6));
+ }finally{globalThis.fetch=original;}
+}));
