@@ -1,6 +1,6 @@
 import './press-motion.js';
 import {shell,session,renderAccount,toast,region,state} from './core.js';
-const pages={affairs:()=>import('./affairs.js'),map:()=>import('./city-map.js'),messages:()=>import('./social.js'),knowledge:()=>import('./knowledge-public.js'),'hotel-owner':()=>import('./hotel-owner.js'),home:()=>import('./home.js'),hotel:()=>import('./hotel.js'),profile:()=>import('./profile.js'),dm:()=>import('./social.js'),notifications:()=>import('./social.js'),admin:()=>import('./admin.js')};
+const pages={affairs:()=>import('./pages/affairs/index.js'),map:()=>import('./pages/map/index.js'),messages:()=>import('./social.js'),knowledge:()=>import('./pages/knowledge/public.js'),'hotel-owner':()=>import('./pages/hotel-owner/index.js'),home:()=>import('./pages/home/index.js'),hotel:()=>import('./pages/hotel/index.js'),profile:()=>import('./pages/profile/index.js'),dm:()=>import('./pages/messages/index.js'),notifications:()=>import('./pages/messages/index.js'),admin:()=>import('./admin.js')};
 shell();
 const auth=session().then(renderAccount).catch(e=>toast(e.message,true));
 state.authPending=auth;
