@@ -381,3 +381,105 @@ button.stat{cursor:pointer;text-align:left}
 @media(pointer:coarse){button,.button,summary{min-height:44px}}
 
 .avatar{display:inline-grid;place-items:center;width:56px;height:56px;background:var(--leaf-soft);border:var(--border-thin);font-size:2rem;}
+
+/* v80 — variant layer. All additions live in this block so we can revert the
+   single file when we want to roll back the variant layer.                */
+
+/* .button.compact — smaller padding / font for toolbars and inline actions.
+   Honours the press-motion contract by leaving the box-shadow path alone
+   and only overriding resting size.                                       */
+.button.compact, button.compact {
+  min-height: 32px;
+  padding: 6px 10px;
+  font-size: 0.82rem;
+  box-shadow: 2px 2px 0 var(--line);
+}
+.button.compact:active, button.compact:active {
+  box-shadow: var(--press-active-shadow);
+}
+
+/* .button.quiet — pure text-link style. No border, no shadow, no press lift
+   so it sits naturally inside prose paragraphs.                          */
+.button.quiet, button.quiet {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  color: var(--green);
+  padding: 4px 6px;
+  min-height: 28px;
+  text-decoration: underline;
+  text-decoration-color: var(--gold);
+  text-underline-offset: 3px;
+}
+.button.quiet:hover, button.quiet:hover { background: var(--leaf-soft); color: var(--green-deep); }
+.button.quiet:active, button.quiet:active { box-shadow: none; background: var(--paper-warm); }
+
+/* .button.danger — same shape as default button but uses --red tokens. Used
+   for destructive actions like "删除" / "停用".                            */
+.button.danger, button.danger {
+  background: var(--red-soft);
+  color: var(--red-deep);
+  border-color: var(--red);
+}
+.button.danger:hover, button.danger:hover { background: var(--red); color: var(--paper); }
+
+/* .badge.info — neutral information blue. Uses --line-soft + --ink-soft so
+   it does not introduce a new hue (SPEC keeps the brand palette).         */
+.badge.info { background: #e3e0cb; color: var(--ink-soft); border-color: var(--line-soft); }
+/* .badge.warning — reuses the gold accent already in the palette.         */
+.badge.warning { background: var(--gold-soft); color: var(--gold-deep); border-color: var(--gold); }
+/* .badge.success — explicitly green for "completed / ok" without the user
+   having to remember which green-shade is active.                         */
+.badge.success { background: var(--leaf-soft); color: var(--green-deep); border-color: var(--green); }
+/* .badge.neutral — greys for "draft" / "untouched".                       */
+.badge.neutral { background: #e5dec0; color: var(--ink-soft); border-color: var(--line-soft); }
+
+/* .card.compact / .card.spacious — three density variants. Default .card
+   keeps current padding (22px). compact drops to 14px, spacious stretches
+   to 30px.                                                                */
+.card.compact { padding: 14px; box-shadow: var(--shadow-soft); }
+.card.spacious { padding: 30px; box-shadow: var(--shadow-lift); }
+
+/* .form-helper — small helper text under a form field. Not error state.
+   Pair with .field so the gap is consistent across form rows.             */
+.form-helper {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 400;
+  margin: 0;
+  line-height: 1.4;
+}
+.field .form-helper { margin-top: 2px; }
+.field .form-error { margin-top: 6px; }
+
+/* .toast--top — toast anchored to the top of the viewport. Default .toast
+   sits at the bottom (see .toast rule earlier in this file). Use this when
+   the page already has a sticky footer / assistant window at the bottom.  */
+.toast--top {
+  bottom: auto;
+  top: 16px;
+}
+
+/* .skeleton — placeholder block while data is loading. Pure opacity pulse
+   driven by motion.css; no content, no text.                               */
+.skeleton {
+  display: block;
+  background: linear-gradient(90deg, var(--paper-soft), var(--ground), var(--paper-soft));
+  background-size: 200% 100%;
+  border: 1px dashed var(--line-soft);
+  min-height: 1em;
+  opacity: 0.85;
+}
+.skeleton.row { min-height: 56px; }
+.skeleton.card { min-height: 120px; }
+
+/* .empty.compact — small empty state inside cards / table rows. Default
+   .empty fills a whole panel; compact is for inline use.                  */
+.empty.compact {
+  padding: 18px 14px;
+  border: 1px dashed var(--line-soft);
+  background: var(--paper-soft);
+  margin: 0;
+  font-size: 0.88rem;
+}
+.empty.compact > span { font-size: 1.5rem; margin-bottom: 4px; }

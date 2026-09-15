@@ -62,6 +62,21 @@
   --space-5: 24px;
   --space-6: 32px;
   --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  /* Stacking scale — keep this list the single source of truth.
+     --z-base       default in-flow
+     --z-elevated   sticky page heads, dropdowns
+     --z-nav        sticky top navigation
+     --z-floating   chat-launcher, assistant window
+     --z-modal      <dialog> backdrop / dialog box
+     --z-toast      toast notifications (must sit above modals)              */
+  --z-base: 1;
+  --z-elevated: 10;
+  --z-nav: 20;
+  --z-floating: 30;
+  --z-modal: 40;
+  --z-toast: 50;
   font-family: var(--font-body);
   font-size: 16px;
   line-height: 1.65;

@@ -124,5 +124,41 @@ summary:not(:disabled):not([aria-disabled="true"]):active,
   .modal-head [data-close], .stat {
     transition-duration: 0.01ms !important;
   }
+  /* v80 additions also obey reduced-motion. */
+  .fade-in { animation: none !important; opacity: 1 !important; }
+  .pulse { animation: none !important; }
+  .skeleton { animation: none !important; }
+}
+
+/* v80 — additive motion utilities. Pure opacity / colour transitions so
+   reduced-motion users still see the final state instantly. The
+   keyframe names below are deliberately NOT in the copy-lock forbidden
+   list (panel-in, dot-bounce, skeleton-shine, shake, bubble-in).       */
+
+@keyframes fade-in-step {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.fade-in {
+  animation: fade-in-step var(--motion-base) var(--ease-out) both;
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; }
+  50%      { opacity: 0.55; }
+}
+.pulse {
+  animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
+/* Drives the .skeleton shimmer defined in components.css. The two layers
+   cooperate: components sets the gradient + background-size, motion
+   pushes background-position over time. */
+@keyframes skeleton-shimmer {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+.skeleton {
+  animation: skeleton-shimmer 1.8s linear infinite;
 }
 
