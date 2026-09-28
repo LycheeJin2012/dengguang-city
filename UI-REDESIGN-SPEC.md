@@ -1,116 +1,142 @@
-# 灯光市 UI 重做规范 (v1.0)
+# 灯光市 UI 规范（v84）
 
-## 1. 风格保留
-重做 UI 但**视觉语言完全保持不变**:
-- 米色背景 (paper) + 黑色边框
-- 像素风字体 (Press Start 2P)
-- 偏移阴影 (4px / 8px)
-- 主色: 草绿 (#5d7c15), 金色 (#ffaa00), 水蓝 (#3a7ad9), 红石 (#ff2a2a), 石头 (#7f7f7f)
-- 不要加新颜色/新字体/新图案
+> 本文件是**组件命名的唯一权威来源**。任何改动 `css/source/*.css` 或 `js/ui/*.js`
+> 的提交都必须同步本文件；`tests/ui-components.test.js` 与 `tests/layout-retirement.test.js`
+> 会按此处的类名做回归断言。
 
-## 2. 统一组件 CSS 类 (所有页面必须用)
+## 0. 与 v1.0 规范的关系
 
-### 按钮 (3 种)
+v1.0 规范描述的类名（`.btn`、`.btn-primary`、`.card-flat`、`.card-pad`、
+`.empty-state`、`.tag`、`.pane-head`、`.pane-hint`、`.modal-mask`）**在当前
+CSS 中一个都不存在**。v77–v83 的组件重构已把它们全部替换为下表的类名。
+照着 v1.0 写代码会得到无样式的裸元素。
+
+本文件按当前真实代码重写，保留 v1.0 的视觉语言约束（第 1 节完全不变）。
+
+## 1. 视觉语言（不变）
+
+- 米色纸感背景 (`--paper`) + 黑色边框 (`--border` / `--border-thin`)
+- 像素风等宽字体 (`--font-mono`)
+- 偏移阴影 (`--shadow` / `--shadow-soft`)
+- 主色仅限：草绿 `--green`、金色 `--gold`、水蓝 `--blue`、红石 `--red`、石头 `--muted`
+- 不新增颜色 / 字体 / 图案 / 圆角；圆角一律 0
+- 不引入暗色主题或 `prefers-color-scheme` 分支（`tests/frontend.test.js` 会拒绝）
+
+## 2. 组件类名对照表
+
+| 语义 | ✅ 现行类名 | ❌ v1.0 旧名（已废弃） |
+| --- | --- | --- |
+| 按钮 | `.button`，修饰 `.primary` / `.quiet` / `.danger` / `.compact` | `.btn` `.btn-primary` `.btn-ghost` `.btn-danger` |
+| 卡片 | `.card`，修饰 `.compact` / `.spacious` | `.card-flat` `.card-pad` |
+| 空状态 | `.empty`，修饰 `.compact` / `.error` | `.empty-state` |
+| 标签 | `.badge`，状态 `.active` `.pending` `.rejected` `.closed` | `.tag` `.tag-success` |
+| 区块标题 | `.section-head` | `.pane-head` |
+| 行内标题 | `.row-head` | — |
+| 页面标题 | `.page-heading` + `.eyebrow` | — |
+| 说明文字 | `<p class="muted">` / `.form-helper` | `.pane-hint` `.hint` |
+| 弹窗 | `<dialog class="modal">` + `.modal-head` + `.modal-body` | `.modal-mask` |
+| 表单字段 | `.field`，修饰 `.wide` `.check` `.compact` `.spacious` `.field-error` | — |
+| 表格 | `.table-wrap` + `.responsive-table` | — |
+| 区块间距 | `.stack-top` / `.stack-top-lg` / `.stack-top-xl` / `.stack-top-2xl` | 内联 `style="margin-top:Npx"` |
+
+## 3. 组件用法
+
+### 按钮
 ```html
-<button class="btn btn-primary">主操作</button>   <!-- 草绿/金色 -->
-<button class="btn btn-ghost">次操作</button>     <!-- 米色+黑边 -->
-<button class="btn btn-danger">危险</button>      <!-- 红石 -->
+<button class="button primary">主操作</button>   <!-- 或直接 <button class="primary"> -->
+<button class="button quiet">次操作</button>
+<button class="button danger">危险</button>
+<button class="button compact">小号</button>
+<button class="icon-button" aria-label="关闭">✕</button>
 ```
 
 ### 卡片
-```html
-<div class="card">...</div>                       <!-- 标准卡: paper 背景 + 4px 黑边 + 4px 偏移阴影 -->
-<div class="card-flat">...</div>                  <!-- 无阴影卡 -->
-<div class="card-pad">...</div>                   <!-- 内边距 16px -->
-```
-
-### 标题区 (pane-head)
-```html
-<div class="pane-head">
-  <h2>标题</h2>
-  <div class="pane-tools">
-    <button class="btn btn-primary btn-sm">操作</button>
-  </div>
-</div>
+优先用 `js/ui/card.js` 的 `recordCard()`，不要手拼 `<article class="card">`：
+```js
+recordCard({
+  title: r.name,              // 会被 escapeHtml 转义
+  meta: '<p class="eyebrow">…</p>',
+  body: '<p>…</p>',
+  actions: '<button …>操作</button>',
+  media: '<img loading="lazy" …>',
+  density: 'compact',         // 'compact' | 'spacious'
+})
 ```
 
 ### 空状态
 ```html
-<div class="empty-state">
-  <div class="empty-icon">📭</div>
-  <p>暂无数据</p>
-</div>
+<div class="empty"><p>暂无数据</p></div>
 ```
 
-### 提示框 (pane-hint)
+### 标签
 ```html
-<p class="pane-hint">这是一段说明文字。</p>
+<span class="badge active">已通过</span>
+<span class="badge pending">待处理</span>
+<span class="badge rejected">已驳回</span>
 ```
 
-### 标签 (badge)
-```html
-<span class="tag">标签</span>
-<span class="tag tag-success">成功</span>
-<span class="tag tag-warn">警告</span>
-<span class="tag tag-danger">危险</span>
-<span class="tag tag-super">仅 SUPER</span>
+### 弹窗
+一律用 `js/ui/dialog.js` 的 `openDialog()` / `core.js` 的 `modal()`，不要手写遮罩层：
+```js
+modal('标题', content, { wide: true, footer: '<button …>额外操作</button>',
+                         submit: async (data, dialog) => { … } })
 ```
 
-### Modal
-```html
-<div class="modal-mask">
-  <div class="modal">
-    <div class="modal-head"><h3>标题</h3><button class="modal-close">✕</button></div>
-    <div class="modal-body">...</div>
-  </div>
-</div>
+### 表单字段
+一律用 `js/ui/form-field.js` 的 `formField()` / `core.js` 的 `field()`：
+```js
+field('name', '名称', 'text', value, { helper: '提示', required: false })
 ```
 
-## 3. 各页面规则
+### 表格
+```js
+tableFrame([tr('时间', 'Time'), '操作者'], rowsHtml, { density: 'compact' })
+```
 
-### index.html (首页)
-- 顶部红色提示条 (保留)
-- Header: logo + 菜单 (保留)
-- Hero: 大背景图 + 标题 + 副标题 + 2 个 CTA
-- Stats: 3 张统计卡 (17/50+/2023.8)
-- 公告区: 标题 + 卡片列表
-- 数据看板: 4-5 张数据卡
-- 实景图集: 网格布局图片卡
-- Footer: 简单版权
+## 4. 页面与模块结构
 
-### admin-new.html (管理后台)
-- 顶部 Header (admin-logo + 返回首页)
-- 用户条 (用户信息 + 退出)
-- Tab 切换 (11 个 tab)
-- 每个 tab: pane-head + 内容
-- 公告/私信/图集 pane: 加 pane-hint
-- Modal: 用统一 modal 组件
+- `js/ui/*` 是共享组件的**事实来源**，页面适配器不得重复实现。
+- `js/app/pages/<page>/index.js` 是每个页面的渲染入口。
+- `js/app/*.js` 中除 `entry.js`、`core.js` 等核心文件外，其余均为 v79 的**兼容转发层**，
+  每个符号直接 `export … from` 真实模块；**新代码不得再经过转发层**，直接
+  `import from '../<workspace>/<module>.js'`。
+- 路由统一写在 `js/app/entry.js` 的 `pages` 表里，全部直连 `pages/` 或 `admin/`。
+- `js/app/entry.js` 顶部必须先 `installErrorBoundary()`，再执行任何业务逻辑。
 
-### hotel.html (酒店预订)
-- Header
-- 酒店卡片列表
-- 房型选择 + 预订表单
-- 我的预订
+## 5. 页面清单（12 个 HTML + 1 个跳转壳）
 
-### profile.html (玩家主页)
-- 头像 + 用户名
-- 驾照等级 + 考试进度
-- 我的赛道成绩
-- 修改密码入口
+`index` / `hotel` / `hotel-owner` / `profile` / `affairs` / `knowledge` / `map` /
+`messages` / `dm` / `notifications` / `404` / `admin-v37`
 
-### dm.html (私信)
-- 对话列表
-- 消息流
-- 输入框
+`admin.html` 只是跳转到 `admin-v37.html` 的 meta-refresh 壳，不引用样式或脚本。
 
-## 4. 不允许的写法
-- 内联 style="background:#xxx" / style="color:#xxx" (用 class)
-- 直接的 <p class="hint"> (用 <p class="pane-hint">)
-- 暗色/cyber 主题 (admin panel 也要米色)
-- 自创的颜色 (只用 CSS 变量)
+每个页面的 HTML 是单行 shell（`data-page` 驱动），主体由 `entry.js` 动态渲染，
+所以改版必须同时看 HTML shell 和 `js/app/pages/*`。
 
-## 5. 验收
-- 所有 button 必须用 .btn + .btn-{primary|ghost|danger}
-- 所有卡片必须有 .card 或 .card-flat
-- 所有弹窗必须用 .modal-mask + .modal 结构
-- 所有空状态必须用 .empty-state 模板
+## 6. 不允许的写法
+
+- 内联 `style="background:…"` / `style="color:…"`；间距改用 `.stack-top*`
+  （唯一例外：地图 `map-pin` 的百分比坐标是运行时计算值，无法写成类）
+- 手拼 `.card` / `.modal` / `.field` / `.responsive-table`，应走 `js/ui/*`
+- 暗色 / cyber 主题
+- 自创颜色（只用 `css/source/foundation.css` 的 CSS 变量）
+- 直接改 `css/style.css` / `css/style.min.css`（生成文件）
+
+## 7. 构建与验收
+
+```bash
+# 编译样式（同时做模块链接 + HTML 资源存在性校验）
+~/.local/node-v20.19.0-darwin-arm64/bin/node --experimental-vm-modules scripts/build.mjs
+
+# 全量测试
+~/.local/node-v20.19.0-darwin-arm64/bin/node --experimental-vm-modules --test tests/*.test.js
+```
+
+注意：macOS Tahoe 上系统 / brew 的 node 会被 SIGKILL，必须用上面这个路径的
+node v20.19.0。
+
+`css/style.min.css` **有意**与 `style.css` 内容相同，只作为旧 URL 的兼容入口
+保留；不要对它做正则压缩（会破坏 `url()` 与 `calc()`）。
+
+改动涉及 `COPY_LOCK.json` 覆盖的文件时，必须同步更新其中的 SHA-256，
+否则 `copy-lock` 测试会以合同破坏为由失败。

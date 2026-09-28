@@ -28,7 +28,8 @@ import {
   date,
   login,
 } from '../../core.js';
-import { roomCards } from '../../hotel.js';
+// v84：直连 hotel 的真实模块，不再绕 v79 兼容转发层 hotel.js。
+import { roomCards } from '../hotel/rooms.js';
 import { signup } from './signup.js';
 import { signin } from './signin.js';
 
@@ -36,7 +37,8 @@ function section(id, zh, en, footer = '') {
   return `<section class="section" id="${id}">${sectionHeading(tr(zh, en))}<div id="${id}-body"></div>${footer}</section>`;
 }
 
-export { signup, signin };
+// v84：signup / signin 不再从本模块再导出；需要它们请直连
+// pages/home/signup.js 与 pages/home/signin.js。
 
 export async function render(el) {
   el.innerHTML = `<section class="city-welcome" id="home"><div class="welcome-copy"><p class="eyebrow">WELCOME TO LIGHT CITY</p><h1>${tr(
@@ -133,7 +135,7 @@ export async function render(el) {
             'Apply'
           )}</button></div></article>`
       )
-      .join('')}</div><div class="panel" style="margin-top:24px"><h3>${tr(
+      .join('')}</div><div class="panel stack-top-lg"><h3>${tr(
       '赛道信息与考试要求',
       'Tracks and exam requirements'
     )}</h3>${d.bundle.tracks

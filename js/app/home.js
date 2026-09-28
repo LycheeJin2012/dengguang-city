@@ -6,8 +6,10 @@
  *   - pages/home/signup.js  报名弹窗（kart / circuit / license）
  *   - pages/home/signin.js  每日签到弹窗
  *
- * 本文件保留为转发层，让 entry.js 的 `import('./home.js')` 路径不变，
- * 外部代码继续 `import { render } from './home.js'` 也能工作。
+ * v84：entry.js 与 pages/profile/ 已改为直连 pages/home/* 真实模块，本文件
+ * 只作为对外兼容层保留，且每个符号直接来自其真实出处。
  */
 
-export { render, signup, signin } from './pages/home/index.js';
+export { render } from './pages/home/index.js';
+export { signup } from './pages/home/signup.js';
+export { signin } from './pages/home/signin.js';

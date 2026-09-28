@@ -18,7 +18,7 @@ export function openDialog(
   const dialog = document.createElement('dialog');
   dialog.id = 'modal';
   dialog.className = wide ? 'modal wide-modal' : 'modal';
-  dialog.innerHTML = `<div class="modal-head"><h2>${esc(title)}</h2><button type="button" class="icon-button" data-close aria-label="${tr('关闭', 'Close')}">✕</button></div><form class="modal-body"><div class="form-grid">${content}</div><p class="form-error" role="alert"></p><div class="actions">${footer}${footer ? '' : ''}<button type="button" data-close>${tr('取消', 'Cancel')}</button>${submit ? `<button class="primary" type="submit">${esc(label)}</button>` : ''}</div></form>`;
+  dialog.innerHTML = `<div class="modal-head"><h2>${esc(title)}</h2><button type="button" class="icon-button" data-close aria-label="${tr('关闭', 'Close')}">✕</button></div><form class="modal-body"><div class="form-grid">${content}</div><p class="form-error" role="alert"></p><div class="actions">${footer}<button type="button" data-close>${tr('取消', 'Cancel')}</button>${submit ? `<button class="primary" type="submit">${esc(label)}</button>` : ''}</div></form>`;
   const previous = document.activeElement;
   document.body.append(dialog);
   const close = () => {

@@ -171,6 +171,17 @@ small, .muted {
 }
 .text-mono { font-family: var(--font-mono); letter-spacing: 0.02em; }
 
+/* Spacing utilities ------------------------------------------------------
+   v84：页面适配器此前只能用内联 style="margin-top:24px" 来给相邻区块加
+   间距，这类写法既无法统一节奏，也让真实 CSS 里混入一次性像素值。
+   这里给出与现有 8px 节奏一致的四个档位，页面改用类名即可。
+   只做 margin-top 的纵向节奏，不引入 flex/grid 工具类，避免工具层
+   悄悄变成第二套布局系统。                                        */
+.stack-top      { margin-top: 16px; }
+.stack-top-lg   { margin-top: 24px; }
+.stack-top-xl   { margin-top: 28px; }
+.stack-top-2xl  { margin-top: 40px; }
+
 /* Skip link */
 .skip {
   position: fixed;

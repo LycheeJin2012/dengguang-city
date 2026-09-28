@@ -208,7 +208,7 @@ export async function render(el) {
     title('市政管理后台', 'City administration') +
     `<div class="section-head"><span>👤 ${esc(state.session.user.username)} <span class="badge">${esc(
       state.session.user.role.toUpperCase()
-    )}</span></span><button id="refresh-stats">↻ ${tr('刷新概览', 'Refresh overview')}</button></div><div id="admin-stats"></div><div class="admin-layout" style="margin-top:28px"><aside class="admin-sidebar"><button type="button" id="admin-nav-toggle" aria-expanded="false" aria-controls="admin-navigation">${tr(
+    )}</span></span><button id="refresh-stats">↻ ${tr('刷新概览', 'Refresh overview')}</button></div><div id="admin-stats"></div><div class="admin-layout stack-top-xl"><aside class="admin-sidebar"><button type="button" id="admin-nav-toggle" aria-expanded="false" aria-controls="admin-navigation">${tr(
       '管理功能',
       'Administration'
     )}</button><nav id="admin-navigation" class="admin-nav" aria-label="${tr(

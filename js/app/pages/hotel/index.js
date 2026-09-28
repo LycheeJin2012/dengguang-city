@@ -14,11 +14,6 @@ import { $, $$, api, region, tr, field, title } from '../../core.js';
 import { roomCards } from './rooms.js';
 import { book } from './booking.js';
 
-// Re-export for pages/home/index.js 的 `import { roomCards } from '../../hotel.js'`。
-export { roomCards };
-// Re-export 保持 hotel.js forwarder 的 `export { render, book, roomCards }` 兼容。
-export { book } from './booking.js';
-
 export async function render(el) {
   el.innerHTML =
     title('树上酒店', 'Treehouse Hotel') +

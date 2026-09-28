@@ -11,7 +11,8 @@
 import { tabsMarkup, bindTabs } from '../../../ui/workspace.js';
 import { renderSurvey } from '../../exam-survey.js';
 import { createTicket, viewCitizenTicket } from '../../ticket-form.js';
-import { signin } from '../../home.js';
+// v84：直连 home 的真实模块，不再绕 v79 兼容转发层 home.js。
+import { signin } from '../home/signin.js';
 import { security as renderSecurityTab } from './security.js';
 import {
   $,
