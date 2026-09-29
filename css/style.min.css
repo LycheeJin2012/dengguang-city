@@ -3,38 +3,54 @@
 /* Design tokens, typography and native controls. */
 :root {
   color-scheme: light;
-  /* Core paper / ink palette */
-  --paper: #fff8dd;
-  --ground: #f1e6bd;
-  --paper-soft: #fffdf2;
-  --paper-warm: #f9e4a5;
-  --ink: #292b20;
-  --ink-soft: #5a5a44;
-  --line: #333323;
-  --line-soft: #777354;
-  --muted: #6c6954;
+
+  /* ---------------------------------------------------------------------
+     v86 色阶重做。
+     旧版 --paper(#fff8dd) 直接铺在 --ground(#f1e6bd) 上，明度差只有 6%，
+     所有卡片和页面糊成一片米黄，全站没有层次可言 —— 这是「不好看」的
+     主要来源，不是配色难看，是**没有层级**。
+     现在把表面拆成明确的四级明度：ground < sunken < paper-2 < paper，
+     每级都保证肉眼可辨的落差，阴影才立得起来。                        */
+  --ground: #c9b273;        /* 页面底：深沙色 */
+  --sunken: #dcc98d;        /* 凹陷面：输入框、槽位、代码块 */
+  --paper-2: #f2e7bb;       /* 次级表面：侧栏、表头、hover 底 */
+  --paper: #fffbe6;         /* 主表面：卡片、面板 */
+  --paper-warm: #f7e9a8;     /* 暖色高亮：按压态、选中态 */
+
+  --ink: #14160e;           /* 近黑，正文 */
+  --ink-soft: #3f3d2a;      /* 次级文字 */
+  --muted: #6a6550;         /* 弱化文字 */
+  --line: #14160e;          /* 所有硬边框 */
+  --line-soft: #7a7256;     /* 虚线、分隔线 */
+
   /* Greens (brand) */
-  --green: #496a20;
-  --green-deep: #355619;
-  --green-soft: #689329;
-  --leaf: #7e9d35;
-  --leaf-soft: #dceac8;
-  --mint: #e0eac3;
-  --mint-warm: #e4e9c8;
+  --green: #4a7a24;
+  --green-deep: #2f5216;
+  --green-soft: #7aa62e;
+  --leaf: #8fb83c;
+  --leaf-soft: #d9e9a8;
+  --mint: #eaf2cf;
+  --mint-warm: #e2e9c0;
+
   /* Accents */
-  --gold: #f1b621;
-  --gold-soft: #ffecac;
-  --gold-deep: #684b00;
-  --red: #a33328;
-  --red-soft: #f5d9ce;
-  --red-deep: #842c23;
-  --focus: #496a20;
-  /* Pixel borders + shadows */
+  --gold: #f5b915;
+  --gold-soft: #ffe38a;
+  --gold-deep: #6b4a00;
+  --red: #b3372a;
+  --red-soft: #f7c9bc;
+  --red-deep: #8a281e;
+  --focus: #2f5216;
+
+  /* Pixel borders + shadows.
+     v86 加深：旧版 3px 边配几乎看不见的偏移阴影，卡片浮不起来。
+     现在阴影是不透明实心块，偏移量和描边同量级，像素游戏 UI 的做法。 */
   --border: 3px solid var(--line);
   --border-thin: 2px solid var(--line);
+  --border-heavy: 4px solid var(--line);
   --shadow: 4px 4px 0 var(--line);
   --shadow-soft: 3px 3px 0 var(--line);
   --shadow-lift: 6px 6px 0 var(--line);
+
   /* Press feedback tokens. Resting depth is set per control (2px / 3px /
      none). On :active every pressable control collapses its shadow to
      --press-active-shadow (1px 1px 0) and inherits --press-active-bg
@@ -44,6 +60,7 @@
   --press-active-shadow: 1px 1px 0 var(--line);
   --press-active-bg: var(--paper-warm);
   --press-indicator: 0 0 0 transparent;
+
   /* Motion · project-suggested ranges (Apple does not prescribe constants):
      --motion-fast  ≈ 100 ms  press / hover
      --motion-base  ≈ 200 ms  state change (focus, tab, menu, toast, link)
@@ -53,10 +70,20 @@
   --motion-fast: 100ms;
   --motion-base: 200ms;
   --motion-slow: 280ms;
-  /* Typography */
-  --font-body: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* Typography.
+     v86：中文像素字体登台。--font-pixel 用于标题、导航、按钮、徽章、
+     表单标签、统计数字等所有「界面构件」；--font-body 保留系统栈，
+     只给长段落正文 —— 12px 像素字排一整屏说明文字会非常吃力，
+     界面要像素、正文要能读，这是两件事。
+     --font-num 用 Press Start 2P，统计数字更有游戏 HUD 的味道。      */
+  --font-pixel: 'Fusion Pixel', 'Press Start 2P', ui-monospace, monospace;
+  --font-num: 'Press Start 2P', 'Fusion Pixel', ui-monospace, monospace;
+  --font-body: 'Fusion Pixel', system-ui, -apple-system, 'PingFang SC',
+    'Microsoft YaHei', sans-serif;
   --font-mono: 'VT323', ui-monospace, 'SFMono-Regular', Menlo, monospace;
-  /* Spacing scale */
+
+  /* Spacing scale — 全部 4 的倍数，8 为主节奏，像素栅格不断裂。 */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -66,6 +93,7 @@
   --space-7: 48px;
   --space-8: 64px;
   --space-9: 96px;
+
   /* Stacking scale — keep this list the single source of truth.
      --z-base       default in-flow
      --z-elevated   sticky page heads, dropdowns
@@ -79,9 +107,10 @@
   --z-floating: 30;
   --z-modal: 40;
   --z-toast: 50;
+
   font-family: var(--font-body);
   font-size: 16px;
-  line-height: 1.65;
+  line-height: 1.7;
   color: var(--ink);
   background: var(--ground);
 }
@@ -115,7 +144,13 @@ body {
 }
 *::-webkit-scrollbar-thumb:hover { background: var(--green); }
 
-/* Typography ------------------------------------------------------------- */
+/* Typography -------------------------------------------------------------
+   v86：像素字体登台。标题、eyebrow 改用 --font-pixel（Fusion Pixel 12px），
+   字号一律取 12 的整数倍（16 / 24 / 32 / 48），像素栅格才不会糊。
+   正文继续用 --font-body 的系统栈 —— 12px 点阵排一整屏说明文字非常
+   吃力，界面要像素、正文要能读，这是两件事。
+   标题加 text-shadow 硬投影，是像素游戏标题字的标准做法：两层同色偏移，
+   廉价但立刻有了「立体字」的辨识度。                                     */
 a {
   color: var(--green);
   text-decoration-thickness: 2px;
@@ -130,43 +165,45 @@ a:hover { color: var(--green-deep); text-decoration-color: var(--green); }
 a:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 
 h1, h2, h3, p { margin: 0 0 1rem; }
-h1, h2, h3 { color: var(--ink); letter-spacing: -0.005em; }
+h1, h2, h3 {
+  font-family: var(--font-pixel);
+  color: var(--ink);
+  letter-spacing: 0.02em;
+  /* 硬投影：一层实心偏移，模拟点阵字的立体边缘 */
+  text-shadow: 2px 2px 0 rgba(20, 22, 14, 0.18);
+}
 h1 {
-  font-size: clamp(1.9rem, 4vw, 3rem);
-  line-height: 1.2;
+  font-size: clamp(2rem, 4.5vw, 3rem);
+  line-height: 1.35;
   color: var(--green);
-  font-weight: 800;
-  letter-spacing: 0.01em;
 }
 h2 {
-  font-size: clamp(1.25rem, 2.2vw, 1.55rem);
-  line-height: 1.3;
-  font-weight: 750;
+  font-size: clamp(1.375rem, 2.4vw, 1.75rem);
+  line-height: 1.45;
   color: var(--green);
 }
 h3 {
-  font-size: 1.1rem;
-  line-height: 1.35;
-  font-weight: 700;
+  font-size: 1.25rem;
+  line-height: 1.5;
   color: var(--ink);
 }
 p { color: var(--ink); }
 small, .muted {
   color: var(--muted);
   font-size: 0.875rem;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 .eyebrow {
-  font-family: var(--font-mono);
-  letter-spacing: 0.14em;
-  color: var(--green);
-  font-size: 0.95rem;
+  font-family: var(--font-pixel);
+  letter-spacing: 0.18em;
+  color: var(--green-deep);
+  font-size: 0.8125rem;
   /* No text-transform: characters render exactly as the source DOM provides.
      .eyebrow hosts dynamic content in hotel.js (the hotel's own name), so
      any case-folding would change user-visible text. The literal source
      already writes uppercase strings ("LIGHT CITY", "WELCOME TO LIGHT CITY",
      "LIGHT CITY / 404", "LIGHT CITY / <PAGE>") for the static labels. */
-  margin: 0 0 0.35rem;
+  margin: 0 0 0.5rem;
   display: inline-block;
 }
 .text-mono { font-family: var(--font-mono); letter-spacing: 0.02em; }
@@ -200,26 +237,28 @@ small, .muted {
 .skip:focus { top: 10px; }
 
 /* Buttons + form controls -----------------------------------------------
-   Apple: immediate response. Pressing must feel instant.
-   We transition only color / box-shadow / border-color. No transform on the
-   press itself; transform would compete with focus rings and a11y tools.    */
+   v86：像素按钮。用 --font-pixel、3px 硬描边、4px 实心偏移阴影，
+   按下时阴影塌成 2px 且整体位移 2px —— 经典的游戏 UI 按压手感：
+   按钮「陷进去」而不是「变个色」。                                       */
 button, input, select, textarea { font: inherit; color: inherit; }
 button, .button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 0.4rem;
+  gap: 0.5rem;
   min-height: 44px;
-  padding: 0.5rem 0.95rem;
-  border: var(--border-thin);
+  padding: 0.625rem 1.125rem;
+  border: var(--border);
   border-radius: 0;
   background: var(--paper);
   color: var(--ink);
   cursor: pointer;
-  font-weight: 650;
+  font-family: var(--font-pixel);
+  font-size: 1rem;
+  line-height: 1.2;
   text-decoration: none;
-  line-height: 1.4;
-  box-shadow: 2px 2px 0 var(--line);
+  letter-spacing: 0.04em;
+  box-shadow: var(--shadow);
   /* Per-component pressed background; the unified :active rule in §7
      applies this token to every pressable control on press.            */
   --press-active-bg: var(--paper-warm);
@@ -230,9 +269,11 @@ button, .button {
   transition:
     background-color var(--motion-base) var(--ease-out),
     color var(--motion-base) var(--ease-out),
-    box-shadow var(--motion-base) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out),
     border-color var(--motion-base) var(--ease-out);
 }
+button:hover, .button:hover { background: var(--paper-2); }
 button:hover, .button:hover {
   background: var(--paper-warm);
   box-shadow: 3px 3px 0 var(--line);
