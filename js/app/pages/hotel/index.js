@@ -10,35 +10,35 @@
  * 因此本文件 re-export 一下保持兼容。
  */
 
-import { $, $$, api, region, tr, field, title } from '../../core.js';
+import {$,$$,api,region,field,title} from '../../core.js'
 import { roomCards } from './rooms.js';
 import { book } from './booking.js';
 
 export async function render(el) {
   el.innerHTML =
-    title('树上酒店', 'Treehouse Hotel') +
+    title('树上酒店') +
     `<div class="service-layout"><aside class="service-filters"><div class="toolbar">${field(
       'availability',
-      tr('状态', 'Status'),
+      '房态',
       'select',
       'all',
       {
         options: [
-          ['all', tr('全部', 'All')],
-          ['open', tr('可预订', 'Available')],
-          ['draft', tr('筹建中', 'Coming soon')],
+          ['all', '全部'],
+          ['open', '可预订'],
+          ['draft', '筹建中'],
         ],
       }
-    )}${field('guests', tr('至少容纳', 'Minimum capacity'), 'number', 1, { min: 1, max: 6 })}${field(
+    )}${field('guests', '住得下几口', 'number', 1, { min: 1, max: 6 })}${field(
       'sort',
-      tr('排序', 'Sort'),
+      '排序',
       'select',
       'default',
       {
         options: [
-          ['default', tr('默认', 'Default')],
-          ['asc', tr('价格从低到高', 'Price: low to high')],
-          ['desc', tr('价格从高到低', 'Price: high to low')],
+          ['default', '默认'],
+          ['asc', '价低在前'],
+          ['desc', '价高在前'],
         ],
       }
     )}</div></aside><section id="rooms" class="service-results"></section></div>`;

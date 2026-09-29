@@ -4,23 +4,20 @@
  * v79 拆分自原 home.js 的 signin() 函数。
  */
 
-import { api, post, modal, requirePlayer, session, renderAccount, toast, tr } from '../../core.js';
+import {api,post,modal,requirePlayer,session,renderAccount,toast} from '../../core.js'
 
 export async function signin() {
   await requirePlayer();
   const d = await api('/api/init?action=signin-status');
   modal(
-    tr('每日签到', 'Daily check-in'),
-    `<div class="wide"><p>${tr('连续签到', 'Streak')} <b>${d.current_streak}</b> ${tr('天', 'days')} · 💎 ${d.emeralds}</p><p>${tr(
-      '每周签到奖励从 1 到 7 绿宝石递增。',
-      'Earn 1 to 7 emeralds per day in a weekly cycle.'
-    )}</p>${
+    '每日签到',
+    `<div class="wide"><p>${'连着签到'} <b>${d.current_streak}</b> ${'天'} · 💎 ${d.emeralds}</p><p>${'一周七天，绿宝石一天比一天多。'}</p>${
       d.signed_today
-        ? `<p class="notice">${tr('今天已经签到，明天再来', 'Already checked in today')}</p>`
+        ? `<p class="notice">${'今天已经签过，明天再来'}</p>`
         : ''
     }</div>`,
     {
-      label: tr('签到', 'Check in'),
+      label: '签到',
       submit: d.signed_today
         ? null
         : async () => {

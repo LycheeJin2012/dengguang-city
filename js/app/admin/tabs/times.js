@@ -5,7 +5,7 @@
  */
 
 import { adminContext } from '../state.js';
-import { $, api, patch, region, tr, date } from '../../core.js';
+import {$,api,patch,region,date} from '../../core.js'
 import { table, toolbar, bindList, attachExport } from '../shared.js';
 import { render as renderSelf } from './times.js';
 
@@ -17,16 +17,16 @@ export async function render(loadActive) {
     table(
       box,
       [
-        ['player_username', tr('市民', 'Citizen')],
-        ['track_name', tr('赛道', 'Track')],
-        ['time_ms', tr('毫秒', 'Milliseconds')],
-        ['verified', tr('已认证', 'Verified'), (v) => (v ? '✓' : '—')],
+        ['player_username', '市民'],
+        ['track_name', '赛道'],
+        ['time_ms', '毫秒'],
+        ['verified', '已认证', (v) => (v ? '✓' : '—')],
       ],
       d.times,
       [
         {
           key: 'verify',
-          label: tr('切换认证', 'Toggle verification'),
+          label: '改认证方式',
           run: async (r) => {
             await patch(`/api/race-times?id=${r.id}&action=${r.verified ? 'unverify' : 'verify'}`);
             await renderSelf(loadActive);

@@ -11,14 +11,14 @@ export function openDialog(
   content,
   { submit, label, wide = false, footer = '' } = {}
 ) {
-  const { $, $$, esc, tr } = deps;
-  label = label || tr('保存', 'Save');
+  const { $, $$, esc } = deps;
+  label = label || '存下';
   $('#modal')?.close();
   $('#modal')?.remove();
   const dialog = document.createElement('dialog');
   dialog.id = 'modal';
   dialog.className = wide ? 'modal wide-modal' : 'modal';
-  dialog.innerHTML = `<div class="modal-head"><h2>${esc(title)}</h2><button type="button" class="icon-button" data-close aria-label="${tr('关闭', 'Close')}">✕</button></div><form class="modal-body"><div class="form-grid">${content}</div><p class="form-error" role="alert"></p><div class="actions">${footer}<button type="button" data-close>${tr('取消', 'Cancel')}</button>${submit ? `<button class="primary" type="submit">${esc(label)}</button>` : ''}</div></form>`;
+  dialog.innerHTML = `<div class="modal-head"><h2>${esc(title)}</h2><button type="button" class="icon-button" data-close aria-label="${'关闭'}">✕</button></div><form class="modal-body"><div class="form-grid">${content}</div><p class="form-error" role="alert"></p><div class="actions">${footer}<button type="button" data-close>${'取消'}</button>${submit ? `<button class="primary" type="submit">${esc(label)}</button>` : ''}</div></form>`;
   const previous = document.activeElement;
   document.body.append(dialog);
   const close = () => {
@@ -56,7 +56,7 @@ export function openDialog(
       btn.disabled = true;
       dialog.dataset.saving = 'true';
       $$('[data-close]', dialog).forEach((b) => (b.disabled = true));
-      btn.textContent = tr('保存中…', 'Saving…');
+      btn.textContent = '保存中…';
       $('.form-error', dialog).textContent = '';
       try {
         await submit(data, dialog);

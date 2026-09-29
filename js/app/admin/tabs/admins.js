@@ -6,18 +6,7 @@
 
 import { viewAudit } from '../../audit-ui.js';
 import { adminContext } from '../state.js';
-import {
-  $,
-  api,
-  post,
-  patch,
-  del,
-  modal,
-  region,
-  field,
-  tr,
-  state,
-} from '../../core.js';
+import {$,api,post,patch,del,modal,region,field,state} from '../../core.js'
 import { table, toolbar, bindList, attachExport } from '../shared.js';
 
 export async function render(loadActive) {
@@ -26,21 +15,21 @@ export async function render(loadActive) {
 
   function edit(r = {}) {
     modal(
-      tr(r.id ? '编辑管理员' : '新增管理员', r.id ? 'Edit administrator' : 'New administrator'),
-      field('username', tr('账号', 'Username'), 'text', r.username || '') +
+      r.id ? '改管理员' : '新添管理员',
+      field('username', '账号', 'text', r.username || '') +
         field(
           r.id ? 'new_password' : 'password',
-          tr(r.id ? '新密码（留空不改）' : '密码', r.id ? 'New password (optional)' : 'Password'),
+          r.id ? '新密码（留空不动旧的）' : '密码',
           'password',
           '',
           { required: !r.id }
         ) +
-        field('role', tr('角色', 'Role'), 'select', r.role || 'admin', {
+        field('role', '权限', 'select', r.role || 'admin', {
           options: ['admin', 'super'],
         }) +
         field(
           'specialties',
-          tr('职责与擅长事项', 'Responsibilities / specialties'),
+          '分管什么、擅长什么',
           'text',
           r.specialties || '',
           { required: false, maxlength: 300 }
@@ -64,23 +53,23 @@ export async function render(loadActive) {
         box,
         [
           ['id', 'ID'],
-          ['username', tr('账号', 'Username')],
-          ['role', tr('角色', 'Role')],
-          ['linked_player_username', tr('绑定市民', 'Linked citizen')],
+          ['username', '账号'],
+          ['role', '权限'],
+          ['linked_player_username', '绑市民'],
         ],
         d.admins,
         [
-          { key: 'audit', label: tr('操作记录', 'History'), run: (r) => viewAudit('admins', r.id) },
-          { key: 'edit', label: tr('编辑', 'Edit'), run: edit },
+          { key: 'audit', label: '经手记录', run: (r) => viewAudit('admins', r.id) },
+          { key: 'edit', label: '改一改', run: edit },
           {
             key: 'link',
-            label: tr('绑定/解绑', 'Link / unlink'),
+            label: '绑定或解绑',
             run: (r) =>
               modal(
-                tr('关联市民账号', 'Link citizen account'),
+                '绑定的市民账号',
                 field(
                   'player_id',
-                  tr('市民 ID（留空解绑）', 'Citizen ID (empty to unlink)'),
+                  '市民 ID（留空即解绑）',
                   'number',
                   r.linked_player_id || '',
                   { required: false, min: 1 }
@@ -101,11 +90,11 @@ export async function render(loadActive) {
           },
           {
             key: 'delete',
-            label: tr('删除', 'Delete'),
+            label: '移除',
             danger: true,
             when: (r) => r.id !== state.session.user.id,
             run: async (r) => {
-              if (confirm(tr('确定删除此管理员？', 'Delete this administrator?'))) {
+              if (confirm('这位管理员真要删掉？删了就找不回来了。')) {
                 await del('/api/admin/admins?id=' + r.id);
                 await load();
               }

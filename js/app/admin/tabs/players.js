@@ -10,21 +10,21 @@
 
 import { viewAudit } from '../../audit-ui.js';
 import { adminContext } from '../state.js';
-import { $, api, post, patch, modal, region, field, tr, status } from '../../core.js';
+import {$,api,post,patch,modal,region,field,status} from '../../core.js'
 import { table, toolbar, bindList, params, attachExport, isSuper } from '../shared.js';
 
 export async function render(loadActive) {
   const view = adminContext.root.querySelector('#admin-view');
   toolbar(
     {
-      options: ['pending', 'active', 'rejected'],
+      options: ['pending','active'],
       create: isSuper()
         ? () =>
             modal(
-              tr('创建市民账号', 'Create citizen'),
-              field('username', tr('游戏 ID', 'Game ID')) +
-                field('email', tr('邮箱', 'Email'), 'email') +
-                field('password', tr('初始密码', 'Initial password'), 'password'),
+              '建个市民账号',
+              field('username', '游戏 ID') +
+                field('email', '邮箱', 'email') +
+                field('password', '起步密码', 'password'),
               {
                 submit: async (d) => {
                   await post('/api/init?action=admin-player-create', d);
@@ -43,22 +43,22 @@ export async function render(loadActive) {
         box,
         [
           ['id', 'ID'],
-          ['username', tr('游戏 ID', 'Game ID')],
-          ['email', tr('邮箱', 'Email')],
+          ['username', '游戏 ID'],
+          ['email', '邮箱'],
           ['emeralds', '💎'],
-          ['status', tr('状态', 'Status'), status],
+          ['status', '状态', status],
         ],
         d.players,
         [
           {
             key: 'audit',
-            label: tr('操作记录', 'History'),
+            label: '经手记录',
             when: isSuper,
             run: (r) => viewAudit('players', r.id),
           },
           {
             key: 'approve',
-            label: tr('批准', 'Approve'),
+            label: '批了',
             when: (r) => r.status !== 'active',
             run: async (r) => {
               await patch('/api/admin/players?id=' + r.id + '&action=approve');
@@ -67,33 +67,33 @@ export async function render(loadActive) {
           },
           {
             key: 'reject',
-            label: tr('停用', 'Disable'),
+            label: '停用',
             when: (r) => r.status !== 'rejected',
             run: async (r) => {
-              if (!confirm(tr('停用此市民账号？', 'Disable this account?'))) return;
+              if (!confirm('停用之后这位市民就登不进来了，真要停？')) return;
               await patch('/api/admin/players?id=' + r.id + '&action=reject');
               await load();
             },
           },
           {
             key: 'reset',
-            label: tr('重置密码', 'Reset password'),
+            label: '重置密码',
             when: isSuper,
             run: async (r) =>
               modal(
-                tr('重置密码', 'Reset password'),
-                field('new_password', tr('新密码', 'New password'), 'password'),
+                '重置密码',
+                field('new_password', '新密码', 'password'),
                 { submit: (d) => patch('/api/admin/players?id=' + r.id + '&action=reset', d) }
               ),
           },
           {
             key: 'rename',
-            label: tr('改名', 'Rename'),
+            label: '改名',
             when: isSuper,
             run: async (r) =>
               modal(
-                tr('修改游戏 ID', 'Rename'),
-                field('new_username', tr('游戏 ID', 'Game ID'), 'text', r.username),
+                '改游戏 ID',
+                field('new_username', '游戏 ID', 'text', r.username),
                 {
                   submit: async (d) => {
                     await patch('/api/admin/players?id=' + r.id + '&action=rename', d);

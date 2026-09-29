@@ -24,23 +24,7 @@ import { renderAudit } from '../audit-ui.js';
 import { navigationFor, resolveNavigation } from '../admin-navigation.js';
 import { passkeyLogin } from '../security.js';
 import { adminContext } from './state.js';
-import {
-  $,
-  $$,
-  api,
-  post,
-  esc,
-  tr,
-  title,
-  field,
-  modal,
-  region,
-  action,
-  state,
-  login,
-  session,
-  renderAccount,
-} from '../core.js';
+import {$,$$,api,post,esc,title,field,modal,region,action,state,login,session,renderAccount} from '../core.js'
 import {
   refreshStats,
   resourceList,
@@ -98,7 +82,7 @@ export function switchTab(key) {
   adminContext.active = selected.child;
   const menu = $('#admin-nav-toggle', adminContext.root);
   if (menu) {
-    menu.textContent = tr(...selected.group.label);
+    menu.textContent = selected.group.label;
     menu.setAttribute('aria-expanded', 'false');
     $('.admin-sidebar', adminContext.root).classList.remove('menu-open');
   }
@@ -112,9 +96,9 @@ export function switchTab(key) {
   if (selected.group.children.length > 1) {
     const tabs = document.createElement('div');
     tabs.innerHTML = tabsMarkup(
-      selected.group.children.map((key) => ({ key, label: tr(...names[key]) })),
+      selected.group.children.map((key) => ({ key, label: names[key] })),
       adminContext.active,
-      { id: 'admin-tabs', label: tr(...selected.group.label), panelId: 'admin-view' }
+      { id: 'admin-tabs', label: selected.group.label, panelId: 'admin-view' }
     );
     bindTabs(tabs, switchTab);
     section.append(tabs);
@@ -151,27 +135,19 @@ export async function render(el) {
     const player = state.session?.player;
     const linked = !!player?.linked_admin_id;
     el.innerHTML =
-      title('市政管理后台', 'City administration') +
-      `<div class="panel"><h2>${tr('通过绑定玩家账号辅助登录', 'Sign in with your linked citizen account')}</h2><p>${
+      title('市政后台') +
+      `<div class="panel"><h2>借玩家账号进后台</h2><p>${
         player
           ? esc(player.username) +
             ' · ' +
-            tr(
-              linked
-                ? '已绑定管理员，可选择密码或通行密钥验证。'
-                : '此玩家尚未绑定管理员账号，请切换到已绑定账号。',
-              linked
-                ? 'Linked administrator: verify with a password or passkey.'
-                : 'This citizen has no linked administrator. Switch to a linked account.'
-            )
-          : tr(
-              '先登录已绑定管理员的玩家账号，再验证管理员身份。',
-              'Sign in to a linked citizen account, then verify administrator access.'
-            )
+            linked
+                ? '这位市民已经绑了管理员身份，用密码或通行密钥都能进。'
+                : '这位市民还没绑管理员，换一个绑过的账号再来。'
+          : '先登一个绑定了管理员的市民账号，再验管理员身份。'
       }</p><div class="actions">${
         linked
-          ? `<button id="admin-enter" class="primary">${tr('使用管理员密码', 'Use admin password')}</button><button id="admin-passkey">${tr('使用通行密钥', 'Use passkey')}</button>`
-          : `<button id="admin-player-login" class="primary">${tr('登录绑定玩家账号', 'Sign in to linked citizen')}</button>`
+          ? `<button id="admin-enter" class="primary">用管理密码进</button><button id="admin-passkey">用通行密钥进</button>`
+          : `<button id="admin-player-login" class="primary">登录绑定的市民账号</button>`
       }</div></div>`;
     $('#admin-player-login', el)?.addEventListener('click', async () => {
       await login(false, 'player', { hideRegistration: true });
@@ -189,10 +165,10 @@ export async function render(el) {
     );
     $('#admin-enter', el)?.addEventListener('click', () =>
       modal(
-        tr('管理密码验证', 'Verify admin password'),
-        field('admin_password', tr('管理密码', 'Admin password'), 'password'),
+        '对一下管理密码',
+        field('admin_password', '管理密码', 'password'),
         {
-          label: tr('验证并进入', 'Verify and enter'),
+          label: '进去',
           submit: async (d) => {
             await post('/api/init?action=admin-enter-password', d);
             await session();
@@ -205,19 +181,13 @@ export async function render(el) {
     return;
   }
   el.innerHTML =
-    title('市政管理后台', 'City administration') +
+    title('市政后台') +
     `<div class="section-head"><span>👤 ${esc(state.session.user.username)} <span class="badge">${esc(
       state.session.user.role.toUpperCase()
-    )}</span></span><button id="refresh-stats">↻ ${tr('刷新概览', 'Refresh overview')}</button></div><div id="admin-stats"></div><div class="admin-layout stack-top-xl"><aside class="admin-sidebar"><button type="button" id="admin-nav-toggle" aria-expanded="false" aria-controls="admin-navigation">${tr(
-      '管理功能',
-      'Administration'
-    )}</button><nav id="admin-navigation" class="admin-nav" aria-label="${tr(
-      '管理功能',
-      'Administration'
-    )}">${navigationFor(isSuper())
+    )}</span></span><button id="refresh-stats">↻ 再看一眼</button></div><div id="admin-stats"></div><div class="admin-layout stack-top-xl"><aside class="admin-sidebar"><button type="button" id="admin-nav-toggle" aria-expanded="false" aria-controls="admin-navigation">功能清单</button><nav id="admin-navigation" class="admin-nav" aria-label="功能清单">${navigationFor(isSuper())
       .map(
         (group) =>
-          `<button data-group="${group.id}" aria-selected="false">${tr(...group.label)}</button>`
+          `<button data-group="${group.id}" aria-selected="false">${group.label}</button>`
       )
       .join('')}</nav></aside><section id="admin-section" class="admin-content"><section id="admin-view"></section></section></div>`;
   adminContext.view = $('#admin-view', el);

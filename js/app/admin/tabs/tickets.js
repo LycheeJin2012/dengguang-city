@@ -20,25 +20,7 @@ import { attachTicketInsights } from '../../ticket-insights.js';
 import { attachAiEditor } from '../../ai-editor.js';
 import { renderDispatchPolicy } from '../../dispatch-policy.js';
 import { attachmentPicker, renderAttachments } from '../../attachments.js';
-import {
-  $,
-  $$,
-  api,
-  post,
-  patch,
-  esc,
-  text,
-  ticketBody,
-  date,
-  tr,
-  status,
-  modal,
-  region,
-  action,
-  toast,
-  field,
-  state,
-} from '../../core.js';
+import {$,$$,api,post,patch,esc,text,ticketBody,date,status,modal,region,action,toast,field,state} from '../../core.js'
 import {
   table,
   toolbar,
@@ -61,25 +43,25 @@ export async function render(loadActive) {
       extra:
         field(
           'assignment',
-          tr('派单状态', 'Assignment'),
+          '派单状态',
           'select',
           dispatching ? 'unassigned' : '',
           {
             required: false,
             options: [
-              ['', tr('全部', 'All')],
-              ['unassigned', tr('未派单', 'Unassigned')],
-              ['mine', tr('派给我', 'Assigned to me')],
+              ['', '全部'],
+              ['unassigned', '还没派'],
+              ['mine', '派给我'],
             ],
           }
         ) +
-        field('category', tr('分类', 'Category'), 'select', '', {
+        field('category', '分类', 'select', '', {
           required: false,
           options: [
-            ['', tr('全部分类', 'All categories')],
+            ['', '所有分类'],
             ['message', '留言'],
             ['support', '人工客服'],
-            ['hotel', '酒店'],
+            ['hotel', '客栈'],
             ['license', '驾照'],
             ['race', '赛车'],
             ['kart', '卡丁车'],
@@ -111,83 +93,83 @@ export async function render(loadActive) {
         box,
         [
           ['id', 'ID'],
-          ['title', tr('标题', 'Title')],
-          ['player_username', tr('市民', 'Citizen')],
+          ['title', '标题'],
+          ['player_username', '市民'],
           [
             'category',
-            tr('分类', 'Category'),
+            '分类',
             (category) =>
               esc(
                 (
                   {
-                    support: tr('人工客服', 'Human support'),
-                    message: tr('留言', 'Message'),
-                    hotel: tr('酒店', 'Hotel'),
-                    license: tr('驾照', 'License'),
-                    race: tr('赛车', 'Race'),
-                    kart: tr('卡丁车', 'Kart'),
-                    service: tr('服务', 'Service'),
-                    comment: tr('评论', 'Comment'),
+                    support: '人工客服',
+                    message: '留言',
+                    hotel: '客栈',
+                    license: '驾照',
+                    race: '赛车',
+                    kart: '卡丁车',
+                    service: '服务',
+                    comment: '评论',
                   }
                 )[category] || category
               ),
           ],
-          ['status', tr('状态', 'Status'), status],
+          ['status', '状态', status],
           [
             'priority',
-            tr('内部优先级', 'Internal priority'),
+            '内部优先级',
             (v) => esc(({ low: '低', normal: '普通', high: '高', urgent: '紧急' })[v] || v),
           ],
           [
             'triage_urgency',
-            tr('紧急程度', 'Urgency'),
+            '急不急',
             (v) =>
               esc(
-                ({ routine: '常规', time_sensitive: '需尽快处理', emergency: '紧急风险' })[v] ||
+                ({ routine: '常规', time_sensitive: '得赶紧办', emergency: '紧急' })[v] ||
                   '—'
               ),
           ],
           [
             'attachment_count',
-            tr('附件', 'Attachments'),
+            '附件',
             (n) => (n ? '📎 ' + Number(n) : '—'),
           ],
           [
             'assignee_id',
-            tr('承办人', 'Assignee'),
-            (id) => esc(id ? adminNames.get(id) || '#' + id : tr('未派单', 'Unassigned')),
+            '承办人',
+            (id) => esc(id ? adminNames.get(id) || '#' + id : '还没派'),
           ],
         ],
         d.tickets,
         [
           {
             key: 'assign',
-            label: tr('派单', 'Assign'),
+            label: '派单',
             when: canHandleTicket,
             run: async (ticket) => {
               const data = await api('/api/admin/admins');
               modal(
-                tr('派单 · ', 'Assign · ') + ticket.title,
+                '派单 → ' + ticket.title,
                 field(
                   'assignee_id',
-                  tr('承办管理员', 'Assign to'),
+                  '承办人',
                   'select',
                   ticket.assignee_id || '',
                   {
                     required: false,
                     options: [
-                      ['', tr('取消派单', 'Unassign')],
+                      ['', '撤销派单'],
                       ...data.admins.map((a) => [a.id, a.username]),
                     ],
                   }
                 ),
                 {
-                  label: tr('确认派单', 'Confirm assignment'),
+                  label: '就这么派',
                   submit: async (values) => {
                     await patch('/api/tickets?id=' + encodeURIComponent(ticket.id), {
                       assignee_id: values.assignee_id ? Number(values.assignee_id) : null,
                     });
-                    toast(tr('派单已保存', 'Assignment saved'));
+                    toast('派单记下了');
                     await load();
                   },
                 }
@@ -196,7 +178,7 @@ export async function render(loadActive) {
           },
           {
             key: 'ai',
-            label: tr('自动补派', 'Auto assign'),
+            label: '自动补派',
             when: (t) => canHandleTicket(t) && !t.assignee_id && !t.dispatch_hold,
             run: async (ticket) => {
               const result = await post(
@@ -205,7 +187,7 @@ export async function render(loadActive) {
               );
               toast(
                 result.status === 'assigned'
-                  ? tr('已自动派给 ', 'Assigned to ') + result.admin.username
+                  ? '已经自动派给 ' + result.admin.username
                   : result.reason
               );
               await load();
@@ -213,14 +195,14 @@ export async function render(loadActive) {
           },
           {
             key: 'detail',
-            label: tr('处理工单', 'Review ticket'),
+            label: '办这张单子',
             run: async (r) => {
               const data = await api('/api/tickets?id=' + r.id);
               const t = data.ticket;
               const admins = await api('/api/admin/admins');
               let ticketUploads;
               const dialog = modal(
-                tr('工单 #', 'Ticket #') + r.id,
+                '单子 #' + r.id,
                 ticketBodyHtml(t) +
                   ticketReplyForm(t, admins) +
                   ticketPublicSettings(t),
@@ -248,27 +230,21 @@ function ticketUploadsRef() {
 }
 
 function ticketBodyHtml(t) {
-  return `<div class="wide notice"><b>${esc(t.title)}</b><p>${tr('公开授权', 'Public consent')}：${tr(
-    t.public_consent ? '已同意' : '未同意',
-    t.public_consent ? 'Granted' : 'Not granted'
-  )}</p>${
+  return `<div class="wide notice"><b>${esc(t.title)}</b><p>${'公开授权'}：${t.public_consent ? '已同意' : '未同意'}</p>${
     t.target_admin_id
-      ? `<p>${tr('被投诉管理员', 'Reported administrator')} #${t.target_admin_id}</p>`
+      ? `<p>${'被投诉的管理员'} #${t.target_admin_id}</p>`
       : ''
   }${
     t.target_player_name
-      ? `<p>${tr('被举报玩家', 'Reported player')}：${esc(t.target_player_name)} ${
-          t.target_player_id ? '#' + t.target_player_id : tr('（自填）', '(entered)')
+      ? `<p>${'被举报的市民'}：${esc(t.target_player_name)} ${
+          t.target_player_id ? '#' + t.target_player_id : '（自己填）'
         }</p>`
       : ''
   }<div>${ticketBody(t.body)}</div>${
     t.replied_by ? `<p><b>${esc(replyAuthor(t))}</b> · ${date(t.replied_at)}</p>` : ''
   }${
     t.auto_reply
-      ? `<div class="notice"><b>${tr(
-          '灯灯 · 自动基础回复',
-          'DengDeng · Automatic first reply'
-        )}</b><p>${text(t.auto_reply)}</p></div>`
+      ? `<div class="notice"><b>${'灯灯 · 自动基础回复'}</b><p>${text(t.auto_reply)}</p></div>`
       : ''
   }${
     t.triage
@@ -280,10 +256,7 @@ function ticketBodyHtml(t) {
       : ''
   }${renderAttachments(t.attachments)}${
     t.reward
-      ? `<p class="notice">${tr('承办奖励', 'Handler reward')}：${t.reward.amount} 💎 · ${tr(
-          t.reward.paid ? '已发放' : '待绑定玩家后发放',
-          t.reward.paid ? 'Paid' : 'Pending linked citizen'
-        )} · ${tr('承办管理员', 'Assignee')} #${t.reward.admin_id}</p>`
+      ? `<p class="notice">${'承办奖励'}：${t.reward.amount} 💎 · ${t.reward.paid ? '已发放' : '等绑市民账号再发'} · ${'承办人'} #${t.reward.admin_id}</p>`
       : ''
   }${ticketTimeline(t.history)}</div>`;
 }
@@ -292,11 +265,11 @@ function triageBlock(trg) {
   return `<aside class="notice" id="internal-triage"><b>内部评估（仅管理端）</b><p>优先级：${esc(
     ({ low: '低', normal: '普通', high: '高', urgent: '紧急' })[trg.priority]
   )} · 紧急程度：${esc(
-    ({ routine: '常规', time_sensitive: '需尽快处理', emergency: '紧急风险' })[trg.urgency]
+    ({ routine: '常规', time_sensitive: '得赶紧办', emergency: '紧急' })[trg.urgency]
   )} · 复杂度：${trg.complexity === 'complex' ? '复杂' : '一般'}</p><p>${text(
     trg.reason
   )}</p><small>${
-    trg.source === 'ai' ? 'AI 判断' : trg.source === 'manual' ? '人工调整' : '规则判断'
+    trg.source === 'ai' ? 'AI 判的' : trg.source === 'manual' ? '人工调过' : '规则判的'
   } · ${date(trg.updated_at)}</small></aside>`;
 }
 
@@ -304,10 +277,10 @@ function feedbackBlock(t) {
   return `<aside class="notice"><b>回复反馈（内部监督）</b>${t.feedback
     .map(
       (f) =>
-        `<p><b>${f.helpful ? '有用' : '未解决'}</b> · 回复记录 #${esc(f.target_id)} · ${date(
+        `<p><b>${f.helpful ? '有用' : '还没解决'}</b> · 回复记录 #${esc(f.target_id)} · ${date(
           f.updated_at
         )}<br>${esc(
-          t.history?.find((e) => e.id === Number(f.target_id))?.actor_name || '客服回复'
+          t.history?.find((e) => e.id === Number(f.target_id))?.actor_name || '客服回的'
         )} · ${esc(f.reason)} · ${text(f.comment)}</p>`
     )
     .join('')}</aside>`;
@@ -315,52 +288,46 @@ function feedbackBlock(t) {
 
 function ticketReplyForm(t, admins) {
   return (
-    field('status', tr('状态', 'Status'), 'select', t.status, {
+    field('status', '状态', 'select', t.status, {
       options: ['open', 'in_progress', 'resolved', 'closed'],
     }) +
-    field('priority', tr('优先级', 'Priority'), 'select', t.priority || 'normal', {
+    field('priority', '优先级', 'select', t.priority || 'normal', {
       options: ['low', 'normal', 'high', 'urgent'],
     }) +
-    field('assignee_id', tr('指派管理员', 'Assign to'), 'select', t.assignee_id || '', {
+    field('assignee_id', '派给谁', 'select', t.assignee_id || '', {
       required: false,
       options: [
-        ['', tr('未指派', 'Unassigned')],
+        ['', '没人接'],
         ...admins.admins.map((a) => [a.id, a.username]),
       ],
     }) +
-    field('admin_reply', tr('回复内容', 'Reply'), 'textarea', t.admin_reply || '', {
+    field('admin_reply', '回什么', 'textarea', t.admin_reply || '', {
       required: false,
     })
   );
 }
 
 function ticketPublicSettings(t) {
-  return `<details class="wide"><summary>${tr(
-    '公开处理设置',
-    'Public processing settings'
-  )}</summary><p class="muted">${tr(
-    '只有提交者同意后才可公开。请先删除联系方式、无关个人信息等敏感内容；附件始终不公开。',
-    'Consent is required. Remove contact details and unrelated personal information; attachments remain private.'
-  )}</p>${field(
+  return `<details class="wide"><summary>${'要不要公开'}</summary><p class="muted">${'得提交的人点了头才能公开。公开前先抹掉联系方式之类的个人信息——附件无论如何都不公开。'}</p>${field(
     'public_visible',
-    tr('发布到公开处理列表', 'Publish to public feed'),
+    '放到公开列表里',
     'checkbox',
     t.public_visible
   )}${field(
     'public_title',
-    tr('公开标题', 'Public title'),
+    '公开标题',
     'text',
     t.public_title || t.title,
     { required: false, maxlength: 120 }
   )}${field(
     'public_body',
-    tr('公开文字', 'Public text'),
+    '对外说明',
     'textarea',
     t.public_body || t.body,
     { required: false }
   )}${field(
     'public_reply',
-    tr('公开答复', 'Public reply'),
+    '对外答复',
     'textarea',
     t.public_reply || t.admin_reply || '',
     { required: false }
@@ -379,17 +346,14 @@ function ticketSubmitConfig(r, t, load, ticketUploadsRef) {
         await load();
         if (saved.reward?.amount)
           toast(
-            tr('办结成功，10 绿宝石已发放至 ', 'Completed. 10 emeralds credited to ') +
+            '办结了，10 绿宝石已经打给 ' +
               saved.reward.player_name
           );
         else if (saved.reward?.pending)
           toast(
-            tr(
-              '已办结，奖励将在承办人绑定玩家账号后发放',
-              'Completed; reward is pending a linked citizen account'
-            )
+            '办结了。奖励等承办人绑上市民账号就发'
           );
-        else toast(tr('已保存', 'Saved'));
+        else toast('存好了');
       }
     : null;
   return { wide: true, submit };
@@ -406,7 +370,7 @@ function wireDialogFeatures(dialog, t, r, ticketUploadsRef, refreshStatsFn) {
     const finish = document.createElement('button');
     finish.type = 'button';
     finish.className = 'primary';
-    finish.textContent = tr('办结工单 · 奖励 10 💎', 'Complete ticket · 10 💎');
+    finish.textContent = '办结这张单 · 10 💎';
     $('.modal-body > .actions', dialog).prepend(finish);
     finish.onclick = () => {
       $('[name=status]', dialog).value = 'resolved';
@@ -424,10 +388,7 @@ function wireDialogFeatures(dialog, t, r, ticketUploadsRef, refreshStatsFn) {
     $$('input,select,textarea', dialog).forEach((input) => (input.disabled = true));
     $('.modal-body', dialog).insertAdjacentHTML(
       'afterbegin',
-      `<p class="notice">${tr(
-        '该工单涉及你本人，请由其他超管处理。',
-        'This complaint involves you; another super administrator must handle it.'
-      )}</p>`
+      `<p class="notice">${'这张单子牵涉到你自己，换位超管来看吧。'}</p>`
     );
     return;
   }
@@ -440,20 +401,20 @@ function wireDialogFeatures(dialog, t, r, ticketUploadsRef, refreshStatsFn) {
       action(e.currentTarget, async () => {
         const d = await post('/api/admin/ticket-triage', { ticket_id: t.id });
         if (d.triage?.manual)
-          throw new Error('期间已有其他管理员调整分级，已保留人工设置，请刷新查看');
+          throw new Error('这期间别的管理员动过分级，你的人工设置没被覆盖，刷新看看');
         if (d.triage) {
           $('[name=priority]', dialog).value = d.triage.priority;
           $('#internal-triage', dialog).innerHTML =
-            '<b>内部评估（仅管理端）</b><p>' +
+            '<b>内部评估（管理端可见）</b><p>' +
             esc(d.triage.priority + ' / ' + d.triage.urgency + ' / ' + d.triage.complexity) +
             '</p><p>' +
             text(d.triage.reason) +
             '</p><small>' +
-            esc(d.triage.source === 'ai' ? 'AI 判断' : '规则判断') +
+            esc(d.triage.source === 'ai' ? 'AI 判的' : '规则判的') +
             '</small>';
           resume.remove();
         }
-        toast('已恢复自动分级，回复草稿保留');
+        toast('已恢复自动分级，回复草稿还在');
       });
   }
   attachAiEditor(dialog, { ticketId: t.id, targetName: 'admin_reply' });
@@ -461,7 +422,7 @@ function wireDialogFeatures(dialog, t, r, ticketUploadsRef, refreshStatsFn) {
   if (isSuper()) {
     const history = document.createElement('button');
     history.type = 'button';
-    history.textContent = tr('查看完整操作留痕', 'View complete audit');
+    history.textContent = '看完整留痕';
     $('.modal-body > .actions', dialog).prepend(history);
     history.onclick = () => import('../../audit-ui.js').then(({ viewAudit }) => viewAudit('tickets', t.id));
   }

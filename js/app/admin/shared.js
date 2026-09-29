@@ -22,26 +22,7 @@
 
 import { adminContext } from './state.js';
 import { navigationFor } from '../admin-navigation.js';
-import {
-  $,
-  $$,
-  api,
-  post,
-  patch,
-  del,
-  tr,
-  esc,
-  date,
-  status,
-  empty,
-  field,
-  modal,
-  region,
-  action,
-  toast,
-  state,
-  csv,
-} from '../core.js';
+import {$,$$,api,post,patch,del,esc,date,status,empty,field,modal,region,action,toast,state,csv} from '../core.js'
 import { tableCell, tableFrame } from '../../ui/table.js';
 import { attachmentPicker, renderAttachments } from '../attachments.js';
 import { viewAudit } from '../audit-ui.js';
@@ -96,58 +77,58 @@ export const resources = {
     path: 'race-tracks',
     key: 'tracks',
     fields: [
-      ['name', '名称'],
-      ['length_km', '长度 km', 'number'],
-      ['laps', '圈数', 'number'],
+      ['name', '名字'],
+      ['length_km','长度 km'],
+      ['laps','跑了几圈'],
       ['difficulty', '难度'],
-      ['trial_price', '试车价格 💎', 'number'],
-      ['description', '介绍', 'textarea'],
-      ['image_url', '图片 URL'],
-      ['sort_order', '排序', 'number'],
-      ['is_active', '开放', 'checkbox'],
+      ['trial_price','试车价格 💎'],
+      ['description','介绍'],
+      ['image_url', '图片地址'],
+      ['sort_order','排序'],
+      ['is_active','开放预订'],
     ],
   },
   hotels: {
     path: 'hotels',
     key: 'hotels',
     fields: [
-      ['owner_id', '经营账户', 'select'],
+      ['owner_id','经营账号'],
       ['name', '酒店名'],
       ['address', '地址'],
-      ['description', '介绍', 'textarea'],
-      ['image_url', '图片 URL'],
-      ['sort_order', '排序', 'number'],
-      ['is_active', '开放', 'checkbox'],
+      ['description','介绍'],
+      ['image_url', '图片地址'],
+      ['sort_order','排序'],
+      ['is_active','开放预订'],
     ],
   },
   rooms: {
     path: 'hotel-rooms',
     key: 'rooms',
     fields: [
-      ['hotel_id', '所属酒店 ID', 'number'],
-      ['name', '房型名'],
-      ['capacity', '最大人数', 'number'],
-      ['beds', '床型'],
-      ['price_per_night', '每晚价格 💎', 'number'],
-      ['breakfast_included', '包含早餐', 'checkbox'],
-      ['description', '介绍', 'textarea'],
-      ['image_url', '图片 URL'],
-      ['sort_order', '排序', 'number'],
-      ['is_active', '开放', 'checkbox'],
+      ['hotel_id','挂在哪间客栈'],
+      ['name', '房型名字'],
+      ['capacity','最多住几个'],
+      ['beds', '床铺'],
+      ['price_per_night','一晚多少钱 💎'],
+      ['breakfast_included','带早饭'],
+      ['description','介绍'],
+      ['image_url', '图片地址'],
+      ['sort_order','排序'],
+      ['is_active','开放预订'],
     ],
   },
   requirements: {
     path: 'license-req',
     key: 'requirements',
     fields: [
-      ['exam_type', '考试类型', 'select'],
+      ['exam_type','考试类型'],
       ['title', '标题'],
-      ['requirements', '要求', 'textarea'],
-      ['description', '介绍', 'textarea'],
-      ['min_age', '最低年龄', 'number'],
-      ['duration_minutes', '考试分钟', 'number'],
-      ['sort_order', '排序', 'number'],
-      ['is_active', '开放', 'checkbox'],
+      ['requirements','要求'],
+      ['description','介绍'],
+      ['min_age','最小年龄'],
+      ['duration_minutes','考试分钟'],
+      ['sort_order','排序'],
+      ['is_active','开放预订'],
     ],
   },
   announcements: {
@@ -155,22 +136,22 @@ export const resources = {
     key: 'announcements',
     fields: [
       ['title', '标题'],
-      ['content', '正文', 'textarea'],
-      ['image_url', '封面 URL'],
+      ['content','正文'],
+      ['image_url', '封面图地址'],
     ],
   },
   gallery: {
     path: 'gallery',
     key: 'items',
     fields: [
-      ['cat', '分类', 'select'],
-      ['is_featured', '精选图片', 'checkbox'],
-      ['num', '编号', 'number'],
+      ['cat','归到哪一类'],
+      ['is_featured','要上首页的图'],
+      ['num','编号'],
       ['title', '标题'],
-      ['caption', '说明', 'textarea'],
-      ['image_url', '图片 URL'],
-      ['sort_order', '排序', 'number'],
-      ['is_active', '显示', 'checkbox'],
+      ['caption','说明'],
+      ['image_url', '图片地址'],
+      ['sort_order','排序'],
+      ['is_active','显示'],
     ],
   },
 };
@@ -189,30 +170,27 @@ export async function refreshStats(onSwitch) {
   await region($('#admin-stats', root), () => api('/api/admin/dashboard'), (data, box) => {
     const racePending = data.kart && data.circuit ? data.kart.pending + data.circuit.pending : null;
     const stats = [
-      ['players', data.players?.pending, '待审玩家', 'Pending citizens'],
-      ['tickets', data.tickets?.open, '待处理工单', 'Pending tickets'],
-      ['bookings', data.bookings?.pending, '待审酒店', 'Pending bookings'],
-      ['license', data.license?.pending, '待审驾照', 'Pending licenses'],
-      ['circuit', racePending, '待审赛道', 'Pending races'],
-      ['players', data.players?.active, '活跃市民', 'Active citizens'],
+      ['players', data.players?.pending, '等人审核', 'Pending citizens'],
+      ['tickets', data.tickets?.open, '等着办的', 'Pending tickets'],
+      ['bookings', data.bookings?.pending, '等审客栈', 'Pending bookings'],
+      ['license', data.license?.pending, '等审驾照', 'Pending licenses'],
+      ['circuit', racePending, '等审赛道', 'Pending races'],
+      ['players', data.players?.active, '常来的市民', 'Active citizens'],
     ];
     box.innerHTML = `<div class="stats">${stats
       .map(
         ([key, count, zh, en]) =>
-          `<button class="stat" data-open="${key}"><strong>${count ?? '—'}</strong><span>${tr(zh, en)}</span>${
+          `<button class="stat" data-open="${key}"><strong>${count ?? '—'}</strong><span>${zh}</span>${
             count == null
-              ? `<small>${tr('暂不可用，请重试', 'Unavailable; retry')}</small>`
+              ? `<small>${'这会儿办不了，等会儿再来'}</small>`
               : ''
           }</button>`
       )
       .join('')}</div>${
       data.partial
-        ? `<p class="form-error" role="status">${tr(
-            '部分统计暂时无法读取，其余功能仍可使用。可点击"刷新概览"重试。',
-            'Some statistics are unavailable. Other functions remain usable. Refresh the overview to retry.'
-          )}</p>`
+        ? `<p class="form-error" role="status">${'部分统计暂时无法读取，其余功能仍可使用。可点击"刷新概览"重试。'}</p>`
         : ''
-    }<small>${tr('更新时间', 'Updated')} ${date(new Date().toISOString())}</small>`;
+    }<small>${'什么时候改的'} ${date(new Date().toISOString())}</small>`;
     $$('[data-open]', box).forEach((button) => {
       button.onclick = () => {
         const key = button.dataset.open;
@@ -228,7 +206,7 @@ export async function refreshStats(onSwitch) {
 export function table(box, columns, rows, actions = []) {
   box.innerHTML = rows.length
     ? tableFrame(
-        [...columns.map(([, label]) => label), ...(actions.length ? [tr('操作', 'Actions')] : [])],
+        [...columns.map(([, label]) => label), ...(actions.length ? ['受理'] : [])],
         `${rows
           .map(
             (r, i) =>
@@ -242,10 +220,7 @@ export function table(box, columns, rows, actions = []) {
                 )
                 .join('')}${
                 actions.length
-                  ? `<td role="cell" class="table-actions"><span class="cell-label" aria-hidden="true">${tr(
-                      '操作',
-                      'Actions'
-                    )}</span><div class="actions compact">${actions
+                  ? `<td role="cell" class="table-actions"><span class="cell-label" aria-hidden="true">${'受理'}</span><div class="actions compact">${actions
                       .filter((a) => !a.when || a.when(r))
                       .map(
                         (a) =>
@@ -271,22 +246,19 @@ export function table(box, columns, rows, actions = []) {
 export function toolbar({ search = true, options = [], create, extra = '' } = {}, onReload) {
   const view = adminContext.view;
   const reload = onReload || _router?.loadActive;
-  view.innerHTML = `<div class="section-head"><h2>${tr(...names[adminContext.active])}</h2><button id="reload-tab">↻ ${tr(
-    '刷新',
-    'Refresh'
-  )}</button></div><div class="toolbar">${
-    search ? field('q', tr('搜索', 'Search'), 'search', '', { required: false }) : ''
+  view.innerHTML = `<div class="section-head"><h2>${names[adminContext.active]}</h2><button id="reload-tab">↻ ${'重新载入'}</button></div><div class="toolbar">${
+    search ? field('q', '查一下', 'search', '', { required: false }) : ''
   }${
     options.length
       ? field(
           'status',
-          tr('状态', 'Status'),
+          '状态',
           'select',
           '',
-          { required: false, options: [['', tr('全部', 'All')], ...options] }
+          { required: false, options: [['', '全部'], ...options] }
         )
       : ''
-  }${create ? `<button id="create-record" class="primary">＋ ${tr('新建', 'New')}</button>` : ''}<button id="export">↓ CSV</button>${extra}</div><div id="records"></div>`;
+  }${create ? `<button id="create-record" class="primary">＋ ${'新建'}</button>` : ''}<button id="export">↓ CSV</button>${extra}</div><div id="records"></div>`;
   $('#reload-tab', view).onclick = () => reload?.();
   $('#create-record', view)?.addEventListener('click', create);
 }
@@ -339,7 +311,7 @@ export async function resourceList(def, deps = {}) {
       .map(([key, label, type = 'text']) =>
         field(
           key,
-          tr(label, key.replaceAll('_', ' ')),
+          label,
           type,
           item[key] ?? defaults[key] ?? '',
           {
@@ -349,19 +321,19 @@ export async function resourceList(def, deps = {}) {
             options:
               key === 'cat'
                 ? [
-                    ['city', tr('城市', 'City')],
-                    ['road', tr('道路', 'Roads')],
-                    ['kart', tr('卡丁车', 'Kart')],
-                    ['nature', tr('自然', 'Nature')],
-                    ['announcement', tr('公告', 'Announcement')],
+                    ['city', '城市'],
+                    ['road', '道路'],
+                    ['kart', '卡丁车'],
+                    ['nature', '自然'],
+                    ['announcement', '公告'],
                   ]
                 : [
-                    ['B', tr('B 级', 'Grade B')],
-                    ['A', tr('A 级', 'Grade A')],
-                    ['S', tr('S 级', 'Grade S')],
-                    ['written', tr('笔试', 'Written')],
-                    ['road', tr('路考', 'Road test')],
-                    ['upgrade', tr('升级考试', 'Upgrade')],
+                    ['B', 'B 级'],
+                    ['A', 'A 级'],
+                    ['S', 'S 级'],
+                    ['written', '笔试'],
+                    ['road', '路考'],
+                    ['upgrade', '换证考'],
                   ],
           }
         )
@@ -375,7 +347,7 @@ export async function resourceList(def, deps = {}) {
           .map(([key, label, type = 'text']) =>
             field(
               key,
-              tr(label, key),
+              label,
               type,
               item[key] ?? defaults[key] ?? '',
               { required: key === 'name', min: 0 }
@@ -384,13 +356,13 @@ export async function resourceList(def, deps = {}) {
           .join('') +
         field(
           'owner_id',
-          tr('分配酒店老板', 'Hotel owner'),
+          '指给哪位老板',
           'select',
           item.owner_id || '',
           {
             required: false,
             options: [
-              ['', tr('暂未分配', 'Unassigned')],
+              ['', '还没派活'],
               ...owners.owners
                 .filter((o) => o.status === 'active')
                 .map((o) => [o.id, `#${o.id} · ${o.username}`]),
@@ -401,7 +373,7 @@ export async function resourceList(def, deps = {}) {
     if (adminContext.active === 'rooms') {
       const h = await api('/api/admin/hotels');
       fields =
-        field('hotel_id', tr('所属酒店', 'Hotel'), 'select', item.hotel_id || h.hotels[0]?.id, {
+        field('hotel_id', '所属客栈', 'select', item.hotel_id || h.hotels[0]?.id, {
           options: h.hotels.map((h) => [h.id, h.name]),
         }) +
         def.fields
@@ -409,17 +381,17 @@ export async function resourceList(def, deps = {}) {
           .map(([key, label, type = 'text']) =>
             field(
               key,
-              tr(label, key),
+              label,
               type,
               item[key] ?? defaults[key] ?? '',
-              { required: ['name', 'price_per_night', 'capacity'].includes(key), min: 0 }
+              { required: ['name','price_per_night'].includes(key), min: 0 }
             )
           )
           .join('');
     }
     let picker;
     const dialog = modal(
-      tr(item.id ? '编辑记录' : '新建记录', item.id ? 'Edit record' : 'New record'),
+      item.id ? '改这条' : '新建一条',
       fields,
       {
         submit: async (d) => {
@@ -431,7 +403,7 @@ export async function resourceList(def, deps = {}) {
             ? patch('/api/admin/' + def.path + '?id=' + item.id, d)
             : post('/api/admin/' + def.path, d));
           picker?.commit();
-          toast(tr('保存成功', 'Saved'));
+          toast('存好了');
           await load();
         },
       }
@@ -454,20 +426,20 @@ export async function resourceList(def, deps = {}) {
             def.key === 'announcements' || def.key === 'items' || def.key === 'requirements'
               ? 'title'
               : 'name',
-            tr('名称', 'Name'),
+            '名字',
           ],
           ...('is_active' in (rows[0] || {})
-            ? [['is_active', tr('状态', 'Status'), (v) => status(v ? 'active' : 'pending')]]
+            ? [['is_active', '状态', (v) => status(v ? 'active' : 'pending')]]
             : []),
-          ['updated_at', tr('更新时间', 'Updated'), date],
+          ['updated_at', '什么时候改的', date],
         ],
         rows,
         isSuper()
           ? [
-              { key: 'edit', label: tr('编辑', 'Edit'), run: editor },
+              { key: 'edit', label: '改一改', run: editor },
               {
                 key: 'history',
-                label: tr('操作记录', 'History'),
+                label: '经手记录',
                 run: (r) =>
                   viewAudit(
                     (
@@ -485,15 +457,12 @@ export async function resourceList(def, deps = {}) {
               },
               {
                 key: 'delete',
-                label: tr('删除', 'Delete'),
+                label: '移除',
                 danger: true,
                 run: async (r) => {
                   if (
                     !confirm(
-                      tr(
-                        '删除这条记录？有历史关联的数据不能删除。',
-                        'Delete this record? Historical references will prevent deletion.'
-                      )
+                      '这条删不得——它身上还挂着别的记录。'
                     )
                   )
                     return;
@@ -516,8 +485,8 @@ export async function signups(kind, deps = {}) {
     kind === 'bookings'
       ? ['pending', 'confirmed', 'completed', 'cancelled']
       : kind === 'license'
-      ? ['pending', 'passed', 'failed']
-      : ['pending', 'approved', 'rejected'];
+      ? ['pending','passed']
+      : ['pending','approved'];
   toolbar({ options: opts }, reload);
   const load = () =>
     region($('#records', view), () => api('/api/admin/' + kind), (d, box) => {
@@ -533,26 +502,26 @@ export async function signups(kind, deps = {}) {
         box,
         [
           ['id', 'ID'],
-          ['player_username', tr('市民', 'Citizen')],
+          ['player_username', '市民'],
           [
             kind === 'bookings' ? 'room_name' : kind === 'license' ? 'exam_type' : 'session',
-            tr('项目', 'Item'),
+            '项目',
           ],
-          ['contact', tr('联系', 'Contact')],
-          ['note', tr('备注', 'Notes')],
-          ['status', tr('状态', 'Status'), status],
-          ['created_at', tr('提交时间', 'Created'), date],
+          ['contact', '联系'],
+          ['note', '补充说明'],
+          ['status', '状态', status],
+          ['created_at', '什么时候交的', date],
         ],
         rows,
         [
           {
             key: 'review',
-            label: tr('处理', 'Review'),
+            label: '受理',
             run: async (r) => {
               modal(
-                tr('处理报名', 'Review application'),
-                field('status', tr('状态', 'Status'), 'select', r.status, { options: opts }) +
-                  field('note', tr('备注', 'Notes'), 'textarea', r.note || '', { required: false }),
+                '看看这份报名',
+                field('status', '状态', 'select', r.status, { options: opts }) +
+                  field('note', '补充说明', 'textarea', r.note || '', { required: false }),
                 {
                   submit: async (values) => {
                     await patch(`/api/admin/${kind}?id=${r.id}&status=${values.status}`, values);

@@ -1021,7 +1021,7 @@ body{min-height:100vh;display:flex;flex-direction:column}
 .grass-block:after{content:'';display:block;width:6px;height:6px;margin:5px;background:#b4c95a;box-shadow:14px 0 #4b7020,0 18px #65462f,15px 16px #65462f}
 #account{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-left:auto;min-width:0}
 #account a{overflow-wrap:anywhere}.balance{white-space:nowrap}
-#language{padding:8px 12px}#menu{display:none}
+#menu{display:none}
 .app-workspace{width:100%;max-width:1520px;display:grid;grid-template-columns:minmax(0,1fr);margin:0 auto;flex:1}
 .site-rail{max-width:1520px;margin:auto;background:var(--paper);padding:8px 28px;border-top:1px solid var(--line-soft);min-width:0}
 #navigation{display:flex;flex-direction:row;flex-wrap:wrap;gap:5px}
@@ -1046,9 +1046,14 @@ main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
 .map-layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:20px;align-items:start}.map-layout>.panel{padding:12px}.map-layout #map-list{display:grid;gap:14px}.map-layout #map-list .panel{margin:0;padding:16px}
 [data-page=admin] .app-workspace{display:block}[data-page=admin] .site-rail{padding:8px 28px;border-right:0;border-bottom:1px solid var(--line-soft)}[data-page=admin] #navigation{position:static;flex-direction:row;flex-wrap:wrap}[data-page=admin] #navigation a{padding:8px 12px}
 @media(max-width:1200px){.home-workspace{grid-template-columns:minmax(0,1fr) 220px}.city-welcome{grid-template-columns:minmax(0,1fr)}.city-welcome>img{min-height:0;height:240px;border-left:0;border-top:3px solid var(--line)}.welcome-copy{padding:28px}.home-services{grid-template-columns:minmax(0,1fr)}}
-@media(max-width:1050px){.app-workspace{grid-template-columns:minmax(0,1fr)}main{padding:28px 24px}.profile-layout,.affairs-workspace,.service-layout,.map-layout,.home-workspace{grid-template-columns:minmax(0,1fr)}.profile-summary,.affairs-assistant,.service-filters,.home-data{position:static}.home-data{order:-1}.home-data .stats{grid-template-columns:repeat(3,minmax(0,1fr))}.profile-summary .actions,.affairs-assistant .actions{flex-direction:row;align-items:center}.service-filters .toolbar{flex-direction:row;flex-wrap:wrap}.service-filters .toolbar>.field{flex:1 1 140px}}
+@media(max-width:1050px){.app-workspace{grid-template-columns:minmax(0,1fr)}main{padding:28px 24px}.profile-layout,.affairs-workspace,.service-layout,.map-layout,.home-workspace{grid-template-columns:minmax(0,1fr)}.profile-summary,.affairs-assistant,.service-filters,.home-data{position:static}.home-data .stats{grid-template-columns:repeat(3,minmax(0,1fr))}.profile-summary .actions,.affairs-assistant .actions{flex-direction:row;align-items:center}.service-filters .toolbar{flex-direction:row;flex-wrap:wrap}.service-filters .toolbar>.field{flex:1 1 140px}}
+/* v85：原先这里有 .home-data{order:-1}，窄屏下会把「绿化区块 / 铁轨」这类
+   城市指标顶到市政公告前面。市民来首页是看公告和办事的，统计是辅助信息，
+   所以不再翻转顺序，公告与工单始终排在城市数据之前。 */
 @media(max-width:700px){
-.header-inner{display:grid;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:'brand menu language' 'account account account';padding:12px;gap:8px}.brand{grid-area:brand;gap:6px}.brand strong{font-size:.87rem}.brand small{font-size:.52rem;letter-spacing:0}.grass-block{width:30px;height:32px}#menu{display:block;grid-area:menu;margin:0;padding:8px}#language{grid-area:language;padding:8px}#account{grid-area:account;margin:0;justify-content:space-between;gap:8px}
+/* v85：#language 按钮已随纯中文化移除，grid 里原本给它预留的 'language'
+   区域不再有对应元素，留着会渲染出一条空轨道，因此一并删除。 */
+.header-inner{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'brand menu' 'account account';padding:12px;gap:8px}.brand{grid-area:brand;gap:6px}.brand strong{font-size:.87rem}.brand small{font-size:.52rem;letter-spacing:0}.grass-block{width:30px;height:32px}#menu{display:block;grid-area:menu;margin:0;padding:8px}#account{grid-area:account;margin:0;justify-content:space-between;gap:8px}
 .app-workspace{display:block}.site-rail,[data-page=admin] .site-rail{display:none;padding:10px 12px;border-bottom:var(--border-thin)}.site-rail.is-open,[data-page=admin] .site-rail.is-open{display:block}#navigation,[data-page=admin] #navigation{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
 main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{padding:22px}.welcome-copy h1{font-size:2.5rem}.city-welcome>img{height:210px}.home-data .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.home-workspace,.home-services{gap:20px}.profile-summary .actions>*{flex:1 1 120px}#footer{padding:22px 16px}
 }
@@ -1141,7 +1146,7 @@ main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{paddi
  *     collapsing the existing offset).
  *
  *   flat controls (.admin-nav button, .tabs button, #navigation a,
- *                  #menu, #language, .gallery-button)
+ *                  #menu, .gallery-button)
  *     resting shadow is 0; an outer 1px shadow on press would look MORE
  *     raised, the opposite of the requested push-down feel. These use an
  *     inset shadow on press instead, so the surface visibly sinks inward.
@@ -1167,7 +1172,6 @@ main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{paddi
 .admin-nav button,
 .tabs button,
 #menu,
-#language,
 .gallery-button,
 .upload-drop,
 .modal details > summary {
@@ -1200,7 +1204,6 @@ input[type="reset"]:not(:disabled):not([aria-disabled="true"]):active,
 [role="button"]:not(:disabled):not([aria-disabled="true"]):active,
 summary:not(:disabled):not([aria-disabled="true"]):active,
 #menu:not(:disabled):not([aria-disabled="true"]):active,
-#language:not(:disabled):not([aria-disabled="true"]):active,
 #navigation a:not(:disabled):not([aria-disabled="true"]):active,
 .tabs button:not(:disabled):not([aria-disabled="true"]):active,
 .admin-nav button:not(:disabled):not([aria-disabled="true"]):active,
@@ -1217,7 +1220,7 @@ summary:not(:disabled):not([aria-disabled="true"]):active,
      cut so reduced-motion users still get the same on-press visual.   */
   button, .button, [role="button"],
   input[type="button"], input[type="submit"], input[type="reset"],
-  summary, #menu, #language, #navigation a,
+  summary, #menu, #navigation a,
   .tabs button, .admin-nav button,
   .modal-head [data-close], .stat {
     transition-duration: 0.01ms !important;

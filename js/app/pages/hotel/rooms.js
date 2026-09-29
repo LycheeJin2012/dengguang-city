@@ -7,7 +7,7 @@
 
 import { recordCard } from '../../../ui/card.js';
 import { $, $$ } from '../../core.js';
-import { esc, tr, empty, imageUrl, modal, toast } from '../../core.js';
+import {esc,empty,imageUrl,modal,toast} from '../../core.js'
 import { book } from './booking.js';
 
 export function roomCards(el, bundle, { limit } = {}) {
@@ -25,8 +25,8 @@ export function roomCards(el, bundle, { limit } = {}) {
             media: imageUrl(r.image_url || h.image_url)
               ? `<img loading="lazy" src="${esc(imageUrl(r.image_url || h.image_url))}" alt="${esc(r.name)}">`
               : '',
-            body: `<p>${esc(r.beds || '')} · ${Number(r.capacity)} ${tr('人', 'guests')}</p><p class="muted">${esc(r.description || tr('房型介绍待公布', 'Details coming soon'))}</p><p class="price">💎 ${Number(r.price_per_night)} / ${tr('晚', 'night')}</p>`,
-            actions: `<button data-detail="${r.id}" class="compact">${tr('详情', 'Details')}</button><button data-book="${r.id}" class="primary compact" ${open ? '' : 'disabled'}>${tr(open ? '预订' : '筹建中', open ? 'Book' : 'Coming soon')}</button>`,
+            body: `<p>${esc(r.beds || '')} · ${Number(r.capacity)} ${'人'}</p><p class="muted">${esc(r.description || '这间还没写介绍，房主大概在赶工')}</p><p class="price">💎 ${Number(r.price_per_night)} / ${'晚'}</p>`,
+            actions: `<button data-detail="${r.id}" class="compact">${'细看'}</button><button data-book="${r.id}" class="primary compact" ${open ? '' : 'disabled'}>${open ? '预订' : '筹建中'}</button>`,
           });
         })
         .join('')}</div>`
@@ -44,7 +44,7 @@ export function roomCards(el, bundle, { limit } = {}) {
       const h = hotels.get(r.hotel_id);
       modal(
         r.name,
-        `<div class="wide"><p>${esc(h.name)} · ${esc(h.address)}</p><p>${esc(r.description)}</p><p>${esc(r.beds)} · ${r.capacity} ${tr('人', 'guests')}</p><p>${tr(r.breakfast_included ? '含早餐' : '不含早餐', r.breakfast_included ? 'Breakfast included' : 'Breakfast not included')}</p><p class="price">💎 ${r.price_per_night} / ${tr('晚', 'night')}</p></div>`
+        `<div class="wide"><p>${esc(h.name)} · ${esc(h.address)}</p><p>${esc(r.description)}</p><p>${esc(r.beds)} · ${r.capacity} ${'人'}</p><p>${r.breakfast_included ? '早餐已含' : '早餐另加'}</p><p class="price">💎 ${r.price_per_night} / ${'晚'}</p></div>`
       );
     }
   );

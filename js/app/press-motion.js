@@ -93,7 +93,6 @@ const PRESSABLE_SELECTOR = [
   '[role="button"]',
   'summary',
   '#menu',
-  '#language',
   '#navigation a',
   '.tabs button',
   '.admin-nav button',

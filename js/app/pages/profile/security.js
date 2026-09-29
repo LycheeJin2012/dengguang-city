@@ -12,27 +12,10 @@
 
 import { renderSessions } from '../../account-sessions.js';
 import { registerPasskey, testPasskey } from '../../security.js';
-import {
-  $,
-  $$,
-  api,
-  post,
-  region,
-  tr,
-  esc,
-  date,
-  empty,
-  field,
-  modal,
-  action,
-  toast,
-} from '../../core.js';
+import {$,$$,api,post,region,esc,date,empty,field,modal,action,toast} from '../../core.js'
 
 export async function security(el) {
-  el.innerHTML = `<h3>${tr('密码与通行密钥', 'Passwords and passkeys')}</h3><p>${tr(
-    '使用 Touch ID、Face ID 或设备 PIN 安全登录。',
-    'Sign in using Touch ID, Face ID, or your device PIN.'
-  )}</p><div class="actions"><button id="password-change">${tr('修改密码', 'Change password')}</button><button id="add-passkey">＋ ${tr('添加通行密钥', 'Add passkey')}</button></div><div id="keys" class="section"></div>`;
+  el.innerHTML = `<h3>${'密码与通行密钥'}</h3><p>${'通行密钥是指纹、面容或设备 PIN 顶替密码登录，密码本身不会离开你的设备。丢了设备就在下面把密钥移除，换新设备重新加一把。'}</p><div class="actions"><button id="password-change">${'改密码'}</button><button id="add-passkey">＋ ${'加通行密钥'}</button></div><div id="keys" class="section"></div>`;
   const sessionsBox = document.createElement('section');
   sessionsBox.className = 'section';
   el.append(sessionsBox);
@@ -42,24 +25,24 @@ export async function security(el) {
 
   $('#password-change', el).onclick = () =>
     modal(
-      tr('修改市民密码', 'Change citizen password'),
-      field('old_password', tr('原密码', 'Current password'), 'password') +
-        field('new_password', tr('新密码', 'New password'), 'password') +
-        field('confirm', tr('确认新密码', 'Confirm password'), 'password'),
+      '改密码',
+      field('old_password', '现在的密码', 'password') +
+        field('new_password', '新密码', 'password') +
+        field('confirm', '再输一遍', 'password'),
       {
         submit: async (d) => {
           if (d.new_password !== d.confirm)
-            throw new Error(tr('两次密码不一致', 'Passwords do not match'));
+            throw new Error('两次输的不一样');
           await post('/api/init?action=player-change-password', d);
-          toast(tr('密码已修改', 'Password changed'));
+          toast('密码已改好');
         },
       }
     );
 
   $('#add-passkey', el).onclick = () =>
     modal(
-      tr('添加通行密钥', 'Add passkey'),
-      field('name', tr('设备名称', 'Device name'), 'text', 'My device'),
+      '加一把通行密钥',
+      field('name', '给设备起个名', 'text', '我的手机'),
       {
         submit: async (d) => {
           await registerPasskey(d.name);
@@ -73,27 +56,21 @@ export async function security(el) {
       (d.passkeys || [])
         .map(
           (k) =>
-            `<div class="row row-head"><span>🔑 ${esc(k.name)} <small>${date(k.created_at)} · ${tr(
-              '最近使用',
-              'Last used'
-            )} ${k.last_used_at ? date(k.last_used_at) : tr('尚未使用', 'Never')}</small></span><div class="actions"><button data-test="${k.id}">${tr(
-              '验证此密钥',
-              'Verify this key'
-            )}</button><button data-delete="${k.id}" class="danger">${tr('移除', 'Remove')}</button></div></div>`
+            `<div class="row row-head"><span>🔑 ${esc(k.name)} <small>${date(k.created_at)} · ${'上次用'} ${k.last_used_at ? date(k.last_used_at) : '还没用过'}</small></span><div class="actions"><button data-test="${k.id}">${'试一把'}</button><button data-delete="${k.id}" class="danger">${'移除'}</button></div></div>`
         )
-        .join('') || empty(tr('还没有通行密钥', 'No passkeys yet'));
+        .join('') || empty('一把密钥都没有，加一把就能免密码登录。');
     $$('[data-test]', box).forEach((b) =>
       b.onclick = (e) =>
         action(e.currentTarget, async () => {
           await testPasskey(Number(b.dataset.test));
-          toast(tr('通行密钥验证通过，当前账号保持不变', 'Passkey verified; your account is unchanged'));
+          toast('验证通过，只是试了一下，账号和登录状态都没动');
           await security(el);
         })
     );
     $$('[data-delete]', box).forEach((b) =>
       b.onclick = (e) =>
         action(e.currentTarget, async () => {
-          if (confirm(tr('移除此通行密钥？', 'Remove this passkey?'))) {
+          if (confirm('移除后这台设备就不能再用密钥登录了，确定？')) {
             await post('/api/init?action=passkey-delete', { id: +b.dataset.delete });
             await security(el);
           }

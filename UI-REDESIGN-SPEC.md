@@ -1,10 +1,26 @@
-# 灯光市 UI 规范（v84）
+# 灯光市 UI 规范（v85）
 
 > 本文件是**组件命名的唯一权威来源**。任何改动 `css/source/*.css` 或 `js/ui/*.js`
 > 的提交都必须同步本文件；`tests/ui-components.test.js` 与 `tests/layout-retirement.test.js`
 > 会按此处的类名做回归断言。
 
-## 0. 与 v1.0 规范的关系
+## 0. 语言：纯中文（v85 起）
+
+站点**只有中文**。v85 移除了整套 i18n 机制：
+
+- `core.js` 不再导出 `tr()`，界面文案就是裸中文字符串。
+- `state.language`、`localStorage['lc_lang']`、`#language` 切换按钮，以及
+  `press-motion.js` 里对应的选择器，全部已删除。
+- `title(zh)` 是单参数；页头 eyebrow 固定为品牌常量 `LIGHT CITY`。
+- `status()` / `optionLabel()` / `ticketBody()` 的标签表从 `{key:['中文','English']}`
+  收敛为 `{key:'中文'}`。
+- 后台导航 `admin-navigation.js` 的 `label` 是**字符串**，不是数组。
+  v85 在此修过一个真实 bug：`tr(...group.label)` 简化成 `group.label` 之后，
+  如果 label 仍是 `['中文','English']`，`textContent` 会渲染成 `中文,English`。
+
+新增界面文案请直接写中文，**不要**再引入 `tr()` 或任何语言切换。
+
+## 0.1 与 v1.0 规范的关系
 
 v1.0 规范描述的类名（`.btn`、`.btn-primary`、`.card-flat`、`.card-pad`、
 `.empty-state`、`.tag`、`.pane-head`、`.pane-hint`、`.modal-mask`）**在当前

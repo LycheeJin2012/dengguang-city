@@ -6,17 +6,7 @@
 
 import { openExamAuthoring } from '../../exam-authoring.js';
 import { adminContext } from '../state.js';
-import {
-  $,
-  api,
-  post,
-  patch,
-  modal,
-  region,
-  field,
-  tr,
-  action,
-} from '../../core.js';
+import {$,api,post,patch,modal,region,field,action} from '../../core.js'
 import { table, toolbar, bindList, attachExport } from '../shared.js';
 
 export async function render(loadActive) {
@@ -24,7 +14,7 @@ export async function render(loadActive) {
   toolbar({ create: () => edit() }, () => loadActive());
 
   const aiButton = document.createElement('button');
-  aiButton.textContent = tr('AI 出驾照题目', 'AI question authoring');
+  aiButton.textContent = '让 AI 出驾照题';
   aiButton.onclick = () => action(aiButton, () => openExamAuthoring(load));
   $('.toolbar', view).append(aiButton);
 
@@ -35,39 +25,39 @@ export async function render(loadActive) {
         box,
         [
           ['id', 'ID'],
-          ['grade', tr('等级', 'Grade')],
-          ['question', tr('题目', 'Question')],
-          ['answer', tr('答案', 'Answer')],
+          ['grade', '等级'],
+          ['question', '题目'],
+          ['answer', '答案'],
         ],
         d.questions,
-        [{ key: 'edit', label: tr('编辑', 'Edit'), run: edit }]
+        [{ key: 'edit', label: '改一改', run: edit }]
       );
     });
 
   function edit(q = {}) {
     modal(
-      tr('模拟题库', 'Question bank'),
-      field('grade', tr('等级', 'Grade'), 'select', q.grade || 'B', {
-        options: ['B', 'A', 'S'],
+      '题库演练',
+      field('grade', '等级', 'select', q.grade || 'B', {
+        options: ['B','A'],
       }) +
-        field('q_type', tr('类型', 'Type'), 'select', q.q_type || 'choice', {
-          options: ['choice', 'multi', 'judge'],
+        field('q_type', '题型', 'select', q.q_type || 'choice', {
+          options: ['choice','multi'],
         }) +
-        field('question', tr('题目', 'Question'), 'textarea', q.question || '') +
+        field('question', '题目', 'textarea', q.question || '') +
         field(
           'options',
-          tr('选项（每行一项，判断题可留空）', 'Options (one per line; empty for true/false)'),
+          '选项（一行一个，判断题留空）',
           'textarea',
           q.options ? JSON.parse(q.options).join('\n') : '',
           { required: false }
         ) +
         field(
           'answer',
-          tr('答案（A / A|B / true / false）', 'Answer (A / A|B / true / false)'),
+          '正确答案（A / A|B / true / false）',
           'text',
           q.answer || ''
         ) +
-        field('explanation', tr('解析', 'Explanation'), 'textarea', q.explanation || '', {
+        field('explanation', '解析', 'textarea', q.explanation || '', {
           required: false,
         }),
       {

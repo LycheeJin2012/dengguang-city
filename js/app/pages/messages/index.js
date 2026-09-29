@@ -11,7 +11,7 @@
 
 import { tabsMarkup, bindTabs } from '../../../ui/workspace.js';
 import { renderChat } from '../../chat-page.js';
-import { $, $$, region, tr, title, login, state } from '../../core.js';
+import {$,$$,region,title,login,state} from '../../core.js'
 import { notifications } from './notifications.js';
 
 export async function render(el, page) {
@@ -23,11 +23,8 @@ export async function render(el, page) {
       : page;
   if (!state.session?.player) {
     el.innerHTML =
-      title(page === 'dm' ? '私信' : '通知中心', page === 'dm' ? 'Messages' : 'Notifications') +
-      `<div class="panel"><p>${tr('请先登录市民账号', 'Please sign in as a citizen')}</p><button id="sign-in">${tr(
-        '登录',
-        'Sign in'
-      )}</button></div>`;
+      title(page === 'dm' ? '私信' : '通知中心') +
+      `<div class="panel"><p>${'私信和通知都锁在账号里，得先认明你本人。'}</p><button id="sign-in">${'我是市民'}</button></div>`;
     $('#sign-in', el).onclick = async () => {
       await login();
       if (state.session?.player) render(el, page);
@@ -35,16 +32,16 @@ export async function render(el, page) {
     return;
   }
   el.innerHTML =
-    title('消息', 'Messages') +
+    title('消息') +
     tabsMarkup(
       [
-        { key: 'dm', label: tr('私信与灯灯', 'Messages & DengDeng') },
-        { key: 'notifications', label: tr('通知', 'Notifications') },
+        { key: 'dm', label: '私信' },
+        { key: 'notifications', label: '通知' },
       ],
       page === 'notifications' ? 'notifications' : 'dm',
       {
         id: 'message-tabs',
-        label: tr('消息分类', 'Message categories'),
+        label: '消息分类',
         panelPrefix: 'message-panel-',
       }
     ) +
@@ -67,7 +64,7 @@ export async function render(el, page) {
       const load = region(panel, () => key, async () => {
         await (key === 'dm' ? renderChat(panel) : notifications(panel));
         $('.page-heading', panel)?.remove();
-        document.title = tr('消息 · 灯光市', 'Messages · Light City');
+        document.title = '消息 · 灯光市';
       });
       loaded.set(key, load);
     }

@@ -5,42 +5,25 @@
  * 通知列表 + 类别过滤 + 单条标已读 + 全部已读。
  */
 
-import {
-  $,
-  $$,
-  api,
-  patch,
-  region,
-  tr,
-  esc,
-  text,
-  empty,
-  title,
-  action,
-  date,
-  linkUrl,
-} from '../../core.js';
+import {$,$$,api,patch,region,esc,text,empty,title,action,date,linkUrl} from '../../core.js'
 
 export async function notifications(el) {
   let filter = 'all';
   let all = [];
   el.innerHTML =
-    title('通知中心', 'Notifications') +
+    title('通知中心') +
     `<div class="toolbar"><div class="tabs">${[
-      ['all', '全部', 'All'],
-      ['unread', '未读', 'Unread'],
-      ['message_reply', '留言回复', 'Replies'],
-      ['dm', '私信', 'Messages'],
-      ['announcement', '公告', 'Announcements'],
+      ['all','全部'],
+      ['unread','未读'],
+      ['message_reply','留言回信'],
+      ['dm','私信'],
+      ['announcement','公告'],
     ]
       .map(
         ([k, zh, en]) =>
-          `<button data-filter="${k}" aria-selected="${k === 'all'}">${tr(zh, en)}</button>`
+          `<button data-filter="${k}" aria-selected="${k === 'all'}">${zh}</button>`
       )
-      .join('')}</div><button id="refresh-notifications">刷新通知</button><button id="read-all">${tr(
-      '全部标为已读',
-      'Mark all read'
-    )}</button></div><p id="unread" class="muted"></p><div id="notifications"></div>`;
+      .join('')}</div><button id="refresh-notifications">再取一次</button><button id="read-all">${'全部收下'}</button></div><p id="unread" class="muted"></p><div id="notifications"></div>`;
   const draw = () => {
     const list = all.filter(
       (n) => filter === 'all' || (filter === 'unread' && !n.read_at) || n.type === filter
@@ -48,20 +31,20 @@ export async function notifications(el) {
     $('#unread', el).textContent =
       all.filter((n) => !n.read_at).length +
       ' ' +
-      tr('条未读（当前加载范围）', 'unread in loaded records');
+      '条没看（只数这次取回来的）';
     $('#notifications', el).innerHTML =
       list
         .map(
           (n) =>
             `<article class="panel"><div class="row-head"><h3>${esc(n.title)}</h3>${
-              n.read_at ? '' : `<span class="badge unread">${tr('未读', 'Unread')}</span>`
+              n.read_at ? '' : `<span class="badge unread">${'没看'}</span>`
             }</div><p>${text(n.body)}</p><small>${date(n.created_at)}</small><div class="actions">${
               linkUrl(n.link) && new URL(linkUrl(n.link)).origin === location.origin
-                ? `<a class="button" href="${esc(linkUrl(n.link))}">${tr('查看', 'Open')} ↗</a>`
+                ? `<a class="button" href="${esc(linkUrl(n.link))}">${'去看看'} ↗</a>`
                 : ''
             }${
               !n.read_at
-                ? `<button data-read="${n.id}">${tr('标为已读', 'Mark read')}</button>`
+                ? `<button data-read="${n.id}">${'看过'}</button>`
                 : ''
             }</div></article>`
         )

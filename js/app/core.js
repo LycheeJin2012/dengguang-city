@@ -11,18 +11,12 @@ export const $ = (s, root=document) => root.querySelector(s);
 export const $$ = (s, root=document) => [...root.querySelectorAll(s)];
 export const esc = escapeHtml;
 export const state = {
-  session:null, language:'zh-CN'
+  session:null
 }
 ;
-try {
-  state.language = localStorage.getItem('lc_lang') === 'en' ? 'en' : 'zh-CN';
-}
-catch {
-}
-export const tr = (zh,en=zh) => state.language==='en'?en:zh;
 export const date = value => {
   const d=parseDate(value);
-  return Number.isFinite(+d)?d.toLocaleString(state.language,{
+  return Number.isFinite(+d)?d.toLocaleString('zh-CN',{
     hour12:false
   }
   ):'—';
@@ -52,10 +46,10 @@ export const imageUrl = value => {
 ;
 export function status(value) {
   const labels={
-    pending:['待审核','Pending'],active:['已激活','Active'],rejected:['未通过','Rejected'],approved:['已批准','Approved'],confirmed:['已确认','Confirmed'],completed:['已完成','Completed'],passed:['已通过','Passed'],failed:['未通过','Failed'],open:['待处理','Open'],in_progress:['处理中','In progress'],resolved:['已解决','Resolved'],closed:['已关闭','Closed'],unread:['未读','Unread'],read:['已读','Read'],done:['已办结','Done']
+    pending:'排队中',active:'在用',rejected:'没通过',approved:'批了',confirmed:'定下了',completed:'办完了',passed:'考过了',failed:'没考过',open:'待受理',in_progress:'在办',resolved:'有结果了',closed:'结案',unread:'没看',read:'看过了',done:'归档'
   }
   ;
-  return `<span class="badge ${esc(value)}">${esc(labels[value]?tr(...labels[value]):value||'—')}</span>`;
+  return `<span class="badge ${esc(value)}">${esc(labels[value]||value||'—')}</span>`;
 }
 export async function api(path,{
   method='GET',body,signal
@@ -82,14 +76,14 @@ export async function api(path,{
     );
     const data=await r.json().catch(()=>null);
     if(!r.ok||!data||data.ok===false){
-      const e=new Error(data?.error||tr('服务暂时不可用，请重试','Service unavailable. Please retry.'));
+      const e=new Error(data?.error||'市政厅这会儿联系不上，稍后再试');
       e.status=r.status;
       throw e;
     }
     return data;
   }
   catch(e){
-    if(e.name==='AbortError')throw new Error(tr('请求超时，请重试','Request timed out. Please retry.'));
+    if(e.name==='AbortError')throw new Error('等太久了，这次没赶上，再试一次');
     throw e;
   }
   finally{
@@ -137,13 +131,13 @@ export function toast(message,error=false){
   clearTimeout(toast.timer);
   toast.timer=setTimeout(()=>el.remove(),5000);
 }
-export const empty=(message=tr('暂无记录','No records yet'))=>`<div class="empty"><span aria-hidden="true">◇</span><p>${esc(message)}</p></div>`;
+export const empty=(message='这里还空着')=>`<div class="empty"><span aria-hidden="true">◇</span><p>${esc(message)}</p></div>`;
 export async function region(el,load,render){
   if(!el)return;
   const token=Symbol();
   el._load=token;
   el.setAttribute('aria-busy','true');
-  el.innerHTML=`<p class="loading" role="status">${tr('正在加载…','Loading…')}</p>`;
+  el.innerHTML=`<p class="loading" role="status">${'正在取…'}</p>`;
   try{
     const d=await load();
     if(el._load!==token||!el.isConnected)return;
@@ -152,7 +146,7 @@ export async function region(el,load,render){
   }
   catch(e){
     if(el._load!==token||!el.isConnected)return;
-    el.innerHTML=`<div class="empty error" role="alert"><p>${esc(e.message)}</p><button type="button" data-retry>${tr('重新加载','Retry')}</button></div>`;
+    el.innerHTML=`<div class="empty error" role="alert"><p>${esc(e.message)}</p><button type="button" data-retry>${'再试一次'}</button></div>`;
     $('[data-retry]',el).onclick=()=>region(el,load,render);
   }
   finally{
@@ -164,7 +158,7 @@ export async function action(button,fn){
   const original=button?.textContent;
   if(button){
     button.disabled=true;
-    button.textContent=tr('处理中…','Working…');
+    button.textContent='正在办…';
   }
   try{
     await fn();
@@ -181,10 +175,10 @@ export async function action(button,fn){
 }
 export function optionLabel(value){
   const labels={
-    pending:['待审核','Pending'],active:['已激活','Active'],rejected:['未通过','Rejected'],approved:['已批准','Approved'],confirmed:['已确认','Confirmed'],completed:['已完成','Completed'],cancelled:['已取消','Cancelled'],passed:['已通过','Passed'],failed:['未通过','Failed'],open:['待处理','Open'],in_progress:['处理中','In progress'],resolved:['已解决','Resolved'],closed:['已关闭','Closed'],low:['低','Low'],normal:['普通','Normal'],high:['高','High'],urgent:['紧急','Urgent'],written:['笔试','Written exam'],road:['路考','Road test'],upgrade:['升级考试','Upgrade test'],choice:['单选题','Single choice'],multi:['多选题','Multiple choice'],judge:['判断题','True / false'],admin:['管理员','Administrator'],super:['超级管理员','Super administrator']
+    pending:'排队中',active:'在用',rejected:'没通过',approved:'批了',confirmed:'定下了',completed:'办完了',cancelled:'撤了',passed:'考过了',failed:'没考过',open:'待受理',in_progress:'在办',resolved:'有结果了',closed:'结案',low:'不急',normal:'一般',high:'要紧',urgent:'十万火急',written:'笔试',road:'路考',upgrade:'换证考',choice:'单选',multi:'多选',judge:'判断',admin:'管理员',super:'超管'
   }
   ;
-  return labels[value]?tr(...labels[value]):value;
+  return labels[value]||value;
 }
 export function ticketBody(value){
   let data;
@@ -196,31 +190,31 @@ export function ticketBody(value){
   }
   if(!data||Array.isArray(data)||typeof data!=='object')return text(value);
   const labels={
-    name:['姓名','Name'],contact:['联系方式','Contact'],room_name:['房型','Room'],in_date:['入住','Check-in'],out_date:['退房','Check-out'],nights:['晚数','Nights'],persons:['入住人数','Guests'],breakfast:['早餐','Breakfast'],session:['场次','Session'],exam_session:['考试场次','Exam session'],exam_type:['考试','Exam'],exam_date:['考试日期','Exam date'],car:['车型','Vehicle'],license:['驾照','License'],note:['备注','Notes']
+    name:'姓名',contact:'联系方式',room_name:'房型',in_date:'入住',out_date:'退房',nights:'晚数',persons:'入住人数',breakfast:'早餐',session:'场次',exam_session:'考试场次',exam_type:'考试',exam_date:'考试日期',car:'车型',license:'驾照',note:'备注'
   }
   ;
-  return Object.entries(data).filter(([key,v])=>Object.prototype.hasOwnProperty.call(labels,key)&&v!==null&&v!=='').map(([key,v])=>`<p><b>${tr(...labels[key])}：</b>${text(key==='breakfast'?tr(v?'含':'不含',v?'Included':'Not included'):optionLabel(v))}</p>`).join('')||text(tr('详情请查看对应业务记录','See the related application for details'));
+  return Object.entries(data).filter(([key,v])=>Object.prototype.hasOwnProperty.call(labels,key)&&v!==null&&v!=='').map(([key,v])=>`<p><b>${labels[key]}：</b>${text(key==='breakfast'?v?'含':'不含':optionLabel(v))}</p>`).join('')||text('详情请查看对应业务记录');
 }
 export function field(name,label,type='text',value='',opts={}){return formField(name,label,type,value,{...opts,optionLabel});}
-export function modal(...args){return openDialog({$,$$,esc,tr},...args);}
+export function modal(...args){return openDialog({$,$$,esc},...args);}
 export async function requirePlayer(){
   await state.authPending;
   if(!state.session?.player){
     await login();
     await session();
-    if(!state.session?.player)throw new Error(tr('请先登录市民账号','Please sign in as a citizen'));
+    if(!state.session?.player)throw new Error('请先登录市民账号');
   }
   return state.session.player;
 }
 export function login(register=false,target='player',options={}){
   return new Promise(resolve=>{
-    const dialog=modal(target==='hotel_owner'?tr('酒店老板登录','Hotel owner sign in'):tr(register?'市民注册':'登录灯光市',register?'Join Light City':'Sign in'),field('username',tr('游戏 ID','Game ID'))+(register?field('email',tr('邮箱','Email'),'email'):'')+field('password',tr('密码','Password'),'password')+`<div class="wide actions">${target==='player'&&!options.hideRegistration?`<button type="button" id="auth-switch">${tr(register?'已有账号？登录':'没有账号？注册',register?'Already registered?':'Create account')}</button>`:''}${register||target==='hotel_owner'?'':`<button type="button" id="auth-passkey">${tr('使用通行密钥','Use passkey')}</button>`}</div>`,{
-      label:tr(register?'提交注册':'登录',register?'Register':'Sign in'),submit:async d=>{
+    const dialog=modal(target==='hotel_owner'?'客栈老板入口':register?'申请成为市民':'进入灯光市',field('username','游戏 ID')+(register?field('email','邮箱','email'):'')+field('password','密码','password')+`<div class="wide actions">${target==='player'&&!options.hideRegistration?`<button type="button" id="auth-switch">${register?'已有账号，直接登录':'还没账号，去登记'}</button>`:''}${register||target==='hotel_owner'?'':`<button type="button" id="auth-passkey">用通行密钥登录</button>`}</div>`,{
+      label:register?'提交申请':'进入',submit:async d=>{
         await post(register?'/api/register':'/api/login',{
           ...d,target
         }
-        );if(register)toast(tr('注册申请已提交，等待审核','Registration submitted for approval'));else {
-          await session();renderAccount();toast(tr('登录成功','Signed in'));
+        );if(register)toast('申请已递交，等市政厅看过就放行');else {
+          await session();renderAccount();toast('欢迎回来');
         }
       }
     }
@@ -240,17 +234,17 @@ export function login(register=false,target='player',options={}){
   );
 }
 function navigationMarkup(){
- const links=[['/','首页','Home'],['/hotel.html','酒店','Hotel'],['/map.html','地图','Map'],['/affairs.html','我的事务','My affairs'],['/messages.html','消息','Messages']];
- if(canSeeMunicipalLink(state.session))links.push(['/admin.html','市政后台','Admin']);
- if(canSeeHotelOwnerLink(state.session))links.push(['/hotel-owner.html','我的酒店','My hotel']);
- return links.map(([href,zh,en])=>`<a href="${href}" ${location.pathname.replace(/\.html$/,'').replace(/\/$/,'').replace('/admin-v37','/admin')===href.replace(/\.html$/,'').replace(/\/$/,'')?'aria-current="page"':''}>${tr(zh,en)}</a>`).join('');
+ const links=[['/','市政厅'],['/hotel.html','树上酒店'],['/map.html','城市地图'],['/affairs.html','我的事务'],['/messages.html','消息中心']];
+ if(canSeeMunicipalLink(state.session))links.push(['/admin.html','市政后台']);
+ if(canSeeHotelOwnerLink(state.session))links.push(['/hotel-owner.html','我的客栈']);
+ return links.map(([href,zh])=>`<a href="${href}" ${location.pathname.replace(/\.html$/,'').replace(/\/$/,'').replace('/admin-v37','/admin')===href.replace(/\.html$/,'').replace(/\/$/,'')?'aria-current="page"':''}>${zh}</a>`).join('');
 }
 export function renderAccount(){
  const navigation=$('#navigation');if(navigation)navigation.innerHTML=navigationMarkup();
   const slot=$('#account');
   if(!slot)return;
   const p=state.session?.player,a=state.session?.admin||state.session?.user;
-  slot.innerHTML=state.session?`${p?`<a href="/profile.html">👤 ${esc(p.username)}</a><span class="balance">💎 ${Number(p.emeralds)||0}</span>`:`<span>${esc(a?.username)}</span>`}<button id="logout">${tr('退出','Sign out')}</button>`:`<button id="login" class="primary">${tr('市民登录','Sign in')}</button>`;
+  slot.innerHTML=state.session?`${p?`<a href="/profile.html">👤 ${esc(p.username)}</a><span class="balance">💎 ${Number(p.emeralds)||0}</span>`:`<span>${esc(a?.username)}</span>`}<button id="logout">离开</button>`:`<button id="login" class="primary">我是市民</button>`;
   const contact=$('#contact-form');
   if(p&&contact){
     for(const [key,val] of [['name',p.username],['contact',p.email]]){
@@ -265,33 +259,24 @@ export function renderAccount(){
   ));
 }
 export function shell(){
-  document.documentElement.lang=state.language;
+  document.documentElement.lang='zh-CN';
   document.documentElement.style.colorScheme='light';
-  $('#header').innerHTML=`<div class="header-inner"><a class="brand" href="/"><span class="grass-block" aria-hidden="true"></span><span><strong>${tr('灯光市人民政府','Light City Hall')}</strong><small>LIGHT CITY · EST. 2023</small></span></a><button id="menu" aria-expanded="false" aria-controls="navigation">☰ ${tr('菜单','Menu')}</button><div id="account"></div><button id="language">${state.language==='en'?'中文':'EN'}</button></div>`;
-  mountWorkspace(navigationMarkup(),tr('主要导航','Main navigation'));
+  $('#header').innerHTML=`<div class="header-inner"><a class="brand" href="/"><span class="grass-block" aria-hidden="true"></span><span><strong>灯光市人民政府</strong><small>LIGHT CITY · EST. 2023</small></span></a><button id="menu" aria-expanded="false" aria-controls="navigation">☰ 菜单</button><div id="account"></div></div>`;
+  mountWorkspace(navigationMarkup(),'主要导航');
   $('#menu').onclick=()=>{
     const open=$('#navigation').classList.toggle('open');document.querySelector('.site-rail').classList.toggle('is-open',open);
     $('#menu').setAttribute('aria-expanded',open);
   }
   ;
-  $('#language').onclick=()=>{
-    try{
-      localStorage.setItem('lc_lang',state.language==='en'?'zh-CN':'en');
-    }
-    catch{
-    }
-    location.reload();
-  }
-  ;
   renderAccount();
-  $('#footer').innerHTML=`<div><b>${tr('灯光市 · 由市民共建','Light City · Built by citizens')}</b><p>${tr('Minecraft 城市作品展示，与 Mojang / Microsoft 无关。','A Minecraft city project, not affiliated with Mojang / Microsoft.')}</p></div><a href="/#contact">${tr('联系市政厅','Contact City Hall')} ↗</a>`;
+  $('#footer').innerHTML=`<div><b>灯光市 · 由市民共建</b><p>Minecraft 城市作品展示，与 Mojang / Microsoft 无关。</p></div><a href="/#contact">联系市政厅 ↗</a>`;
 }
-export function title(zh,en){
-  document.title=tr(zh,en)+' · '+tr('灯光市','Light City');
-  return pageHeading(tr(zh,en),'LIGHT CITY / '+en.toUpperCase());
+export function title(zh){
+  document.title=zh+' · '+'灯光市';
+  return pageHeading(zh,'LIGHT CITY');
 }
 export async function download(name,content,type='text/plain'){
-  try{await post('/api/ui-events',{events:[{action:'export',page:location.pathname,element:'download',label:name}]});}catch(e){toast(tr('无法记录导出操作，请重试','Could not record export. Please retry.'),true);return;}
+  try{await post('/api/ui-events',{events:[{action:'export',page:location.pathname,element:'download',label:name}]});}catch(e){toast('这次导出没能记入台账，请重试',true);return;}
   const url=URL.createObjectURL(new Blob([content],{
     type
   }
@@ -303,7 +288,7 @@ export async function download(name,content,type='text/plain'){
   setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 export async function csv(name,rows){
-  if(!rows.length)return toast(tr('暂无可导出记录','No records to export'));
+  if(!rows.length)return toast('没东西可以导出');
   const keys=Object.keys(rows[0]);
   const cell=v=>'"'+String(v??'').replace(/^[=+@-]/,"'$&").replace(/"/g,'""')+'"';
   await download(name,'\ufeff'+[keys,...rows.map(r=>keys.map(k=>r[k]))].map(r=>r.map(cell).join(',')).join('\r\n'),'text/csv;charset=utf-8');

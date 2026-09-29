@@ -43,7 +43,7 @@
  *     collapsing the existing offset).
  *
  *   flat controls (.admin-nav button, .tabs button, #navigation a,
- *                  #menu, #language, .gallery-button)
+ *                  #menu, .gallery-button)
  *     resting shadow is 0; an outer 1px shadow on press would look MORE
  *     raised, the opposite of the requested push-down feel. These use an
  *     inset shadow on press instead, so the surface visibly sinks inward.
@@ -69,7 +69,6 @@
 .admin-nav button,
 .tabs button,
 #menu,
-#language,
 .gallery-button,
 .upload-drop,
 .modal details > summary {
@@ -102,7 +101,6 @@ input[type="reset"]:not(:disabled):not([aria-disabled="true"]):active,
 [role="button"]:not(:disabled):not([aria-disabled="true"]):active,
 summary:not(:disabled):not([aria-disabled="true"]):active,
 #menu:not(:disabled):not([aria-disabled="true"]):active,
-#language:not(:disabled):not([aria-disabled="true"]):active,
 #navigation a:not(:disabled):not([aria-disabled="true"]):active,
 .tabs button:not(:disabled):not([aria-disabled="true"]):active,
 .admin-nav button:not(:disabled):not([aria-disabled="true"]):active,
@@ -119,7 +117,7 @@ summary:not(:disabled):not([aria-disabled="true"]):active,
      cut so reduced-motion users still get the same on-press visual.   */
   button, .button, [role="button"],
   input[type="button"], input[type="submit"], input[type="reset"],
-  summary, #menu, #language, #navigation a,
+  summary, #menu, #navigation a,
   .tabs button, .admin-nav button,
   .modal-head [data-close], .stat {
     transition-duration: 0.01ms !important;

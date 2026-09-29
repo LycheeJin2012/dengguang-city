@@ -6,7 +6,7 @@
 
 import { attachAiEditor } from '../../ai-editor.js';
 import { adminContext } from '../state.js';
-import { $, post, region, field, modal, date, tr, text } from '../../core.js';
+import {$,post,region,field,modal,date,text} from '../../core.js'
 import { table, toolbar, bindList, attachExport } from '../shared.js';
 
 export async function render(loadActive) {
@@ -25,22 +25,22 @@ export async function render(loadActive) {
         table(
           box,
           [
-            ['from_username', tr('发送方', 'From')],
-            ['to_username', tr('接收方', 'To')],
-            ['last_content', tr('最近消息', 'Last message')],
+            ['from_username', '谁发的'],
+            ['to_username', '发给谁'],
+            ['last_content', '最近一条'],
           ],
           d.conversations,
           [
             {
               key: 'open',
-              label: tr('查看与回复', 'View & reply'),
+              label: '看看再回',
               run: async (r) => {
                 const d = await post('/api/init?action=admin-dm-thread', {
                   from_player_id: r.from_player_id,
                   to_player_id: r.to_player_id,
                 });
                 const dialog = modal(
-                  tr('私信监管', 'DM moderation'),
+                  '私信巡查',
                   `<div class="wide">${d.messages
                     .map(
                       (m) =>
@@ -48,7 +48,7 @@ export async function render(loadActive) {
                           m.created_at
                         )}</small><p>${text(m.content)}</p></div>`
                     )
-                    .join('')}</div>` + field('content', tr('管理员回复', 'Admin reply'), 'textarea'),
+                    .join('')}</div>` + field('content', '管理员回的', 'textarea'),
                   {
                     wide: true,
                     submit: async (v) => {

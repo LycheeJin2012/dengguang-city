@@ -6,28 +6,14 @@
  */
 
 import { viewCitizenTicket } from '../../ticket-form.js';
-import {
-  $,
-  $$,
-  api,
-  region,
-  tr,
-  esc,
-  date,
-  status,
-  empty,
-  title,
-  state,
-  login,
-  toast,
-} from '../../core.js';
+import {$,$$,api,region,esc,date,status,empty,title,state,login,toast} from '../../core.js'
 
 export async function render(el) {
-  el.innerHTML = title('我的事务', 'My affairs');
+  el.innerHTML = title('我的事务');
   if (!state.session?.player) {
     el.insertAdjacentHTML(
       'beforeend',
-      '<section class="panel"><p>登录后查看自己的办理进度与提醒。</p><button id="affairs-login">市民登录</button></section>'
+      '<section class="panel"><p>登录之后，你办过或在办的事都会汇到这一页。</p><button id="affairs-login">我是市民</button></section>'
     );
     $('#affairs-login', el).onclick = async () => {
       await login();
@@ -37,15 +23,15 @@ export async function render(el) {
   }
   el.insertAdjacentHTML(
     'beforeend',
-    `<div class="affairs-workspace"><aside class="affairs-assistant panel"><div class="row-head"><h2>灯灯 · 个人小助手</h2><button id="affairs-refresh">刷新</button></div><p>为你汇总最近事务与当前提醒。数据在打开和刷新时更新。</p><div id="affairs-reminders" role="status"></div><div class="actions"><a class="button primary" href="/messages.html?to=${encodeURIComponent(
+    `<div class="affairs-workspace"><aside class="affairs-assistant panel"><div class="row-head"><h2>灯灯 · 你的小帮手</h2><button id="affairs-refresh">再看一次</button></div><p>最近在办的事和当下的提醒都摆在这儿。数据只在打开页面和点「再看一次」时刷新，市政厅不后台替你盯着。</p><div id="affairs-reminders" role="status"></div><div class="actions"><a class="button primary" href="/messages.html?to=${encodeURIComponent(
       '灯灯客服'
-    )}">问灯灯我的近况</a><a class="button" href="/profile.html#security">账号与登录管理</a><a class="button" href="/map.html">城市地图与施工</a></div></aside><div class="affairs-records"><div class="tabs" id="affairs-filters">${[
+    )}">问问灯灯</a><a class="button" href="/profile.html#security">账号与登录</a><a class="button" href="/map.html">城市地图</a></div></aside><div class="affairs-records"><div class="tabs" id="affairs-filters">${[
       ['all', '全部'],
-      ['attention', '需要我关注'],
+      ['attention', '等我处理'],
       ['ticket', '工单'],
       ['booking', '酒店'],
       ['exam', '考试'],
-      ['support', '人工客服'],
+      ['support', '人工'],
     ]
       .map(([k, l]) => `<button data-filter="${k}" aria-selected="${k === 'all'}">${l}</button>`)
       .join('')}</div><section id="affairs-items" class="section"></section></div></div>`
@@ -56,21 +42,21 @@ export async function render(el) {
     ticket: '工单',
     booking: '酒店',
     exam: '考试',
-    license: '驾照申请',
-    appeal: '成绩复核',
+    license: '驾照',
+    appeal: '复核',
     support: '客服',
   };
   function affairStatus(r) {
     const labels =
       r.kind === 'support'
-        ? { queued: '等待人工接入', active: '人工客服已接入', ended: '人工会话已结束' }
+        ? { queued: '等人接', active: '已接入', ended: '聊完了' }
         : r.kind === 'exam'
         ? {
-            generating: '生成试卷中',
-            in_progress: '作答中',
-            grading: '批改中',
-            needs_review: '简答待复核',
-            graded: '已批改',
+            generating: '正在出卷',
+            in_progress: '正在答',
+            grading: '正在批',
+            needs_review: '等复核',
+            graded: '批好了',
             abandoned: '已放弃',
           }
         : {};
@@ -88,19 +74,19 @@ export async function render(el) {
               r
             )}</div><small>${labels[r.kind]} · ${date(r.created_at)}</small>${
               r.in_date
-                ? `<p>入住 ${esc(r.in_date)} — 离店 ${esc(r.out_date)}</p>`
+                ? `<p>住进去 ${esc(r.in_date)} — 退房 ${esc(r.out_date)}</p>`
                 : ''
             }${
               r.kind === 'exam'
-                ? `<p>${r.score === null ? '总分尚未确定' : `成绩 ${Number(r.score)} 分`}</p>`
+                ? `<p>${r.score === null ? '分数还没出来' : `得分 ${Number(r.score)} 分`}</p>`
                 : ''
             }<div class="actions">${
               r.kind === 'ticket'
-                ? `<button data-ticket="${esc(r.id)}">查看详情 / 补充与追问</button>`
-                : `<a class="button" href="${esc(r.href)}">查看 / 继续办理</a>`
+                ? `<button data-ticket="${esc(r.id)}">查看与补充</button>`
+                : `<a class="button" href="${esc(r.href)}">接着办</a>`
             }</div></article>`
         )
-        .join('') || empty('当前分类没有近期记录');
+        .join('') || empty('这一类暂时没有记录。换个分类，或者去工单里新交一单。');
     $$('[data-ticket]', el).forEach((b) =>
       b.onclick = () =>
         viewCitizenTicket(b.dataset.ticket, { onChanged: load }).catch((e) =>
@@ -113,9 +99,9 @@ export async function render(el) {
       data = d;
       $('#affairs-reminders', el).innerHTML = `<p>有 <b>${
         d.unread_count
-      }</b> 条未读通知、<b>${d.items.filter((r) => r.attention).length}</b> 项值得关注的近期事务。<a href="/messages.html?tab=notifications">查看消息</a></p><small>更新于 ${date(
+      }</b> 条没看的通知、<b>${d.items.filter((r) => r.attention).length}</b> 项近期事务在等你。<a href="/messages.html?tab=notifications">看消息</a></p><small>数据截至 ${date(
         d.as_of
-      )} · 显示各类最近记录，完整历史可在相应页面查看。</small>`;
+      )} · 只摆各类最近几件，完整历史去对应那页翻。</small>`;
       draw();
     });
   }
