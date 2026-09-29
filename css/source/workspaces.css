@@ -1,34 +1,82 @@
 /* Page composition: a city navigation rail and task-specific workspaces. */
 html,body{width:100%;min-width:0}
 body{min-height:100vh;display:flex;flex-direction:column}
-#header{background:var(--paper);border-bottom:3px solid var(--line);box-shadow:0 4px var(--gold);z-index:5}
-.header-inner{max-width:1520px;margin:auto;display:flex;align-items:center;gap:18px;padding:16px 28px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:12px;color:var(--green);text-decoration:none;min-width:0}
+/* v87：页头改成实心绿带 + 底部金色高光，像游戏主菜单的顶栏。
+   之前是 --paper 浅色 + 一条金色下边，整片页头没有任何品牌存在感，
+   白白占掉首屏 90px。实心绿能把品牌色锚在最显眼的位置。 */
+#header{background:var(--green);border-bottom:4px solid var(--line);box-shadow:0 4px 0 var(--gold);z-index:5}
+.header-inner{max-width:1520px;margin:auto;display:flex;align-items:center;gap:18px;padding:14px 28px;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:12px;color:var(--paper);text-decoration:none;min-width:0}
 .brand strong{display:block;font-family:var(--font-pixel);font-size:1.25rem;letter-spacing:.02em}
-.brand small{font: .65rem var(--font-mono);color:var(--muted);letter-spacing:.05em}
-.grass-block{width:40px;height:40px;flex:none;border:3px solid var(--line);background:linear-gradient(#689329 0 35%,#8d633d 35%);box-shadow:inset 7px 0 #0001;overflow:hidden}
-.grass-block:after{content:'';display:block;width:6px;height:6px;margin:5px;background:#b4c95a;box-shadow:14px 0 #4b7020,0 18px #65462f,15px 16px #65462f}
+/* v87：页头现在是实心绿底，副标题原本是 --muted 深灰，压在绿上会糊成一团，
+   改成半透明白。grass-block 的泥土色在绿底上也不够跳，加一圈金色描边，
+   像游戏里的头像位。 */
+.brand small{font: .65rem var(--font-mono);color:#c9e0a4;letter-spacing:.05em}
+.grass-block{width:40px;height:40px;flex:none;border:3px solid var(--line);outline:2px solid var(--gold);background:linear-gradient(#7aa62e 0 35%,#8d633d 35%);box-shadow:inset 7px 0 #0001;overflow:hidden}
+.grass-block:after{content:'';display:block;width:6px;height:6px;margin:5px;background:#c6dc68;box-shadow:14px 0 #4b7020,0 18px #65462f,15px 16px #65462f}
 #account{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-left:auto;min-width:0}
 #account a{overflow-wrap:anywhere}.balance{white-space:nowrap}
+/* v87：页头转成实心绿底后，里面的控件要反色，否则「我是市民」绿底绿字
+   直接消失。页头内的按钮一律改成纸面 + 黑边，退出/账号文字改浅色。 */
+#account .balance{color:#f4eeda}#account>span{color:var(--paper)}
+#header button,#header a.button{background:var(--paper);color:var(--ink);border-color:var(--line);box-shadow:2px 2px 0 var(--line)}
+#header button:hover,#header a.button:hover{background:var(--gold-soft)}
+#header .primary{background:var(--gold);color:var(--ink)}
+#header .primary:hover{background:var(--gold-soft)}
 #menu{display:none}
 .app-workspace{width:100%;max-width:1520px;display:grid;grid-template-columns:minmax(0,1fr);margin:0 auto;flex:1}
-.site-rail{max-width:1520px;margin:auto;background:var(--paper);padding:8px 28px;border-top:1px solid var(--line-soft);min-width:0}
+/* v87：site-rail 是 header 的子元素，也落在绿带内。给它一层更深的绿
+   + 顶部黑线，和上方品牌栏拉开层次；导航文字反白。 */
+.site-rail{max-width:1520px;margin:auto;background:var(--green-deep);padding:6px 28px;border-top:3px solid var(--line);min-width:0}
 #navigation{display:flex;flex-direction:row;flex-wrap:wrap;gap:5px}
-/* v86：导航项是界面构件，用像素字体；选中态改成实心绿底 + 金色左标，
-   像游戏菜单的高亮条，而不是普通网页的下划线选中。 */
-#navigation a{display:block;padding:12px 14px;color:var(--ink);font-family:var(--font-pixel);font-size:1rem;letter-spacing:.04em;text-decoration:none;border-left:4px solid transparent}
-#navigation a[aria-current=page]{background:var(--green);color:var(--paper);border-left-color:var(--gold)}
-#navigation a:hover{background:var(--leaf-soft);color:var(--green)}
+/* v87：导航项是界面构件，用像素字体；整条导航栏现在在深绿底上，
+   文字反白，当前页用金色底 + 黑字做高亮（绿底绿字会看不见）。 */
+#navigation a{display:block;padding:11px 16px;color:var(--paper);font-family:var(--font-pixel);font-size:1rem;letter-spacing:.04em;text-decoration:none;border-left:4px solid transparent}
+#navigation a[aria-current=page]{background:var(--gold);color:var(--ink);border-left-color:var(--paper)}
+#navigation a:hover{background:rgba(255,253,246,.14);color:var(--paper)}
+#navigation a[aria-current=page]:hover{background:var(--gold-soft);color:var(--ink)}
 main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
 #footer{width:100%;max-width:1520px;margin:auto;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;border-top:1px solid var(--line-soft);background:var(--paper);padding:24px 28px;color:var(--muted)}
 #footer p{font-size:.85rem;margin:6px 0}#footer b{color:var(--green)}
-.city-welcome{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:0;align-items:stretch;background:var(--paper);border:3px solid var(--line);box-shadow:5px 5px var(--line);margin-bottom:32px}
-.welcome-copy{padding:36px;align-self:center}.welcome-copy h1{font-size:clamp(2.7rem,4.5vw,4.5rem);line-height:1.1;margin:12px 0 22px;color:var(--green)}
-.welcome-copy>p{max-width:42ch}.city-welcome>img{height:100%;min-height:340px;width:100%;object-fit:cover;border-left:3px solid var(--line)}
+/* v87：首屏 hero 重做成实心绿面板。
+   之前是「白底卡 + 巨大留白 + 绿色标题」，align-self:center 让整块文字浮在
+   一片空白中间，右侧配图又只有 1fr，视觉重心散在两块互不支撑的面积上，
+   首屏完全没有主菜单那种「一锤定音」的分量。现在左侧整块压成品牌绿，
+   右下角塞一枚金色像素徽标，像游戏主菜单的标题画面。 */
+.city-welcome{position:relative;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:0;align-items:stretch;background:var(--green);border:3px solid var(--line);box-shadow:6px 6px 0 var(--line);margin-bottom:34px;overflow:hidden}
+.welcome-copy{position:relative;padding:44px 40px 40px;display:flex;flex-direction:column;justify-content:center;gap:0;min-width:0}
+/* 绿底上叠一层极淡的点阵纹理（4px 网格 + 8px 错位），只在大面积平色上
+   给一点颗粒，避免纯色块显得死板；不影响文字对比度。 */
+.welcome-copy:before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.14;background-image:radial-gradient(var(--paper) 1px,transparent 1px);background-size:6px 6px}
+.welcome-copy>*{position:relative;z-index:1}
+/* eyebrow 做成金色胶囊徽标：黑边 + 金底，跟绿面拉开层级。 */
+.welcome-copy .eyebrow{align-self:flex-start;margin:0 0 14px;padding:6px 12px;background:var(--gold);color:var(--ink);border:2px solid var(--line);box-shadow:3px 3px 0 var(--line);font-family:var(--font-pixel);font-size:.7rem;letter-spacing:.12em}
+.welcome-copy h1{font-family:var(--font-pixel);font-size:clamp(2.4rem,3.9vw,3.9rem);line-height:1.16;margin:0 0 18px;color:var(--paper);letter-spacing:.04em;text-shadow:4px 4px 0 #1d3409}
+.welcome-copy>p{max-width:40ch;margin:0 0 26px;color:#dbe8bd;font-size:1.02rem;line-height:1.75}
+.welcome-copy .actions{gap:12px;margin:0}
+.welcome-copy .actions .button,.welcome-copy .actions button{font-family:var(--font-pixel);font-size:.9rem;padding:.8rem 1.35rem;box-shadow:4px 4px 0 var(--line);border:3px solid var(--line)}
+/* 主按钮金色，次按钮纸面；绿面上两个都要有黑边才压得住。 */
+.welcome-copy .actions .primary{background:var(--gold);color:var(--ink)}
+.welcome-copy .actions .primary:hover{background:var(--gold-soft)}
+.welcome-copy .actions .button:not(.primary),.welcome-copy .actions button:not(.primary){background:var(--paper);color:var(--ink)}
+.welcome-copy .actions .button:not(.primary):hover,.welcome-copy .actions button:not(.primary):hover{background:var(--paper-warm)}
+/* 绿面左下角做一条抖动渐变（checkerboard 逐级变淡），是像素美术里
+   表示「渐隐」的标准手法。原先这里放的是一枚金色方块徽标，截图中看着
+   像渲染残留而不是设计元素，已去掉。 */
+.welcome-copy:after{content:'';position:absolute;left:0;bottom:0;width:132px;height:88px;pointer-events:none;opacity:.5;background:repeating-conic-gradient(#ffffff 0% 25%,transparent 0% 50%) 0 0/8px 8px;mask-image:linear-gradient(160deg,transparent 42%,#000 100%);-webkit-mask-image:linear-gradient(160deg,transparent 42%,#000 100%)}
+.city-welcome>img{height:100%;min-height:360px;width:100%;object-fit:cover;border-left:3px solid var(--line)}
 .home-workspace{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:28px;align-items:start}
 .home-primary>.section:first-child{margin-top:0}.home-data{position:sticky;top:20px;min-width:0}
 .home-data .stats{grid-template-columns:repeat(2,minmax(0,1fr));margin:0;gap:10px}.home-data .stat{border:var(--border-thin);box-shadow:2px 2px var(--line);padding:16px 12px;background:var(--paper)}.home-data .stat strong{font-size:1.8rem}
-.bulletin-list{display:grid;gap:14px}.bulletin{overflow-wrap:anywhere;padding:20px;border-left:4px solid var(--green);background:var(--paper);border-bottom:1px solid var(--line-soft)}.bulletin h3{margin:8px 0}.bulletin img{width:100%;max-height:240px;object-fit:cover}
+/* v87：公告卡改成和其它卡片同一套语言（3px 黑边 + 实心阴影）。
+   之前是「白底 + 绿色左边框 + 底部一条细线」的列表样式，在浅米底上几乎
+   立不起来，跟上方实心绿的 hero 一比整个公告区像没做完。线上公告正文
+   普遍偏长（火车站那条 100 多字还带落款），卡片必须自己撑住。 */
+.bulletin-list{display:grid;gap:16px}
+.bulletin{overflow-wrap:anywhere;padding:20px 22px;background:var(--paper);border:var(--border);box-shadow:var(--shadow);border-left:6px solid var(--green)}
+.bulletin h3{margin:8px 0 10px;font-size:1.2rem;color:var(--ink)}
+.bulletin .card-content>p{margin:0;line-height:1.8}
+.bulletin img{width:100%;max-height:240px;object-fit:cover;margin-bottom:14px;border:var(--border-thin);display:block}
 .home-services{display:grid;grid-template-columns:minmax(0,1fr);gap:26px}.home-services>.section{margin-top:0}.home-services .cards{grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr))}
 .home-services .card{display:grid;grid-template-columns:minmax(0,1fr);box-shadow:none}
 .profile-layout{display:grid;grid-template-columns:270px minmax(0,1fr);gap:24px;align-items:start}.profile-summary{position:sticky;top:20px}.profile-summary .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.profile-summary .stat{padding:10px;box-shadow:none}.profile-summary .stat strong{font-size:1.8rem}.profile-summary .actions{display:flex;flex-direction:column;align-items:stretch}.profile-workspace{min-width:0}

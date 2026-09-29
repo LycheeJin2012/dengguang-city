@@ -3,25 +3,30 @@
   color-scheme: light;
 
   /* ---------------------------------------------------------------------
-     v86 色阶重做。
-     旧版 --paper(#fff8dd) 直接铺在 --ground(#f1e6bd) 上，明度差只有 6%，
-     所有卡片和页面糊成一片米黄，全站没有层次可言 —— 这是「不好看」的
-     主要来源，不是配色难看，是**没有层级**。
-     现在把表面拆成明确的四级明度：ground < sunken < paper-2 < paper，
-     每级都保证肉眼可辨的落差，阴影才立得起来。                        */
-  --ground: #c9b273;        /* 页面底：深沙色 */
-  --sunken: #dcc98d;        /* 凹陷面：输入框、槽位、代码块 */
-  --paper-2: #f2e7bb;       /* 次级表面：侧栏、表头、hover 底 */
-  --paper: #fffbe6;         /* 主表面：卡片、面板 */
-  --paper-warm: #f7e9a8;     /* 暖色高亮：按压态、选中态 */
+     v87 色阶重做（第二次）。
+     v86 把底色压成 #c9b273 深土黄，想用「暗底衬亮卡」制造层次，结果
+     整页蒙了一层土色滤镜，像旧黄历而不是像素游戏 —— 层次有了，好看没有。
+     现在改回**浅底**：靠「亮纸面 + 纯黑硬边 + 实心阴影」造层次，而不是
+     靠底色深浅。底色只做安静的浅暖灰，卡片用接近纯白的黑边面板，
+     视觉重心交给绿色实心块和金色点缀。
+       ground  浅暖灰  页面底，最不显眼
+       sunken  略深    凹陷面（输入框）
+       paper-2 米白    次级表面（侧栏、表头）
+       paper   近纯白  卡片、面板
+                                                                   */
+  --ground: #e9e3ce;
+  --sunken: #ddd5bb;
+  --paper-2: #f4eeda;
+  --paper: #fffdf6;
+  --paper-warm: #fbeeb4;     /* 暖色高亮：按压态、选中态 */
 
   --ink: #14160e;           /* 近黑，正文 */
   --ink-soft: #3f3d2a;      /* 次级文字 */
   --muted: #6a6550;         /* 弱化文字 */
-  --line: #14160e;          /* 所有硬边框 */
-  --line-soft: #7a7256;     /* 虚线、分隔线 */
+  --line: #14160e;          /* 所有硬边框，纯黑，像素风的关键 */
+  --line-soft: #8a8265;     /* 虚线、分隔线 */
 
-  /* Greens (brand) */
+  /* Greens (brand) —— 品牌主色，页头与分区标题用实心块 */
   --green: #4a7a24;
   --green-deep: #2f5216;
   --green-soft: #7aa62e;
@@ -70,15 +75,15 @@
   --motion-slow: 280ms;
 
   /* Typography.
-     v86：中文像素字体登台。--font-pixel 用于标题、导航、按钮、徽章、
-     表单标签、统计数字等所有「界面构件」；--font-body 保留系统栈，
-     只给长段落正文 —— 12px 像素字排一整屏说明文字会非常吃力，
-     界面要像素、正文要能读，这是两件事。
-     --font-num 用 Press Start 2P，统计数字更有游戏 HUD 的味道。      */
+     v87 修正 v86 的一个误判：v86 把 'Fusion Pixel' 放在 --font-body 首位，
+     结果整站正文都用 12px 点阵中文排版，16px 下点阵笔画糊成一片，长段落
+     明显发涩。**像素字体只用在界面构件上**（标题 / 导航 / 按钮 / 徽章 /
+     表单标签 / 统计数字），正文回到系统无衬线。
+     「界面要像素，正文要能读」—— 这两件事不冲突，各走各的字体栈。   */
   --font-pixel: 'Fusion Pixel', 'Press Start 2P', ui-monospace, monospace;
   --font-num: 'Press Start 2P', 'Fusion Pixel', ui-monospace, monospace;
-  --font-body: 'Fusion Pixel', system-ui, -apple-system, 'PingFang SC',
-    'Microsoft YaHei', sans-serif;
+  --font-body: system-ui, -apple-system, 'PingFang SC', 'Microsoft YaHei',
+    'Hiragino Sans GB', sans-serif;
   --font-mono: 'VT323', ui-monospace, 'SFMono-Regular', Menlo, monospace;
 
   /* Spacing scale — 全部 4 的倍数，8 为主节奏，像素栅格不断裂。 */

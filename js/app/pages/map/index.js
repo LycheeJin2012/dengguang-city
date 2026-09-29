@@ -74,6 +74,11 @@ async function mapView(el, manage) {
       maxX = Math.max(...xs),
       minZ = Math.min(...zs),
       maxZ = Math.max(...zs);
+    /* v87：区分「压根没有地点」和「筛选后没匹配上」两种空。
+       线上地图一条地点都没有，原先两处却同时显示「没找到符合条件的地点」和
+       「这里还空着，等超管摆上第一个地点」—— 前者暗示用户筛错了，实际是数据
+       为空，措辞误导；两个空状态叠在一起也重复。现在按 places 总数分流。 */
+    const noPlacesAtAll = places.length === 0;
     $('#map-plot', el).innerHTML =
       rows.length
         ? rows
@@ -90,6 +95,8 @@ async function mapView(el, manage) {
                 }</button>`
             )
             .join('')
+        : noPlacesAtAll
+        ? ''
         : empty('没找到符合条件的地点');
     $('#map-list', el).innerHTML =
       rows
@@ -121,7 +128,10 @@ async function mapView(el, manage) {
                 : ''
             }</div></article>`
         )
-        .join('') || empty('这里还空着，等超管摆上第一个地点');
+        .join('') ||
+      (noPlacesAtAll
+        ? empty('这里还空着，等超管摆上第一个地点')
+        : empty('没找到符合条件的地点，换个筛选条件试试'));
     $$('[data-pin]', el).forEach((b) =>
       b.onclick = () => {
         const card = $('#place-' + b.dataset.pin, el);
