@@ -188,12 +188,12 @@
 .modal-head [data-close]:hover { background: var(--red-soft); color: var(--red); border-color: var(--red); }
 
 /* Toast -----------------------------------------------------------------
-   Apple: short, restrained slide-up. ≤ 8 px, opacity only, no bounce.
-   Centring uses inset + fit-content + auto margins so it does NOT rely on
-   the animated transform. Under prefers-reduced-motion we set
-   `transform: none !important`; if centring depended on `translateX(-50%)`
-   the toast would shift to the left half of the viewport. Centring must
-   survive that override.                                                 */
+   回到像素语言：纸面卡 + 3px 纯黑边 + 4px 实心偏移影，和站内其它卡片同一套。
+   左侧色条从 8px 收到 6px —— 一条提示不需要那么宽的色块，8px 在小屏幕上
+   会吃掉将近三分之一的文字宽度。
+   居中用 inset + fit-content + auto margins，不依赖 transform：reduced
+   motion 下 motion.css 会强制 transform:none，若靠 translateX(-50%) 居中
+   就会把 toast 甩到左半屏。                                                */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -203,16 +203,17 @@
   max-width: calc(100vw - 32px);
   margin-left: auto;
   margin-right: auto;
-  padding: 14px 22px;
+  padding: 13px 20px;
   background: var(--paper);
   border: var(--border);
   box-shadow: var(--shadow);
+  color: var(--ink);
   z-index: 100;
   overflow-wrap: anywhere;
   /* Initial state is visible, animation brings it in. We use 'both' so
      reduced motion (0.01ms) instantly shows the final state.            */
   animation: toast-in var(--motion-base) var(--ease-out) both;
-  border-left: 8px solid var(--green);
+  border-left: 6px solid var(--green);
 }
 .toast.error { border-left-color: var(--red); color: var(--red-deep); }
 @keyframes toast-in {

@@ -762,12 +762,12 @@ input[type="checkbox"] {
 .modal-head [data-close]:hover { background: var(--red-soft); color: var(--red); border-color: var(--red); }
 
 /* Toast -----------------------------------------------------------------
-   Apple: short, restrained slide-up. ≤ 8 px, opacity only, no bounce.
-   Centring uses inset + fit-content + auto margins so it does NOT rely on
-   the animated transform. Under prefers-reduced-motion we set
-   `transform: none !important`; if centring depended on `translateX(-50%)`
-   the toast would shift to the left half of the viewport. Centring must
-   survive that override.                                                 */
+   回到像素语言：纸面卡 + 3px 纯黑边 + 4px 实心偏移影，和站内其它卡片同一套。
+   左侧色条从 8px 收到 6px —— 一条提示不需要那么宽的色块，8px 在小屏幕上
+   会吃掉将近三分之一的文字宽度。
+   居中用 inset + fit-content + auto margins，不依赖 transform：reduced
+   motion 下 motion.css 会强制 transform:none，若靠 translateX(-50%) 居中
+   就会把 toast 甩到左半屏。                                                */
 .toast {
   position: fixed;
   bottom: 24px;
@@ -777,16 +777,17 @@ input[type="checkbox"] {
   max-width: calc(100vw - 32px);
   margin-left: auto;
   margin-right: auto;
-  padding: 14px 22px;
+  padding: 13px 20px;
   background: var(--paper);
   border: var(--border);
   box-shadow: var(--shadow);
+  color: var(--ink);
   z-index: 100;
   overflow-wrap: anywhere;
   /* Initial state is visible, animation brings it in. We use 'both' so
      reduced motion (0.01ms) instantly shows the final state.            */
   animation: toast-in var(--motion-base) var(--ease-out) both;
-  border-left: 8px solid var(--green);
+  border-left: 6px solid var(--green);
 }
 .toast.error { border-left-color: var(--red); color: var(--red-deep); }
 @keyframes toast-in {
@@ -1143,41 +1144,26 @@ main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
 /* 次按钮改成幽灵样式。原先是纸面白底黑字，一块纯白压在绿面上像贴了张
    便签，在整块深绿里格外扎眼；改成透明底 + 金色描边 + 米白字，既保留
    「两个按钮」的层级差，又不会在绿面上开一个白洞。 */
-/* v88：次按钮改毛玻璃。
-   之前是纯透明底 + 金色描边，透明度过高 —— 整个按钮在绿面上几乎没有实体感，
-   看着像一行浮空的字而不是能按下去的东西。改成毛玻璃后有了明确的「面」：
-   半透明白底 + 背景模糊 + 1px 亮边 + 上沿内高光 + 柔和落影，和下方压在配图
-   上的玻璃读数条是同一套材质语言，两个玻璃元素在首屏里成组。
-   投影也从硬偏移换成柔和落影：玻璃的厚度靠光影渐变，硬边偏移是像素语言的
-   专属手法，两种材质不能共用一个投影。 */
-.welcome-lead .actions .button:not(.primary),.welcome-lead .actions button:not(.primary){background:#ffffff24;-webkit-backdrop-filter:blur(10px) saturate(160%);backdrop-filter:blur(10px) saturate(160%);color:var(--paper);border:1px solid #ffffff5c;box-shadow:0 4px 14px #00000047,inset 0 1px 0 #ffffff73}
-.welcome-lead .actions .button:not(.primary):hover,.welcome-lead .actions button:not(.primary):hover{background:#ffffff3d;border-color:#ffffff8f;color:var(--gold-soft)}
-/* v87：城市数据做成压在配图底部的悬浮读数条。
-   v88 改成液态玻璃：这是全站唯一压在照片上的元素，磨砂透明在这里语义成立
-   （像给游戏截图叠了一层系统 UI），而上方绿面板的像素硬边保持不动 —— 玻璃
-   配硬边是两种语言，各管各的区域，混在一起反而谁都不像。
-   玻璃用「熏黑」而不是纯白：照片里既有亮天空也有暗树，纯白玻璃上的文字
-   在亮处会糊掉，压深一点底 + 轻微提亮，金色数字和浅色标签才都稳。 */
+/* 次按钮回到像素语言：深绿实底 + 纸面白字 + 3px 黑边 + 4px 实心偏移影。
+   中间试过纯透明描边（太虚）和毛玻璃（与整站像素语言打架），都撤掉了。
+   底色选 --green-deep 而不是纸白：纸白按钮压在一整块绿面板上像贴了张
+   便签；深绿实底既有实体感，又不会在绿面上开一个白洞。 */
+.welcome-lead .actions .button:not(.primary),.welcome-lead .actions button:not(.primary){background:var(--green-deep);color:var(--paper);border:3px solid var(--line);box-shadow:4px 4px 0 var(--line)}
+.welcome-lead .actions .button:not(.primary):hover,.welcome-lead .actions button:not(.primary):hover{background:var(--green);color:var(--gold-soft)}
+/* v88：城市数据做成压在配图底部的实体读数板。
+   曾经试过液态玻璃（backdrop-filter + 半透明底 + 圆角 + 斜向高光），
+   但整站是「真像素风」，玻璃那一套语言和周围的 3px 硬边、实心偏移影
+   放在一起是两个设计系统在打架，已全部撤回。这里改回像素语言：近白
+   纸面 + 3px 纯黑边 + 5px 实心偏移影，和站内其它卡片完全同一套。 */
 .welcome-figure{position:relative;min-width:0;border-left:3px solid var(--line)}
 .welcome-figure>img{display:block;width:100%;height:100%;min-height:300px;object-fit:cover}
-/* v88：圆角归零 + 加大透光度。
-   圆角：全站其它元素（按钮、卡片、面板、徽标）一律 0 圆角，这是「真像素风」
-   的硬性前提 —— 像素画里没有圆角。玻璃条原来用 20px 圆角，成了整站唯一的
-   圆角元素，视觉上像从别的设计系统里贴过来的。玻璃的质感靠透光、斜向高光
-   和投影来体现，不依赖圆角，削平之后并不会损失玻璃感。
-   透光度：底色从 #10180ac2（不透明度 76%）降到 #10180a78（47%），模糊从
-   20px 加到 24px、饱和度 175%→190%。原来那层几乎是一块实色玻璃，看不到
-   背后的城市，磨砂的意义没发挥出来。 */
-.welcome-stats{position:absolute;left:18px;right:18px;bottom:18px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:9px;border-radius:0;overflow:hidden;background:#10180a78;-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);border:1px solid #ffffff42;box-shadow:0 12px 34px #00000066,inset 0 1px 0 #ffffff66,inset 0 -1px 0 #ffffff1f}
-/* 斜向高光扫过玻璃上沿，是液态玻璃最关键的一笔：没有它就只是一块半透明底 */
-.welcome-stats:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(112deg,#ffffff4d 0%,#ffffff0f 24%,#ffffff00 44%)}
+.welcome-stats{position:absolute;left:18px;right:18px;bottom:18px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));background:var(--paper);border:3px solid var(--line);box-shadow:5px 5px 0 var(--line);overflow:hidden}
 .welcome-stats .stats{display:contents}
-.welcome-stats .stat{position:relative;background:none;border:0;box-shadow:none;padding:4px 10px;gap:2px;align-items:start;border-radius:0;min-width:0}
-.welcome-stats .stat strong{font-family:var(--font-mono);font-size:1.3rem;line-height:1.1;color:#ffd45e;text-shadow:0 1px 2px #0009}
-/* 玻璃底变透明后，标签文字压在亮天空上会发虚，补一层同色阴影保底 */
-.welcome-stats .stat span{font-size:.7rem;color:#ffffffe0;letter-spacing:.02em;overflow-wrap:anywhere;text-shadow:0 1px 2px #000a}
-/* 读数之间用极淡竖线分隔，不给每项套边框 —— 六个小盒子会挤成摩尔纹 */
-.welcome-stats .stat+ .stat{border-left:1px solid #ffffff24}
+.welcome-stats .stat{background:none;border:0;box-shadow:none;padding:11px 14px;gap:3px;align-items:start;border-radius:0;min-width:0}
+.welcome-stats .stat strong{font-family:var(--font-mono);font-size:1.3rem;line-height:1.1;color:var(--green)}
+.welcome-stats .stat span{font-size:.72rem;color:var(--muted);letter-spacing:.02em;overflow-wrap:anywhere}
+/* 读数之间一条细竖线分隔，不给每项套卡片边框 —— 六个小盒子会挤成摩尔纹 */
+.welcome-stats .stat+ .stat{border-left:1px solid var(--line-soft)}
 /* v88：删掉绿面左下角的棋盘格抖动渐变。
    本意是像素美术里表示「渐隐」的标准手法，但落在一整块平色绿上就只是一片
    白噪点，截图里被当成渲染残留而不是设计元素（同一位置之前那枚金色方块
