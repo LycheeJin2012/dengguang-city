@@ -7,6 +7,27 @@ test('text and generated fields escape account-controlled strings',()=>{assert.e
 test('imageUrl guards null / blank values and still whitelists safe URLs',()=>{/* Regression: an announcement / room with a missing image_url used to flow through linkUrl(null), which `new URL(null, location.href)` parsed as /null and returned as a real http(s) URL. The <img> rendered src="/null" and 404'd. */const prevLocation=globalThis.location;Object.defineProperty(globalThis,'location',{value:{href:'https://light-city.test/'},configurable:true});try{assert.equal(imageUrl(null),'');assert.equal(imageUrl(undefined),'');assert.equal(imageUrl(''),'');assert.equal(imageUrl('   '),'');assert.equal(imageUrl('\t\n'),'');assert.equal(imageUrl('/assets/backgrounds/bg-pixel-hero.jpg'),'https://light-city.test/assets/backgrounds/bg-pixel-hero.jpg');assert.equal(imageUrl('https://example.test/x.png'),'https://example.test/x.png');assert.equal(imageUrl('http://example.test/x.png'),'http://example.test/x.png');assert.equal(imageUrl('data:image/png;base64,iVBORw0KGgo='),'data:image/png;base64,iVBORw0KGgo=');assert.equal(imageUrl('data:image/webp;base64,UklGRg=='),'data:image/webp;base64,UklGRg==');assert.equal(imageUrl('data:image/svg+xml;base64,PHN2Zy8+'),'');assert.equal(imageUrl('javascript:alert(1)'),'');assert.equal(imageUrl('  https://example.test/x.png  '),'https://example.test/x.png');assert.equal(linkUrl('javascript:alert(1)'),'');assert.equal(linkUrl('  javascript:alert(1)  '),'');}finally{Object.defineProperty(globalThis,'location',{value:prevLocation,configurable:true});}});
 test('all failed API writes reject, malformed responses never count as success',async()=>{const original=globalThis.fetch;try{for(const code of [401,403,409,500]){globalThis.fetch=async()=>new Response(JSON.stringify({ok:false,error:'test failure'}),{status:code});for(const method of ['GET','POST','PATCH','DELETE'])await assert.rejects(()=>api('/api/test',{method,body:method==='GET'?undefined:{}}),/test failure/);}globalThis.fetch=async()=>new Response('<html>Error</html>',{status:200});await assert.rejects(()=>api('/api/test'));}finally{globalThis.fetch=original;}});
 test('the site is Chinese-only: no language toggle, no bilingual runtime state',()=>{assert.equal(state.language,undefined,'language state must be gone');assert.match(status('pending'),/排队中/);assert.match(status('open'),/待受理/);const core=fs.readFileSync(root+'js/app/core.js','utf8');assert.doesNotMatch(core,/\btr\s*[=(]/,'no i18n helper should remain');assert.doesNotMatch(core,/lc_lang|#language/,'language switch must be fully removed');for(const page of ['index','hotel','profile','dm','notifications','admin-v37','hotel-owner','affairs','map','messages','knowledge']){const html=fs.readFileSync(root+page+'.html','utf8');assert.doesNotMatch(html,/lc_lang|lang="en"/,page);}});
+test('every HTML shell has balanced tags and keeps header/main/footer outside the skip link',()=>{/* v85 回归防线：rewrite-shells 曾把闭合标签的 '<' 吃掉
+     （`>跳到主要内容</a>` 被替换成 `>跳到正文/a>`）。未闭合的 <a class="skip">
+     会把 header / main / footer 全部吞进链接文本，文档高度塌掉，整页划不动。
+     scripts/build.mjs 只做资源存在性校验，抓不到标签配对错误，所以在这里断言。 */
+const VOID=new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+for(const file of fs.readdirSync(root).filter(f=>f.endsWith('.html'))){
+  const html=fs.readFileSync(root+file,'utf8');
+  const stack=[];
+  for(const m of html.matchAll(/<(\/?)([a-zA-Z][a-zA-Z0-9]*)\b[^>]*?(\/?)>/g)){
+    const [,close,raw,selfClose]=m;
+    const tag=raw.toLowerCase();
+    if(VOID.has(tag)||selfClose)continue;
+    if(close){const top=stack.pop();assert.equal(top,tag,`${file}: </${tag}> 与 <${top ?? '(无)'}> 不匹配`);}
+    else stack.push(tag);
+  }
+  assert.deepEqual(stack,[],`${file}: 有未闭合标签 ${stack.join(' > ')}`);
+  assert.doesNotMatch(html,/>[^<>]*\/[a-z]+>/,`${file}: 文本后出现残缺闭合标签`);
+}
+const home=fs.readFileSync(root+'index.html','utf8');
+assert.match(home,/<\/a><header id="header">/,'skip 链接必须正确闭合，header 不能被吞进 <a>');
+});
 test('SQLite and ISO dates normalize without NaN or duplicate timezone suffix',()=>{for(const s of ['2026-09-08 04:00:00','2026-09-08T04:00:00Z','2026-09-08T12:00:00+08:00'])assert.equal(parseDate(s).toISOString(),'2026-09-08T04:00:00.000Z');assert.ok(Number.isNaN(+parseDate('invalid')));});
 test('service worker never intercepts HTML, auth or API responses',()=>{const handlers={};vm.runInNewContext(fs.readFileSync(root+'sw.js','utf8'),{URL,self:{location:{origin:'https://test.invalid'},addEventListener:(k,f)=>handlers[k]=f}});for(const url of ['/','/api/login','/api/admin/dashboard','/profile.html','/js/app/core.js']){let called=false;handlers.fetch({request:{url:'https://test.invalid'+url,method:'GET'},respondWith(){called=true;}});assert.equal(called,false,url);}});
 test('copy-lock: every file in COPY_LOCK.json is byte-identical to its recorded SHA-256',()=>{/* Apple-motion second pass freezes the HTML, JS and local seed data so the
