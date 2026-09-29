@@ -70,14 +70,17 @@ main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
    便签；深绿实底既有实体感，又不会在绿面上开一个白洞。 */
 .welcome-lead .actions .button:not(.primary),.welcome-lead .actions button:not(.primary){background:var(--green-deep);color:var(--paper);border:3px solid var(--line);box-shadow:4px 4px 0 var(--line)}
 .welcome-lead .actions .button:not(.primary):hover,.welcome-lead .actions button:not(.primary):hover{background:var(--green);color:var(--gold-soft)}
-/* v88：城市数据做成压在配图底部的实体读数板。
+/* v88：城市数据做成配图底部的数据条。
    曾经试过液态玻璃（backdrop-filter + 半透明底 + 圆角 + 斜向高光），
    但整站是「真像素风」，玻璃那一套语言和周围的 3px 硬边、实心偏移影
-   放在一起是两个设计系统在打架，已全部撤回。这里改回像素语言：近白
-   纸面 + 3px 纯黑边 + 5px 实心偏移影，和站内其它卡片完全同一套。 */
+   放在一起是两个设计系统在打架，已全部撤回。现在改回像素语言：近白
+   纸面 + 3px 纯黑上边，和站内其它卡片同一套配色。
+   贴满整幅宽度、紧贴图片底部：原先四边留 18px 空隙，缝隙里露出照片的
+   暗部（右侧是树影、底部是土坡），再叠上偏移影，看上去像边框没裁干净。
+   贴边之后它就是图片的说明栏，不存在「悬浮卡片压在图上」那种悬空感。 */
 .welcome-figure{position:relative;min-width:0;border-left:3px solid var(--line)}
 .welcome-figure>img{display:block;width:100%;height:100%;min-height:300px;object-fit:cover}
-.welcome-stats{position:absolute;left:18px;right:18px;bottom:18px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));background:var(--paper);border:3px solid var(--line);box-shadow:5px 5px 0 var(--line);overflow:hidden}
+.welcome-stats{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));background:var(--paper);border:0;border-top:3px solid var(--line);box-shadow:none}
 .welcome-stats .stats{display:contents}
 .welcome-stats .stat{background:none;border:0;box-shadow:none;padding:11px 14px;gap:3px;align-items:start;border-radius:0;min-width:0}
 .welcome-stats .stat strong{font-family:var(--font-mono);font-size:1.3rem;line-height:1.1;color:var(--green)}

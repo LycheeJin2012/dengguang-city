@@ -2,7 +2,7 @@
 /* Notice + gallery + flow ---------------------------------------------- */
 .notice {
   border-left: 5px solid var(--gold);
-  background: #fff0b3;
+  background: var(--paper-warm);
   padding: 16px 20px;
   margin-bottom: 24px;
   color: var(--ink);
@@ -67,7 +67,7 @@
   align-items: center;
   gap: 8px;
   border: 2px dashed var(--green);
-  background: #f0f0d2;
+  background: var(--sunken);
   padding: 24px 16px;
   text-align: center;
   cursor: pointer;
@@ -77,7 +77,7 @@
     border-color var(--motion-base) var(--ease-out);
 }
 .upload-drop.dragging, .upload-drop:hover {
-  background: #e2ebc5;
+  background: var(--mint);
   border-style: solid;
   border-color: var(--green-deep);
 }
@@ -87,7 +87,7 @@
   align-items: center;
   gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px dashed #b8ad83;
+  border-bottom: 1px dashed var(--line-soft);
   min-width: 0;
 }
 .upload-preview {
@@ -136,7 +136,7 @@
   width: 100%;
   max-height: 340px;
   object-fit: contain;
-  background: #e8dfb9;
+  background: var(--sunken);
   border: 1px solid var(--line-soft);
 }
 .attachment-card b { overflow-wrap: anywhere; font-size: 0.9rem; }
@@ -145,7 +145,7 @@
 /* Ticket history gets a left rail of dots for scannability */
 .ticket-history {
   margin-top: 24px;
-  border-top: 2px dashed #b8ad83;
+  border-top: 2px dashed var(--line-soft);
   padding-top: 20px;
 }
 .ticket-history .row {
@@ -194,7 +194,7 @@
 .survey-question legend { font-weight: 700; padding: 0 8px; color: var(--green); }
 .survey-question textarea { width: 100%; min-height: 130px; margin-top: 8px; }
 .survey-option { display: flex; align-items: flex-start; gap: 12px; padding: 12px; margin: 8px 0; border: 1px solid var(--line-soft); cursor: pointer; }
-.survey-option:has(input:checked) { background: #e4dba8; border-color: var(--green); }
+.survey-option:has(input:checked) { background: var(--leaf-soft); border-color: var(--green); }
 .survey-option input { flex: 0 0 auto; width: auto; margin-top: 3px; accent-color: var(--green); }
 .survey-option span { overflow-wrap: anywhere; }
 #exam-paper progress { width: 100%; height: 14px; accent-color: var(--green); }
@@ -202,11 +202,11 @@
 
 .ticket-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); list-style: none; gap: 8px; margin: 12px 0 20px; padding: 0; }
 .ticket-progress li { border: 2px solid var(--line-soft); padding: 10px; color: var(--muted); }
-.ticket-progress li.done { border-color: var(--green); background: #e4dba8; color: var(--green-deep); font-weight: 700; }
+.ticket-progress li.done { border-color: var(--green); background: var(--leaf-soft); color: var(--green-deep); font-weight: 700; }
 .reply-feedback { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line-soft); }
 .reply-feedback .actions { margin: 8px 0; }
 .reply-feedback textarea, .reply-feedback select { width: 100%; margin: 6px 0; }
-.reply-feedback [aria-pressed="true"] { background: #e4dba8; border-color: var(--green); }
+.reply-feedback [aria-pressed="true"] { background: var(--leaf-soft); border-color: var(--green); }
 .ticket-followup { margin: 18px 0; padding: 16px; border: 2px solid var(--line-soft); }
 .ticket-followup label { display: block; margin: 8px 0; }
 @media(max-width:600px) { .ticket-progress { grid-template-columns: repeat(2, minmax(0,1fr)); } }

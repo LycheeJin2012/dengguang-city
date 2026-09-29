@@ -25,6 +25,8 @@
   --muted: #6a6550;         /* 弱化文字 */
   --line: #14160e;          /* 所有硬边框，纯黑，像素风的关键 */
   --line-soft: #8a8265;     /* 虚线、分隔线 */
+  --grid: #14160e14;         /* 页面底纹网格线：纯黑压到 8%，比旧值 #7d6e2510
+                                更中性，且跟 --line 同源，改配色时不会漏 */
 
   /* Greens (brand) —— 品牌主色，页头与分区标题用实心块 */
   --green: #4a7a24;
@@ -129,8 +131,8 @@ html { scroll-behavior: auto; }
 body {
   margin: 0;
   background-image:
-    linear-gradient(#7d6e2510 1px, transparent 1px),
-    linear-gradient(90deg, #7d6e2510 1px, transparent 1px);
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size: 24px 24px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -292,7 +294,7 @@ button:disabled, .button:disabled {
 }
 button.primary, .button.primary {
   background: var(--green);
-  color: #fff;
+  color: var(--paper);
   border-color: var(--line);
   --press-active-bg: var(--green-deep);
 }
@@ -339,7 +341,7 @@ input:hover, select:hover, textarea:hover {
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--green);
-  background: #fff;
+  background: var(--paper);
   box-shadow: inset 0 0 0 1px var(--green);
 }
 input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"] {

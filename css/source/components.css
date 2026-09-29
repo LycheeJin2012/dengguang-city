@@ -157,12 +157,15 @@
   gap: 20px;
   padding: 18px 24px;
   border-bottom: var(--border);
-  background: linear-gradient(180deg, #efe8b3, #e5dfae);
+  /* v88：原来是写死的旧米黄渐变 linear-gradient(180deg,#efe8b3,#e5dfae)，
+     弹窗标题栏一直是 v86 之前那套配色，和站内其它面板不一家。改用 --mint
+     纯色，和表头同一档，层级靠 3px 黑分隔线拉开。 */
+  background: var(--mint);
   position: sticky;
   top: 0;
   z-index: 1;
 }
-.modal-head h2 { min-width:0;overflow-wrap:anywhere;margin: 0; font-size: 1.25rem; }
+.modal-head h2 { min-width:0;overflow-wrap:anywhere;margin: 0; font-size: 1.25rem; font-family: var(--font-pixel); }
 .modal-body { padding: 24px; }
 .modal-body > .form-grid > .actions,
 .modal-body > .actions {
@@ -239,11 +242,13 @@ table {
   background: var(--paper);
   font-size: 0.9rem;
 }
+/* v88：表头底色从写死的旧米黄 #e5dfb4 改为 --mint。旧色属于 v86 之前
+   那套配色，和现在的四级色阶不是一家，表格在其它页面会显出旧底色。 */
 thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #e5dfb4;
+  background: var(--mint);
   color: var(--green);
   text-align: left;
   font-weight: 700;

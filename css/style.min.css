@@ -27,6 +27,8 @@
   --muted: #6a6550;         /* 弱化文字 */
   --line: #14160e;          /* 所有硬边框，纯黑，像素风的关键 */
   --line-soft: #8a8265;     /* 虚线、分隔线 */
+  --grid: #14160e14;         /* 页面底纹网格线：纯黑压到 8%，比旧值 #7d6e2510
+                                更中性，且跟 --line 同源，改配色时不会漏 */
 
   /* Greens (brand) —— 品牌主色，页头与分区标题用实心块 */
   --green: #4a7a24;
@@ -131,8 +133,8 @@ html { scroll-behavior: auto; }
 body {
   margin: 0;
   background-image:
-    linear-gradient(#7d6e2510 1px, transparent 1px),
-    linear-gradient(90deg, #7d6e2510 1px, transparent 1px);
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
   background-size: 24px 24px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -294,7 +296,7 @@ button:disabled, .button:disabled {
 }
 button.primary, .button.primary {
   background: var(--green);
-  color: #fff;
+  color: var(--paper);
   border-color: var(--line);
   --press-active-bg: var(--green-deep);
 }
@@ -341,7 +343,7 @@ input:hover, select:hover, textarea:hover {
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--green);
-  background: #fff;
+  background: var(--paper);
   box-shadow: inset 0 0 0 1px var(--green);
 }
 input[aria-invalid="true"], textarea[aria-invalid="true"], select[aria-invalid="true"] {
@@ -362,7 +364,7 @@ input[type="checkbox"] {
 /* Notice + gallery + flow ---------------------------------------------- */
 .notice {
   border-left: 5px solid var(--gold);
-  background: #fff0b3;
+  background: var(--paper-warm);
   padding: 16px 20px;
   margin-bottom: 24px;
   color: var(--ink);
@@ -427,7 +429,7 @@ input[type="checkbox"] {
   align-items: center;
   gap: 8px;
   border: 2px dashed var(--green);
-  background: #f0f0d2;
+  background: var(--sunken);
   padding: 24px 16px;
   text-align: center;
   cursor: pointer;
@@ -437,7 +439,7 @@ input[type="checkbox"] {
     border-color var(--motion-base) var(--ease-out);
 }
 .upload-drop.dragging, .upload-drop:hover {
-  background: #e2ebc5;
+  background: var(--mint);
   border-style: solid;
   border-color: var(--green-deep);
 }
@@ -447,7 +449,7 @@ input[type="checkbox"] {
   align-items: center;
   gap: 12px;
   padding: 14px 0;
-  border-bottom: 1px dashed #b8ad83;
+  border-bottom: 1px dashed var(--line-soft);
   min-width: 0;
 }
 .upload-preview {
@@ -496,7 +498,7 @@ input[type="checkbox"] {
   width: 100%;
   max-height: 340px;
   object-fit: contain;
-  background: #e8dfb9;
+  background: var(--sunken);
   border: 1px solid var(--line-soft);
 }
 .attachment-card b { overflow-wrap: anywhere; font-size: 0.9rem; }
@@ -505,7 +507,7 @@ input[type="checkbox"] {
 /* Ticket history gets a left rail of dots for scannability */
 .ticket-history {
   margin-top: 24px;
-  border-top: 2px dashed #b8ad83;
+  border-top: 2px dashed var(--line-soft);
   padding-top: 20px;
 }
 .ticket-history .row {
@@ -554,7 +556,7 @@ input[type="checkbox"] {
 .survey-question legend { font-weight: 700; padding: 0 8px; color: var(--green); }
 .survey-question textarea { width: 100%; min-height: 130px; margin-top: 8px; }
 .survey-option { display: flex; align-items: flex-start; gap: 12px; padding: 12px; margin: 8px 0; border: 1px solid var(--line-soft); cursor: pointer; }
-.survey-option:has(input:checked) { background: #e4dba8; border-color: var(--green); }
+.survey-option:has(input:checked) { background: var(--leaf-soft); border-color: var(--green); }
 .survey-option input { flex: 0 0 auto; width: auto; margin-top: 3px; accent-color: var(--green); }
 .survey-option span { overflow-wrap: anywhere; }
 #exam-paper progress { width: 100%; height: 14px; accent-color: var(--green); }
@@ -562,11 +564,11 @@ input[type="checkbox"] {
 
 .ticket-progress { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); list-style: none; gap: 8px; margin: 12px 0 20px; padding: 0; }
 .ticket-progress li { border: 2px solid var(--line-soft); padding: 10px; color: var(--muted); }
-.ticket-progress li.done { border-color: var(--green); background: #e4dba8; color: var(--green-deep); font-weight: 700; }
+.ticket-progress li.done { border-color: var(--green); background: var(--leaf-soft); color: var(--green-deep); font-weight: 700; }
 .reply-feedback { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--line-soft); }
 .reply-feedback .actions { margin: 8px 0; }
 .reply-feedback textarea, .reply-feedback select { width: 100%; margin: 6px 0; }
-.reply-feedback [aria-pressed="true"] { background: #e4dba8; border-color: var(--green); }
+.reply-feedback [aria-pressed="true"] { background: var(--leaf-soft); border-color: var(--green); }
 .ticket-followup { margin: 18px 0; padding: 16px; border: 2px solid var(--line-soft); }
 .ticket-followup label { display: block; margin: 8px 0; }
 @media(max-width:600px) { .ticket-progress { grid-template-columns: repeat(2, minmax(0,1fr)); } }
@@ -731,12 +733,15 @@ input[type="checkbox"] {
   gap: 20px;
   padding: 18px 24px;
   border-bottom: var(--border);
-  background: linear-gradient(180deg, #efe8b3, #e5dfae);
+  /* v88：原来是写死的旧米黄渐变 linear-gradient(180deg,#efe8b3,#e5dfae)，
+     弹窗标题栏一直是 v86 之前那套配色，和站内其它面板不一家。改用 --mint
+     纯色，和表头同一档，层级靠 3px 黑分隔线拉开。 */
+  background: var(--mint);
   position: sticky;
   top: 0;
   z-index: 1;
 }
-.modal-head h2 { min-width:0;overflow-wrap:anywhere;margin: 0; font-size: 1.25rem; }
+.modal-head h2 { min-width:0;overflow-wrap:anywhere;margin: 0; font-size: 1.25rem; font-family: var(--font-pixel); }
 .modal-body { padding: 24px; }
 .modal-body > .form-grid > .actions,
 .modal-body > .actions {
@@ -813,11 +818,13 @@ table {
   background: var(--paper);
   font-size: 0.9rem;
 }
+/* v88：表头底色从写死的旧米黄 #e5dfb4 改为 --mint。旧色属于 v86 之前
+   那套配色，和现在的四级色阶不是一家，表格在其它页面会显出旧底色。 */
 thead th {
   position: sticky;
   top: 0;
   z-index: 1;
-  background: #e5dfb4;
+  background: var(--mint);
   color: var(--green);
   text-align: left;
   font-weight: 700;
@@ -1150,14 +1157,17 @@ main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
    便签；深绿实底既有实体感，又不会在绿面上开一个白洞。 */
 .welcome-lead .actions .button:not(.primary),.welcome-lead .actions button:not(.primary){background:var(--green-deep);color:var(--paper);border:3px solid var(--line);box-shadow:4px 4px 0 var(--line)}
 .welcome-lead .actions .button:not(.primary):hover,.welcome-lead .actions button:not(.primary):hover{background:var(--green);color:var(--gold-soft)}
-/* v88：城市数据做成压在配图底部的实体读数板。
+/* v88：城市数据做成配图底部的数据条。
    曾经试过液态玻璃（backdrop-filter + 半透明底 + 圆角 + 斜向高光），
    但整站是「真像素风」，玻璃那一套语言和周围的 3px 硬边、实心偏移影
-   放在一起是两个设计系统在打架，已全部撤回。这里改回像素语言：近白
-   纸面 + 3px 纯黑边 + 5px 实心偏移影，和站内其它卡片完全同一套。 */
+   放在一起是两个设计系统在打架，已全部撤回。现在改回像素语言：近白
+   纸面 + 3px 纯黑上边，和站内其它卡片同一套配色。
+   贴满整幅宽度、紧贴图片底部：原先四边留 18px 空隙，缝隙里露出照片的
+   暗部（右侧是树影、底部是土坡），再叠上偏移影，看上去像边框没裁干净。
+   贴边之后它就是图片的说明栏，不存在「悬浮卡片压在图上」那种悬空感。 */
 .welcome-figure{position:relative;min-width:0;border-left:3px solid var(--line)}
 .welcome-figure>img{display:block;width:100%;height:100%;min-height:300px;object-fit:cover}
-.welcome-stats{position:absolute;left:18px;right:18px;bottom:18px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));background:var(--paper);border:3px solid var(--line);box-shadow:5px 5px 0 var(--line);overflow:hidden}
+.welcome-stats{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));background:var(--paper);border:0;border-top:3px solid var(--line);box-shadow:none}
 .welcome-stats .stats{display:contents}
 .welcome-stats .stat{background:none;border:0;box-shadow:none;padding:11px 14px;gap:3px;align-items:start;border-radius:0;min-width:0}
 .welcome-stats .stat strong{font-family:var(--font-mono);font-size:1.3rem;line-height:1.1;color:var(--green)}
