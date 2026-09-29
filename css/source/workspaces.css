@@ -74,19 +74,28 @@ main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
    在亮处会糊掉，压深一点底 + 轻微提亮，金色数字和浅色标签才都稳。 */
 .welcome-figure{position:relative;min-width:0;border-left:3px solid var(--line)}
 .welcome-figure>img{display:block;width:100%;height:100%;min-height:300px;object-fit:cover}
-.welcome-stats{position:absolute;left:18px;right:18px;bottom:18px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:9px;border-radius:20px;overflow:hidden;background:#10180ac2;-webkit-backdrop-filter:blur(20px) saturate(175%);backdrop-filter:blur(20px) saturate(175%);border:1px solid #ffffff38;box-shadow:0 12px 34px #00000073,inset 0 1px 0 #ffffff5c,inset 0 -1px 0 #ffffff1f}
+/* v88：圆角归零 + 加大透光度。
+   圆角：全站其它元素（按钮、卡片、面板、徽标）一律 0 圆角，这是「真像素风」
+   的硬性前提 —— 像素画里没有圆角。玻璃条原来用 20px 圆角，成了整站唯一的
+   圆角元素，视觉上像从别的设计系统里贴过来的。玻璃的质感靠透光、斜向高光
+   和投影来体现，不依赖圆角，削平之后并不会损失玻璃感。
+   透光度：底色从 #10180ac2（不透明度 76%）降到 #10180a78（47%），模糊从
+   20px 加到 24px、饱和度 175%→190%。原来那层几乎是一块实色玻璃，看不到
+   背后的城市，磨砂的意义没发挥出来。 */
+.welcome-stats{position:absolute;left:18px;right:18px;bottom:18px;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:9px;border-radius:0;overflow:hidden;background:#10180a78;-webkit-backdrop-filter:blur(24px) saturate(190%);backdrop-filter:blur(24px) saturate(190%);border:1px solid #ffffff42;box-shadow:0 12px 34px #00000066,inset 0 1px 0 #ffffff66,inset 0 -1px 0 #ffffff1f}
 /* 斜向高光扫过玻璃上沿，是液态玻璃最关键的一笔：没有它就只是一块半透明底 */
 .welcome-stats:before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(112deg,#ffffff4d 0%,#ffffff0f 24%,#ffffff00 44%)}
 .welcome-stats .stats{display:contents}
 .welcome-stats .stat{position:relative;background:none;border:0;box-shadow:none;padding:4px 10px;gap:2px;align-items:start;border-radius:0;min-width:0}
 .welcome-stats .stat strong{font-family:var(--font-mono);font-size:1.3rem;line-height:1.1;color:#ffd45e;text-shadow:0 1px 2px #0009}
-.welcome-stats .stat span{font-size:.7rem;color:#ffffffc7;letter-spacing:.02em;overflow-wrap:anywhere}
+/* 玻璃底变透明后，标签文字压在亮天空上会发虚，补一层同色阴影保底 */
+.welcome-stats .stat span{font-size:.7rem;color:#ffffffe0;letter-spacing:.02em;overflow-wrap:anywhere;text-shadow:0 1px 2px #000a}
 /* 读数之间用极淡竖线分隔，不给每项套边框 —— 六个小盒子会挤成摩尔纹 */
 .welcome-stats .stat+ .stat{border-left:1px solid #ffffff24}
-/* 绿面左下角做一条抖动渐变（checkerboard 逐级变淡），是像素美术里
-   表示「渐隐」的标准手法。原先这里放的是一枚金色方块徽标，截图中看着
-   像渲染残留而不是设计元素，已去掉。 */
-.welcome-copy:after{content:'';position:absolute;left:0;bottom:0;width:132px;height:88px;pointer-events:none;opacity:.5;background:repeating-conic-gradient(#ffffff 0% 25%,transparent 0% 50%) 0 0/8px 8px;mask-image:linear-gradient(160deg,transparent 42%,#000 100%);-webkit-mask-image:linear-gradient(160deg,transparent 42%,#000 100%)}
+/* v88：删掉绿面左下角的棋盘格抖动渐变。
+   本意是像素美术里表示「渐隐」的标准手法，但落在一整块平色绿上就只是一片
+   白噪点，截图里被当成渲染残留而不是设计元素（同一位置之前那枚金色方块
+   徽标也是同样下场）。底部改由两个按钮和金色徽标来收尾，不需要额外装饰。 */
 /* v87：配图移入 .welcome-figure 包裹层后，这里不再需要给 img 单独设边 ——
    左边框已由 .welcome-figure 承担，重复设置会叠成 6px。 */
 /* v87：城市数据搬进 hero 后，右侧 260px 侧栏没有了，正文变成整幅。
