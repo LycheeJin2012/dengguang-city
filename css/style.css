@@ -1120,33 +1120,56 @@ main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
 /* v87：首屏 hero 重做成实心绿面板。
    之前是「白底卡 + 巨大留白 + 绿色标题」，align-self:center 让整块文字浮在
    一片空白中间，右侧配图又只有 1fr，视觉重心散在两块互不支撑的面积上，
-   首屏完全没有主菜单那种「一锤定音」的分量。现在左侧整块压成品牌绿，
-   右下角塞一枚金色像素徽标，像游戏主菜单的标题画面。 */
-.city-welcome{position:relative;display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:0;align-items:stretch;background:var(--green);border:3px solid var(--line);box-shadow:6px 6px 0 var(--line);margin-bottom:34px;overflow:hidden}
-.welcome-copy{position:relative;padding:44px 40px 40px;display:flex;flex-direction:column;justify-content:center;gap:0;min-width:0}
+   首屏完全没有主菜单那种「一锤定音」的分量。现在左侧整块压成品牌绿。
+   配图从 1.05fr/.95fr 收窄到 1.2fr/.8fr：文案栏内部还要再分两栏，
+   若不给它多留宽度，减去内边距后文案只剩 340px，大标题和正文都会被挤到
+   换行；图片相应从 688px 收到 638px，构图重心更偏左。 */
+.city-welcome{position:relative;display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:0;align-items:stretch;background:var(--green);border:3px solid var(--line);box-shadow:6px 6px 0 var(--line);margin-bottom:34px;overflow:hidden}
+.welcome-copy{position:relative;padding:36px 32px;display:flex;flex-direction:column;justify-content:center;min-width:0}
+.welcome-lead{display:flex;flex-direction:column;justify-content:center;min-width:0}
 /* 绿底上叠一层极淡的点阵纹理（4px 网格 + 8px 错位），只在大面积平色上
    给一点颗粒，避免纯色块显得死板；不影响文字对比度。 */
 .welcome-copy:before{content:'';position:absolute;inset:0;pointer-events:none;opacity:.14;background-image:radial-gradient(var(--paper) 1px,transparent 1px);background-size:6px 6px}
 .welcome-copy>*{position:relative;z-index:1}
 /* eyebrow 做成金色胶囊徽标：黑边 + 金底，跟绿面拉开层级。 */
-.welcome-copy .eyebrow{align-self:flex-start;margin:0 0 14px;padding:6px 12px;background:var(--gold);color:var(--ink);border:2px solid var(--line);box-shadow:3px 3px 0 var(--line);font-family:var(--font-pixel);font-size:.7rem;letter-spacing:.12em}
-.welcome-copy h1{font-family:var(--font-pixel);font-size:clamp(2.4rem,3.9vw,3.9rem);line-height:1.16;margin:0 0 18px;color:var(--paper);letter-spacing:.04em;text-shadow:4px 4px 0 #1d3409}
-.welcome-copy>p{max-width:40ch;margin:0 0 26px;color:#dbe8bd;font-size:1.02rem;line-height:1.75}
-.welcome-copy .actions{gap:12px;margin:0}
-.welcome-copy .actions .button,.welcome-copy .actions button{font-family:var(--font-pixel);font-size:.9rem;padding:.8rem 1.35rem;box-shadow:4px 4px 0 var(--line);border:3px solid var(--line)}
+.welcome-lead .eyebrow{align-self:flex-start;margin:0 0 14px;padding:6px 12px;background:var(--gold);color:var(--ink);border:2px solid var(--line);box-shadow:3px 3px 0 var(--line);font-family:var(--font-pixel);font-size:.7rem;letter-spacing:.12em}
+.welcome-lead h1{font-family:var(--font-pixel);font-size:clamp(2.1rem,3.1vw,3.3rem);line-height:1.16;margin:0 0 16px;color:var(--paper);letter-spacing:.04em;text-shadow:4px 4px 0 #1d3409}
+.welcome-lead>p{margin:0 0 22px;color:#dbe8bd;font-size:1rem;line-height:1.75}
+.welcome-lead .actions{gap:12px;margin:0}
+.welcome-lead .actions .button,.welcome-lead .actions button{font-family:var(--font-pixel);font-size:.9rem;padding:.8rem 1.35rem;box-shadow:4px 4px 0 var(--line);border:3px solid var(--line)}
 /* 主按钮金色，次按钮纸面；绿面上两个都要有黑边才压得住。 */
-.welcome-copy .actions .primary{background:var(--gold);color:var(--ink)}
-.welcome-copy .actions .primary:hover{background:var(--gold-soft)}
-.welcome-copy .actions .button:not(.primary),.welcome-copy .actions button:not(.primary){background:var(--paper);color:var(--ink)}
-.welcome-copy .actions .button:not(.primary):hover,.welcome-copy .actions button:not(.primary):hover{background:var(--paper-warm)}
+.welcome-lead .actions .primary{background:var(--gold);color:var(--ink)}
+.welcome-lead .actions .primary:hover{background:var(--gold-soft)}
+/* 次按钮改成幽灵样式。原先是纸面白底黑字，一块纯白压在绿面上像贴了张
+   便签，在整块深绿里格外扎眼；改成透明底 + 金色描边 + 米白字，既保留
+   「两个按钮」的层级差，又不会在绿面上开一个白洞。 */
+.welcome-lead .actions .button:not(.primary),.welcome-lead .actions button:not(.primary){background:transparent;color:var(--paper);border-color:var(--gold);box-shadow:4px 4px 0 #1d3409}
+.welcome-lead .actions .button:not(.primary):hover,.welcome-lead .actions button:not(.primary):hover{background:#0000002e;color:var(--gold-soft)}
+/* v87：城市数据做成压在配图底部的 HUD 条带（6 项一行），不再占文案栏的高度。
+   整条是半透明近黑底 + 顶部一条黑边，读数用金色，标签用浅绿 —— 像游戏里
+   叠在画面底部的状态栏。 */
+.welcome-figure{position:relative;min-width:0;border-left:3px solid var(--line)}
+.welcome-figure>img{display:block;width:100%;height:100%;min-height:300px;object-fit:cover}
+.welcome-stats{position:absolute;left:0;right:0;bottom:0;display:grid;grid-template-columns:repeat(6,minmax(0,1fr));background:#0d1a06f2;border-top:3px solid var(--line)}
+.welcome-stats .stats{display:contents}
+.welcome-stats .stat{background:none;border:0;box-shadow:none;padding:10px 12px;gap:2px;align-items:start;border-radius:0;min-width:0}
+.welcome-stats .stat strong{font-family:var(--font-mono);font-size:1.3rem;line-height:1.1;color:var(--gold)}
+.welcome-stats .stat span{font-size:.7rem;color:#b9cfa0;letter-spacing:.02em;overflow-wrap:anywhere}
+/* 条带内相邻读数之间用一条半透明竖线分隔，不再给每项套卡片边框 ——
+   六个小盒子在 640px 宽度里会挤成一团摩尔纹。 */
+.welcome-stats .stat+ .stat{border-left:1px solid #ffffff1f}
 /* 绿面左下角做一条抖动渐变（checkerboard 逐级变淡），是像素美术里
    表示「渐隐」的标准手法。原先这里放的是一枚金色方块徽标，截图中看着
    像渲染残留而不是设计元素，已去掉。 */
 .welcome-copy:after{content:'';position:absolute;left:0;bottom:0;width:132px;height:88px;pointer-events:none;opacity:.5;background:repeating-conic-gradient(#ffffff 0% 25%,transparent 0% 50%) 0 0/8px 8px;mask-image:linear-gradient(160deg,transparent 42%,#000 100%);-webkit-mask-image:linear-gradient(160deg,transparent 42%,#000 100%)}
-.city-welcome>img{height:100%;min-height:360px;width:100%;object-fit:cover;border-left:3px solid var(--line)}
-.home-workspace{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:28px;align-items:start}
-.home-primary>.section:first-child{margin-top:0}.home-data{position:sticky;top:20px;min-width:0}
-.home-data .stats{grid-template-columns:repeat(2,minmax(0,1fr));margin:0;gap:10px}.home-data .stat{border:var(--border-thin);box-shadow:2px 2px var(--line);padding:16px 12px;background:var(--paper)}.home-data .stat strong{font-size:1.8rem}
+/* v87：配图移入 .welcome-figure 包裹层后，这里不再需要给 img 单独设边 ——
+   左边框已由 .welcome-figure 承担，重复设置会叠成 6px。 */
+/* v87：城市数据搬进 hero 后，右侧 260px 侧栏没有了，正文变成整幅。
+   不加约束的话 1520px 宽的公告卡里只放 100 多字，行长会拉到不可读。
+   限宽 1120px 居中，既保住阅读行长，也把公告/工单和满幅的风貌轮播拉开
+   层级。 */
+.home-workspace{display:block;max-width:1120px;margin:0 auto 8px}
+.home-primary>.section:first-child{margin-top:0}
 /* v87：公告卡改成和其它卡片同一套语言（3px 黑边 + 实心阴影）。
    之前是「白底 + 绿色左边框 + 底部一条细线」的列表样式，在浅米底上几乎
    立不起来，跟上方实心绿的 hero 一比整个公告区像没做完。线上公告正文
@@ -1163,8 +1186,10 @@ main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
 .affairs-workspace{display:grid;grid-template-columns:270px minmax(0,1fr);gap:24px;align-items:start}.affairs-assistant{position:sticky;top:20px}.affairs-assistant .actions{flex-direction:column;align-items:stretch}.affairs-assistant .row-head{align-items:start}.affairs-records{min-width:0}#affairs-items{display:grid;gap:14px}#affairs-items .panel{margin:0}
 .map-layout{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:20px;align-items:start}.map-layout>.panel{padding:12px}.map-layout #map-list{display:grid;gap:14px}.map-layout #map-list .panel{margin:0;padding:16px}
 [data-page=admin] .app-workspace{display:block}[data-page=admin] .site-rail{padding:8px 28px;border-right:0;border-bottom:1px solid var(--line-soft)}[data-page=admin] #navigation{position:static;flex-direction:row;flex-wrap:wrap}[data-page=admin] #navigation a{padding:8px 12px}
-@media(max-width:1200px){.home-workspace{grid-template-columns:minmax(0,1fr) 220px}.city-welcome{grid-template-columns:minmax(0,1fr)}.city-welcome>img{min-height:0;height:240px;border-left:0;border-top:3px solid var(--line)}.welcome-copy{padding:28px}.home-services{grid-template-columns:minmax(0,1fr)}}
-@media(max-width:1050px){.app-workspace{grid-template-columns:minmax(0,1fr)}main{padding:28px 24px}.profile-layout,.affairs-workspace,.service-layout,.map-layout,.home-workspace{grid-template-columns:minmax(0,1fr)}.profile-summary,.affairs-assistant,.service-filters,.home-data{position:static}.home-data .stats{grid-template-columns:repeat(3,minmax(0,1fr))}.profile-summary .actions,.affairs-assistant .actions{flex-direction:row;align-items:center}.service-filters .toolbar{flex-direction:row;flex-wrap:wrap}.service-filters .toolbar>.field{flex:1 1 140px}}
+@media(max-width:1200px){.city-welcome{grid-template-columns:minmax(0,1fr)}.welcome-figure{border-left:0;border-top:3px solid var(--line)}.welcome-figure>img{min-height:0;height:260px}.welcome-copy{padding:28px}.home-services{grid-template-columns:minmax(0,1fr)}}
+/* v87：hero 内部两栏在 1050px 以下太挤（每栏不到 500px，数据块被压扁），
+   改成上下排：文案在上、数据在下，数据此时铺成三列，正好一行放完。 */
+@media(max-width:1050px){.app-workspace{grid-template-columns:minmax(0,1fr)}main{padding:28px 24px}.profile-layout,.affairs-workspace,.service-layout,.map-layout{grid-template-columns:minmax(0,1fr)}.profile-summary,.affairs-assistant,.service-filters{position:static}.profile-summary .actions,.affairs-assistant .actions{flex-direction:row;align-items:center}.service-filters .toolbar{flex-direction:row;flex-wrap:wrap}.service-filters .toolbar>.field{flex:1 1 140px}}
 /* v85：原先这里有 .home-data{order:-1}，窄屏下会把「绿化区块 / 铁轨」这类
    城市指标顶到市政公告前面。市民来首页是看公告和办事的，统计是辅助信息，
    所以不再翻转顺序，公告与工单始终排在城市数据之前。 */
@@ -1176,7 +1201,14 @@ main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
    菜单同排，账户区右对齐，不再另起一行。 */
 .header-inner{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;padding:12px}.brand{gap:8px;min-width:0;flex:1 1 auto}.brand strong{font-size:1rem}.brand small{font-size:.52rem;letter-spacing:0}.grass-block{width:30px;height:32px}#menu{display:block;margin:0;padding:8px 10px;flex:none}#account{margin:0 0 0 auto;justify-content:flex-end;flex:none}#account .button,#account button{padding:.5rem .75rem;min-height:40px}
 .app-workspace{display:block}.site-rail,[data-page=admin] .site-rail{display:none;padding:10px 12px;border-bottom:var(--border-thin)}.site-rail.is-open,[data-page=admin] .site-rail.is-open{display:block}#navigation,[data-page=admin] #navigation{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
-main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{padding:22px}.welcome-copy h1{font-size:2.5rem}.city-welcome>img{height:210px}.home-data .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.home-workspace,.home-services{gap:20px}.profile-summary .actions>*{flex:1 1 120px}#footer{padding:22px 16px}
+main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{padding:22px}.welcome-lead h1{font-size:2rem}.welcome-figure>img{height:280px}
+/* v87：窄屏下 6 项读数排一行太挤（「1500+m」会被压缩换行），改成 3×2，
+   并且把数字和标签排到同一行 —— 上下堆叠时条带要 118px，会盖掉 280px
+   配图的 42%，城市的实景就看不见了；改成单行后条带只占 23%。 */
+.welcome-stats{grid-template-columns:repeat(3,minmax(0,1fr))}
+.welcome-stats .stat{flex-direction:row;align-items:baseline;gap:8px;padding:8px 10px}
+.welcome-stats .stat strong{font-size:1.15rem}
+.welcome-stats .stat span{font-size:.7rem}.home-services{gap:20px}.profile-summary .actions>*{flex:1 1 120px}#footer{padding:22px 16px}
 }
 
 /* The media frame is sized from the loaded image, not a fixed empty stage. */

@@ -27,10 +27,14 @@ function section(id, zh, footer = '') {
 // pages/home/signup.js 与 pages/home/signin.js。
 
 export async function render(el) {
-  el.innerHTML = `<section class="city-welcome" id="home"><div class="welcome-copy"><p class="eyebrow">WELCOME TO LIGHT CITY</p><h1>欢迎来到<br>灯光市</h1><p>一座市民自己动手搭起来的 Minecraft 城。公告在这儿发，事务在这儿办，建成什么样全靠大家。</p><div class="actions"><a class="button primary" href="#notice">看市政公告 ↗</a><button id="signin">🎁 每日签到</button></div></div><img src="/assets/backgrounds/bg-pixel-hero.jpg" alt="灯光市 Minecraft 城市实景"></section><div class="home-workspace"><div class="home-primary">${section(
+  // v87：城市数据从右侧 260px 侧栏搬进 hero，压在配图底部做成 HUD 条带。
+  // 中间试过一版把 6 项数据塞进文案栏右侧的空地，结果 hero 被撑到近 900px
+  // 高，首屏被自己顶出去。改成压在图上之后文案栏恢复原来的紧凑高度，
+  // 数据仍然在第一屏，而且「和图片堆叠」正好是这张图该有的用法。
+  el.innerHTML = `<section class="city-welcome" id="home"><div class="welcome-copy"><div class="welcome-lead"><p class="eyebrow">WELCOME TO LIGHT CITY</p><h1>欢迎来到<br>灯光市</h1><p>一座市民自己动手搭起来的 Minecraft 城。公告在这儿发，事务在这儿办，建成什么样全靠大家。</p><div class="actions"><a class="button primary" href="#notice">看市政公告 ↗</a><button id="signin">🎁 每日签到</button></div></div></div><div class="welcome-figure"><img src="/assets/backgrounds/bg-pixel-hero.jpg" alt="灯光市 Minecraft 城市实景"><div class="welcome-stats" id="city-stats"></div></div></section><div class="home-workspace"><div class="home-primary">${section(
     'notice',
     '📜 市政公告'
-  )}${section('contact', '💬 留言与工单')}</div><aside class="home-data"><div id="city-stats"></div></aside></div><div class="home-gallery">${section(
+  )}${section('contact', '💬 留言与工单')}</div></div><div class="home-gallery">${section(
     'gallery',
     '📸 城市风貌'
   )}</div><div class="home-services">${section(
