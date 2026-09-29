@@ -50,7 +50,7 @@
 .flow > * {
   border: var(--border-thin);
   padding: 18px;
-  background: var(--paper-soft);
+  background: var(--paper-2);
   box-shadow: var(--shadow-soft);
 }
 
@@ -107,7 +107,7 @@
   width: 100%;
   height: 12px;
   accent-color: var(--green);
-  background: var(--paper-soft);
+  background: var(--paper-2);
   border: 1px solid var(--line-soft);
 }
 .upload-actions { display: flex; gap: 6px; flex-wrap: wrap; }

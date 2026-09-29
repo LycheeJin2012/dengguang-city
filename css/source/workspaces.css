@@ -4,7 +4,7 @@ body{min-height:100vh;display:flex;flex-direction:column}
 #header{background:var(--paper);border-bottom:3px solid var(--line);box-shadow:0 4px var(--gold);z-index:5}
 .header-inner{max-width:1520px;margin:auto;display:flex;align-items:center;gap:18px;padding:16px 28px;flex-wrap:wrap}
 .brand{display:flex;align-items:center;gap:12px;color:var(--green);text-decoration:none;min-width:0}
-.brand strong{display:block;font-size:1.15rem;font-weight:800}
+.brand strong{display:block;font-family:var(--font-pixel);font-size:1.25rem;letter-spacing:.02em}
 .brand small{font: .65rem var(--font-mono);color:var(--muted);letter-spacing:.05em}
 .grass-block{width:40px;height:40px;flex:none;border:3px solid var(--line);background:linear-gradient(#689329 0 35%,#8d633d 35%);box-shadow:inset 7px 0 #0001;overflow:hidden}
 .grass-block:after{content:'';display:block;width:6px;height:6px;margin:5px;background:#b4c95a;box-shadow:14px 0 #4b7020,0 18px #65462f,15px 16px #65462f}
@@ -14,7 +14,9 @@ body{min-height:100vh;display:flex;flex-direction:column}
 .app-workspace{width:100%;max-width:1520px;display:grid;grid-template-columns:minmax(0,1fr);margin:0 auto;flex:1}
 .site-rail{max-width:1520px;margin:auto;background:var(--paper);padding:8px 28px;border-top:1px solid var(--line-soft);min-width:0}
 #navigation{display:flex;flex-direction:row;flex-wrap:wrap;gap:5px}
-#navigation a{display:block;padding:12px 14px;color:var(--ink);font-weight:700;text-decoration:none;border-left:3px solid transparent}
+/* v86：导航项是界面构件，用像素字体；选中态改成实心绿底 + 金色左标，
+   像游戏菜单的高亮条，而不是普通网页的下划线选中。 */
+#navigation a{display:block;padding:12px 14px;color:var(--ink);font-family:var(--font-pixel);font-size:1rem;letter-spacing:.04em;text-decoration:none;border-left:4px solid transparent}
 #navigation a[aria-current=page]{background:var(--green);color:var(--paper);border-left-color:var(--gold)}
 #navigation a:hover{background:var(--leaf-soft);color:var(--green)}
 main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
@@ -41,8 +43,11 @@ main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
    所以不再翻转顺序，公告与工单始终排在城市数据之前。 */
 @media(max-width:700px){
 /* v85：#language 按钮已随纯中文化移除，grid 里原本给它预留的 'language'
-   区域不再有对应元素，留着会渲染出一条空轨道，因此一并删除。 */
-.header-inner{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'brand menu' 'account account';padding:12px;gap:8px}.brand{grid-area:brand;gap:6px}.brand strong{font-size:.87rem}.brand small{font-size:.52rem;letter-spacing:0}.grass-block{width:30px;height:32px}#menu{display:block;grid-area:menu;margin:0;padding:8px}#account{grid-area:account;margin:0;justify-content:space-between;gap:8px}
+   区域不再有对应元素，留着会渲染出一条空轨道，因此一并删除。
+   v86 修正失衡：此前 account 独占第二行且 justify-content:space-between，
+   窄屏上「我是市民」孤零零贴左、右侧整片留白。改为单行 flex：品牌与
+   菜单同排，账户区右对齐，不再另起一行。 */
+.header-inner{display:flex;flex-wrap:nowrap;align-items:center;gap:8px;padding:12px}.brand{gap:8px;min-width:0;flex:1 1 auto}.brand strong{font-size:1rem}.brand small{font-size:.52rem;letter-spacing:0}.grass-block{width:30px;height:32px}#menu{display:block;margin:0;padding:8px 10px;flex:none}#account{margin:0 0 0 auto;justify-content:flex-end;flex:none}#account .button,#account button{padding:.5rem .75rem;min-height:40px}
 .app-workspace{display:block}.site-rail,[data-page=admin] .site-rail{display:none;padding:10px 12px;border-bottom:var(--border-thin)}.site-rail.is-open,[data-page=admin] .site-rail.is-open{display:block}#navigation,[data-page=admin] #navigation{position:static;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px}
 main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{padding:22px}.welcome-copy h1{font-size:2.5rem}.city-welcome>img{height:210px}.home-data .stats{grid-template-columns:repeat(2,minmax(0,1fr))}.home-workspace,.home-services{gap:20px}.profile-summary .actions>*{flex:1 1 120px}#footer{padding:22px 16px}
 }

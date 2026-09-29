@@ -317,9 +317,12 @@ input, select, textarea {
   border: var(--border-thin);
   border-color: var(--line-soft);
   border-radius: 0;
-  background: var(--paper-soft);
+  /* v86：输入框用 --sunken（凹陷面），比卡片暗一档。
+     层级里「凹进去的东西」就该更暗，卡片 / 输入框 / 页面底三级各归其位。 */
+  background: var(--sunken);
   color: var(--ink);
   min-height: 44px;
+  font-family: var(--font-body);
   transition:
     border-color var(--motion-base) var(--ease-out),
     background-color var(--motion-base) var(--ease-out),

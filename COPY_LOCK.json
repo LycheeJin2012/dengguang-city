@@ -1,5 +1,5 @@
 {
-  "basis": "v85.1 修复 v85 引入的 HTML 闭合标签损坏（skip 链接未闭合导致整页无法滚动）",
+  "basis": "v85.1 HTML 闭合标签修复基线",
   "files": {
     "404.html": "d2a86cd7252bdb09115adcd9383f4ba5541223362cae397ebf11f3f586462c43",
     "admin-v37.html": "78cac2843c368e438b21996e16d8519b076c4dcc4b43befd6aa1d42ba15e5054",

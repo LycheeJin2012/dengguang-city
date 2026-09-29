@@ -51,16 +51,17 @@
 .badge {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  border: 1px solid #9b9374;
-  padding: 2px 8px;
-  background: #ebe5cf;
+  gap: 6px;
+  /* v86：徽章是界面构件，用像素字体，和标题/按钮同一套字形语言 */
+  font-family: var(--font-pixel);
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  border: var(--border-thin);
+  padding: 3px 10px;
+  background: var(--paper-2);
   color: var(--ink);
   white-space: nowrap;
-  line-height: 1.4;
+  line-height: 1.5;
   border-radius: 0;
   /* Apple: badge state changes (e.g. pending → resolved) are colour only. */
   transition:
@@ -274,25 +275,31 @@ td .actions button { min-height: 36px; padding: 0.3rem 0.7rem; font-size: 0.82re
 main,section,article,aside,nav,form,fieldset,.panel,.card,.field{min-width:0}
 button,.button,summary{max-width:100%;white-space:normal;overflow-wrap:anywhere}
 input,select,textarea{min-width:0;max-width:100%}
-.panel,.card{overflow-wrap:anywhere;background:var(--paper);border:var(--border-thin);padding:22px;box-shadow:var(--shadow-soft);min-width:0}
+/* v86 卡片 / 面板 —— 像素化的核心。
+   旧版用 --border-thin(2px) + --shadow-soft(3px)，在米黄底上几乎立不起来。
+   现在：3px 硬描边 + 4px 实心偏移阴影 + --paper 亮面，压在 --ground 深底上，
+   三级明度（ground / paper-2 / paper）各就各位，卡片才有「浮起来」的体积感。 */
+.panel,.card{overflow-wrap:anywhere;background:var(--paper);border:var(--border);padding:24px;box-shadow:var(--shadow);min-width:0}
 .panel+.panel{margin-top:16px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:18px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,250px),1fr));gap:20px}
 .card{display:flex;flex-direction:column}
-.card img,.media{width:100%;aspect-ratio:16/10;object-fit:cover;border:var(--border-thin);background:var(--paper-soft)}
-.card .actions{margin-top:auto;padding-top:14px}
+.card img,.media{width:100%;aspect-ratio:16/10;object-fit:cover;border:var(--border-thin);background:var(--sunken)}
+.card .actions{margin-top:auto;padding-top:16px}
 .actions{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin-top:16px}
 .actions.compact{gap:6px;margin-top:8px}
 .page-heading,.section-head,.row-head{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap}
-.page-heading{margin-bottom:28px;padding-bottom:20px;border-bottom:2px solid var(--line)}
-.page-heading h1{font-size:clamp(2rem,4vw,3.2rem);margin:0;line-height:1.1}
-.section-head{margin-bottom:16px;align-items:baseline}
-.section-head h2{font-size:1.3rem;margin:0;color:var(--green)}
+/* v86：分区标题加一条左侧金色竖条，像游戏里的区块标牌，
+   把长页面切成一块块可扫读的区域 —— 这是旧版最缺的「结构感」。 */
+.page-heading{margin-bottom:32px;padding-bottom:24px;border-bottom:4px solid var(--line)}
+.page-heading h1{font-size:clamp(2rem,4vw,3rem);margin:0;line-height:1.3}
+.section-head{margin-bottom:20px;align-items:center;padding-left:14px;border-left:6px solid var(--gold)}
+.section-head h2{font-size:1.5rem;margin:0;color:var(--green)}
 .section-head .eyebrow{font-size:.65rem}
 .section{margin:36px 0;scroll-margin-top:20px}
 .tabs{display:flex;flex-wrap:wrap;gap:6px;padding:6px;background:var(--ground);border:var(--border-thin);margin:0 0 20px;overflow:visible}
 .tabs button{position:relative;flex:1 1 120px;padding:10px 12px;background:var(--paper);border:0;box-shadow:none;min-height:44px}
 .tabs button[aria-selected=true]{background:var(--green);color:var(--paper);box-shadow:inset 0 -3px var(--gold)}
-.toolbar{display:flex;flex-wrap:wrap;align-items:end;gap:12px;padding:16px;background:var(--paper-soft);border:var(--border-thin);margin-bottom:18px}
+.toolbar{display:flex;flex-wrap:wrap;align-items:end;gap:12px;padding:16px;background:var(--paper-2);border:var(--border-thin);margin-bottom:18px}
 .toolbar>.field{flex:1 1 160px;min-width:0}
 .toolbar>.tabs{flex:1 1 100%;margin:0}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
@@ -311,12 +318,12 @@ button.stat{cursor:pointer;text-align:left}
 .conversation b,.conversation small{display:block;overflow-wrap:anywhere}
 .conversation small{font-size:.82rem;color:var(--muted);margin-top:6px;white-space:normal}
 .conversation.selected{background:var(--leaf-soft);border-left:4px solid var(--green)}
-.messages{display:flex;flex-direction:column;gap:14px;height:clamp(280px,48vh,540px);padding:18px;background:var(--paper-soft);border:1px solid var(--line-soft);overflow-y:auto;overflow-x:hidden;min-width:0}
+.messages{display:flex;flex-direction:column;gap:14px;height:clamp(280px,48vh,540px);padding:18px;background:var(--paper-2);border:1px solid var(--line-soft);overflow-y:auto;overflow-x:hidden;min-width:0}
 .bubble{align-self:flex-start;max-width:88%;padding:12px 16px;background:var(--paper);border:var(--border-thin);flex-shrink:0;overflow-wrap:anywhere}
 .bubble.mine{align-self:flex-end;background:var(--leaf-soft);border-color:var(--green)}
 .bubble p{margin:0 0 8px}
 .bubble small{color:var(--muted);font-size:.76rem}
-.chat-assistance{border-left:4px solid var(--gold);background:var(--paper-soft);padding:12px;margin:14px 0}
+.chat-assistance{border-left:4px solid var(--gold);background:var(--paper-2);padding:12px;margin:14px 0}
 .chat-assistance .reply-feedback{border:0;margin:0;padding:0}
 #support-actions{display:contents}
 #support-status>#support-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
@@ -464,7 +471,7 @@ button.stat{cursor:pointer;text-align:left}
    driven by motion.css; no content, no text.                               */
 .skeleton {
   display: block;
-  background: linear-gradient(90deg, var(--paper-soft), var(--ground), var(--paper-soft));
+  background: linear-gradient(90deg, var(--paper-2), var(--ground), var(--paper-2));
   background-size: 200% 100%;
   border: 1px dashed var(--line-soft);
   min-height: 1em;
@@ -478,7 +485,7 @@ button.stat{cursor:pointer;text-align:left}
 .empty.compact {
   padding: 18px 14px;
   border: 1px dashed var(--line-soft);
-  background: var(--paper-soft);
+  background: var(--paper-2);
   margin: 0;
   font-size: 0.88rem;
 }
