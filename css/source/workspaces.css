@@ -64,8 +64,15 @@ main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
 /* 次按钮改成幽灵样式。原先是纸面白底黑字，一块纯白压在绿面上像贴了张
    便签，在整块深绿里格外扎眼；改成透明底 + 金色描边 + 米白字，既保留
    「两个按钮」的层级差，又不会在绿面上开一个白洞。 */
-.welcome-lead .actions .button:not(.primary),.welcome-lead .actions button:not(.primary){background:transparent;color:var(--paper);border-color:var(--gold);box-shadow:4px 4px 0 #1d3409}
-.welcome-lead .actions .button:not(.primary):hover,.welcome-lead .actions button:not(.primary):hover{background:#0000002e;color:var(--gold-soft)}
+/* v88：次按钮改毛玻璃。
+   之前是纯透明底 + 金色描边，透明度过高 —— 整个按钮在绿面上几乎没有实体感，
+   看着像一行浮空的字而不是能按下去的东西。改成毛玻璃后有了明确的「面」：
+   半透明白底 + 背景模糊 + 1px 亮边 + 上沿内高光 + 柔和落影，和下方压在配图
+   上的玻璃读数条是同一套材质语言，两个玻璃元素在首屏里成组。
+   投影也从硬偏移换成柔和落影：玻璃的厚度靠光影渐变，硬边偏移是像素语言的
+   专属手法，两种材质不能共用一个投影。 */
+.welcome-lead .actions .button:not(.primary),.welcome-lead .actions button:not(.primary){background:#ffffff24;-webkit-backdrop-filter:blur(10px) saturate(160%);backdrop-filter:blur(10px) saturate(160%);color:var(--paper);border:1px solid #ffffff5c;box-shadow:0 4px 14px #00000047,inset 0 1px 0 #ffffff73}
+.welcome-lead .actions .button:not(.primary):hover,.welcome-lead .actions button:not(.primary):hover{background:#ffffff3d;border-color:#ffffff8f;color:var(--gold-soft)}
 /* v87：城市数据做成压在配图底部的悬浮读数条。
    v88 改成液态玻璃：这是全站唯一压在照片上的元素，磨砂透明在这里语义成立
    （像给游戏截图叠了一层系统 UI），而上方绿面板的像素硬边保持不动 —— 玻璃
