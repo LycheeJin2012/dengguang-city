@@ -10,15 +10,23 @@ body{min-height:100vh;display:flex;flex-direction:column}
 .brand strong{display:block;font-family:var(--font-pixel);font-size:1.25rem;letter-spacing:.02em}
 /* v87：页头现在是实心绿底，副标题原本是 --muted 深灰，压在绿上会糊成一团，
    改成半透明白。grass-block 的泥土色在绿底上也不够跳，加一圈金色描边，
-   像游戏里的头像位。 */
-.brand small{font: .65rem var(--font-mono);color:#c9e0a4;letter-spacing:.05em}
+   像游戏里的头像位。
+   v88.6：#c9e0a4 那个带绿调的颜色压在 --green 上只有 3.58:1，AA 要 4.5:1。
+   搜过色相空间，同一绿调提到最亮也上不去 —— --green 太深，撑不住有色相的文字。
+   改用 --paper（5.03:1），层级交给字号（0.65rem vs 1.25rem）拉开。 */
+.brand small{font: .65rem var(--font-mono);color:var(--paper);letter-spacing:.05em}
 .grass-block{width:40px;height:40px;flex:none;border:3px solid var(--line);outline:2px solid var(--gold);background:linear-gradient(#7aa62e 0 35%,#8d633d 35%);box-shadow:inset 7px 0 #0001;overflow:hidden}
 .grass-block:after{content:'';display:block;width:6px;height:6px;margin:5px;background:#c6dc68;box-shadow:14px 0 #4b7020,0 18px #65462f,15px 16px #65462f}
 #account{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-left:auto;min-width:0}
 #account a{overflow-wrap:anywhere}.balance{white-space:nowrap}
 /* v87：页头转成实心绿底后，里面的控件要反色，否则「我是市民」绿底绿字
    直接消失。页头内的按钮一律改成纸面 + 黑边，退出/账号文字改浅色。 */
-#account .balance{color:#f4eeda}#account>span{color:var(--paper)}
+#account .balance{color:var(--paper)}#account>span{color:var(--paper)}
+/* v88.6：市民名是 <a>（跳 /profile.html），上面只反白了 .balance 和直接子 span，
+   链接漏网后掉回全局链接色，深绿底上几乎读不出来（实测 SIM_漫画家 糊成一团）。
+   纸白压 --green 的对比度是 4.8:1，过 AA；下划线保留可点击的暗示。 */
+#account a{color:var(--paper);text-decoration:underline;text-underline-offset:3px;text-decoration-thickness:2px}
+#account a:hover{color:var(--gold-soft)}
 #header button,#header a.button{background:var(--paper);color:var(--ink);border-color:var(--line);box-shadow:2px 2px 0 var(--line)}
 #header button:hover,#header a.button:hover{background:var(--gold-soft)}
 #header .primary{background:var(--gold);color:var(--ink)}
@@ -55,7 +63,7 @@ main{width:100%;max-width:none;margin:0;padding:36px;min-width:0}
 /* eyebrow 做成金色胶囊徽标：黑边 + 金底，跟绿面拉开层级。 */
 .welcome-lead .eyebrow{align-self:flex-start;margin:0 0 14px;padding:6px 12px;background:var(--gold);color:var(--ink);border:2px solid var(--line);box-shadow:3px 3px 0 var(--line);font-family:var(--font-pixel);font-size:.7rem;letter-spacing:.12em}
 .welcome-lead h1{font-family:var(--font-pixel);font-size:clamp(2.1rem,3.1vw,3.3rem);line-height:1.16;margin:0 0 16px;color:var(--paper);letter-spacing:.04em;text-shadow:4px 4px 0 #1d3409}
-.welcome-lead>p{margin:0 0 22px;color:#dbe8bd;font-size:1rem;line-height:1.75}
+.welcome-lead>p{margin:0 0 22px;color:var(--paper);font-size:1rem;line-height:1.75}
 .welcome-lead .actions{gap:12px;margin:0}
 .welcome-lead .actions .button,.welcome-lead .actions button{font-family:var(--font-pixel);font-size:.9rem;padding:.8rem 1.35rem;box-shadow:4px 4px 0 var(--line);border:3px solid var(--line)}
 /* 主按钮金色，次按钮纸面；绿面上两个都要有黑边才压得住。 */
