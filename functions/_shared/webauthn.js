@@ -95,7 +95,7 @@ export function parseAuthData(authData) {
   if (authData.length < 37) throw new Error('authData 太短');
   const rpIdHash = authData.slice(0, 32);
   const flags = authData[32];
-  const signCount = new DataView(authData.buffer,authData.byteOffset,authData.byteLength).getUint32(33);
+  const signCount = new DataView(authData.buffer, authData.byteOffset, authData.byteLength).getUint32(33);
   let offset = 37;
   let attestedCredentialData = null;
   if (flags & 0x40) {
@@ -124,6 +124,7 @@ function derToRawSig(der) {
   let s = der.slice(p, p + sLen);
   if (r.length === 33 && r[0] === 0) r = r.slice(1);
   if (s.length === 33 && s[0] === 0) s = s.slice(1);
+  // Web Crypto 只吃固定 32 字节的 r/s, DER 里可能是 31(前导 0 被去)也可能更长
   if (r.length < 32) r = new Uint8Array([...new Array(32 - r.length).fill(0), ...r]);
   if (s.length < 32) s = new Uint8Array([...new Array(32 - s.length).fill(0), ...s]);
   const out = new Uint8Array(64);
@@ -257,11 +258,12 @@ export async function passkeyRegisterFinish(env, body, subject, rpId, expectedOr
   if (!(parsed.flags & 0x40)) throw new Error('AT 标志缺失');
 
   // v17.10.3: coseToJwk 接受 raw bytes, 这里需要从 authData 重新切出 COSE_Key bytes
+  // AT 段固定布局: rpIdHash(32) + flags(1) + signCount(4) = 37, 再 + aaguid(16) + credIdLen(2)
   const authData = att.authData;
-  let _off = 37 + 16 + 2;
-  const _credIdLen = (authData[_off - 2] << 8) | authData[_off - 1];
-  _off += _credIdLen;
-  const coseBytes = authData.slice(_off);
+  let coseOffset = 37 + 16 + 2;
+  const credIdLen = (authData[coseOffset - 2] << 8) | authData[coseOffset - 1];
+  coseOffset += credIdLen;
+  const coseBytes = authData.slice(coseOffset);
   const jwk = coseToJwk(coseBytes);
   const credId = parsed.attestedCredentialData.credentialId;
   const aaguid = parsed.attestedCredentialData.aaguid;
@@ -408,12 +410,17 @@ export async function passkeyLoginFinish(env, body, rpId, expectedOrigin, target
     if (!_player) throw new Error('玩家不存在');
     if (_player.status !== 'active') throw new Error('账号已被禁用');
   }
+  // 合并账号(v17.9): passkey 只绑一边时, 借 linked_* 反查出对端身份
   if (_player && !_admin) {
-    const _link = await env.DB.prepare("SELECT a.id, a.username, a.role FROM players p LEFT JOIN admins a ON a.id = p.linked_admin_id WHERE p.id = ?").bind(_player.id).first();
+    const _link = await env.DB.prepare(
+      "SELECT a.id, a.username, a.role FROM players p LEFT JOIN admins a ON a.id = p.linked_admin_id WHERE p.id = ?"
+    ).bind(_player.id).first();
     if (_link && _link.id) _admin = _link;
   }
   if (_admin && !_player) {
-    const _link = await env.DB.prepare("SELECT p.id, p.username, p.status FROM admins a LEFT JOIN players p ON p.id = a.linked_player_id WHERE a.id = ?").bind(_admin.id).first();
+    const _link = await env.DB.prepare(
+      "SELECT p.id, p.username, p.status FROM admins a LEFT JOIN players p ON p.id = a.linked_player_id WHERE a.id = ?"
+    ).bind(_admin.id).first();
     if (_link && _link.id && _link.status === 'active') _player = _link;
   }
   // v47.5: target 参数决定创建哪类 session
@@ -444,14 +451,17 @@ export async function passkeyLoginFinish(env, body, rpId, expectedOrigin, target
   throw new Error('该通行密钥未关联任何账号');
 }
 
+// listPasskeys / deletePasskey 两种传参: 新版传 {kind, id}, 旧调用方直接传 playerId
+function resolveSubject(subjectOrPlayerId) {
+  if (typeof subjectOrPlayerId === 'object' && subjectOrPlayerId !== null) {
+    return { kind: subjectOrPlayerId.kind, id: subjectOrPlayerId.id };
+  }
+  return { kind: 'player', id: subjectOrPlayerId };
+}
+
 // v17.5: listPasskeys 接受 subject (kind + id) 或旧的 playerId
 export async function listPasskeys(env, subjectOrPlayerId) {
-  let kind, id;
-  if (typeof subjectOrPlayerId === 'object' && subjectOrPlayerId !== null) {
-    kind = subjectOrPlayerId.kind; id = subjectOrPlayerId.id;
-  } else {
-    kind = 'player'; id = subjectOrPlayerId;
-  }
+  const { kind, id } = resolveSubject(subjectOrPlayerId);
   const where = kind === 'admin' ? 'admin_id = ?' : 'player_id = ?';
   return await env.DB.prepare(
     `SELECT id, credential_id, name, created_at, last_used_at, aaguid FROM passkeys WHERE ${where} ORDER BY created_at DESC`
@@ -459,12 +469,7 @@ export async function listPasskeys(env, subjectOrPlayerId) {
 }
 
 export async function deletePasskey(env, subjectOrPlayerId, passkeyId) {
-  let kind, id;
-  if (typeof subjectOrPlayerId === 'object' && subjectOrPlayerId !== null) {
-    kind = subjectOrPlayerId.kind; id = subjectOrPlayerId.id;
-  } else {
-    kind = 'player'; id = subjectOrPlayerId;
-  }
+  const { kind, id } = resolveSubject(subjectOrPlayerId);
   const where = kind === 'admin' ? 'id = ? AND admin_id = ?' : 'id = ? AND player_id = ?';
   return await env.DB.prepare(
     `DELETE FROM passkeys WHERE ${where}`

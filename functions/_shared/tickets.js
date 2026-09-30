@@ -20,11 +20,11 @@ export async function createTicket(env, opts) {
     if (!env?.DB) return null;
     const { player_id = null, category, source_table = null, source_id = null, title, body = null, priority = 'normal' } = opts;
     if (!category || !title) return null;
-    const r = await env.DB.prepare(
+    const result = await env.DB.prepare(
       `INSERT INTO tickets (player_id, category, source_table, source_id, title, body, priority)
        VALUES (?, ?, ?, ?, ?, ?, ?)`
     ).bind(player_id, category, source_table, source_id, title, body, priority).run();
-    return r.meta?.last_row_id || null;
+    return result.meta?.last_row_id || null;
   } catch (e) {
     console.warn('[tickets] createTicket failed:', e?.message || e);
     return null;

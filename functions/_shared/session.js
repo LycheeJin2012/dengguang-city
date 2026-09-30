@@ -26,6 +26,7 @@ export async function mergeAccount(env, adminId, playerId) {
   const _a = await env.DB.prepare("SELECT id, username FROM admins WHERE id = ?").bind(adminId).first();
   if (!_a) throw new Error('管理员不存在');
   const _pOld = await env.DB.prepare('SELECT linked_admin_id FROM players WHERE id = ?').bind(playerId).first();
+  // 一对一绑定: 已经绑给别人就不许覆盖, 否则会把别人的合并关系顶掉(错提示要求先解绑)
   if (_pOld?.linked_admin_id && _pOld.linked_admin_id !== adminId) {
     throw new Error(`玩家 ${_p.username} 已绑定其他管理员 (id=${_pOld.linked_admin_id}), 请先解绑`);
   }
@@ -54,6 +55,7 @@ export async function getSession(env, token) {
     'SELECT token, player_id, admin_id, hotel_owner_id, expires_at FROM sessions WHERE token = ?'
   ).bind(token).first();
   if (!row) return null;
+  // 过期会话顺手删掉(滑动续期没做, 过期即失效)。expires_at 缺失/非法也走这条路 → 401
   if (!Number.isFinite(+new Date(row.expires_at)) || new Date(row.expires_at) <= new Date()) {
     await env.DB.prepare('DELETE FROM sessions WHERE token = ?').bind(token).run();
     return null;

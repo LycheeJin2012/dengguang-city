@@ -8,12 +8,25 @@ import {
   listPasskeys, deletePasskey
 } from '../../_shared.js';
 
+// 「验证已有密钥」的四个 action 走另一套实现（_core/passkey-verification.js），
+// 它们验证的是签名而不是注册新密钥，所以要在 parseSession 之前就分流出去。
+const VERIFY_ACTIONS = ['passkey-test-start', 'passkey-test-finish', 'passkey-admin-start', 'passkey-admin-finish'];
+
 export async function onRequestPost(context) {
   const { env, request } = context;
   const url = new URL(request.url);
   const action = url.searchParams.get('action') || '';
 
-  if(['passkey-test-start','passkey-test-finish','passkey-admin-start','passkey-admin-finish'].includes(action))return endpoint(async()=>{const input=await body(request),adminMode=action.includes('-admin-');return action.endsWith('-start')?startVerification(context,input,adminMode):finishVerification(context,input,adminMode);});
+  if (VERIFY_ACTIONS.includes(action)) {
+    return endpoint(async () => {
+      const input = await body(request);
+      // 名字里带 -admin- 的是管理端提权验证，其余是玩家自测
+      const adminMode = action.includes('-admin-');
+      return action.endsWith('-start')
+        ? startVerification(context, input, adminMode)
+        : finishVerification(context, input, adminMode);
+    });
+  }
   const { sess: _sess } = await parseSession(env, request);
   const rpId = getRpId(request);
   const origin = getOrigin(request);
@@ -71,7 +84,11 @@ export async function onRequestPost(context) {
       //   admin 端用 passkey 登录时传 'admin' → 创建 admin session (即使 passkey 绑在 player 上)
       //   玩家端用 passkey 登录时传 'player' 或不传 → 创建 player session
       const b = await request.json();
-      if(b.target==='admin')return err(403,'请先登录绑定玩家，再从管理页面验证身份');
+      // v47.5: 读 body.target ('admin' | 'player' | undefined) 传给 finish
+      //   admin 端用 passkey 登录时传 'admin' → 创建 admin session (即使 passkey 绑在 player 上)
+      //   玩家端用 passkey 登录时传 'player' 或不传 → 创建 player session
+      if (b.target === 'admin') return err(403, '请先登录绑定玩家，再从管理页面验证身份');
+      // 传 'admin' 已被拒，这里恒为玩家登录
       const _target = 'player';
       const r = await passkeyLoginFinish(env, b, rpId, expectedOriginLogin, _target);
       if (r && r.token) {
