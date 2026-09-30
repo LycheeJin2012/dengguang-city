@@ -1,4 +1,4 @@
-import * as oldM from './audit-policy.old.js';
+import * as oldM from '../functions/_core/audit-policy.oldcheck.js';
 import * as newM from '../functions/_core/audit-policy.js';
 const diffs=[];
 const paths=['/api/login','/api/init','/api/hotel-owner','/api/city-map','/api/nope','/api/admin/messages','/api/uploads','/api/tickets','/api/admin/exam-review','/api/admin/support-chat','/api/admin/circuit'];

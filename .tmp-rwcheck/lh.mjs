@@ -1,4 +1,4 @@
-import * as o from './login-history.old.js';
+import * as o from '../functions/_core/login-history.oldcheck.js';
 import * as n from '../functions/_core/login-history.js';
 const diffs=[];
 

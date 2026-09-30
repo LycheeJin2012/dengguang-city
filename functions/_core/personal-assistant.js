@@ -109,31 +109,20 @@ export async function personalSources(db, player, question) {
     recent: rows,
   });
 
-  // 兜底文本同样要声明边界，并复述最要紧的余额/未读数
-  const fallback =
-    '以下是你当前账号的近期信息：未读通知 ' +
-    data.unread_count +
-    ' 条。' +
-    (rows.length
-      ? '\n' +
-        rows
-          .slice(0, 5)
-          .map(
-            (r) =>
-              r.title +
-              '：' +
-              r.status +
-              (r.score != null ? '，' + r.score + ' 分' : '') +
-              (r.latest_reply ? '。最近回复：' + r.latest_reply.slice(0, 180) : '')
-          )
-          .join('\n')
-      : '暂时没有查到近期事务。') +
-    '\n网站绿宝石余额 ' +
-    player.emeralds +
-    '（与游戏背包尚未同步）。\n可在“我的事务”查看详情。这里仅显示最近记录，不代表完整历史；涉及原因或未记录结果，需要工作人员核实。';
+  // 兜底文本同样要声明边界，并复述最要紧的未读数与余额
+  const fallback = plainSummary(data, rows, player);
 
   return {
-    sources: [{ key: 'personal:current', kind: 'personal', id: player.id, title: '我的事务 · 当前账号', url: '/affairs.html', content }],
+    sources: [
+      {
+        key: 'personal:current',
+        kind: 'personal',
+        id: player.id,
+        title: '我的事务 · 当前账号',
+        url: '/affairs.html',
+        content,
+      },
+    ],
     fallback,
   };
 }

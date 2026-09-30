@@ -1,4 +1,4 @@
-import * as o from './ticket-visibility.old.js';
+import * as o from '../functions/_core/ticket-visibility.oldcheck.js';
 import * as n from '../functions/_core/ticket-visibility.js';
 const diffs=[];
 const mk=(action,extra={})=>({id:Math.floor(Math.random()*1e6),created_at:'2026-01-01 00:00:00',action,actor_type:'admin',actor_id:7,actor_name:'管理员',details:JSON.stringify(extra),...extra.raw});
