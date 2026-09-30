@@ -18,12 +18,24 @@
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { join } from 'node:path';
 
 const HTML = readdirSync('.').filter((f) => f.endsWith('.html'));
 
 /** 抽某个文件里所有 ?v= 号 */
 const versionsIn = (src) => [...src.matchAll(/\?v=(\d+)/g)].map((m) => m[1]);
+
+/** 递归列出目录下的 .js / .css 相对路径 */
+const walk = (dir, out = []) => {
+  for (const name of readdirSync(dir)) {
+    if (name === 'node_modules' || name.startsWith('.')) continue;
+    const rel = join(dir, name);
+    if (statSync(rel).isDirectory()) walk(rel, out);
+    else if (/\.(js|css)$/.test(name)) out.push(rel);
+  }
+  return out;
+};
 
 test('所有 HTML 页面引用同一份资源版本号', () => {
   const seen = new Map();
@@ -65,4 +77,24 @@ test('资源版本号能对上当前进度', () => {
   for (const v of all) {
     assert.ok(v >= MIN, `资源版本号 v${v} 低于当前的 v${MIN}，改完 UI 忘了 bump`);
   }
+});
+
+// 上面三条只扫根目录的 *.html（readdirSync('.')），结构上看不见 js/ 里的硬编码。
+// v88.6 就漏过一个：js/ui/assistant-window.js 给灯灯浮窗的 Shadow DOM 写死了
+// /css/style.css?v=84。Shadow DOM 不继承宿主样式表，只认自己那条 <link>，
+// 于是全站都 bump 到 89 了，唯独这个浮窗继续吃旧缓存。
+//
+// 这条把 js/ 和 css/ 一起扫进来，钉死「全站只有一个版本号」。
+test('js/ 和 css/ 里硬编码的 ?v= 也和 HTML 保持同一个版本号', () => {
+  const htmlVersions = new Set(HTML.flatMap((f) => versionsIn(readFileSync(f, 'utf8'))));
+  assert.equal(htmlVersions.size, 1, '前提：HTML 那边本来就该只有一个版本号');
+  const want = [...htmlVersions][0];
+
+  const bad = [];
+  for (const rel of [...walk('js'), ...walk('css')]) {
+    for (const v of versionsIn(readFileSync(rel, 'utf8'))) {
+      if (v !== want) bad.push(`${rel}: ?v=${v}（应为 ${want}）`);
+    }
+  }
+  assert.deepEqual(bad, [], '以下文件里的资源版本号和 HTML 不一致，部署后会吃到旧缓存：\n' + bad.join('\n'));
 });
