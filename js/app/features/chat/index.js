@@ -1,34 +1,195 @@
 /**
- * Chat page (1-on-1 messages + DengDeng assistant).
+ * 私信工作区（市民私信 + 灯灯助手）。
  *
- * v79-6 拆分自 js/app/chat-page.js（28 行 minified）。仅修正 import 路径。
+ * v88.6 重构：原来这个文件 33 行、10KB，每行都超长，同时管着
+ *   会话列表 / 线程渲染 / 消息增量判断 / 发送 / 已读 / 5 秒轮询
+ *   / 灯灯提醒 / 快捷问题 / 回复评价 / 人工转接
+ * 十件事。现在拆成 conversations / thread / feedback / support / composer
+ * 五个模块，这里只留**生命周期**和**数据流**。
+ *
+ * 拆的时候有三个约定必须守住，否则会出很难查的 bug：
+ *
+ *   1. epoch —— 每次打开会话自增。异步回调里凡是碰 DOM 的都要先核对
+ *      epoch 还是自己。切得快的时候，上一个会话的 in-flight 请求会回来，
+ *      不挡的话会把新会话的界面冲掉。
+ *   2. stillMine = epoch 没变 **且** 节点还在文档里。两个条件缺一不可：
+ *      节点被移走时 isConnected 为 false，但仍有人在监听。
+ *   3. 轮询自续期 —— 每轮 setTimeout 结束时再决定要不要排下一轮，
+ *      不是固定 setInterval。这样标签页隐藏、组件卸载都能干净停掉。
+ *      轮询必须定义在 open() 的作用域里，因为它要碰到那一回合的
+ *      lastDrawn / ratedId / supportRevision 游标。
+ *
+ * 对外契约（别的文件依赖，不能改）：
+ *   renderChat(el, {assistantOnly, isVisible})
+ *   渲染后必须存在 #send-form（assistant-window.js 靠它判断加载完了）
+ *   API 路径与 data-* 钩子保持原样
  */
 
-import {$,$$,api,post,patch,region,esc,text,date,empty,title,field,modal,action,toast,state} from '../../core.js'
-import {feedbackMarkup,bindFeedback} from '../../reply-feedback.js';
-import {createTicket,viewCitizenTicket} from '../../ticket-form.js';
-function links(raw){try{const a=JSON.parse(raw||'[]');return Array.isArray(a)?a.filter(s=>Number.isSafeInteger(s.id)).map(s=>`<a href="${s.kind==='hotel'?'/hotel.html':s.kind==='personal'?'/affairs.html':s.kind==='place'?'/map.html#place-'+s.id:'/knowledge.html?id='+s.id}">依据：${esc(s.title)}</a>`).join('<br>'):'';}catch{return '';}}
-export async function renderChat(el,{assistantOnly=false,isVisible=()=>true}={}){let peer='',epoch=0,timer=null;
- el.innerHTML=(assistantOnly?'':title('市民私信'))+`<div class="toolbar" ${assistantOnly?'hidden':''}><button id="new-message" class="primary">＋ 写私信</button><button id="ai-message">🤖 灯灯个人助手</button><a class="button" href="/knowledge.html">查阅知识库</a></div><div class="split"><aside class="panel" id="conversations" ${assistantOnly?'hidden':''}></aside><section class="panel" id="thread">${empty('选择会话或写一封新私信')}</section></div>`;
- async function list(){if(assistantOnly)return;await region($('#conversations',el),()=>api('/api/social?action=dm-list'),(d,box)=>{box.innerHTML=d.conversations.map((c,i)=>`<button class="conversation ${c.peer.username===peer?'selected':''}" data-conversation="${i}"><b>${esc(c.peer.username)}</b>${c.unread?` <span class="badge">${c.unread}</span>`:''}<small>${esc(c.last_content)}</small></button>`).join('')||empty();$$('[data-conversation]',box).forEach(b=>b.onclick=()=>open(d.conversations[Number(b.dataset.conversation)].peer.username));});}
- async function open(username){clearTimeout(timer);peer=username;const version=++epoch;await region($('#thread',el),()=>api('/api/social?action=dm-thread&peer='+encodeURIComponent(username)),async(d,box)=>{if(version!==epoch)return;box.innerHTML=`<div class="row-head"><h2>${esc(d.peer.username)}</h2><a href="/profile.html?u=${encodeURIComponent(d.peer.username)}">主页 ↗</a></div><div class="messages" aria-label="消息记录"></div>${username==='灯灯客服'?'<section class="chat-assistance" aria-label="回复反馈与人工客服"><div id="latest-reply-feedback"></div><div id="support-status"></div></section>':''}${username==='灯灯客服'?'<p id="assistant-reminder" class="notice" aria-live="polite"></p><div class="actions assistant-shortcuts"><button type="button" data-ask="我最近有哪些事务需要关注？">我的近况</button><button type="button" data-ask="我的工单和考试进度怎么样？">办理进度</button><a class="button" href="/affairs.html">查看我的事务与提醒</a></div>':''}<form id="send-form">${field('content','消息内容','textarea')}<div class="actions"><button class="primary">发送 ↗</button></div></form><p role="status" id="chat-refresh-state"></p>`;
- $$('[data-ask]',box).forEach(b=>b.onclick=()=>{const input=$('[name=content]',box);input.value=b.dataset.ask;input.focus();});
- if(username==='灯灯客服')api('/api/my-affairs').then(d=>{if(box.isConnected&&version===epoch)$('#assistant-reminder',box).textContent=`灯灯提醒：你有 ${d.unread_count} 条未读通知、${d.items.filter(r=>r.attention).length} 项近期事务值得关注。可打开“我的事务”查看。`;}).catch(()=>{if(box.isConnected)$('#assistant-reminder',box).textContent='暂时无法读取个人提醒，可在我的事务中刷新。';});
- let lastId=-1,chatRevision=-1,feedbackId=null;
- function placeSupportActions(){const controls=$('#support-actions',box),target=$('#latest-reply-feedback .reply-feedback .actions',box);if(controls&&target)target.append(controls);}
- function updateFeedback(messages){if(username!=='灯灯客服')return;const latest=messages.filter(m=>m.to_player_id===state.session.player.id).at(-1),target=$('#latest-reply-feedback',box);if(!latest||latest.id===feedbackId)return;if(target.contains((el.getRootNode().activeElement||document.activeElement))&&(el.getRootNode().activeElement||document.activeElement).matches('textarea,select'))return;const controls=$('#support-actions',box);if(controls)$('#support-status',box).append(controls);feedbackId=latest.id;target.innerHTML='<p class="reply-context">评价这条回复：'+esc(latest.content.slice(0,70))+'</p>'+feedbackMarkup('dm',latest.id,latest.helpful);bindFeedback(target);placeSupportActions();}
- function drawMessages(messages,force=false){updateFeedback(messages);const last=messages.at(-1)?.id||0;if(!force&&last===lastId)return false;const target=$('.messages',box);if(!force&&target.contains((el.getRootNode().activeElement||document.activeElement))&&(el.getRootNode().activeElement||document.activeElement).matches('textarea,select'))return false;lastId=last;const nearBottom=target.scrollHeight-target.scrollTop-target.clientHeight<80;target.innerHTML=messages.map(m=>`<div class="bubble ${m.from_player_id===state.session.player.id?'mine':''}"><p>${text(m.content)}</p>${links(m.knowledge_sources)}<small>${m.replied_by_admin_id?esc('人工客服 #'+m.replied_by_admin_id+' · '+(m.reply_author_name||''))+' · ':''}${date(m.created_at)}</small>${username==='灯灯客服'&&m.to_player_id===state.session.player.id&&m.id!==feedbackId?feedbackMarkup('dm',m.id,m.helpful):''}</div>`).join('')||empty();bindFeedback(target);if(force||nearBottom)target.scrollTop=target.scrollHeight;return true;}
- async function drawSupport(force=false){const result=await api('/api/support');if(version!==epoch||!box.isConnected)return;const chat=result.chat,revision=chat?.revision||0;if(!force&&revision===chatRevision)return;chatRevision=revision;const waiting=chat?.status==='queued',active=chat?.status==='active',bar=$('#support-status',box);$('#support-actions',box)?.remove();bar.innerHTML=`<p>${waiting?'已转人工，正在等待客服接入。继续在这个聊天补充说明即可。':active?'人工客服已接入，灯灯自动回复已暂停。':chat?.auto_handoff===false?'已结束人工等待。可以继续与灯灯交流，需要时手动转人工。':'灯灯会根据资料组织答复；无法可靠回答时，会在当前聊天自动转人工。'}</p><div class="actions" id="support-actions">${waiting||active?`<button type="button" id="end-support">${waiting?'结束等待':'结束人工会话'}</button>`:'<button type="button" id="handoff">转人工</button>'}<button type="button" id="support-refresh">刷新回复</button>${chat?.linked_ticket_id?'<button type="button" id="linked-ticket">查看已提交工单</button>':chat?.needs_ticket?'<button type="button" class="primary" id="suggested-ticket">提交工单</button>':''}</div>${chat?.needs_ticket&&!chat.linked_ticket_id?'<p>人工客服建议通过工单继续处理。点击后可核对问题说明，再确认提交。</p>':''}`;
- const refresh=async()=>{const r=await api('/api/social?action=dm-thread&peer='+encodeURIComponent(username));drawMessages(r.messages);await drawSupport(true);await patch('/api/social?action=dm-read&peer='+encodeURIComponent(username));await list();};$('#support-refresh',bar).onclick=e=>action(e.currentTarget,refresh);
- if($('#handoff',bar))$('#handoff',bar).onclick=e=>action(e.currentTarget,async()=>{await post('/api/support',{});await refresh();});
- if($('#end-support',bar))$('#end-support',bar).onclick=e=>action(e.currentTarget,async()=>{await post('/api/support',{action:'cancel',revision:chat.revision});await refresh();});
- if($('#linked-ticket',bar))$('#linked-ticket',bar).onclick=e=>action(e.currentTarget,()=>viewCitizenTicket(chat.linked_ticket_id));
- if($('#suggested-ticket',bar))$('#suggested-ticket',bar).onclick=e=>action(e.currentTarget,()=>createTicket({kind:'service',initial:{title:'人工客服建议跟进的问题',body:chat.ticket_summary||''},onCreated:async t=>{await post('/api/support',{action:'link-ticket',ticket_id:t.id});await drawSupport(true);}}));
- placeSupportActions();
- }
- drawMessages(d.messages,true);if(username==='灯灯客服')await drawSupport(true);$('#send-form',box).onsubmit=e=>{e.preventDefault();const form=e.currentTarget;action($('button',form),async()=>{const result=await post('/api/social?action=dm-send',{to_username:username,content:$('[name=content]',form).value});if(version===epoch){$('[name=content]',form).value='';const r=await api('/api/social?action=dm-thread&peer='+encodeURIComponent(username));drawMessages(r.messages,true);if(username==='灯灯客服')await drawSupport(true);await patch('/api/social?action=dm-read&peer='+encodeURIComponent(username));await list();if(result.support_error)toast('消息已保存，但自动转人工暂未成功，请点击“转人工”重试',true);}});};
- if(isVisible()&&!el.closest('[hidden]'))await patch('/api/social?action=dm-read&peer='+encodeURIComponent(username));await list();
- async function poll(){timer=setTimeout(async()=>{if(!el.isConnected||version!==epoch)return;try{if(isVisible()&&document.visibilityState!=='hidden'&&!el.closest('[hidden]')){const r=await api('/api/social?action=dm-thread&peer='+encodeURIComponent(username));if(version!==epoch)return;if(!isVisible()||el.closest('[hidden]')){poll();return;}if(drawMessages(r.messages)){await patch('/api/social?action=dm-read&peer='+encodeURIComponent(username));await list();}if(username==='灯灯客服')await drawSupport();$('#chat-refresh-state',box).textContent='';}}catch{$('#chat-refresh-state',box).textContent='暂时无法刷新，可点击刷新回复重试。';}if(el.isConnected&&version===epoch)poll();},5000);}poll();
- });}
- $('#new-message',el).onclick=()=>modal('新私信',field('username','收件人游戏 ID'),{label:'打开会话',submit:async v=>{await open(v.username);}});$('#ai-message',el).onclick=e=>action(e.currentTarget,async()=>{const d=await api('/api/ai-bot');await open(d.username);});await list();const to=assistantOnly?(await api('/api/ai-bot')).username:new URLSearchParams(location.search).get('to');if(to)await open(to);
+import { $, api, post, patch, region, empty, title, field, modal, action } from '../../core.js';
+import { renderConversations } from './conversations.js';
+import { threadMarkup, drawMessages, bindShortcuts, ASSISTANT } from './thread.js';
+import { updateReplyFeedback, placeSupportActions } from './feedback.js';
+import { drawSupport } from './support.js';
+import { composerMarkup, bindComposer } from './composer.js';
+
+const POLL_MS = 5000;
+
+export async function renderChat(el, { assistantOnly = false, isVisible = () => true } = {}) {
+  let peer = '';
+  let epoch = 0;
+  let timer = null;
+
+  el.innerHTML =
+    (assistantOnly ? '' : title('市民私信')) +
+    `<div class="toolbar" ${assistantOnly ? 'hidden' : ''}>` +
+    `<button id="new-message" class="primary">＋ 写私信</button>` +
+    `<button id="ai-message">🤖 灯灯个人助手</button>` +
+    `<a class="button" href="/knowledge.html">查阅知识库</a></div>` +
+    `<div class="split"><aside class="panel" id="conversations" ${assistantOnly ? 'hidden' : ''}></aside>` +
+    `<section class="panel" id="thread">${empty('选择会话或写一封新私信')}</section></div>`;
+
+  const refreshList = () => renderConversations(el, { peer, onOpen: open });
+
+  /** 打开某个会话 */
+  async function open(username) {
+    clearTimeout(timer);
+    peer = username;
+    const version = ++epoch;
+    const stillMine = () => version === epoch && el.isConnected;
+    const isAssistant = username === ASSISTANT;
+
+    await region(
+      $('#thread', el),
+      () => api('/api/social?action=dm-thread&peer=' + encodeURIComponent(username)),
+      async (data, box) => {
+        if (!stillMine()) return;
+
+        box.innerHTML = threadMarkup({ peer: data.peer, isAssistant }) + composerMarkup();
+
+        // ---- 本回合的增量游标 ----
+        let lastDrawn = -1;
+        let ratedId = null;
+        let supportRevision = -1;
+
+        /** 反馈槽先刷，再画气泡 —— 反馈槽不受「最后一条 id 没变」影响 */
+        function redraw(messages, force = false) {
+          ratedId = updateReplyFeedback(box, { messages, isAssistant, ratedId });
+          const changed = drawMessages(box, { messages, isAssistant, ratedId, lastDrawn }, force);
+          // 只有真画了才推进游标。被「正在输入」挡下来时不能推进，
+          // 否则这批消息永远不会再被画出来。lastDrawn 是按值传的，
+          // 靠这里回写，跟原实现里闭包变量 lastId 的行为一致。
+          if (changed) lastDrawn = messages.at(-1)?.id || 0;
+          return changed;
+        }
+
+        /** 客服面板：revision 没变就整块跳过，不重画 */
+        async function paintSupport(force = false) {
+          if (!isAssistant) return;
+          const rev = await drawSupport(box, { refresh, isCurrent: stillMine });
+          if (rev === null) return;
+          if (!force && rev === supportRevision) return;
+          supportRevision = rev;
+        }
+
+        /** 一次完整刷新：拉线程 → 重画 → 刷客服 → 标已读 → 刷左侧 */
+        async function refresh() {
+          const r = await api('/api/social?action=dm-thread&peer=' + encodeURIComponent(username));
+          redraw(r.messages);
+          await paintSupport(true);
+          await patch('/api/social?action=dm-read&peer=' + encodeURIComponent(username));
+          await refreshList();
+        }
+
+        bindShortcuts(box);
+        placeSupportActions(box);
+
+        if (isAssistant) await loadReminder(box, stillMine);
+
+        redraw(data.messages, true);
+        await paintSupport(true);
+
+        bindComposer(
+          box,
+          async (content) => {
+            const result = await post('/api/social?action=dm-send', { to_username: username, content });
+            if (version === epoch) await refresh();
+            return result;
+          },
+          () => version === epoch
+        );
+
+        if (isVisible() && !el.closest('[hidden]')) {
+          await patch('/api/social?action=dm-read&peer=' + encodeURIComponent(username));
+        }
+        await refreshList();
+
+        // ---- 轮询：自续期，每轮结束时再决定要不要排下一轮 ----
+        const schedulePoll = () => {
+          timer = setTimeout(async () => {
+            const note = () => $('#chat-refresh-state', box);
+            try {
+              const watching = isVisible() && document.visibilityState !== 'hidden' && !el.closest('[hidden]');
+              if (stillMine() && watching) {
+                const r = await api('/api/social?action=dm-thread&peer=' + encodeURIComponent(username));
+                if (!stillMine()) return;
+                // 请求在飞的这几秒里可能已经切走或切到别的标签页了，补一次检查
+                if (!isVisible() || el.closest('[hidden]')) {
+                  schedulePoll();
+                  return;
+                }
+                if (redraw(r.messages)) {
+                  await patch('/api/social?action=dm-read&peer=' + encodeURIComponent(username));
+                  await refreshList();
+                }
+                await paintSupport();
+                if (note()) note().textContent = '';
+              }
+            } catch {
+              if (note()) note().textContent = '暂时无法刷新，可点击刷新回复重试。';
+            }
+            if (stillMine()) schedulePoll();
+          }, POLL_MS);
+        };
+        schedulePoll();
+      }
+    );
+  }
+
+  /**
+   * 灯灯的「你有几条未读 / 几项事务待办」提醒。
+   * 读不到不算错误 —— 我的事务接口挂了不该让聊天看起来坏了。
+   */
+  async function loadReminder(box, stillMine) {
+    try {
+      const d = await api('/api/my-affairs');
+      if (!box.isConnected || !stillMine()) return;
+      $('#assistant-reminder', box).textContent =
+        `灯灯提醒：你有 ${d.unread_count} 条未读通知、` +
+        `${d.items.filter((r) => r.attention).length} 项近期事务值得关注。可打开“我的事务”查看。`;
+    } catch {
+      if (box.isConnected) $('#assistant-reminder', box).textContent = '暂时无法读取个人提醒，可在我的事务中刷新。';
+    }
+  }
+
+  // ---- 顶栏三个入口 ----
+  $('#new-message', el).onclick = () =>
+    modal('新私信', field('username', '收件人游戏 ID'), {
+      label: '打开会话',
+      submit: async (v) => {
+        await open(v.username);
+      },
+    });
+
+  $('#ai-message', el).onclick = (e) =>
+    action(e.currentTarget, async () => {
+      const d = await api('/api/ai-bot');
+      await open(d.username);
+    });
+
+  await renderConversations(el, { peer: '', onOpen: open });
+
+  const to = assistantOnly
+    ? (await api('/api/ai-bot')).username
+    : new URLSearchParams(location.search).get('to');
+  if (to) await open(to);
 }

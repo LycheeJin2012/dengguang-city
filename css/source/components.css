@@ -332,26 +332,6 @@ input,select,textarea{min-width:0;max-width:100%}
 .stat span{font-size:.85rem;color:var(--muted)}
 button.stat{cursor:pointer;text-align:left}
 .split{display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;align-items:start}
-.conversation{display:block;width:100%;text-align:left;padding:14px;border:0;border-bottom:1px solid var(--line-soft);background:transparent;box-shadow:none;flex-shrink:0}
-.conversation b,.conversation small{display:block;overflow-wrap:anywhere}
-.conversation small{font-size:.82rem;color:var(--muted);margin-top:6px;white-space:normal}
-.conversation.selected{background:var(--leaf-soft);border-left:4px solid var(--green)}
-.messages{display:flex;flex-direction:column;gap:14px;height:clamp(280px,48vh,540px);padding:18px;background:var(--paper-2);border:1px solid var(--line-soft);overflow-y:auto;overflow-x:hidden;min-width:0}
-.bubble{align-self:flex-start;max-width:88%;padding:12px 16px;background:var(--paper);border:var(--border-thin);flex-shrink:0;overflow-wrap:anywhere}
-.bubble.mine{align-self:flex-end;background:var(--leaf-soft);border-color:var(--green)}
-.bubble p{margin:0 0 8px}
-.bubble small{color:var(--muted);font-size:.76rem}
-.chat-assistance{border-left:4px solid var(--gold);background:var(--paper-2);padding:12px;margin:14px 0}
-.chat-assistance .reply-feedback{border:0;margin:0;padding:0}
-#support-actions{display:contents}
-#support-status>#support-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-#support-status p{font-size:.85rem;margin:8px 0;color:var(--muted)}
-.reply-context{font-size:.8rem;color:var(--muted);margin-bottom:8px}
-#conversations,#support-chat-list{padding:6px;max-height:65vh;overflow-y:auto;display:flex;flex-direction:column}
-#thread,#support-chat-room{padding:20px}
-#send-form{padding-top:16px;border-top:1px solid var(--line-soft);margin-top:18px}
-#send-form textarea{min-height:92px}
-#send-form>.actions{justify-content:flex-end}
 .table-wrap{max-width:100%;overflow:visible}
 .responsive-table{width:100%;table-layout:fixed}
 .responsive-table th,.responsive-table td{white-space:normal;overflow-wrap:anywhere;min-width:0}

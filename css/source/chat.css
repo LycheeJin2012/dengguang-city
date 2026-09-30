@@ -1,0 +1,86 @@
+/* 私信：市民私信页 + 浮动灯灯助手 + 管理员接待台。
+ *
+ * v88.6 从 components.css / workspaces.css 搬出来单独成文件。
+ * 搬之前散在两个文件里，还夹在 .split 和 .table-wrap 中间，
+ * 改私信样式要同时开两个文件，而且很容易误伤隔壁规则。
+ *
+ * 三个界面共用这里的样式，靠的是同一批类名：
+ *   玩家私信   .conversation / .messages / .bubble
+ *   管理员接待台 #support-chat-list / #support-chat-room（support-chat-admin.js）
+ *   浮动灯灯   .assistant-embedded（assistant-window.js）
+ * 所以改的时候要按「三个都要能用」来改，不能只看玩家那边。
+ */
+
+/* ---------- 会话列表 ---------- */
+.conversation{display:block;width:100%;text-align:left;padding:12px 14px;margin:0 0 10px;border:3px solid var(--line);background:var(--paper);box-shadow:3px 3px 0 var(--line);flex-shrink:0;transition:transform .08s,box-shadow .08s}
+.conversation b,.conversation small{display:block;overflow-wrap:anywhere}
+.conversation b{font-family:var(--font-pixel);font-size:.95rem;letter-spacing:.02em}
+.conversation small{font-size:.82rem;color:var(--muted);margin-top:6px;white-space:normal}
+/* 列表项是 <button>，按下时要有实体感 —— 往下压一点、影子收掉 */
+.conversation:active{transform:translate(3px,3px);box-shadow:0 0 0 var(--line)}
+/* 选中项：绿面反白。深绿底上再用 --leaf-soft 浅绿会糊成一片。 */
+.conversation.selected{background:var(--green-deep);color:var(--paper);border-color:var(--line);box-shadow:3px 3px 0 var(--line)}
+.conversation.selected b,.conversation.selected small{color:var(--paper)}
+
+/* ---------- 消息区 ---------- */
+.messages{display:flex;flex-direction:column;gap:14px;height:clamp(280px,48vh,540px);padding:18px;background:var(--paper-2);border:3px solid var(--line);overflow-y:auto;overflow-x:hidden;min-width:0}
+
+/* ---------- 气泡 ---------- */
+/* 对方气泡：纸面 + 黑边 + 实心偏移影。--line 纯黑，2px 在浅底上不够立。 */
+.bubble{align-self:flex-start;max-width:88%;padding:12px 16px;background:var(--paper);border:3px solid var(--line);box-shadow:4px 4px 0 var(--line);flex-shrink:0;overflow-wrap:anywhere}
+/* 自己气泡：--green-deep 实底 + 纸白字。之前用 --leaf-soft 浅绿底 + 深绿字，
+   在 --paper-2 消息区上跟对面气泡只差一个色阶，谁是谁看不出来。 */
+.bubble.mine{align-self:flex-end;background:var(--green-deep);color:var(--paper)}
+.bubble p{margin:0 0 8px}
+.bubble p:last-child{margin-bottom:0}
+/* 气泡变深底后，时间戳不能还是 --muted 深灰，压上去看不见 */
+.bubble small{color:var(--ink-soft);font-size:.76rem}
+.bubble.mine small{color:#dbe8bd}
+.bubble a{color:var(--green-deep);text-decoration:underline;font-weight:600}
+.bubble.mine a{color:var(--gold-soft)}
+
+/* ---------- 人工客服面板 ---------- */
+.chat-assistance{border:3px solid var(--line);border-left-width:6px;border-left-color:var(--gold);background:var(--paper);padding:12px;margin:14px 0;box-shadow:4px 4px 0 var(--line)}
+.chat-assistance .reply-feedback{border:0;margin:0;padding:0}
+#support-actions{display:contents}
+#support-status>#support-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#support-status p{font-size:.85rem;margin:8px 0;color:var(--ink-soft)}
+.reply-context{font-size:.8rem;color:var(--ink-soft);margin-bottom:8px}
+
+/* ---------- 容器 ---------- */
+#conversations,#support-chat-list{padding:12px;max-height:65vh;overflow-y:auto;display:flex;flex-direction:column}
+#thread,#support-chat-room{padding:20px}
+#send-form{padding-top:16px;border-top:3px solid var(--line);margin-top:18px}
+#send-form textarea{min-height:92px}
+#send-form>.actions{justify-content:flex-end}
+
+/* ---------- 浮动灯灯助手 ----------
+   独立 DOM + 复用同一个私信控制器。窗口窄、矮，空间极紧，
+   这里的规则优先级最高，压在上面的通用规则之上。 */
+#assistant-launcher{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:30;background:var(--green);color:var(--paper);min-height:48px;box-shadow:4px 4px var(--line)}
+#assistant-window{position:fixed;right:16px;bottom:80px;width:min(420px,calc(100vw - 24px));height:min(680px,calc(100dvh - 104px));display:grid;grid-template-rows:auto minmax(0,1fr);border:3px solid var(--line);box-shadow:6px 6px #0004;background:var(--paper);z-index:29;overflow:hidden}
+.assistant-window-head{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:2px solid var(--line);background:var(--ground)}
+.assistant-window-head strong{flex:1}.assistant-window-head button{padding:6px;min-width:40px;min-height:40px}
+.assistant-window-content{min-height:0;height:100%;overflow:auto}
+.assistant-embedded{background:var(--paper);min-height:0;font-family:var(--font-body);font-size:16px;color:var(--ink)}
+.assistant-embedded main{padding:0}.assistant-embedded .split{display:block}.assistant-embedded #thread{padding:12px;border:0;box-shadow:none}
+.assistant-embedded .messages{height:210px;min-height:160px}.assistant-embedded #thread>.row-head{font-size:.85rem}.assistant-embedded #thread h2{font-size:1.05rem}
+.assistant-embedded .chat-assistance{padding:8px}.assistant-embedded .chat-assistance button{font-size:.8rem;padding:7px;min-height:40px}
+.assistant-embedded #assistant-reminder{font-size:.8rem}.assistant-embedded .assistant-shortcuts{gap:6px}.assistant-embedded .assistant-shortcuts button,.assistant-embedded .assistant-shortcuts .button{font-size:.8rem;padding:7px}
+.assistant-embedded #send-form textarea{min-height:76px}
+@media(max-width:700px){#assistant-window{right:12px;bottom:76px;height:min(640px,calc(100dvh - 96px))}}
+@media(max-height:500px){#assistant-window{bottom:64px;height:calc(100dvh - 76px)}}
+/* Keep the composer visible in the compact window; full history remains in Messages. */
+.assistant-embedded{height:100%}
+.assistant-embedded main,.assistant-embedded .split{height:100%;min-height:0}
+.assistant-embedded #thread{margin:0;height:100%;min-height:0;display:grid;grid-template-rows:minmax(80px,1fr) auto auto auto;gap:6px;overflow:auto;padding:10px}
+.assistant-embedded #thread>.row-head,.assistant-embedded .assistant-shortcuts,.assistant-embedded .reply-context,.assistant-embedded .bubble .reply-feedback{display:none}
+.assistant-embedded .messages{height:auto;min-height:80px;padding:8px}
+.assistant-embedded .bubble{padding:8px 10px;box-shadow:3px 3px 0 var(--line)}
+.assistant-embedded .chat-assistance{margin:0;padding:8px;box-shadow:none}
+.assistant-embedded .chat-assistance .actions{margin-top:6px;gap:5px}
+.assistant-embedded #assistant-reminder{margin:0;padding:6px 8px;font-size:.75rem}
+.assistant-embedded #send-form{margin:0;padding-top:8px}
+.assistant-embedded #send-form .field{gap:4px;font-size:.8rem}
+.assistant-embedded #send-form textarea{height:64px;min-height:64px;max-height:120px}
+.assistant-embedded #send-form .actions{margin-top:6px}

@@ -160,33 +160,4 @@ main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{paddi
 .gallery-original{display:block;width:100%;height:auto;max-width:100%;grid-column:1/-1;object-fit:contain}
 @media(max-width:700px){.city-carousel{padding:8px;width:min(100%,calc(62svh * var(--image-ratio) + 20px))}.carousel-caption{font-size:.9rem;gap:8px}.city-carousel .actions{gap:8px}}
 .ticket-preview .row-head{margin-bottom:10px}.ticket-preview p{margin:10px 0}
-/* Floating assistant: isolated DOM, shared authenticated chat controller. */
-#assistant-launcher{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:30;background:var(--green);color:var(--paper);min-height:48px;box-shadow:4px 4px var(--line)}
-#assistant-window{position:fixed;right:16px;bottom:80px;width:min(420px,calc(100vw - 24px));height:min(680px,calc(100dvh - 104px));display:grid;grid-template-rows:auto minmax(0,1fr);border:3px solid var(--line);box-shadow:6px 6px #0004;background:var(--paper);z-index:29;overflow:hidden}
-.assistant-window-head{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:2px solid var(--line);background:var(--ground)}
-.assistant-window-head strong{flex:1}.assistant-window-head button{padding:6px;min-width:40px;min-height:40px}
-.assistant-window-content{min-height:0;height:100%;overflow:auto}
-.assistant-embedded{background:var(--paper);min-height:0;font-family:var(--font-body);font-size:16px;color:var(--ink)}
-.assistant-embedded main{padding:0}.assistant-embedded .split{display:block}.assistant-embedded #thread{padding:12px;border:0;box-shadow:none}
-.assistant-embedded .messages{height:210px;min-height:160px}.assistant-embedded #thread>.row-head{font-size:.85rem}.assistant-embedded #thread h2{font-size:1.05rem}
-.assistant-embedded .chat-assistance{padding:8px}.assistant-embedded .chat-assistance button{font-size:.8rem;padding:7px;min-height:40px}
-.assistant-embedded #assistant-reminder{font-size:.8rem}.assistant-embedded .assistant-shortcuts{gap:6px}.assistant-embedded .assistant-shortcuts button,.assistant-embedded .assistant-shortcuts .button{font-size:.8rem;padding:7px}
-.assistant-embedded #send-form textarea{min-height:76px}
 #footer{padding-bottom:84px}
-@media(max-width:700px){#assistant-window{right:12px;bottom:76px;height:min(640px,calc(100dvh - 96px))}}
-@media(max-height:500px){#assistant-window{bottom:64px;height:calc(100dvh - 76px)}}
-/* Keep the composer visible in the compact window; full history remains in Messages. */
-.assistant-embedded{height:100%}
-.assistant-embedded main,.assistant-embedded .split{height:100%;min-height:0}
-.assistant-embedded #thread{margin:0;height:100%;min-height:0;display:grid;grid-template-rows:minmax(80px,1fr) auto auto auto;gap:6px;overflow:auto;padding:10px}
-.assistant-embedded #thread>.row-head,.assistant-embedded .assistant-shortcuts,.assistant-embedded .reply-context,.assistant-embedded .bubble .reply-feedback{display:none}
-.assistant-embedded .messages{height:auto;min-height:80px;padding:8px}
-.assistant-embedded .chat-assistance{margin:0;padding:8px}
-.assistant-embedded .chat-assistance .actions{margin-top:6px;gap:5px}
-.assistant-embedded #assistant-reminder{margin:0;padding:6px 8px;font-size:.75rem}
-.assistant-embedded #send-form{margin:0;padding-top:8px}
-.assistant-embedded #send-form .field{gap:4px;font-size:.8rem}
-.assistant-embedded #send-form textarea{height:64px;min-height:64px;max-height:120px}
-.assistant-embedded #send-form .actions{margin-top:6px}
-.assistant-embedded #chat-refresh-state:empty{display:none}
-@media(max-height:500px){.assistant-embedded #thread{display:block;height:auto}.assistant-embedded .messages{height:140px}.assistant-embedded #send-form{margin-top:8px}}

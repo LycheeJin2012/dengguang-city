@@ -128,6 +128,12 @@ const CONTRACT = [
   ['.brand strong', '--green', '页头站名'],
   ['.brand small', '--green', '页头站名副标题'],
   ['.welcome-lead .eyebrow', '--gold', 'hero 徽标'],
+  // v88.6 私信像素化后新增的深底文字
+  ['.conversation.selected', '--green-deep', '私信会话列表选中项'],
+  ['.conversation.selected small', '--green-deep', '私信会话列表选中项的摘要'],
+  ['.bubble.mine', '--green-deep', '私信里自己发的气泡'],
+  ['.bubble.mine small', '--green-deep', '自己发的气泡上的时间戳'],
+  ['.bubble.mine a', '--green-deep', '自己发的气泡里的链接'],
 ];
 
 test('深色表面上的文字都能解析出生效颜色', () => {
