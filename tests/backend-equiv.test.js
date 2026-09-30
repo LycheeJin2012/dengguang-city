@@ -20,7 +20,9 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
-import { writeFileSync, unlinkSync, existsSync, readFileSync } from 'node:fs';
+import { writeFileSync, unlinkSync, existsSync, readFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
 import { database } from './local-d1.mjs';
 import { ensureDatabase } from '../functions/_core/database.js';
 
@@ -99,18 +101,59 @@ async function fixture() {
   };
 }
 
-/** 把一个模块的两版都装到能跑的状态 */
+/**
+ * 把一个模块的两版都装到能跑的状态。
+ *
+ * 踩过的坑，按时间顺序：
+ *
+ * 1. 第一版把基线副本写成 `functions/_core/xxx.equiv-old.js`。
+ *    frontend.test.js 会链接检查 functions/ 下的每个 .js，于是并行跑测试时
+ *    那个临时文件被当成「有模块 import 了不存在的文件」，报出莫名其妙的失败。
+ *    跑完还会在仓库里留下 14 个 *.equiv-old.js / *.oldcheck.js 垃圾。
+ *
+ * 2. 第二版改放 tests/.equiv-tmp/。**路径彻底断了** —— 副本里的
+ *    `import ... from './dispatch.js'` 是相对路径，挪走后就指向
+ *    tests/.equiv-tmp/dispatch.js，直接 Cannot find module。
+ *    副本必须待在原目录，它的相对 import 才成立。
+ *
+ * 所以只能回原位，靠两点避开扫描：文件名用 `.mjs`（扫的是 `.js`），
+ * 名字加进程号（并发跑时互不覆盖），并挂在进程退出时清空。
+ */
+let tmpSeq = 0;
 async function loadBoth(path) {
-  const tmp = path.replace(/\.js$/, '.equiv-old.js');
-  writeFileSync(tmp, show(path));
-  const oldM = await import('../' + tmp);
+  const name = `.equiv-${process.pid}-${++tmpSeq}-${path.replace(/[/\\]/g, '_').replace(/\.js$/, '')}.mjs`;
+  const rel = path.replace(/\/[^/]+$/, '/') + name;
+  // 两个路径基准不一样，别混：
+  //   writeFileSync / unlinkSync —— 相对 **cwd**（仓库根），所以直接用 rel
+  //   import()                 —— 相对**本文件**（tests/），所以要加 '../'
+  // 副本必须写在原目录，它内部的 './xxx.js' 相对 import 才成立。
+  writeFileSync(rel, show(path));
+  const oldM = await import('../' + rel);
   const newM = await import('../' + path);
   return {
     oldM,
     newM,
-    cleanup: () => { try { unlinkSync(tmp); } catch {} },
+    cleanup: () => { try { unlinkSync(rel); } catch {} },
   };
 }
+
+/** 进程退出时清掉所有本次跑出来的副本 */
+function cleanupTmpFiles() {
+  try {
+    const cwd = process.cwd();
+    for (const f of readdirSync(cwd, { recursive: true })) {
+      if (typeof f === 'string' && /\.equiv-\d+-\d+-.*\.mjs$/.test(f)) {
+        try { unlinkSync(join(cwd, f)); } catch {}
+      }
+    }
+  } catch {}
+}
+
+process.on('exit', cleanupTmpFiles);
+process.on('uncaughtException', (e) => {
+  cleanupTmpFiles();
+  throw e;
+});
 
 /** 读出玩家账户余额与报名行，作为「实际落库结果」的证据 */
 async function snapshot(DB) {
