@@ -163,6 +163,13 @@ export const onRequestPost = (c) =>
       return reply({ session: publicSession(await owned(db, player, row.id)) });
     }
 
+    // 白名单闸门：只认 submit。
+    // 这里是兜底 return，重写时这层校验被吃掉了 —— 任何拼错的 action
+    // （'delete' / 'SUBMIT' / 'start ' 带尾空格 / 'grade'）都会静默走进
+    // 交卷逻辑，而基线一律 400 '操作无效'。默认 action 仍是 'start'，
+    // 所以只补这一道，不动其它分支。
+    if (action !== 'submit') fail(400, '操作无效');
+
     return submitSession(c, player, db, input, row);
   });
 

@@ -13,3 +13,34 @@ test('pending short answers can be reviewed by another admin with audit, never b
 test('missing model never returns a canned paper disguised as instant generation',()=>fixture(async({start,env,DB})=>{delete env.OPENAI_API_KEY;assert.equal((await start()).http,503);assert.equal((await DB.prepare('SELECT COUNT(*) AS n FROM exam_sessions').first()).n,0);}));
 test('stalled grading can recover to pending review without re-running the model',()=>fixture(async({start,call,DB,answers,counters})=>{const s=(await start()).session;await DB.prepare("UPDATE exam_sessions SET status='grading',answers=?,updated_at=datetime('now','-3 minutes') WHERE id=?").bind(JSON.stringify(await answers(s.id)),s.id).run();const r=await call('exam-sessions','POST',{action:'recover',session_id:s.id});assert.equal(r.session.status,'needs_review');assert.equal(r.session.known_score,60);assert.equal(counters().gradeCalls,0);}));
 test('model questions containing an explicit answer hint are rejected before exposure',()=>fixture(async({start})=>{const d=modelPaper();d.questions[0].prompt='正确答案：停车';globalThis.fetch=async()=>Response.json({choices:[{message:{content:JSON.stringify(d)}}]});assert.equal((await start()).http,502);}));
+
+// v88.7 回归守门：基线里交卷分支前有一道 action 白名单
+// `if(action!=='submit')fail(400,'操作无效')`。去压缩重写时它被兜底
+// `return submitSession(...)` 吃掉了 —— 任何拼错的 action 都会静默走进
+// 交卷逻辑。行为差分实测：'delete' / 'SUBMIT' / 'start ' / 'grade' 在基线
+// 一律 400，现版全部 200，且对未知 action 的响应与真 submit 逐字节相同。
+//
+// 这里钉死两件事：未知 action 必须 400，且不能触发交卷（模型不被调用、
+// 卷子状态不变）。默认 action 仍是 'start'，所以 'start' 本身要放行。
+test('unknown action hits the submit whitelist instead of falling through to grading',()=>fixture(async({start,call,answers,counters,DB})=>{
+  const s=(await start()).session,a=await answers(s.id);
+  for(const bad of ['delete','SUBMIT','start ','grade','submit ','Submit','submit;drop']){
+    const r=await call('exam-sessions','POST',{action:bad,session_id:s.id,revision:s.revision,answers:a});
+    assert.equal(r.http,400,`action=${JSON.stringify(bad)} 应当 400，实际 ${r.http}`);
+    assert.equal(r.error,'操作无效',`action=${JSON.stringify(bad)} 的错误文案不对`);
+  }
+  // falsy 的 action 走 `input.action || 'start'` 默认分支，这是基线就有的行为，
+  // 不属于「未知 action」。卷子已在进行中，start 会复用它返回 200；
+  // 这里只钉住「它不是被当未知 action 拒掉」。
+  const blank=await call('exam-sessions','POST',{action:'',grade:'B'});
+  assert.notEqual(blank.error,'操作无效','空 action 应等同 start，而不是被白名单拒掉');
+  assert.equal(blank.http,200);
+  assert.equal(counters().gradeCalls,0,'被拒绝的 action 不该触发 AI 评分');
+  const still=(await call('exam-sessions?id='+s.id)).session;
+  assert.equal(still.status,'in_progress','被拒绝的 action 不该改动卷子状态');
+  // 真正的 submit 仍然放行，确认这道闸门没把正路也堵了。
+  const ok=await call('exam-sessions','POST',{action:'submit',session_id:s.id,revision:s.revision,answers:a});
+  assert.equal(ok.http,200);
+  assert.equal(ok.session.status,'completed');
+  assert.equal(counters().gradeCalls,1);
+}));
