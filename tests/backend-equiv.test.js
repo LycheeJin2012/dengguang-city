@@ -119,6 +119,18 @@ async function fixture() {
  * 所以只能回原位，靠两点避开扫描：文件名用 `.mjs`（扫的是 `.js`），
  * 名字加进程号（并发跑时互不覆盖），并挂在进程退出时清空。
  */
+
+/**
+ * 本进程创建过的临时副本路径。
+ *
+ * 清理时**只认这个集合**，不去全仓库扫文件名匹配。
+ * 坑：早先的 cleanupTmpFiles 用正则 /\.equiv-\d+-\d+-.*\.mjs$/ 扫全仓库，
+ * 于是会把**其他并发进程**正在用的副本一起删掉 —— 那些 worker import 到一半
+ * 文件没了，报 Cannot find module，看起来像代码坏了，其实是清理越界。
+ * 并发跑测试时这是最难查的一类假故障。
+ */
+const ownedTmpFiles = new Set();
+
 let tmpSeq = 0;
 async function loadBoth(path) {
   const name = `.equiv-${process.pid}-${++tmpSeq}-${path.replace(/[/\\]/g, '_').replace(/\.js$/, '')}.mjs`;
@@ -128,25 +140,25 @@ async function loadBoth(path) {
   //   import()                 —— 相对**本文件**（tests/），所以要加 '../'
   // 副本必须写在原目录，它内部的 './xxx.js' 相对 import 才成立。
   writeFileSync(rel, show(path));
+  ownedTmpFiles.add(rel);
   const oldM = await import('../' + rel);
   const newM = await import('../' + path);
   return {
     oldM,
     newM,
-    cleanup: () => { try { unlinkSync(rel); } catch {} },
+    cleanup: () => {
+      try { unlinkSync(rel); } catch {}
+      ownedTmpFiles.delete(rel);
+    },
   };
 }
 
-/** 进程退出时清掉所有本次跑出来的副本 */
+/** 进程退出时只清理本进程登记过的副本 */
 function cleanupTmpFiles() {
-  try {
-    const cwd = process.cwd();
-    for (const f of readdirSync(cwd, { recursive: true })) {
-      if (typeof f === 'string' && /\.equiv-\d+-\d+-.*\.mjs$/.test(f)) {
-        try { unlinkSync(join(cwd, f)); } catch {}
-      }
-    }
-  } catch {}
+  for (const f of ownedTmpFiles) {
+    try { unlinkSync(f); } catch {}
+  }
+  ownedTmpFiles.clear();
 }
 
 process.on('exit', cleanupTmpFiles);

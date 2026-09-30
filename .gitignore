@@ -8,3 +8,12 @@ node_modules/
 
 # backup-d1 测试的临时输出目录
 .backup-test-*
+
+# v88.7 重构等价性验证的运行时产物 —— 一律不进版本库，也绝不进部署包。
+# 这些文件是 worker 差分测试临时生成的：基线副本（含 .js/.mjs 源码）
+# 和套件自己的 SQLite 模板库。留在仓库里既污染 diff，也会把整个
+# functions/ 的历史快照一起打包上传。
+**/.equiv-tmp/
+**/.equiv-*.mjs
+**/*.equiv-old.js
+**/*.oldcheck.js
