@@ -66,7 +66,7 @@ export const onRequestPost = (c) =>
       // 通知承办人；承办人没绑定玩家账号就自然查不到行，不发。
       db
         .prepare(
-          "INSERT INTO notification_log(player_id,type,title,body,link) SELECT p.id,'ticket_update','工单收到补充或追问',?,'/admin-v37.html#tickets' FROM admins a JOIN players p ON p.id=a.linked_player_id AND p.linked_admin_id=a.id WHERE a.id=(SELECT assignee_id FROM ${ref.table} WHERE id=?)"
+          `INSERT INTO notification_log(player_id,type,title,body,link) SELECT p.id,'ticket_update','工单收到补充或追问',?,'/admin-v37.html#tickets' FROM admins a JOIN players p ON p.id=a.linked_player_id AND p.linked_admin_id=a.id WHERE a.id=(SELECT assignee_id FROM ${ref.table} WHERE id=?)`
         )
         .bind('工单 #' + ref.ref + ' 有新内容，请在后台查看。', ref.id),
     ];

@@ -1,4 +1,4 @@
-import { endpoint, identity, reply, string, fail } from '../_core/request.js';
+import { endpoint, identity, reply, string, fail, body } from '../_core/request.js';
 
 /** ?kind= 的默认目录。 */
 const DEFAULT_KIND = 'players';
