@@ -33,9 +33,10 @@
 .bubble.mine{align-self:flex-end;background:var(--green-deep);color:var(--paper)}
 .bubble p{margin:0 0 8px}
 .bubble p:last-child{margin-bottom:0}
-/* 气泡变深底后，时间戳不能还是 --muted 深灰，压上去看不见 */
+/* 气泡变深底后，时间戳不能还是 --muted 深灰，压上去看不见。
+   用 --paper-2（米白）而不是 --muted：深绿底上的 --muted 只有 2:1 出头。 */
 .bubble small{color:var(--ink-soft);font-size:.76rem}
-.bubble.mine small{color:#dbe8bd}
+.bubble.mine small{color:var(--paper-2)}
 .bubble a{color:var(--green-deep);text-decoration:underline;font-weight:600}
 .bubble.mine a{color:var(--gold-soft)}
 

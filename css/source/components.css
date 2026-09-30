@@ -89,13 +89,13 @@
   color: var(--red-deep);
   border-color: var(--red);
 }
-.badge.closed { background: #e5dec0; color: var(--ink-soft); border-color: var(--line-soft); }
+.badge.closed { background: var(--sunken); color: var(--ink-soft); border-color: var(--line-soft); }
 
 /* Pre-wrapped paragraphs + rows ---------------------------------------- */
 .prewrap { white-space: pre-wrap; overflow-wrap: anywhere; }
 .row {
   padding: 18px 0;
-  border-bottom: 2px dashed #b9af8b;
+  border-bottom: 2px dashed var(--line-soft);
 }
 .row:first-child { padding-top: 0; }
 .row:last-child { border-bottom: 0; padding-bottom: 0; }
@@ -169,7 +169,7 @@
 .modal-body { padding: 24px; }
 .modal-body > .form-grid > .actions,
 .modal-body > .actions {
-  border-top: 1px dashed #b9af8b;
+  border-top: 1px dashed var(--line-soft);
   padding-top: 16px;
   margin-top: 8px;
 }
@@ -258,7 +258,7 @@ thead th {
 th, td {
   padding: 12px 16px;
   text-align: left;
-  border-bottom: 1px solid #c7bea0;
+  border-bottom: 1px solid var(--line-soft);
   white-space: nowrap;
   vertical-align: middle;
 }
@@ -266,7 +266,7 @@ tbody tr { transition: background-color var(--motion-fast) var(--ease-out); }
 tbody tr:nth-child(even) { background: rgba(255, 249, 223, 0.6); }
 tbody tr:hover { background: var(--leaf-soft); }
 tbody tr:last-child td { border-bottom: 0; }
-th { background: #e5dfb4; color: var(--green); }
+th { background: var(--mint); color: var(--green); }
 td.wrap { white-space: normal; min-width: 180px; max-width: 380px; }
 td .actions { margin-top: 0; gap: 6px; }
 td .actions button { min-height: 36px; padding: 0.3rem 0.7rem; font-size: 0.82rem; }
@@ -327,7 +327,7 @@ input,select,textarea{min-width:0;max-width:100%}
 .check input{flex-shrink:0}
 .field textarea{width:100%;resize:vertical}
 .stats{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:12px;margin:20px 0}
-.stat{border:var(--border-thin);padding:14px;background:var(--paper);box-shadow:2px 2px var(--line);display:flex;flex-direction:column;align-items:start;gap:8px;min-width:0;--press-active-bg:#e0d294}
+.stat{border:var(--border-thin);padding:14px;background:var(--paper);box-shadow:2px 2px var(--line);display:flex;flex-direction:column;align-items:start;gap:8px;min-width:0;--press-active-bg:var(--gold-soft)}
 .stat strong{font:clamp(1.4rem,2.7vw,2.4rem)/1.1 var(--font-mono);color:var(--green);overflow-wrap:anywhere}
 .stat span{font-size:.85rem;color:var(--muted)}
 button.stat{cursor:pointer;text-align:left}
@@ -430,14 +430,14 @@ button.stat{cursor:pointer;text-align:left}
 
 /* .badge.info — neutral information blue. Uses --line-soft + --ink-soft so
    it does not introduce a new hue (SPEC keeps the brand palette).         */
-.badge.info { background: #e3e0cb; color: var(--ink-soft); border-color: var(--line-soft); }
+.badge.info { background: var(--sunken); color: var(--ink-soft); border-color: var(--line-soft); }
 /* .badge.warning — reuses the gold accent already in the palette.         */
 .badge.warning { background: var(--gold-soft); color: var(--gold-deep); border-color: var(--gold); }
 /* .badge.success — explicitly green for "completed / ok" without the user
    having to remember which green-shade is active.                         */
 .badge.success { background: var(--leaf-soft); color: var(--green-deep); border-color: var(--green); }
 /* .badge.neutral — greys for "draft" / "untouched".                       */
-.badge.neutral { background: #e5dec0; color: var(--ink-soft); border-color: var(--line-soft); }
+.badge.neutral { background: var(--sunken); color: var(--ink-soft); border-color: var(--line-soft); }
 
 /* .card.compact / .card.spacious — three density variants. Default .card
    keeps current padding (22px). compact drops to 14px, spacious stretches
@@ -465,13 +465,16 @@ button.stat{cursor:pointer;text-align:left}
   top: 16px;
 }
 
-/* .skeleton — placeholder block while data is loading. Pure opacity pulse
-   driven by motion.css; no content, no text.                               */
+/* .skeleton — placeholder block while data is loading.
+   v88.6：原来是 linear-gradient 微光（横向扫过的高光）—— 全站唯一的
+   平滑渐变，跟真像素风冲突：像素语言靠硬边和实心色块分层，渐变会糊边界。
+   改成平底 + 3px 硬边 + 虚线填充感，加载态靠 opacity 呼吸（motion.css）。
+   降级设计下 prefers-reduced-motion 会关掉动画，此时就是一个安静的占位块。 */
 .skeleton {
   display: block;
-  background: linear-gradient(90deg, var(--paper-2), var(--ground), var(--paper-2));
-  background-size: 200% 100%;
-  border: 1px dashed var(--line-soft);
+  background: var(--sunken);
+  border: 3px solid var(--line);
+  box-shadow: 3px 3px 0 var(--line);
   min-height: 1em;
   opacity: 0.85;
 }

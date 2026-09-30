@@ -13,9 +13,13 @@ import { escapeHtml as esc } from './html.js';
 export function recordCard({ title, body = '', meta = '', actions = '', media = '', className = 'card', density }) {
   const densityClass =
     density === 'compact' ? ' compact' : density === 'spacious' ? ' spacious' : '';
-  return `<article class="${esc(className)}${densityClass}">${media}<header class="card-heading">${meta}<h3>${esc(
-    title
-  )}</h3></header><div class="card-content">${body}</div>${
-    actions ? `<div class="actions">${actions}</div>` : ''
-  }</article>`;
+
+  return (
+    `<article class="${esc(className)}${densityClass}">` +
+    `${media}` +
+    `<header class="card-heading">${meta}<h3>${esc(title)}</h3></header>` +
+    `<div class="card-content">${body}</div>` +
+    `${actions ? `<div class="actions">${actions}</div>` : ''}` +
+    `</article>`
+  );
 }

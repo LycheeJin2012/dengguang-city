@@ -16,7 +16,12 @@ export function tableCell(label, html, className = '') {
 export function tableFrame(headers, rows, { density } = {}) {
   const densityClass =
     density === 'compact' ? ' compact' : density === 'spacious' ? ' spacious' : '';
-  return `<div class="table-wrap"><table class="responsive-table${densityClass}" role="table"><thead><tr role="row">${headers
-    .map((label) => `<th scope="col">${esc(label)}</th>`)
-    .join('')}</tr></thead><tbody>${rows}</tbody></table></div>`;
+
+  const head = headers.map((label) => `<th scope="col">${esc(label)}</th>`).join('');
+
+  return (
+    `<div class="table-wrap"><table class="responsive-table${densityClass}" role="table">` +
+    `<thead><tr role="row">${head}</tr></thead>` +
+    `<tbody>${rows}</tbody></table></div>`
+  );
 }

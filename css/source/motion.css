@@ -149,14 +149,15 @@ summary:not(:disabled):not([aria-disabled="true"]):active,
   animation: pulse-soft 1.6s ease-in-out infinite;
 }
 
-/* Drives the .skeleton shimmer defined in components.css. The two layers
-   cooperate: components sets the gradient + background-size, motion
-   pushes background-position over time. */
-@keyframes skeleton-shimmer {
-  from { background-position: 200% 0; }
-  to   { background-position: -200% 0; }
+/* Drives the .skeleton loading placeholder defined in components.css.
+   v88.6：加载态从「渐变微光扫过」改成「明暗呼吸」—— 微光那条是全站
+   唯一的平滑渐变，跟真像素风的硬边语言冲突，已经撤掉。
+   呼吸只动 opacity，边界不动，观感上是整块在闪而不是在糊。 */
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.95; }
 }
 .skeleton {
-  animation: skeleton-shimmer 1.8s linear infinite;
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
 }
 
