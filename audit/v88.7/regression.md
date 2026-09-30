@@ -104,12 +104,21 @@ status IN (…) AND (SELECT enabled…)=1 AND (SELECT revision…)=? AND (worklo
 - 静态面：模板降级扫描（proper lexer）**0 命中**；SQL 字面量多重集比对命中 17 个文件（全是改名/常量提取，已逐个证伪）；
   中文文案多重集比对命中 5 个文件（已逐个证伪，唯一真实项即缺陷 1）。
 
-**没验到的部分（如实说明）**：`env.R2` 为 `null`，故 `api/uploads.js` 分片上传/流式读与 `_core/uploads.js`
-的 R2 落盘**没真跑过**（补偿：`_core/uploads.js` token 级比对**完全一致**，966/966 token 0 差异）；
+**没验到的部分（如实说明）**：`api/uploads.js` 分片上传/流式读与 `_core/uploads.js` 的落盘逻辑
+**整条链路都没被行为验证过**（当时的补偿只有 `_core/uploads.js` 的 token 级源码比对 966/966 一致，
+那是静态文本比对，不是行为验证）；
 WebAuthn 成功路径需真实凭据，`_core/passkey-verification.js` 只覆盖失败分支；
 `_core/customer-answer.js` 主链路（无 `OPENAI_API_KEY`）只能走到 fallback，而该文件被大幅重构
 （提取了 `FOLLOW_UP`/`HOTEL_QUERY`/`PLACE_QUERY`/`MAX_QUERY_CHARS` 等），**主链路未被行为验证，是我覆盖最弱的一块**；
 真实 D1 与单进程桥在并发时序上有差异，可能掩盖仅竞态下出现的漂移。
+
+> **2026-10-01 更正**：本报告初版把上一条的盲区归因为「`env.R2` 为 `null` 导致 R2 落盘没跑过」。
+> **这个理由是错的** —— `git grep 'env\.R2|R2_BUCKET'` 在 HEAD、`06e9595` 和 `wrangler.toml` 上
+> **全部 0 命中，代码库里根本不存在 R2**，上传全链路走 D1（分块存 `media_chunks.data`，base64）。
+> 盲区的**结论**成立（上传链路确实没被行为验证），错的只是**理由**。
+> 两处盲区已分别由 `tests/customer-answer-equiv.test.js`（7 用例）与
+> `tests/uploads-equiv.test.js`（22 用例）补齐。
+
 
 ---
 
