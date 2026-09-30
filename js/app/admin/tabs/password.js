@@ -1,8 +1,14 @@
 /**
- * Password tab.
+ * 账号安全 tab（password）。
  *
- * 管理员账号安全：修改密码 / 添加通行密钥 / 管理通行密钥。
- * 该 tab 不走通用 toolbar + table 模板，因为没有列表，只有按钮面板。
+ * 管理员改密码 / 添通行密钥 / 看已登记的通行密钥。
+ *
+ * 这个 tab 不走 shared.js 的 toolbar + table 模板 —— 它没有列表，
+ * 只是一块按钮面板。三块功能各自独立，互不影响。
+ *
+ * 两个不能改的行为：
+ *   - 改密码要求「新密码」和「确认」一致，不一致直接抛错，不发请求
+ *   - 撤通行密钥前要 confirm：这是**不可逆**的，撤了就登不进来
  */
 
 import { adminContext } from '../state.js';
@@ -12,8 +18,16 @@ import { registerPasskey } from '../../security.js';
 
 export async function render() {
   const view = adminContext.root.querySelector('#admin-view');
-  view.innerHTML = `<div class="panel"><h2>${'账号安全'}</h2><p>${'这里改的是管理密码，不影响绑定的市民密码。'}</p><div class="actions"><button id="change-password">${'改密码'}</button><button id="admin-add-key">${'添一个通行密钥'}</button><button id="admin-list-keys">${'通行密钥'}</button></div></div>`;
+  view.innerHTML =
+    `<div class="panel"><h2>${'账号安全'}</h2>` +
+    `<p>${'这里改的是管理密码，不影响绑定的市民密码。'}</p>` +
+    `<div class="actions">` +
+    `<button id="change-password">${'改密码'}</button>` +
+    `<button id="admin-add-key">${'添一个通行密钥'}</button>` +
+    `<button id="admin-list-keys">${'通行密钥'}</button>` +
+    `</div></div>`;
 
+  // 改管理密码。要先输旧的；两次新密码不一致就别浪费一次请求
   $('#change-password', view).onclick = () =>
     modal(
       '改管理密码',
@@ -30,6 +44,7 @@ export async function render() {
       }
     );
 
+  // 登记新的通行密钥。名字只是给人看的标签，默认给一个中性值
   $('#admin-add-key', view).onclick = () =>
     modal(
       '添一个通行密钥',
@@ -42,6 +57,7 @@ export async function render() {
       }
     );
 
+  // 已登记的密钥列表 + 逐个撤销
   $('#admin-list-keys', view).onclick = async () => {
     const d = await post('/api/init?action=passkey-list');
     const dialog = modal(
@@ -58,8 +74,10 @@ export async function render() {
     $$('[data-key]', dialog).forEach((b) =>
       b.onclick = (e) =>
         action(e.currentTarget, async () => {
+          // 不可逆操作，最后一道人工确认
           if (confirm('这个通行密钥真要撤？撤了就登不进来了。')) {
             await post('/api/init?action=passkey-delete', { id: +b.dataset.key });
+            // 撤掉一行就行，不必重开列表
             b.closest('.row').remove();
           }
         })

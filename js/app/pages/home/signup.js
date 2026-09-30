@@ -34,6 +34,8 @@ export async function signup(kind, bundle) {
       field('exam_date', '希望哪天', 'date', '', {
         required: false,
       });
+  // 注意这里是 else 不是独立的 if：考驾照不填「开什么车」，
+  // 另两种才要。改成两个 if 会让驾照报名多出一个用不上的车名字段。
   else fields += field('car', '开什么车', 'text', '', { required: false });
 
   modal(

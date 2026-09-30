@@ -1,7 +1,12 @@
 /**
- * Questions tab.
+ * 模拟题库 tab（questions）。
  *
- * 模拟题库 CRUD + AI 出题入口。
+ * 题库 CRUD + 「让 AI 出驾照题」入口（后者在 exam-authoring.js）。
+ *
+ * 两个不能改的行为：
+ *   - options 在表单里是「一行一项」的文本，存之前切回数组。判断题留空
+ *   - 读的时候要从 JSON 字符串 parse 回来（q.options 存的是 JSON 文本，
+ *     不是数组）—— 这跟 exam-authoring.js 的草稿结构不一样，别照抄
  */
 
 import { openExamAuthoring } from '../../exam-authoring.js';
@@ -13,6 +18,8 @@ export async function render(loadActive) {
   const view = adminContext.root.querySelector('#admin-view');
   toolbar({ create: () => edit() }, () => loadActive());
 
+  // AI 出题入口直接挂在工具栏末尾。开考生成 + 审核后回调 load 重画列表，
+  // 这样新入库的题立刻能看到
   const aiButton = document.createElement('button');
   aiButton.textContent = '让 AI 出驾照题';
   aiButton.onclick = () => action(aiButton, () => openExamAuthoring(load));
@@ -34,6 +41,7 @@ export async function render(loadActive) {
       );
     });
 
+  /** 新建 / 编辑题目。q 有 id 就是编辑。 */
   function edit(q = {}) {
     modal(
       '题库演练',
@@ -48,6 +56,7 @@ export async function render(loadActive) {
           'options',
           '选项（一行一个，判断题留空）',
           'textarea',
+          // ⚠️ 库里存的是 JSON 文本，进表单要先 parse
           q.options ? JSON.parse(q.options).join('\n') : '',
           { required: false }
         ) +
@@ -62,6 +71,7 @@ export async function render(loadActive) {
         }),
       {
         submit: async (d) => {
+          // 表单里是文本，存回库里要是数组。空行丢掉，判断题因此可以留空
           d.options = d.options
             .split('\n')
             .map((s) => s.trim())

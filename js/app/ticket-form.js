@@ -1,32 +1,18 @@
-import {feedbackMarkup,bindFeedback} from './reply-feedback.js';
-import {$,$$,api,post,patch,field,modal,requirePlayer,toast,esc,text,ticketBody,status,action,date} from './core.js'
-import {attachmentPicker,renderAttachments} from './attachments.js';
-import {MAX_ATTACHMENTS} from '../../shared/uploads.js';
-export const replyAuthor=t=>t.replied_by?`${'市政厅'} #${t.replied_by} · ${t.reply_author_name||'没留名字'}`:'这条旧回复没留署名';
-export function ticketTimeline(events=[]){const labels={triage_resumed:'重新交给机器分级',triaged:'内部掂了掂轻重',priority_changed:'改了内部轻重',reopened:'又捡起来办',player_question:'市民追问',auto_replied:'灯灯自动回话',human_requested:'要求转人工',player_followup:'市民补了情况',dispatch_deferred:'自动派单先按住',business_updated:'关联业务有变',created:'递交工单',assigned:'派给了谁',replied:'有人回复',status_changed:'状态变了',published:'挂上公开页',unpublished:'撤下公开',consent_changed:'改了公开授权',attachments_added:'补了附件'};return `<section class="ticket-history"><h3>${'办到哪一步了'}</h3>${events.length?events.map(e=>{let d={};try{d=JSON.parse(e.details);}catch{}return `<div class="row"><div class="row-head"><b>${esc((e.actor_type==='system'?'市政厅机器':e.actor_type==='admin'?'市政厅':e.actor_type==='hotel_owner'?'酒店老板':'市民')+(e.actor_id?' #'+e.actor_id:'')+' · '+e.actor_name)}</b><small>${date(e.created_at)}</small></div><p>${esc(labels[e.action]?labels[e.action]:e.action)}${e.action==='assigned'?` → ${esc(d.to?'#'+d.to+' '+(d.name||''):'还没落到人')}`:''}${e.action==='assigned'&&d.mode==='automatic'?` · ${esc(d.source==='ai'?'AI 自动派单':'规则自动派单')}<br>${esc(d.reason||'')}`:''}${e.action==='dispatch_deferred'?` · ${esc(d.reason||'')}`:''}${e.action==='triaged'?` · ${esc(d.priority||'')} / ${esc(d.urgency||'')} / ${esc(d.complexity||'')}<br>${esc(d.reason||'')} · ${esc(d.source||'')}`:''}${e.action==='priority_changed'?` · ${esc(d.from||'')} → ${esc(d.to||'')}`:''}${e.action==='business_updated'?` · ${status(d.status)}`:''}${e.action==='status_changed'?` · ${status(d.to)}`:''}</p>${['replied','auto_replied','player_followup','player_question'].includes(e.action)?`<div>${text(d.reply)}</div>`:''}</div>`;}).join(''):`<p class="muted">${'这单还新，除了你递上来那一句，没人动过。'}</p>`}</section>`;}
-export async function showAdminDirectory(){await requirePlayer();const d=await api('/api/directory?kind=admins');modal('管理员编号名录',`<div class="wide"><p>${'市政厅里有几个同名同姓的，投诉前先按编号认准人。'}</p>${d.admins.map(a=>`<div class="row"><b>#${a.id}</b> · ${esc(a.username)}</div>`).join('')}</div>`);}
-export async function createTicket({kind='message',onCreated=()=>{},initial={}}={}){
- const player=await requirePlayer();const directory=await api('/api/directory?kind=admins');let picker,players=[];
- const dialog=modal('给市政厅捎句话',field('kind','这是什么事','select',kind,{options:[['message','留言'],['service','市政服务'],['bug','坏了/出故障'],['report','举报玩家'],['admin_complaint','投诉管理员']]})+
- field('target_player_name','被举报玩家（可自填）','text','',{required:false,maxlength:64})+'<datalist id="report-player-options"></datalist><input type="hidden" name="target_player_id">'+
- field('target_admin_id','要投诉的管理员','select','',{required:false,options:['',...directory.admins.map(a=>[a.id,`#${a.id} · ${a.username}`])]})+
- field('title','一句话标题','text',initial.title||'',{maxlength:90})+field('body','把事说清楚','textarea',initial.body||'',{maxlength:2000})+field('contact','联系方式（只有承办人看得到）','text',player.email||'',{required:false})+
- field('public_consent','同意公开（文字和答复先经人过一遍再挂到公开页，附件永远不公开）','checkbox',false)+
- `<p class="muted wide">${'时间、地点、账号、怎么复现，都写上，我们少跑一趟。'}<br>${'没勾公开的工单，只有你和承办人看得到。'}</p>`,{wide:true,label:'递上去',submit:async values=>{
-  const result=await post('/api/tickets',{...values,attachment_ids:picker.ids()});picker.commit();toast('递上去了，去“我的工单”看它走到哪一步');try{await onCreated(result);}catch(e){toast(e.message,true);}
- }});
- const kindInput=$('[name=kind]',dialog),nameInput=$('[name=target_player_name]',dialog),adminInput=$('[name=target_admin_id]',dialog),idInput=$('[name=target_player_id]',dialog);nameInput.setAttribute('list','report-player-options');let timer;
- const setTargets=()=>{const reporting=kindInput.value==='report',complaint=kindInput.value==='admin_complaint';nameInput.closest('label').hidden=!reporting;nameInput.disabled=!reporting;nameInput.required=reporting;idInput.disabled=!reporting;adminInput.closest('label').hidden=!complaint;adminInput.disabled=!complaint;adminInput.required=complaint;};kindInput.onchange=setTargets;setTargets();
- nameInput.addEventListener('input',()=>{idInput.value=players.find(p=>p.username===nameInput.value.trim())?.id||'';clearTimeout(timer);timer=setTimeout(async()=>{try{const q=nameInput.value.trim();const d=await api('/api/directory?kind=players&q='+encodeURIComponent(q));if(!dialog.isConnected||nameInput.value.trim()!==q)return;players=d.players;$('#report-player-options',dialog).innerHTML=players.map(p=>`<option value="${esc(p.username)}">#${p.id}</option>`).join('');idInput.value=players.find(p=>p.username===q)?.id||'';}catch{}},200);});
- dialog.addEventListener('close',()=>clearTimeout(timer));picker=attachmentPicker(dialog);return dialog;
-}
-export async function viewCitizenTicket(id,{onChanged=()=>{}}={}){
- const data=await api('/api/tickets?my=1&id='+encodeURIComponent(id)),ticket=data.ticket;let picker;const remaining=MAX_ATTACHMENTS-(ticket.attachments||[]).length;
- const dialog=modal(ticket.title,`<div class="wide">${progressMarkup(ticket)}<div class="row-head">${status(ticket.status)}<span>${ticket.public_visible?'已挂上公开页':ticket.public_consent?'你同意了，等人过目':'只你自己看'}</span></div><div>${ticketBody(ticket.body)}</div>${ticket.target_admin_id?`<p>${'被投诉的管理员'} #${ticket.target_admin_id}</p>`:''}${ticket.target_player_name?`<p>${'被举报的玩家'}：${esc(ticket.target_player_name)} ${ticket.target_player_id?'#'+ticket.target_player_id:'（你自己填的名字）'}</p>`:''}${ticket.admin_reply?`<div class="notice"><b>${esc(replyAuthor(ticket))}</b><small> · ${date(ticket.replied_at)}</small><p>${text(ticket.admin_reply)}</p></div>`:''}${ticket.auto_reply?`<div class="notice"><b>${'灯灯 · 自动回的话'}</b><p>${text(ticket.auto_reply)}</p></div>`:''}${renderAttachments(ticket.attachments)}${ticket.reward?`<p class="notice">${'办结奖励'}：10 💎 · ${ticket.reward.paid?'已发到账':'等承办人绑了市民账号再发'} · ${'市政厅'} #${ticket.reward.admin_id}</p>`:''}<button type="button" id="consent-toggle">${ticket.public_consent?'收回公开授权':'同意公开'}</button>${ticketTimeline(ticket.history)}<section class="ticket-followup"><h3>再补两句</h3>${field('followup_kind','类型','select','followup',{options:[['followup','补充情况'],['question','我要问一句']]})}${field('followup_content','补充内容','textarea','',{required:false,maxlength:2000})}<button type="button" id="ticket-followup-send">递补充</button><p class="muted">这段只交给承办人，不进公开页。工单已经结案的，收到新话会重新开起来。</p></section><section>${(ticket.reply_feedback||[]).slice(0,2).map(f=>`<h4>${f.action==='auto_replied'?'灯灯的回话':'人的回话'}</h4>${feedbackMarkup('ticket',f.id,f.helpful)}`).join('')}</section></div>`,{wide:true,label:'补附件',submit:remaining>0?async()=>{const ids=picker.ids();if(!ids.length)throw new Error('先挑个文件再递');await post('/api/ticket-attachments',{ticket_id:String(ticket.id),attachment_ids:ids});picker.commit();toast('材料补上了');try{await onChanged();}catch(e){toast(e.message,true);}}:null});
- if(remaining>0)picker=attachmentPicker(dialog,{max:remaining,existingBytes:(ticket.attachments||[]).reduce((sum,f)=>sum+f.size,0)});
- bindFeedback(dialog);$('#ticket-followup-send',dialog).onclick=e=>action(e.currentTarget,async()=>{await post('/api/ticket-updates',{ticket_id:id,kind:$('[name=followup_kind]',dialog).value,content:$('[name=followup_content]',dialog).value});toast('递上去了');dialog.close();await onChanged();await viewCitizenTicket(id,{onChanged});});
- $('#consent-toggle',dialog).hidden=ticket.private_support;
- $('#consent-toggle',dialog).onclick=e=>action(e.currentTarget,async()=>{await patch('/api/tickets?my=1&id='+encodeURIComponent(id),{public_consent:!ticket.public_consent});dialog.close();await onChanged();await viewCitizenTicket(id,{onChanged});});return dialog;
-}
+/**
+ * 工单表单模块的稳定入口（转发层）。
+ *
+ * 原来 createTicket / viewCitizenTicket / ticketTimeline 三个东西挤在这一个
+ * 文件里，最长一行 2200 多字符。现在按职责拆到 features/tickets/ 下：
+ *   timeline.js  时间线渲染、回复署名（后台工单页也在用）
+ *   create.js    递交工单弹窗、管理员编号名录
+ *   view.js      市民侧工单详情弹窗
+ *
+ * 这个文件只做再导出，**不要在这里加逻辑**。历史 import 路径有五处
+ * （features/chat/support.js、features/ticket-center/index.js、
+ * pages/profile/index.js、pages/affairs/index.js、admin/tabs/tickets.js）
+ * 都指着这里，export 的名字和签名一个字都不能动。
+ */
 
-function progressMarkup(t){const stages=[['递上来了',true],['有人接手',t.status==='in_progress'||!!t.admin_reply],['有回话',!!t.admin_reply],['结案了','resolved'.includes(t.status)]];return `<ol class="ticket-progress" aria-label="工单进度">${stages.map(([label,done])=>`<li class="${done?'done':''}">${done?'✓ ':'○ '}${label}</li>`).join('')}</ol>`;}
+export { replyAuthor, ticketTimeline } from './features/tickets/timeline.js';
+export { showAdminDirectory, createTicket } from './features/tickets/create.js';
+export { viewCitizenTicket } from './features/tickets/view.js';

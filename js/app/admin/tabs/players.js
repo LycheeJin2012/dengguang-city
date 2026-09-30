@@ -1,7 +1,15 @@
 /**
- * Players tab.
+ * 市民管理 tab（players）。
  *
- * 市民管理：批准 / 停用 / 重置密码 / 改名（仅 super）。
+ * 批准 / 停用 / 重置密码 / 改名 / 建号。
+ *
+ * 权限是分层的，别看混：
+ *   - 所有管理员都能「批了」「停用」—— 这是日常受理
+ *   - 建号、经手记录、重置密码、改名只有超管能做（when: isSuper）
+ *   - 工具栏的「新建」按钮同样按 isSuper 出不给
+ *
+ * 「停用」和「移除」的区别：停用是软删除（status=rejected），市民登不进来
+ * 但记录还在，工单历史、消息关联都不能断。⚠️ 所以这里没有真正的删除。
  *
  * 列格式与 actions 约定见 ../shared.js#table：
  *   - columns: [key, label] | [key, label, format(value, row)?]
@@ -18,6 +26,7 @@ export async function render(loadActive) {
   toolbar(
     {
       options: ['pending','active'],
+      // 建市民账号是超管专属；不是超管时 create 传 null，按钮就不出现
       create: isSuper()
         ? () =>
             modal(
@@ -59,6 +68,7 @@ export async function render(loadActive) {
           {
             key: 'approve',
             label: '批了',
+            // 已经 active 的不必再批
             when: (r) => r.status !== 'active',
             run: async (r) => {
               await patch('/api/admin/players?id=' + r.id + '&action=approve');
@@ -68,8 +78,10 @@ export async function render(loadActive) {
           {
             key: 'reject',
             label: '停用',
+            // 已经是 rejected 的不重复显示
             when: (r) => r.status !== 'rejected',
             run: async (r) => {
+              // 停用后此人登不进来，但记录保留（工单、消息还指着这个人）
               if (!confirm('停用之后这位市民就登不进来了，真要停？')) return;
               await patch('/api/admin/players?id=' + r.id + '&action=reject');
               await load();
@@ -79,6 +91,7 @@ export async function render(loadActive) {
             key: 'reset',
             label: '重置密码',
             when: isSuper,
+            // 这里**不接 await load()**：重置完只弹个框，不重拉列表
             run: async (r) =>
               modal(
                 '重置密码',
