@@ -5,3 +5,6 @@ node_modules/
 .dev.vars
 .dev.vars.*
 !.dev.vars.example
+
+# backup-d1 测试的临时输出目录
+.backup-test-*
