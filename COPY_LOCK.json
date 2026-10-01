@@ -20,7 +20,7 @@
     "js/app/hotel.js": "00eaa65fcd4693b143b85efbc5e525f3b55f95825036bcddd5f37122e8f429fa",
     "js/app/permissions.js": "31f9e3cb9457f75f2fa9d705d1b2319211b3ae27edf339c17fd8d055a326b880",
     "js/app/profile.js": "f3ae3a6bb02b833e65d1bf4f7b1427de33feac458dc852eff544b4a70036843e",
-    "js/app/security.js": "4ed78299fb12139c296007bf71519a4229ac1f384b85b17ee3637b83a8ad5c14",
+    "js/app/security.js": "03213dc6917a891400ad544920dd6418971aeb47d98b407404396da48c035c2b",
     "js/app/social.js": "41ba2dfa46a6e47b75f565355967e8b25c22cbdb745904c573f9d36496e8e85e",
     "js/app/ticket-center.js": "487875387286a34d134acd3928cfa907f5f1567abbc4b97c0a0463526f314e3a",
     "js/app/ticket-form.js": "41480255a776929e43fb173c42701d703c168eb421392b662e5156ff6fd92171",
@@ -29,6 +29,6 @@
     "profile.html": "c96f6a34084e784c4d64cf638b1af1ee99cc215fa7e01b9f18374919d02df1a3",
     "tests/dev-server.mjs": "752175ba70027287385a49e225271dd1666b0282d13aefcd78308502be32fb58"
   },
-  "relocked_at": "2026-09-30",
+  "relocked_at": "2026-10-01",
   "relock_note": "哈希随纯重构（拆函数 / 加注释 / 换排版）重新计算，不含文案改动。文案本身由 tests/copy-preservation.test.js 单独锁定，那一层扛得住重构。"
 }
