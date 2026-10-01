@@ -1,7 +1,33 @@
-// D1 datetime('now') is UTC without a suffix; ISO timestamps may already include a zone.
+/**
+ * 解析后端返回的时间字符串。
+ *
+ * ## 为什么要专门写一个
+ *
+ * D1 的 `datetime('now')` 产出的是 **UTC 且不带时区后缀** 的字符串，
+ * 形如 `2026-01-01 00:00:00`。而 `new Date('2026-01-01 00:00:00')` 在
+ * 各浏览器里的解释并不统一（现代浏览器按本地时间，部分环境按 UTC），
+ * 于是同一条记录在服务器和浏览器上会差出一整个时区。
+ *
+ * ISO 8601 带 `T` 分隔的字符串在不带时区时，规范规定按**本地时间**处理；
+ * 带 `Z` 或 `±hh:mm` 的则已自带时区。所以这里的做法是：
+ *
+ *   1. 把空格换成 `T`，让字符串至少是个像样的 ISO 形状；
+ *   2. 若替换后**仍不带任何时区信息**，补一个 `Z`，明确它是 UTC。
+ *
+ * 已经是 `Z` 或 `+08:00` 这种形式的，原样返回，不动。
+ *
+ * 解析不了时返回 `new Date(NaN)`（即 Invalid Date）而不是抛错 ——
+ * 调用方通常在做比较和格式化，拿到 Invalid Date 会自然显示成「—」，
+ * 比整条渲染链路抛掉要好。
+ */
 export function parseDate(value) {
   if (typeof value !== 'string' || !value.trim()) return new Date(NaN);
+
   let iso = value.trim().replace(' ', 'T');
+
+  // 只在「年月日 T 时:分（:秒（.毫秒）?）?」这种裸形状上补 Z；
+  // 一旦已经带时区（结尾是 Z 或 ±hh:mm），正则不匹配，原样保留。
   if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(?::\d{2}(?:\.\d+)?)?$/.test(iso)) iso += 'Z';
+
   return new Date(iso);
 }

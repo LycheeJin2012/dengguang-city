@@ -1,14 +1,14 @@
 /**
- * Messages page workspace — backward-compatible forwarder.
+ * 消息页工作区 —— 兼容转发层。
  *
- * v79-3 起，social.js 拆分到 js/app/pages/messages/：
- *   - pages/messages/index.js        render + tab 切换
- *   - pages/messages/notifications.js 通知列表（类别过滤 / 单条 / 全部已读）
+ * v79-3 起 social.js 拆到 js/app/pages/messages/ 下：
+ *   pages/messages/index.js          render 与 tab 切换
+ *   pages/messages/notifications.js  通知列表（按类别过滤 / 单条已读 / 全部已读）
  *
- * DM（私信与灯灯）继续走 renderChat()（chat-page.js），没单独文件。
+ * 私信（含与灯灯的对话）没有单独文件，继续走 chat-page.js 的 renderChat()。
  *
- * 本文件保留为转发层，让 entry.js 的 `import('./social.js')` 路径不变，
- * 外部 `import { render } from './social.js'` 也能继续工作。
+ * 本文件只为兼容旧路径而留着：entry.js 的 `import('./social.js')` 和外部的
+ * `import { render } from './social.js'` 都还要能用。
  */
 
 export { render } from './pages/messages/index.js';
