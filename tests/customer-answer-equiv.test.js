@@ -241,13 +241,24 @@ async function snapshotAll(DB) {
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 const ISO_INNER = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z/g;
 
+// SQLite 的 CURRENT_TIMESTAMP 落库是 'YYYY-MM-DD HH:MM:SS' —— 空格分隔、
+// **秒级精度、没有毫秒也没有 Z**。上面两条 JS 正则压根匹配不上它，
+// 于是全量并发跑时只要基线与现版跨过一个秒边界就假失败（实测 5 次挂 3 次，
+// 单独跑却从不挂）。这两种格式都要抹。
+const SQLITE_TS = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/;
+const SQLITE_TS_INNER = /\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}/g;
+
 /**
  * personal 来源的 content 里带 as_of=new Date().toISOString()，两次运行必然不同。
  * 麻烦的是它不是独立的字符串叶子，而是**嵌在 content 这段 JSON 文本里**的，
  * 所以要连字符串内部的 ISO 片段一起抹掉，否则差分测试每次都假失败。
+ * 库快照里那些 datetime('now') 落的 CURRENT_TIMESTAMP 同样要抹。
  */
 function normalize(value) {
-  if (typeof value === 'string') return ISO.test(value) ? '<ISO时间>' : value.replace(ISO_INNER, '<ISO时间>');
+  if (typeof value === 'string') {
+    if (ISO.test(value) || SQLITE_TS.test(value)) return '<ISO时间>';
+    return value.replace(ISO_INNER, '<ISO时间>').replace(SQLITE_TS_INNER, '<ISO时间>');
+  }
   if (Array.isArray(value)) return value.map(normalize);
   if (value && typeof value === 'object') {
     const out = {};
@@ -610,7 +621,10 @@ test('customer-answer：两版跑完之后全库快照逐表逐行一致（没�
   try {
     const a = await runAll(oldM);
     const b = await runAll(newM);
-    const d = firstDiff(b.snap, a.snap, '全库快照');
+    // 必须过 normalize —— snapshotAll() 把每行 JSON.stringify 成了字符串，
+    // 时间戳是**嵌在那段文本里**的；不归一的话，全量并发跑时基线与现版
+    // 跨过一个秒边界就假失败（单独跑不挂，所以很容易被误判成偶发）。
+    const d = firstDiff(normalize(b.snap), normalize(a.snap), '全库快照');
     assert.equal(d, null, d || '');
     // 防假绿：快照里必须真的有数据，比两个空库等于没比
     const rows = Object.entries(a.snap).filter(([k]) => !k.startsWith('__'));

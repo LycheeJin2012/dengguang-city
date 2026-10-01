@@ -168,9 +168,22 @@ process.on('uncaughtException', (e) => {
 });
 
 /** 读出玩家账户余额与报名行，作为「实际落库结果」的证据 */
+// `SELECT *` 会把 datetime('now') 落的 CURRENT_TIMESTAMP 一起带出来，
+// 而基线与现版是先后两次跑库的 —— 全量并发时只要跨过一个秒边界就假失败
+// （实测 5 次挂 1 次，单独跑不挂）。这里把时间戳列抹平再比。
+// 业务字段（emeralds / status / source_id …）一个字都不动。
+const clock = (v) =>
+  typeof v === 'string' && /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(v) ? '<时间>' : v;
+
+const scrub = (row) => {
+  const out = {};
+  for (const k of Object.keys(row).sort()) out[k] = clock(row[k]);
+  return out;
+};
+
 async function snapshot(DB) {
   const player = await DB.prepare('SELECT emeralds FROM players WHERE id=1').first();
-  const rows = (await DB.prepare('SELECT * FROM circuit_signups').all()).results;
+  const rows = (await DB.prepare('SELECT * FROM circuit_signups').all()).results.map(scrub);
   const tickets = (await DB.prepare('SELECT id,category,title,status FROM tickets ORDER BY id').all()).results;
   return { emeralds: player.emeralds, circuit: rows, tickets };
 }
