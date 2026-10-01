@@ -36,8 +36,8 @@ export function shouldAudit(request) {
   if (url.pathname === '/api/login' || authentication.has(action)) return false;
   if (reads.has(action)) return false;
 
-  // 下面两条靠 HTTP 方法区分读写，路径和 action 都盖不住，只能看方法
-  if (url.pathname === '/api/admin/messages' && request.method === 'POST') return false;
+  // 下面这条靠 HTTP 方法区分读写，路径和 action 都盖不住，只能看方法
+  // （原来这里还有一条 legacy 留言管理路由的 POST 豁免，那条路由已删除）
   if (url.pathname === '/api/uploads' && request.method === 'PUT') return false;
 
   return (

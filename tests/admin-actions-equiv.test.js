@@ -1,6 +1,6 @@
-// functions/api/actions/ 下两个高风险路由的行为差分守门。
+// functions/api/actions/ 下高风险路由的行为差分守门。
 //
-// 背景：v88.7 的「去压缩」重写跨了 118 个后端文件，但下面这两个文件在重写前
+// 背景：v88.7 的「去压缩」重写跨了 118 个后端文件，但下面这几个文件在重写前
 // **没有一条行为验证**，而它们恰好是这一轮里最可疑的三个：
 //
 //   1. admin-passkey-debug.js —— 文件名带 debug，三个端点全 super only，
@@ -935,16 +935,20 @@ test('announcements 孤儿端点已删除；actions/ 目录的接线情况与孤
     false,
     'actions/announcements.js 已被判定为无人 import 的孤儿端点并删除，别再加回来'
   );
-  // init.js 真正 import 的是这五个；admin-passkey-debug.js 不在其中（见文件头注释：
-  // 它是从 init.js LEGACY 段拆出来但**忘了接回新分发表**的漏项，不是设计上的死代码，
-  // 所以这次留着、单独决策）。
-  const wired = ['signin.js', 'account.js', 'passkey.js', 'admin-player.js', 'admin-dm.js']
-    .map((f) => `functions/api/actions/${f}`);
+  // init.js 真正 import 的是这六个。其中 admin-passkey-debug.js 曾经**不在其中**：
+  // 它是从 init.js 拆出来时忘了接回新分发表 —— init.js:94 用的是
+  // action.startsWith('passkey-')，而这个路由的 action 是 'admin-passkey-' 开头，
+  // 于是 /api/init?action=admin-passkey-debug 恒 404，只能直连非文档 URL 才 200。
+  // 3444f1e 已接回，这里把它也纳入断言，免得接线又被改掉。
+  const wired = [
+    'signin.js', 'account.js', 'passkey.js', 'admin-player.js', 'admin-dm.js',
+    'admin-passkey-debug.js',
+  ].map((f) => `functions/api/actions/${f}`);
   const initSrc = execSync(`cat "functions/api/init.js"`, { encoding: 'utf8', maxBuffer: 1 << 28 });
   for (const p of wired) {
     assert.ok(initSrc.includes(p.slice(p.lastIndexOf('actions/') + 8)), `init.js 应当 import ${p}`);
   }
-  // 目录里除了这五个 + 待决策的 admin-passkey-debug，不该再多出无人 import 的文件
+  // 目录里除了这六个，不该再多出无人 import 的文件
   const actions = readdirSync('functions/api/actions').filter((f) => f.endsWith('.js')).sort();
   assert.deepEqual(actions, [
     'account.js', 'admin-dm.js', 'admin-passkey-debug.js', 'admin-player.js', 'passkey.js', 'signin.js',

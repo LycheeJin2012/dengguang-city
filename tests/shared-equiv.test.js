@@ -1308,8 +1308,12 @@ test('webauthn：完整注册→登录往返两版一致，且 challenge 只能�
     out.sessionRow = await f.DB.prepare(
       'SELECT player_id,admin_id FROM sessions WHERE token=?'
     ).bind(loginFinish.token).first();
-    out.signCountAfter = (await f.DB.prepare('SELECT sign_count,last_used_at FROM passkeys').first());
-    out.lastUsedSet = out.signCountAfter.last_used_at !== null;
+    // last_used_at 是秒级时间戳（webauthn.js 每次成功登录都写 datetime('now')），
+    // 基线跑和现版跑是先后两次，跨一秒就假失败 —— 实测全量并发下 5 次挂 1 次。
+    // 只比 sign_count；「有没有被打上」由下面的 lastUsedSet 单独断言，那才是行为。
+    out.signCountAfter = (await f.DB.prepare('SELECT sign_count FROM passkeys').first());
+    out.lastUsedSet =
+      (await f.DB.prepare('SELECT last_used_at FROM passkeys').first()).last_used_at !== null;
 
     // challenge 一次性消费：登录 challenge 重放必须失败
     const replayAssertion = await makeAssertion(loginStart.publicKey.challenge, 43);
