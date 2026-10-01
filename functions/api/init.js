@@ -5,6 +5,7 @@ import * as account from './actions/account.js';
 import * as passkey from './actions/passkey.js';
 import * as adminPlayer from './actions/admin-player.js';
 import * as adminDm from './actions/admin-dm.js';
+import * as adminPasskeyDebug from './actions/admin-passkey-debug.js';
 import { onRequestGet as bundle } from './homepage-bundle.js';
 import { resource } from '../_core/resources.js';
 
@@ -92,6 +93,10 @@ export const onRequestPost = (c) =>
 
     if (['signin', 'signin-status'].includes(action)) return signin.onRequestPost(c);
     if (action.startsWith('passkey-')) return passkey.onRequestPost(c);
+    // 这三个从 v45 的 LEGACY 段拆出来后一直没接进来：它们的 action 是
+    // `admin-passkey-` 开头，上面那条 `startsWith('passkey-')` 匹配不到，
+    // 于是走 /api/init 一律 404「未知功能」。直连 /api/actions/... 却是通的。
+    if (action.startsWith('admin-passkey-')) return adminPasskeyDebug.onRequestPost(c);
     if (action.startsWith('admin-dm-')) return adminDm.onRequestPost(c);
     if (action.startsWith('admin-player-')) return adminPlayer.onRequestPost(c);
     if (ACCOUNT_ACTIONS.includes(action)) return account.onRequestPost(c);

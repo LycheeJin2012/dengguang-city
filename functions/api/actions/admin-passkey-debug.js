@@ -2,10 +2,16 @@
 // 从 init.js LEGACY 段 L394-432 拆出
 // 包含 admin-passkey-debug / admin-passkey-fix-jwks / admin-passkey-reregister
 //
-// v88.7 去压缩重写: 只改排版与结构, 行为一个字都没动。
-// 下面三处「看起来不严谨但保留原样」的地方都加了说明, **不要顺手修** ——
-// 修它们要单独决策, 证据见 tests/admin-actions-equiv.test.js。
+// 2026-10-01：本文件在 v45 拆出后**一直没接回 init.js 的分发表** ——
+// init.js 用 `action.startsWith('passkey-')` 匹配，而这三个 action 是
+// `admin-passkey-` 开头，匹配不上，于是走 /api/init 一律 404「未知功能」。
+// 实跑确认：直连 /api/actions/admin-passkey-debug 返回 200，走 init 返回 404。
+// 已在 init.js 里补上 `admin-passkey-` 前缀分支。
 import { ok, err, parseSession } from '../_helpers.js';
+// integer() 是严格整数校验，在 _core/request.js 里（_helpers.js 不导出它）。
+// HttpError 同样要引：下面那个 catch 默认把一切异常兜成 500，
+// 但参数校验失败得如实回 4xx，得靠 instanceof 把它挑出来。
+import { integer, HttpError } from '../../_core/request.js';
 
 export async function onRequestPost(context) {
   const { env, request } = context;
@@ -30,6 +36,9 @@ export async function onRequestPost(context) {
     if (action === 'admin-passkey-reregister') return await reregisterPasskeys(env, request);
     return err(404, '未知 admin-passkey-debug action');
   } catch (e) {
+    // 参数校验类错误（integer() 抛的 HttpError）不是「debug 错误」，不能兜成 500。
+    // 它是客户端把 player_id 传错了，该如实回 4xx，别让运维背锅去查 SQL。
+    if (e instanceof HttpError) return err(e.status, e.message);
     return err(500, 'debug 错误: ' + (e?.message || String(e)));
   }
 }
@@ -67,14 +76,25 @@ async function reportJwks(env) {
 /**
  * 强制重置某玩家的 passkey (超级管理员用, 删了重让用户注册)
  *
- * v88.7 保留(v88.7 未改): player_id 走的是 parseInt 而不是严格整数校验,
- * 所以 '1abc'、1.9 都会被吃成 1 并**真的**删掉 1 号玩家的全部 passkey;
- * 负数(-5)也不拦, 只是恰好匹配不到行。修它要单独提工单, 本轮只做可读性重写。
+ * 2026-10-01 修：player_id 原来走的是 parseInt，所以 '1abc'、'1.9' 都会被
+ * `parseInt` 吃成 1，然后**真的**执行 `DELETE FROM passkeys WHERE player_id=1`
+ * —— 一次手滑就能删掉别人全部的通行密钥。改用 `integer()` 做严格整数校验
+ * （min=1，顺带挡住 0 和负数），与 `functions/_core/request.js` 里既有的用法一致。
+ *
+ * 这条修复与「接回 init.js 分发表」同批：接回之前必须先堵住这个误删面。
  */
 async function reregisterPasskeys(env, request) {
   const body = await request.json().catch(() => ({}));
-  const playerId = parseInt(body.player_id || 0, 10);
-  if (!playerId) return err(400, 'player_id 必填');
+  // 先挡类型再校验数值：`integer()` 内部是 `Number(value)`，而
+  // Number(true) === 1、Number(null) === 0 —— 也就是说光靠 integer()，
+  // 传 `{"player_id": true}` 会被当成玩家 1 然后**真的删掉他的全部密钥**。
+  // 原来的 parseInt 对 true 返回 NaN 才躲过了这一劫。这里显式只收
+  // number 与数字字符串。
+  const raw = body.player_id;
+  if (typeof raw !== 'number' && typeof raw !== 'string') {
+    return err(400, 'player_id 必须是数字');
+  }
+  const playerId = integer(raw, 'player_id');
   const result = await env.DB.prepare('DELETE FROM passkeys WHERE player_id = ?').bind(playerId).run();
   return ok({
     player_id: playerId,

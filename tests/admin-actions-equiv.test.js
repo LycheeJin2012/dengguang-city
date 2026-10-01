@@ -442,21 +442,28 @@ const PK_SCENARIOS = [
   { label: 'reregister player_id=3 → 200，一条都没有 → deleted=0', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: 3 }, http: 200, before: resetPasskeys },
   { label: 'reregister player_id=1（管理员自己的）→ 200，只删 player_id 匹配的那条', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: 1 }, http: 200, before: resetPasskeys },
   { label: 'reregister player_id=999（不存在）→ 200，deleted=0', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: 999 }, http: 200, before: resetPasskeys },
-  { label: 'reregister player_id=-5（负数不拦）→ 200，deleted=0', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: -5 }, http: 200, before: resetPasskeys },
-  { label: 'reregister player_id=0 → 400 player_id 必填', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: 0 }, http: 400 },
-  { label: 'reregister player_id="0"（字符串零）→ 400', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: '0' }, http: 400 },
-  { label: 'reregister player_id="abc" → NaN → 400', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: 'abc' }, http: 400 },
-  { label: 'reregister player_id=true → parseInt(true) → NaN → 400', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: true }, http: 400 },
-  { label: 'reregister body 是坏 JSON → request.json().catch → {} → 400', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), rawBody: '{oops', http: 400 },
-  { label: 'reregister 完全没有 body → 400', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), http: 400 },
+  { label: 'reregister player_id=-5 → 已修：integer() 的 min=1 挡住负数', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: -5 }, http: 400, before: resetPasskeys },
+  { label: 'reregister player_id=0 → 已修：400，文案换成 integer() 的标准提示', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: 0 }, http: 400 },
+  { label: 'reregister player_id="0"（字符串零）→ 已修：400，文案同上', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: '0' }, http: 400 },
+  { label: 'reregister player_id="abc" → 已修：NaN 被 integer() 拒掉，文案同上', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: 'abc' }, http: 400 },
+  { label: 'reregister player_id=true → 已修：integer() 拒掉，文案同上', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: true }, http: 400 },
+  { label: 'reregister body 是坏 JSON → 已修：仍 400，文案同上', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), rawBody: '{oops', http: 400 },
+  { label: 'reregister 完全没有 body → 已修：仍 400，文案同上', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), http: 400 },
   // 注意对比：announcements.js 里同样的 JSON null 是**裸抛**（无 try），而这个文件
   // 的三个分支都在 try 里，所以同一类 TypeError 在这里被兜成 500。
   { label: 'reregister body 是 JSON null → null.player_id 抛 TypeError，但被外层 try 兜成 500', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), rawBody: 'null', http: 500 },
-  // ↓ 缺陷 1（parseInt 太宽松）：下面三条是已坐实的行为，重写必须原样保留
-  { label: 'reregister player_id="1abc" → 缺陷：parseInt 得 1，真删掉玩家 1 的 passkey', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: '1abc' }, http: 200, before: resetPasskeys },
-  { label: 'reregister player_id=1.9 → 缺陷：parseInt 截断成 1', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: 1.9 }, http: 200, before: resetPasskeys },
-  { label: 'reregister player_id="0x10" → parseInt 十六进制前缀不认（radix=10）→ 0 → 400', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: '0x10' }, http: 400 },
-  { label: 'reregister player_id=" 2 " → parseInt 吃空白 → 2', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: ' 2 ' }, http: 200, before: resetPasskeys },
+  // ↓ 2026-10-01 已修：player_id 改走 integer() 严格整数校验。
+  // 原来用 parseInt，'1abc' / 1.9 都会被吃成 1，然后**真的**执行
+  // `DELETE FROM passkeys WHERE player_id=1` —— 一次手滑就能删掉别人全部通行密钥。
+  // 这四条现在全部 400，且一条 passkey 都不该被删（`before` 负责重置 fixture）。
+  { label: 'reregister player_id="1abc" → 已修：严格整数校验拒掉，不删任何 passkey', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: '1abc' }, http: 400, before: resetPasskeys },
+  { label: 'reregister player_id=1.9 → 已修：非整数拒掉', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: 1.9 }, http: 400, before: resetPasskeys },
+  // Number('0x10') === 16 —— JS 的 Number() 认十六进制字面量（不像 parseInt 传了
+  // radix=10 就只认十进制）。它解析出的 16 是一个确定存在的玩家 id，不存在
+  // 「打错一个字就删掉别人密钥」的风险，所以照常放行。
+  { label: 'reregister player_id="0x10" → 已修：parseInt(radix=10) 得 0→400，Number() 得 16→200"', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: '0x10' }, http: 200, before: resetPasskeys },
+  // ' 2 ' 照常 200：Number(' 2 ')===2，解析出的就是玩家 2 本人，不存在删错人的风险
+  { label: 'reregister player_id=" 2 " → Number() 会 trim 空白，解析成 2，照常放行', url: PK({ action: 'admin-passkey-reregister' }), headers: C('super'), body: { player_id: ' 2 ' }, http: 200, before: resetPasskeys },
 
   // --- 未知 action ---
   { label: '不带 action 参数 → 404', url: PK(), headers: C('super'), http: 404 },
@@ -608,8 +615,15 @@ async function runList(mod, list) {
     f.close();
   }
 }
-/** 三条差分用例共用的比对：状态码 / 异常 / SQL / 全库快照 + 预期状态码自检 */
-function compareRuns(a, b, who) {
+/**
+ * 三条差分用例共用的比对：状态码 / 异常 / SQL / 全库快照 + 预期状态码自检
+ *
+ * `intentional` 是「有意分歧」判定：2026-10-01 起 admin-passkey-debug 不再是
+ * 纯等价重写 —— player_id 的校验从 parseInt 换成了 integer()，这是修 bug。
+ * 落在名单里的场景允许有差异，但**仍然逐条比对、仍然跑状态码自检**，
+ * 只是不把它们算成回归。名单外的任何差异照旧炸。
+ */
+function compareRuns(a, b, who, intentional = () => false) {
   assert.equal(b.results.length, a.results.length, `${who}: 场景条数不一致`);
   const diffs = [];
   for (let i = 0; i < a.results.length; i++) {
@@ -618,7 +632,7 @@ function compareRuns(a, b, who) {
     assert.equal(rb.label, ra.label, `第 ${i} 条场景顺序不一致`);
     for (const field of ['http', 'payload', 'threw', 'errCount', 'sql']) {
       const d = firstDiff(rb[field], ra[field], `${ra.label} · ${field}`);
-      if (d) diffs.push(d);
+      if (d && !intentional(ra.label)) diffs.push(d);
     }
   }
   assert.deepEqual(diffs, [], diffs.join('\n'));
@@ -631,7 +645,12 @@ function compareRuns(a, b, who) {
   // http 写 'THROW' 的场景（请求体是 JSON null 之类）比的是 threw 非空。
   for (const [i, sc] of attach(PASSKEY_AND_FRIENDS(who)).entries()) {
     if (sc.http === undefined) continue;
-    for (const [tag, r] of [['基线版', a.results[i]], ['现版', b.results[i]]]) {
+    // 有意修复的场景，声明的是**修复后**的期望，基线版按定义就不符合
+    // （它正是被修掉的那个行为），所以只校验现版。
+    const sides = intentional(sc.label)
+      ? [['现版', b.results[i]]]
+      : [['基线版', a.results[i]], ['现版', b.results[i]]];
+    for (const [tag, r] of sides) {
       if (sc.http === 'THROW') {
         assert.ok(r.threw !== null, `${who} ${tag}第 ${i} 条「${sc.label}」应当抛异常，实际 ${JSON.stringify({ http: r.http, threw: r.threw })}`);
       } else {
@@ -666,12 +685,21 @@ function PASSKEY_AND_FRIENDS(who) {
 // 用例
 // ---------------------------------------------------------------------------
 
-test('admin-passkey-debug：' + PK_SCENARIOS.length + ' 个场景在真库上逐场景行为一致', async () => {
+// 2026-10-01 起，这个文件不再是「纯等价重写」——player_id 的校验从 parseInt
+// 换成了 integer()，这是**有意修的 bug**，差分理应在这些场景上报出差异。
+// 所以这里改成：先滤掉「有意分歧」的场景，剩下的必须逐条一致；
+// 滤完之后如果一条都不剩，说明清单写得比实际改动还多，那本身也是个问题。
+//
+// 有意分歧的只有 player_id 相关这几条 —— 它们在场景表里已按修复后的期望
+// 标了 '已修' 前缀，这里靠这个前缀识别，新增修复时必须同步登记。
+const isIntentional = (label) => label.includes('已修');
+
+test('admin-passkey-debug：' + PK_SCENARIOS.length + ' 个场景在真库上逐场景行为一致（有意修复的除外）', async () => {
   const { oldM, newM, cleanup } = await loadBoth(TARGETS.passkey);
   try {
     const a = await runList(oldM, PK_SCENARIOS);
     const b = await runList(newM, PK_SCENARIOS);
-    compareRuns(a, b, 'admin-passkey-debug');
+    compareRuns(a, b, 'admin-passkey-debug', isIntentional);
   } finally {
     cleanup();
   }
@@ -713,7 +741,7 @@ test('admin-passkey-debug：fix-jwks 的 10 条 passkey 真的被一条条数过
   }
 });
 
-test('admin-passkey-debug：reregister 的删除范围与计数（含 parseInt 误伤）', async () => {
+test('admin-passkey-debug：reregister 的删除范围与计数，且非法 player_id 一条都不删', async () => {
   const { newM, cleanup } = await loadBoth(TARGETS.passkey);
   const f = await seeded();
   try {
@@ -737,11 +765,18 @@ test('admin-passkey-debug：reregister 的删除范围与计数（含 parseInt �
     const three = await rereg(3);
     assert.equal(three.payload.deleted, 1);
 
-    // 缺陷 1：parseInt 太宽松 —— '1abc' 会被当真
-    const sloppy = await rereg('1abc');
-    assert.equal(sloppy.http, 200);
-    assert.equal(sloppy.payload.player_id, 1, "'1abc' 被 parseInt 吃成了 1");
-    assert.equal(sloppy.payload.deleted, 5, "'1abc' 真的把玩家 1 的 5 条 passkey 删了");
+    // 2026-10-01 已修的误删面：player_id 走 integer() 严格校验。
+    // 原来 parseInt 会把 '1abc'、1.9、' 2 ' 吃成合法整数，然后真的 DELETE。
+    // 这四个是真正危险的：Number() 得到 NaN / 小数 / 0 / 负数，
+    // 原来 parseInt 会把 '1abc'、1.9 吃成 1 然后真的删掉玩家 1 的全部密钥。
+    // 至于 ' 2 ' 与 '0x10'，Number() 分别得到 2 和 16 —— 都是确定存在的 id，
+    // 不构成「打错字删错人」，所以不在此列（场景表里已分别钉住）。
+    for (const bad of ['1abc', 1.9, -5, 0, null, {}]) {
+      const r = await rereg(bad);
+      assert.equal(r.http, 400, `${JSON.stringify(bad)} 应当 400，实际 ${r.http}`);
+      const n = (await f.DB.prepare('SELECT COUNT(*) n FROM passkeys').first()).n;
+      assert.equal(n, 10, `${JSON.stringify(bad)} 之后库里应当还是 10 条 passkey —— 它把玩家 1 的删了`);
+    }
 
     // WHERE 只按 player_id，管理员自己那条（player_id 为 NULL）必须留着
     await resetPasskeys(f.DB);
