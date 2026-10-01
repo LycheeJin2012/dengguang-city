@@ -41,17 +41,43 @@ export async function ticketOwner(c, reference) {
     .bind(id)
     .first();
   if (!ticket) fail(404, '工单不存在');
+
+  // ── 取管理员身份（失败就退回玩家分支）──
+  // 这一段必须**单独**包在自己的 try 里。v88.8 之前回避校验的两句 fail(403)
+  // 和它写在同一个 try 里，catch 只按 e.status 过滤（401/403 都接），
+  // 于是「被投诉人不能处理」「仅限超管」这两个 403 被当成「你不是管理员」接走，
+  // 再退回玩家视角重走 —— 只登了管理员、没登玩家的人到这儿就抛 401
+  // 「需要市民账号」（有玩家会话但不是提交人的则走 404 那一支）。
+  // 回避规则真正想说的事一句都没传达出去。
+  let admin = null;
   try {
-    const admin = await identity(c, 'admin');
-    // 只读（GET）不受回避限制，方便玩家查看自己被投诉的工单
-    if (c.request.method !== 'GET' && (ticket.target_admin_id === admin.id || ticket.target_player_id && ticket.target_player_id === admin.linked_player_id)) fail(403, '被投诉人不能处理该工单');
-    if (admin.role !== 'super' && (ticket.target_admin_id || ticket.target_player_id === admin.linked_player_id)) fail(403, '此投诉仅限超管处理');
+    admin = await identity(c, 'admin');
   } catch (e) {
     if (e.status !== 401 && e.status !== 403) throw e;
     const p = await identity(c);
     // 对本人也报 404：泄露「这张单存在」本身就是信息
     if (ticket.player_id !== p.id) fail(404, '工单不存在');
+    return ticket;
   }
+
+  // ── 回避校验（在 try 之外，它的 403 就是最终答案）──
+  // 这张单与「我」有没有瓜：指名了我本人，或指名了我绑定的那个玩家。
+  const recusesMe =
+    ticket.target_admin_id === admin.id ||
+    (ticket.target_player_id && ticket.target_player_id === admin.linked_player_id);
+
+  // 只读（GET）不受回避限制，方便玩家查看自己被投诉的工单
+  if (c.request.method !== 'GET' && recusesMe) fail(403, '被投诉人不能处理该工单');
+
+  // 这张单是不是「指名了某个人」的投诉单 —— 是的话就只给超管办。
+  //
+  // ⚠️ `ticket.target_player_id &&` 这个守卫不能少。少了它，两边都是 null 时
+  // `null === null` 为 true，于是**任何没绑定玩家账号的普通管理员，处理任何
+  // 没指名对象的普通工单，都会被误判成「涉及回避」**。第一句那个同样的守卫
+  // 当时是有的，第二句漏了。
+  const namesSomeone = ticket.target_admin_id || (ticket.target_player_id && ticket.target_player_id === admin.linked_player_id);
+  if (admin.role !== 'super' && namesSomeone) fail(403, '此投诉仅限超管处理');
+
   return ticket;
 }
 

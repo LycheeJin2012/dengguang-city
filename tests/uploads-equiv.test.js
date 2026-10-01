@@ -339,7 +339,7 @@ function batchTraceDb(DB, log) {
 }
 
 /** 同一个场景在两版上各跑一遍（各自一份全新真库），比对逐响应 + 全库快照 + batch 顺序 */
-async function differential(pair, { seed, steps, fault, probe }) {
+async function differential(pair, { seed, steps, fault, probe, intentional }) {
   const results = [];
   for (const mod of [pair.old.api, pair.new.api]) {
     const f = await seeded();
@@ -367,12 +367,53 @@ async function differential(pair, { seed, steps, fault, probe }) {
     console.error('--- media_uploads ---\n' + JSON.stringify(a.db.media_uploads, null, 1));
     console.error('--- probe ---\n' + JSON.stringify(a.probe, null, 1));
   }
-  assert.deepEqual(b.steps, a.steps, '逐场景响应不一致（状态码 / 响应头 / 响应体 / 抛出的异常）');
+
+  // ── 有意的行为变更登记 ────────────────────────────────────────────────
+  // 差分的职责是拦「未预期」的变化。有意的修复必须显式登记，
+  // 而且登记本身也要被检查：登记了却没命中（说明改动被回退了）要报，
+  // 没登记却变了（说明出现了计划外的变化）也要报。
+  if (intentional) {
+    const fired = new Set();
+    for (const rule of intentional) {
+      const i = steps.findIndex((s) => s.label === rule.label);
+      assert.notEqual(i, -1, `登记的 label 在 steps 里找不到：${rule.label}`);
+      if (JSON.stringify(b.steps[i]) === JSON.stringify(a.steps[i])) continue;
+      fired.add(rule.label);
+      assert.deepEqual(
+        b.steps[i],
+        rule.to,
+        `${rule.label} 的实际变化与登记的不一致。\n  登记为：${JSON.stringify(rule.to)}\n  实际为：${JSON.stringify(b.steps[i])}`
+      );
+    }
+    // 未登记的差异
+    const unlisted = steps
+      .map((s, i) => [s.label, a.steps[i], b.steps[i]])
+      .filter(([label, x, y]) => JSON.stringify(x) !== JSON.stringify(y) && ![...fired].includes(label));
+    assert.deepEqual(unlisted, [], '出现未登记的行为变化：\n' + unlisted.map(([l, x, y]) => `  ${l}\n    旧 ${JSON.stringify(x)}\n    新 ${JSON.stringify(y)}`).join('\n'));
+    // 登记了却没命中的（stale）
+    const stale = [...fired].length === 0
+      ? intentional.map((r) => r.label)
+      : intentional.filter((r) => !fired.has(r.label)).map((r) => r.label);
+    assert.deepEqual(stale, [], '这些登记项没有命中 —— 要么改动被回退了，要么登记该删：\n' + stale.join('\n'));
+  }
+
+  // 登记过的差异在中性化之后再比：**未**登记的任何变化仍然会让这条挂掉。
+  if (intentional) {
+    const neutral = b.steps.map((s, i) =>
+      intentional.some((r) => r.label === steps[i].label) ? a.steps[i] : s
+    );
+    assert.deepEqual(neutral, a.steps, '逐场景响应不一致（登记过的差异已中性化）');
+  } else {
+    assert.deepEqual(b.steps, a.steps, '逐场景响应不一致（状态码 / 响应头 / 响应体 / 抛出的异常）');
+  }
   assert.deepEqual(b.db, a.db, '全库快照不一致');
   assert.deepEqual(b.r2, a.r2, 'R2 调用序列不一致');
   assert.deepEqual(b.batch, a.batch, 'DB.batch 里 SQL 的先后顺序不一致');
   assert.deepEqual(b.probe, a.probe, 'probe 结果不一致');
-  return a;
+  // 返回值是**基线**（旧版）那侧，字段与原来完全一致。
+  // 另把现版那侧挂在 `new` 上：登记过的有意差异必须用 `byLabel(a.new.steps)` 读，
+  // 拿基线那侧去断言修复后的期望，会得到「基线怎么也不该对」的假红。
+  return Object.assign(a, { new: b });
 }
 
 // ===========================================================================
@@ -623,8 +664,44 @@ test('uploads：ticketOwner 回避矩阵（tickets / m: 旧 messages / 超管 / 
       try { out.push(await Promise.all(CASES.map(([as, method, ref]) => run(mod, f.DB, as, method, ref)))); }
       finally { f.close(); }
     }
-    assert.deepEqual(out[1], out[0], 'ticketOwner 两版不一致');
+    // ── v88.8 有意的行为变更登记 ──────────────────────────────────────
+    // ticketOwner 修了两处，两处都改变了对外的 (状态码, 文案)：
+    //   A. 两句 fail(403) 原来和 identity() 写在同一个 try 里，catch 只按
+    //      e.status 过滤（401/403 都接），于是回避校验的 403 被当成
+    //      「你不是管理员」接走，再退回玩家身份报 401。现在 403 如实到前端。
+    //   B. 第二句少了 `ticket.target_player_id &&` 守卫，两边都是 null 时
+    //      `null === null` 为 true，于是任何没绑定玩家账号的普通管理员，
+    //      处理任何没指名对象的普通工单，都会被误判成「涉及回避」。
+    // 登记项必须真的命中（改动被回退要报），出现未登记的变化同样要报。
+    const INTENTIONAL = {
+      'wzc|GET|2': { t: 403, m: '此投诉仅限超管处理' },
+      'wzc|POST|2': { t: 403, m: '被投诉人不能处理该工单' },
+      'wzc|GET|1': { ok: true, id: 1 },
+      'wzc|POST|1': { ok: true, id: 1 },
+      'super|POST|6': { t: 403, m: '被投诉人不能处理该工单' },
+      'wzc|GET|6': { t: 403, m: '此投诉仅限超管处理' },
+    };
+    {
+      const fired = new Set();
+      const unlisted = [];
+      CASES.forEach((c, i) => {
+        const key = c.join('|');
+        const same = JSON.stringify(out[0][i]) === JSON.stringify(out[1][i]);
+        if (same) return;
+        if (!(key in INTENTIONAL)) {
+          unlisted.push(`${key}\n    旧 ${JSON.stringify(out[0][i])}\n    新 ${JSON.stringify(out[1][i])}`);
+          return;
+        }
+        fired.add(key);
+        assert.deepEqual(out[1][i], INTENTIONAL[key], `${key} 的实际变化与登记的不一致`);
+      });
+      assert.deepEqual(unlisted, [], '出现未登记的行为变化：\n' + unlisted.join('\n'));
+      const stale = Object.keys(INTENTIONAL).filter((k) => !fired.has(k));
+      assert.deepEqual(stale, [], '这些登记项没命中 —— 改动被回退了，或登记该删：\n' + stale.join('\n'));
+    }
     const at = (as, method, ref) => out[0][CASES.findIndex((c) => c[0] === as && c[1] === method && c[2] === ref)];
+    // at() 读的是**基线**（旧版）。下面这几条是 v88.8 有意改过的，用 atNew 读现版。
+    const atNew = (as, method, ref) => out[1][CASES.findIndex((c) => c[0] === as && c[1] === method && c[2] === ref)];
     // 防假绿：锁住回避矩阵
     assert.deepEqual(at('p1', 'GET', '1'), { ok: true, id: 1 });
     assert.deepEqual(at('p1', 'POST', '1'), { ok: true, id: 1 });
@@ -639,12 +716,19 @@ test('uploads：ticketOwner 回避矩阵（tickets / m: 旧 messages / 超管 / 
     assert.deepEqual(at('wzc', 'GET', '5'), { ok: true, id: 5 }, 'GET 不受角色限制');
     assert.deepEqual(at('super', 'POST', '2'), { ok: true, id: 2 }, '超管可处理投诉单');
     assert.deepEqual(at('super', 'POST', '3'), { ok: true, id: 3 });
+    assert.deepEqual(atNew('wzc', 'GET', '2'), { t: 403, m: '此投诉仅限超管处理' },
+      'v88.8 已修：角色检查的 fail(403) 原来写在 try 里，被同一段的 catch 接住，'
+      + '退到玩家身份后变成 401「需要市民账号」，403 文案到不了前端。现在如实回 403。');
+    assert.deepEqual(atNew('wzc', 'POST', '2'), { t: 403, m: '被投诉人不能处理该工单' },
+      'v88.8 已修：被投诉人检查的 fail(403) 同样被吞成 401，现在如实回 403。');
+    assert.deepEqual(atNew('wzc', 'GET', '1'), { ok: true, id: 1 },
+      'v88.8 已修：工单 1 没指名任何人、wzc 也没绑定玩家，第二句少了 `target_player_id &&` '
+      + '守卫时 `null === null` 为 true，普通工单也会被误判成「涉及回避」而 401。');
+    assert.deepEqual(atNew('super', 'POST', '6'), { t: 403, m: '被投诉人不能处理该工单' },
+      'v88.8 已修：工单 6 指名的就是超管本人，回避规则终于能生效（原来被吞成 401）。');
+    // 基线那一侧仍然要钉住旧行为，免得有人以为「两版一直一样」
     assert.deepEqual(at('wzc', 'GET', '2'), { t: 401, m: '需要市民账号' },
-      '⚠ 真实行为：角色检查的 fail(403) 写在 try 里，被同一段的 catch 接住，'
-      + '退到玩家身份后变成 401「需要市民账号」—— 两版一致，但 403 文案到不了前端');
-    assert.deepEqual(at('wzc', 'POST', '2'), { t: 401, m: '需要市民账号' },
-      '⚠ 真实行为：被投诉人检查的 fail(403) 写在 try 里，被同一段的 catch 接住，'
-      + '退到玩家身份后变成 401 —— 两版一致，但「被投诉人不能处理该工单」到不了前端');
+      '基线（06e9595）就是 401 —— 这条差异是 v88.8 有意引入的，不是本来就有的');
     assert.deepEqual(at('p1', 'GET', 'm:1'), { ok: true, id: 1 }, 'm: 前缀走 messages 表');
     assert.deepEqual(at('p1', 'POST', 'm:1'), { ok: true, id: 1 });
     assert.deepEqual(at('super', 'POST', 'm:2'), { ok: true, id: 2 }, 'm: 前缀 + 投诉人字段也要走回避');
@@ -1346,8 +1430,27 @@ test('uploads：GET 元信息（归属 / 匿名 / 已挂工单 / 公开 / 未就
         { label: 'download=yes', method: 'GET', as: 'p1', url: `/api/uploads?id=${UUID(2)}&download=yes` },
         { label: '未就绪就下载', method: 'GET', as: 'p1', url: `/api/uploads?id=${UUID(1)}&download=1` },
       ],
+      // v88.8 有意的行为变更：ticketOwner 的回避校验 403 不再被自己的 catch 吞掉。
+      // 旧行为里 wzc 走到 ticketOwner 后，fail(403) 被接走、退回玩家身份，
+      // 于是一个附件请求得到的是 401「需要市民账号」—— 回避规则真正想说的话
+      // 一句都没传达出去。现在它如实回 403「此投诉仅限超管处理」。
+      intentional: [
+        {
+          label: '挂投诉单·被投诉人看',
+          to: {
+            label: '挂投诉单·被投诉人看',
+            status: 403,
+            headers: { 'cache-control': 'no-store', 'content-type': 'application/json; charset=utf-8' },
+            json: { ok: false, error: '此投诉仅限超管处理' },
+          },
+          reason: 'ticketOwner 的 403 现在能到前端了（原来被吞成 401）',
+        },
+      ],
     });
     const at = byLabel(a.steps);
+    // atNew 读的是**现版**。本用例里只有「挂投诉单·被投诉人看」这一条是有意改过的，
+    // 其余全部用 at 锁住两版共有的行为。
+    const atNew = byLabel(a.new.steps);
     // 防假绿
     assert.deepEqual(at('自己的·分块中').json, {
       ok: true, id: UUID(1), name: 'photo.jpg', mime: 'image/jpeg', size: CHUNK_SIZE * 3,
@@ -1364,8 +1467,14 @@ test('uploads：GET 元信息（归属 / 匿名 / 已挂工单 / 公开 / 未就
     assert.equal(at('挂别人工单·本人').status, 200);
     assert.equal(at('挂别人工单·匿名').status, 401);
     assert.equal(at('挂别人工单·超管').status, 200, '超管能看任何工单');
+    assert.equal(atNew('挂投诉单·被投诉人看').status, 403, '现版如实回 403');
+    assert.equal(atNew('挂投诉单·被投诉人看').json.error, '此投诉仅限超管处理',
+      'v88.8 已修：ticketOwner 里的 fail(403) 原来写在同一个 try 里，被该段的 catch '
+      + '当成「你不是管理员」接走，退回玩家身份后变成 401「需要市民账号」。'
+      + '回避规则真正想说的话一句都到不了前端。现在如实回 403。');
+    assert.equal(at('挂投诉单·被投诉人看').status, 401, '基线那一侧仍是 401');
     assert.equal(at('挂投诉单·被投诉人看').json.error, '需要市民账号',
-      '附件是玩家上传的，归属校验先要市民身份 —— wzc 到不了 ticketOwner 这一步');
+      '基线（06e9595）就是 401 —— 这条差异是 v88.8 有意引入的，不是本来就有的');
     assert.equal(at('挂投诉单·超管看').status, 200);
     assert.equal(at('挂投诉单·提交人看').status, 200);
     assert.equal(at('管理员的').status, 200);

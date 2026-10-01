@@ -53,8 +53,10 @@ export const onRequestGet = (context) =>
   endpoint(async () => {
     const admin = await identity(context, 'admin');
 
-    const result = {};
-    const errors = {};
+    // 收集：6 条查询照旧并发跑（性能不动），但结果先落到 collected 里，
+    // **不**直接往最终要序列化的对象上赋值。
+    const collected = {};
+    const failed = {};
 
     // Keep independent sections visible if one query fails. Unavailable is not zero.
     await Promise.all(
@@ -63,16 +65,32 @@ export const onRequestGet = (context) =>
           const rows = await context.env.DB.prepare(
             `SELECT status, COUNT(*) AS n FROM ${section.table} GROUP BY status`
           ).all();
-          result[key] = tallyByState(rows.results, section.states);
+          collected[key] = tallyByState(rows.results, section.states);
         } catch (error) {
           console.error(`[dashboard:${key}]`, error);
-          result[key] = null;
+          collected[key] = null;
           // Only authenticated admins can see diagnostics; these queries contain no user values.
-          errors[key] = { code: 'STAT_QUERY_FAILED', detail: String(error.message || error).slice(0, 300) };
+          failed[key] = { code: 'STAT_QUERY_FAILED', detail: String(error.message || error).slice(0, 300) };
         }
       })
     );
 
+    // ── 拼装：按 SECTIONS 的声明顺序重建 ──────────────────────────────────
+    //
+    // 原来这里是 `result[key] = …`，赋值写在各自 promise 的回调内部，
+    // 于是谁先返回谁先被插入。JS 对象对非数组下标的字符串键按**插入序**枚举，
+    // JSON.stringify 又按插入序输出 —— 同一个接口、同样的数据，只因 D1 的调度
+    // 快慢不同就给出不同的键序，响应没法做快照比对，缓存/监控的哈希也无意义地抖。
+    //
+    // errors 同样要按声明序排：两块以上查询失败时，它的键序也是完成顺序。
+    const result = {};
+    const errors = {};
+    for (const key of Object.keys(SECTIONS)) {
+      result[key] = collected[key];
+      if (key in failed) errors[key] = failed[key];
+    }
+
+    // tickets 一直在 Promise.all 之后单独算，位置仍然在最后。
     try {
       result.tickets = await pendingCount(context.env.DB, admin);
     } catch {
