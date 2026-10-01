@@ -41,10 +41,34 @@ export const onRequestPost = (context) =>
       return reply({ id: found.id });
     }
 
+    // 并发重订阅会插出重复行：上面那次 SELECT 和这条 INSERT 之间有窗口，
+    // 实跑 6 个并发请求能留下 4 行。重复行会让「取消订阅」取消不掉 ——
+    // 软停用只把一行 enabled=0，另一行还在，用户照样收通知。
+    //
+    // 这里用单条 INSERT…SELECT…WHERE NOT EXISTS 收口：SQLite 里一条 INSERT
+    // 语句是原子的，检查和写入在同一个写锁里，所以两个并发请求只会有一个
+    // 真的插进来。不加 UNIQUE 约束是为了不碰生产迁移（_schema.js 里 88 条
+    // 迁移都已在生产执行过），而这一条就足以堵住竞态。
     const created = await context.env.DB
-      .prepare("INSERT INTO subscriptions(player_id,type,channel) VALUES(?,?,'site')")
-      .bind(player.id, input.type)
+      .prepare(
+        `INSERT INTO subscriptions(player_id,type,channel)
+         SELECT ?,?,'site'
+         WHERE NOT EXISTS (
+           SELECT 1 FROM subscriptions WHERE player_id=? AND type=? AND channel='site'
+         )`
+      )
+      .bind(player.id, input.type, player.id, input.type)
       .run();
+
+    // 输掉竞态的那一方（changes=0）说明别人刚插好了，把那行的 id 捞回来。
+    // 语义与「已存在就复用」一致：重复订阅永远只对应一行。
+    if (!created.meta.changes) {
+      const winner = await context.env.DB
+        .prepare(FIND_EXISTING)
+        .bind(player.id, input.type)
+        .first();
+      return reply({ id: winner.id });
+    }
 
     return reply({ id: created.meta.last_row_id }, 201);
   });
