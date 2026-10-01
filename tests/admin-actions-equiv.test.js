@@ -1,6 +1,6 @@
-// functions/api/actions/ 下三个孤儿/可疑路由的行为差分守门。
+// functions/api/actions/ 下两个高风险路由的行为差分守门。
 //
-// 背景：v88.7 的「去压缩」重写跨了 118 个后端文件，但这三个文件在重写前
+// 背景：v88.7 的「去压缩」重写跨了 118 个后端文件，但下面这两个文件在重写前
 // **没有一条行为验证**，而它们恰好是这一轮里最可疑的三个：
 //
 //   1. admin-passkey-debug.js —— 文件名带 debug，三个端点全 super only，
@@ -15,12 +15,13 @@
 //      admin-player-* 动作的唯一入口，改错了前端整页管理员列表就没了。
 //      注意：这个改写是**有意的**，重写时不能「顺手修掉」。
 //
-//   3. announcements.js —— 全仓库**没有任何文件 import 它**的孤儿。
-//      正规公告路由是 init.js:99-107，转给 _core/resources.js（那条路有
-//      notification_log 扇出、有严格图片白名单）。这个文件只能靠直接
-//      POST /api/actions/announcements 命中。它与正规实现已经漂移，且有
-//      三个已坐实的缺陷（见下面 §DEFECT）。**本轮只做等价重写，不修它们** ——
-//      删文件是不可逆的 API 变更，修缺陷要单独决策，所以先用测试把它们钉住。
+//   3. ~~announcements.js~~ —— 原先也是这一列的第三个：全仓库无人 import 的
+//      孤儿，只能靠直接 POST 非文档 URL 命中，与正规实现已漂移，且有三个
+//      已坐实缺陷（parseInt 太宽松 / 放行 data:image/svg+xml / SQL 错误外泄）。
+//      **已于 6608a46 之后删除**，理由：它没有任何调用方，正规公告路由走
+//      init.js:99-107 → _core/resources.js（那条路有 notification_log 扇出、
+//      严格图片白名单）。留着等于让一套校验更松的实现继续可路由。
+//      那三个缺陷随文件一起消失，不必再逐条钉。
 //
 // 上一轮就是这么翻车的：重写完只验 export 名单没变，结果 exam-sessions.js
 // 的 action 白名单被兜底 return 吃掉（delete / SUBMIT / start 全从 400 变 200），
@@ -34,7 +35,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
-import { writeFileSync, unlinkSync } from 'node:fs';
+import { writeFileSync, unlinkSync, existsSync, readdirSync } from 'node:fs';
 import { database, dispatch } from './local-d1.mjs';
 import { ensureDatabase } from '../functions/_core/database.js';
 import { verifyPassword } from '../functions/_shared/auth.js';
@@ -44,7 +45,6 @@ const BASELINE = '06e9595';
 const TARGETS = {
   passkey: 'functions/api/actions/admin-passkey-debug.js',
   player: 'functions/api/actions/admin-player.js',
-  announce: 'functions/api/actions/announcements.js',
 };
 
 const show = (path) =>
@@ -288,7 +288,6 @@ async function snapshotAll(DB) {
 const URLS = {
   passkey: 'https://local.test/api/actions/admin-passkey-debug',
   player: 'https://local.test/api/init',
-  announce: 'https://local.test/api/actions/announcements',
 };
 
 const qs = (base, obj = {}) => {
@@ -590,133 +589,6 @@ const PL_SCENARIOS = [
 //   create / update 各有 try/catch → 500。
 // ---------------------------------------------------------------------------
 
-const AN = (q) => qs(URLS.announce, q);
-
-const AN_SCENARIOS = [
-  { label: 'env 里没有 DB → 500 D1 binding DB not configured（鉴权之前）', url: AN({ action: 'announcement-create' }), noDB: true, http: 500 },
-  { label: '匿名 → 401 需要管理员登录', url: AN({ action: 'announcement-create' }), body: BODY, http: 401 },
-  { label: '玩家会话 → 403 需要管理员权限', url: AN({ action: 'announcement-create' }), headers: C('player'), body: BODY, http: 403 },
-  { label: 'token 查不到会话 → 403（不是 401：401 只认「压根没带 token」）', url: AN({ action: 'announcement-create' }), headers: C('nosuchtoken'), body: BODY, http: 403 },
-  { label: '过期会话 → 403，且会话行被 getSession 删掉', url: AN({ action: 'announcement-create' }), headers: C('expired'), body: BODY, http: 403 },
-  { label: '会话指向不存在的管理员行 → 403 只有 super 管理员可操作公告', url: AN({ action: 'announcement-create' }), headers: C('ghost'), body: BODY, http: 403 },
-  { label: '普通管理员 → 403 只有 super 管理员可操作公告', url: AN({ action: 'announcement-create' }), headers: C('admin2'), body: BODY, http: 403 },
-  { label: 'super + Cookie → 200 走通', url: AN({ action: 'announcement-create' }), headers: C('super'), body: BODY, http: 200 },
-  { label: 'super + Authorization: Bearer → 200', url: AN({ action: 'announcement-create' }), headers: { Authorization: 'Bearer super' }, body: BODY, http: 200 },
-  { label: 'super + X-Session-Token → 200', url: AN({ action: 'announcement-create' }), headers: { 'X-Session-Token': 'super' }, body: BODY, http: 200 },
-  { label: '玩家+管理员合并账号 → 200（认 sess.admin_id）', url: AN({ action: 'announcement-create' }), headers: C('both'), body: BODY, http: 200 },
-
-  // --- 标题边界：stripHtml 先把标签摘掉、把 <>"' 转义、再截到 2000 字 ---
-  { label: 'title 1 字 → 400 标题 2-80 字', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: '短' }, http: 400 },
-  { label: 'title 2 字 → 200（下边界刚好合法）', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: '刚好' }, http: 200 },
-  { label: 'title 80 字 → 200（上边界刚好合法）', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: '标'.repeat(80) }, http: 200 },
-  { label: 'title 81 字 → 400 标题 2-80 字', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: '标'.repeat(81) }, http: 400 },
-  { label: 'title 2000+ 字 → stripHtml 截到 2000 → 仍然 400（截断救不了 80 字上限）', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: '标'.repeat(2500) }, http: 400 },
-  { label: 'title 去掉 HTML 标签后不足 2 字 → 400（"<b></b>x" 只剩 1 个字）', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: '<b></b>x' }, http: 400 },
-  { label: 'title 剥标签后够长 → 200，落库的是剥过的纯文本', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: '  <b>东门</b>施工  ' }, http: 200 },
-  { label: 'title 里的裸 < 被转义成 &lt; 后落库（stripHtml 第二步）', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: 'a<b' }, http: 200 },
-  { label: 'title 里的引号被转义（&quot; / &#39;）', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: '他说"要"走' }, http: 200 },
-  { label: 'title 是数字 → toString 后仍按字符串量长度', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: 12345 }, http: 200 },
-  { label: 'title 是 0 → 0||"" → 空串 → 400', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: 0 }, http: 400 },
-  { label: 'title 是对象 → toString 得 "[object Object]" → 15 字 → 200', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, title: { a: 1 } }, http: 200 },
-
-  // --- 正文边界 ---
-  { label: 'content 1 字 → 400 内容 2-2000 字', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, content: '短' }, http: 400 },
-  { label: 'content 2 字 → 200', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, content: '刚好' }, http: 200 },
-  { label: 'content 2000 字 → 200（上边界）', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, content: '内'.repeat(2000) }, http: 200 },
-  { label: 'content 2001 字 → stripHtml 截到 2000 → 200（缺陷方向：超长正文被静默截断而非拒绝）', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, content: '内'.repeat(2001) }, http: 200 },
-  { label: 'content 3000 字 → 同样被截到 2000 后放行，落库正好 2000 字', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, content: '内'.repeat(3000) }, http: 200 },
-  { label: 'content 全是 HTML 标签 → 剥完为空 → 400', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, content: '<p></p>' }, http: 400 },
-
-  // --- 封面图白名单（只认前缀，这是缺陷所在）---
-  { label: 'image_url=https:// → 200', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 'https://local.test/a.png' }, http: 200 },
-  { label: 'image_url=http:// → 200', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 'http://local.test/a.png' }, http: 200 },
-  { label: 'image_url 大写 HTTPS:// → 200（正则带 i）', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 'HTTPS://LOCAL.TEST/A.PNG' }, http: 200 },
-  { label: 'image_url=data:image/png;base64 → 200', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 'data:image/png;base64,AAA' }, http: 200 },
-  { label: 'image_url 大写 DATA:IMAGE/ → 200', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 'DATA:IMAGE/PNG,AAA' }, http: 200 },
-  { label: 'image_url=ftp:// → 400 封面图必须是 https:// 或 data:image/ 开头', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 'ftp://x/y.png' }, http: 400 },
-  { label: 'image_url=//evil.com/x.png（协议相对）→ 400', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: '//evil.com/x.png' }, http: 400 },
-  { label: 'image_url=javascript:alert(1) → 400', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 'javascript:alert(1)' }, http: 400 },
-  { label: 'image_url 全是空白 → trim 后为空 → 当作没填，落库 null', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: '   ' }, http: 200 },
-  { label: 'image_url 是数字 12345 → toString 后无前缀 → 400', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 12345 }, http: 400 },
-  { label: 'image_url 是 0 → 0||"" → 空 → 落库 null', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 0 }, http: 200 },
-  // ↓ 缺陷 2：只校验 data:image/ 前缀，SVG 一起放行（SVG 能带脚本）
-  { label: 'image_url=data:image/svg+xml → 缺陷：SVG 被放行', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 'data:image/svg+xml;base64,PHN2Zy8+' }, http: 200 },
-  { label: 'image_url=data:image/html → 缺陷：不是真图片的类型也放行', url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 'data:image/html,<script>x</script>' }, http: 200 },
-
-  // --- body 解析 ---
-  { label: '坏 JSON → catch 成 {} → 400 标题 2-80 字', url: AN({ action: 'announcement-create' }), headers: C('super'), rawBody: '{oops', http: 400 },
-  { label: 'JSON 数组 → body.title 是 undefined → 400（这个文件不用 _core 的 body()，所以不是「必须是 JSON 对象」）', url: AN({ action: 'announcement-create' }), headers: C('super'), rawBody: '[]', http: 400 },
-  { label: 'JSON null → null.title 抛 TypeError（无 try 兜住，直接冒出去）', url: AN({ action: 'announcement-create' }), headers: C('super'), rawBody: 'null', http: 'THROW' },
-  { label: '完全没有 body → 400 标题 2-80 字', url: AN({ action: 'announcement-create' }), headers: C('super'), http: 400 },
-
-  // --- 未知 action：字段校验先跑，所以非法 title 拿到的是 400 而不是 404 ---
-  { label: '未知 action + 非法 title → 400 标题 2-80 字（校验先于分发）', url: AN({ action: 'announcement-frobnicate' }), headers: C('super'), body: { ...BODY, title: '短' }, http: 400 },
-  { label: '未知 action + 非法 content → 400 内容 2-2000 字', url: AN({ action: 'announcement-frobnicate' }), headers: C('super'), body: { ...BODY, content: '短' }, http: 400 },
-  { label: '未知 action + 非法 image_url → 400 封面图必须是 https:// 或 data:image/ 开头', url: AN({ action: 'announcement-frobnicate' }), headers: C('super'), body: { ...BODY, image_url: 'ftp://x' }, http: 400 },
-  { label: '未知 action + 合法 body → 404 未知 announcement action: 后面跟 action 原样', url: AN({ action: 'announcement-frobnicate' }), headers: C('super'), body: BODY, http: 404 },
-  { label: '不带 action + 合法 body → 404 后面跟空串', url: AN(), headers: C('super'), body: BODY, http: 404 },
-  { label: 'action=announcement（少写后缀）→ 404', url: AN({ action: 'announcement' }), headers: C('super'), body: BODY, http: 404 },
-
-  // --- 删除分支：在字段校验之前 return，所以 body 再离谱也照删 ---
-  { label: 'delete 不带 id → 400 id 必填', url: AN({ action: 'announcement-delete' }), headers: C('super'), http: 400 },
-  { label: 'delete id=0 → 400 id 必填', url: AN({ action: 'announcement-delete', id: 0 }), headers: C('super'), http: 400 },
-  { label: 'delete id=abc → NaN → 400', url: AN({ action: 'announcement-delete', id: 'abc' }), headers: C('super'), http: 400 },
-  { label: 'delete id=1 → 200 真的删掉 1 号', url: AN({ action: 'announcement-delete', id: 1 }), headers: C('super'), http: 200, before: (DB) => seedAnnouncements(DB) },
-  { label: 'delete id=999（不存在）→ 200 且回 deleted:true（没删也这么说）', url: AN({ action: 'announcement-delete', id: 999 }), headers: C('super'), http: 200, before: (DB) => seedAnnouncements(DB) },
-  { label: 'delete id=-1 → 200 回 deleted:true，实际零行', url: AN({ action: 'announcement-delete', id: -1 }), headers: C('super'), http: 200, before: (DB) => seedAnnouncements(DB) },
-  { label: 'delete id=1.9 → 缺陷：parseInt 截成 1，真的删掉 1 号', url: AN({ action: 'announcement-delete', id: 1.9 }), headers: C('super'), http: 200, before: (DB) => seedAnnouncements(DB) },
-  { label: 'delete id=0x2 → parseInt(radix=10) 得 0 → 400（十六进制反而不认）', url: AN({ action: 'announcement-delete', id: '0x2' }), headers: C('super'), http: 400, before: (DB) => seedAnnouncements(DB) },
-  { label: 'delete + 非法 title 的 body → 200（删除分支不校验字段）', url: AN({ action: 'announcement-delete', id: 2 }), headers: C('super'), body: { title: '短' }, http: 200, before: (DB) => seedAnnouncements(DB) },
-  { label: 'delete + 坏 JSON 的 body → 200（body 压根没被读）', url: AN({ action: 'announcement-delete', id: 2 }), headers: C('super'), rawBody: '{oops', http: 200, before: (DB) => seedAnnouncements(DB) },
-  // ↓ 缺陷 1（同 reregister）：parseInt 太宽松
-  { label: 'delete id=2abc → 缺陷：真删掉 2 号公告', url: AN({ action: 'announcement-delete', id: '2abc' }), headers: C('super'), http: 200, before: (DB) => seedAnnouncements(DB) },
-
-  // --- 更新分支 ---
-  { label: 'update 不带 id + 合法 body → 400 id 必填（字段校验先过，再查 id）', url: AN({ action: 'announcement-update' }), headers: C('super'), body: BODY, http: 400, before: (DB) => seedAnnouncements(DB) },
-  { label: 'update 不带 id + 非法 title → 400 标题 2-80 字（连 id 都没轮到查）', url: AN({ action: 'announcement-update' }), headers: C('super'), body: { ...BODY, title: '短' }, http: 400, before: (DB) => seedAnnouncements(DB) },
-  { label: 'update id=1 → 200 改标题正文并盖上 updated_at', url: AN({ action: 'announcement-update', id: 1 }), headers: C('super'), body: { title: '新标题在这里', content: '新的正文内容' }, http: 200, before: (DB) => seedAnnouncements(DB) },
-  { label: 'update id=999（不存在）→ 200 回 ok:true，实际零行被改', url: AN({ action: 'announcement-update', id: 999 }), headers: C('super'), body: BODY, http: 200, before: (DB) => seedAnnouncements(DB) },
-  { label: 'update id=5 且 image_url 留空 → 200，image_url 被覆盖成 null', url: AN({ action: 'announcement-update', id: 5 }), headers: C('super'), body: BODY, http: 200, before: (DB) => seedAnnouncements(DB) },
-  { label: 'update id=3abc → 缺陷：真改到 3 号上', url: AN({ action: 'announcement-update', id: '3abc' }), headers: C('super'), body: { title: '被误改的标题', content: '被误改的正文' }, http: 200, before: (DB) => seedAnnouncements(DB) },
-  { label: 'update 只改内容：title 仍要过 2-80 字校验（没有「部分更新」这回事）', url: AN({ action: 'announcement-update', id: 1 }), headers: C('super'), body: { content: '只有正文' }, http: 400, before: (DB) => seedAnnouncements(DB) },
-
-  // --- 三条 try/catch → 500：SQL 真出错时把原始错误文案抖给客户端（缺陷 3）---
-  {
-    label: 'create 撞 RAISE(ABORT) → 500 发布失败: 后面跟原始 SQL 错误文案',
-    url: AN({ action: 'announcement-create' }), headers: C('super'), body: BODY, http: 500,
-    before: async (DB) => {
-      await DB.prepare("CREATE TRIGGER boom_ins BEFORE INSERT ON announcements BEGIN SELECT RAISE(ABORT,'boom-insert'); END").run();
-    },
-    after: async (DB) => { await DB.prepare('DROP TRIGGER boom_ins').run(); },
-  },
-  {
-    label: 'update 撞 RAISE(ABORT) → 500 更新失败: 后面跟原始 SQL 错误文案',
-    url: AN({ action: 'announcement-update', id: 1 }), headers: C('super'), body: BODY, http: 500,
-    before: async (DB) => {
-      await seedAnnouncements(DB);
-      await DB.prepare("CREATE TRIGGER boom_upd BEFORE UPDATE ON announcements BEGIN SELECT RAISE(ABORT,'boom-update'); END").run();
-    },
-    after: async (DB) => { await DB.prepare('DROP TRIGGER boom_upd').run(); },
-  },
-  {
-    label: 'delete 撞 RAISE(ABORT) → 500 删除失败: 后面跟原始 SQL 错误文案',
-    url: AN({ action: 'announcement-delete', id: 1 }), headers: C('super'), http: 500,
-    before: async (DB) => {
-      await seedAnnouncements(DB);
-      await DB.prepare("CREATE TRIGGER boom_del2 BEFORE DELETE ON announcements BEGIN SELECT RAISE(ABORT,'boom-delete'); END").run();
-    },
-    after: async (DB) => { await DB.prepare('DROP TRIGGER boom_del2').run(); },
-  },
-  {
-    label: 'announcements 表真的不存在 → 500 发布失败: no such table（最坏情况：把 schema 名抖出去）',
-    url: AN({ action: 'announcement-create' }), headers: C('super'), body: BODY, http: 500,
-    before: async (DB) => { await DB.prepare('DROP TABLE announcements').run(); },
-    after: async (DB) => {
-      await DB.prepare('CREATE TABLE announcements (id INTEGER PRIMARY KEY AUTOINCREMENT,title TEXT NOT NULL,content TEXT NOT NULL,image_url TEXT,created_by INTEGER,created_at TEXT NOT NULL DEFAULT (datetime(\'now\')),updated_at TEXT)').run();
-    },
-  },
-];
-
 // ---------------------------------------------------------------------------
 // 场景执行：把 sc.rawUrl（带原始查询串的场景用）与 after 钩子接上
 // ---------------------------------------------------------------------------
@@ -736,44 +608,6 @@ async function runList(mod, list) {
     f.close();
   }
 }
-
-// ---------------------------------------------------------------------------
-// 用例
-// ---------------------------------------------------------------------------
-
-test('admin-passkey-debug：' + PK_SCENARIOS.length + ' 个场景在真库上逐场景行为一致', async () => {
-  const { oldM, newM, cleanup } = await loadBoth(TARGETS.passkey);
-  try {
-    const a = await runList(oldM, PK_SCENARIOS);
-    const b = await runList(newM, PK_SCENARIOS);
-    compareRuns(a, b, 'admin-passkey-debug');
-  } finally {
-    cleanup();
-  }
-});
-
-test('admin-player：' + PL_SCENARIOS.length + ' 个场景在真库上逐场景行为一致', async () => {
-  const { oldM, newM, cleanup } = await loadBoth(TARGETS.player);
-  try {
-    const a = await runList(oldM, PL_SCENARIOS);
-    const b = await runList(newM, PL_SCENARIOS);
-    compareRuns(a, b, 'admin-player');
-  } finally {
-    cleanup();
-  }
-});
-
-test('announcements：' + AN_SCENARIOS.length + ' 个场景在真库上逐场景行为一致', async () => {
-  const { oldM, newM, cleanup } = await loadBoth(TARGETS.announce);
-  try {
-    const a = await runList(oldM, AN_SCENARIOS);
-    const b = await runList(newM, AN_SCENARIOS);
-    compareRuns(a, b, 'announcements');
-  } finally {
-    cleanup();
-  }
-});
-
 /** 三条差分用例共用的比对：状态码 / 异常 / SQL / 全库快照 + 预期状态码自检 */
 function compareRuns(a, b, who) {
   assert.equal(b.results.length, a.results.length, `${who}: 场景条数不一致`);
@@ -821,10 +655,38 @@ function compareRuns(a, b, who) {
 }
 
 function PASSKEY_AND_FRIENDS(who) {
-  return who === 'admin-passkey-debug' ? PK_SCENARIOS : who === 'admin-player' ? PL_SCENARIOS : AN_SCENARIOS;
+  return who === 'admin-passkey-debug' ? PK_SCENARIOS : PL_SCENARIOS;
 }
 
-// --- 专项：把三个文件的绝对值钉死（证明测试不是假绿）---
+// --- 专项：把两个文件的绝对值钉死（证明测试不是假绿）---
+
+
+
+// ---------------------------------------------------------------------------
+// 用例
+// ---------------------------------------------------------------------------
+
+test('admin-passkey-debug：' + PK_SCENARIOS.length + ' 个场景在真库上逐场景行为一致', async () => {
+  const { oldM, newM, cleanup } = await loadBoth(TARGETS.passkey);
+  try {
+    const a = await runList(oldM, PK_SCENARIOS);
+    const b = await runList(newM, PK_SCENARIOS);
+    compareRuns(a, b, 'admin-passkey-debug');
+  } finally {
+    cleanup();
+  }
+});
+
+test('admin-player：' + PL_SCENARIOS.length + ' 个场景在真库上逐场景行为一致', async () => {
+  const { oldM, newM, cleanup } = await loadBoth(TARGETS.player);
+  try {
+    const a = await runList(oldM, PL_SCENARIOS);
+    const b = await runList(newM, PL_SCENARIOS);
+    compareRuns(a, b, 'admin-player');
+  } finally {
+    cleanup();
+  }
+});
 
 test('admin-passkey-debug：fix-jwks 的 10 条 passkey 真的被一条条数过（valid=3）', async () => {
   const { newM, cleanup } = await loadBoth(TARGETS.passkey);
@@ -1003,141 +865,7 @@ test('admin-player：创建分支真的建出了市民，且密码哈希确实�
   }
 });
 
-test('announcements：三个已坐实的缺陷逐条钉住（这一轮是等价重写，缺陷原样保留）', async () => {
-  const { oldM, newM, cleanup } = await loadBoth(TARGETS.announce);
-  try {
-    for (const [tag, mod] of [['基线', oldM], ['现版', newM]]) {
-      const f = await seeded();
-      try {
-        // 缺陷 1：parseInt 太宽松，?id=2abc 会真删掉 2 号公告
-        await seedAnnouncements(f.DB);
-        const del = await runOne(mod, f, { url: AN({ action: 'announcement-delete', id: '2abc' }), headers: C('super') });
-        assert.equal(del.http, 200, `[${tag}] 缺陷1 状态码`);
-        assert.equal(del.payload.id, 2, `[${tag}] 缺陷1：id 被吃成 2`);
-        assert.equal(del.payload.deleted, true, `[${tag}] 缺陷1：回 deleted:true`);
-        const gone = (await f.DB.prepare('SELECT COUNT(*) n FROM announcements WHERE id = 2').first()).n;
-        assert.equal(gone, 0, `[${tag}] 缺陷1：2 号公告必须真的被删掉（这就是缺陷本身）`);
-        // 对照组：确实是 id 参数导致，不是别的地方把它删了
-        await seedAnnouncements(f.DB);
-        const nother = await runOne(mod, f, { url: AN({ action: 'announcement-delete', id: 3 }), headers: C('super') });
-        assert.equal(nother.http, 200, `[${tag}] 缺陷1 对照组`);
-        const left = (await f.DB.prepare('SELECT COUNT(*) n FROM announcements').first()).n;
-        assert.equal(left, 4, `[${tag}] 删掉 1 条后应当还剩 4 条`);
-
-        // 缺陷 2：只校验 data:image/ 前缀，SVG 与假图片类型都放行
-        const svg = await runOne(mod, f, { url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, image_url: 'data:image/svg+xml;base64,PHN2Zy8+' } });
-        assert.equal(svg.http, 200, `[${tag}] 缺陷2：SVG 应当被放行（缺陷本身）`);
-        assert.equal(svg.payload.ok, true, `[${tag}] 缺陷2：落库了`);
-        const stored = (await f.DB.prepare('SELECT image_url FROM announcements WHERE id = ?').bind(svg.payload.id).first());
-        assert.equal(stored.image_url, 'data:image/svg+xml;base64,PHN2Zy8+', `[${tag}] 缺陷2：原样存进去了`);
-
-        // 缺陷 3：原始 SQL 错误直接外泄给客户端
-        await f.DB.prepare("CREATE TRIGGER boom_x BEFORE INSERT ON announcements BEGIN SELECT RAISE(ABORT,'boom-insert'); END").run();
-        const failed = await runOne(mod, f, { url: AN({ action: 'announcement-create' }), headers: C('super'), body: BODY });
-        assert.equal(failed.http, 500, `[${tag}] 缺陷3 状态码`);
-        assert.ok(
-          /boom-insert|boom/.test(failed.payload.error),
-          `[${tag}] 缺陷3：内部错误文案应当外泄（实际 ${JSON.stringify(failed.payload)}）`,
-        );
-        assert.ok(!/SQLITE|sqlite/.test(failed.payload.error), `[${tag}] 缺陷3 的反向检查意外通过`);
-        await f.DB.prepare('DROP TRIGGER boom_x').run();
-      } finally {
-        f.close();
-      }
-    }
-  } finally {
-    cleanup();
-  }
-});
-
-test('announcements：其它几个「说了不等于做了」的地方也钉住', async () => {
-  const { newM, cleanup } = await loadBoth(TARGETS.announce);
-  const f = await seeded();
-  try {
-    // 删不存在的行也回 deleted:true
-    await seedAnnouncements(f.DB);
-    const missing = await runOne(newM, f, { url: AN({ action: 'announcement-delete', id: 999 }), headers: C('super') });
-    assert.equal(missing.payload.deleted, true, '没删任何行也回 deleted:true');
-    assert.equal((await f.DB.prepare('SELECT COUNT(*) n FROM announcements').first()).n, 5);
-
-    // update 不存在的 id 也回 ok:true
-    const upd = await runOne(newM, f, { url: AN({ action: 'announcement-update', id: 999 }), headers: C('super'), body: BODY });
-    assert.equal(upd.http, 200);
-    assert.equal(upd.payload.ok, true, '零行被改也回 ok:true');
-
-    // 正文超 2000 字被静默截断到 2000（不是拒绝）
-    const long = await runOne(newM, f, { url: AN({ action: 'announcement-create' }), headers: C('super'), body: { ...BODY, content: '内'.repeat(3000) } });
-    assert.equal(long.http, 200, '超长正文应当被放行（截断而非拒绝）');
-    const len = (await f.DB.prepare('SELECT LENGTH(content) n FROM announcements WHERE id = ?').bind(long.payload.id).first()).n;
-    assert.equal(len, 2000, '落库长度应当正好是 stripHtml 的 2000 上限');
-
-    // updated_at 必须是「本次运行现生成」的墙钟时间（挡住把 datetime('now') 换成硬编码）
-    await seedAnnouncements(f.DB);
-    const upd2 = await runOne(newM, f, { url: AN({ action: 'announcement-update', id: 1 }), headers: C('super'), body: BODY });
-    assert.equal(upd2.http, 200);
-    const row = (await f.DB.prepare('SELECT updated_at, created_at, created_by FROM announcements WHERE id = 1').first());
-    assert.ok(row.updated_at, 'updated_at 必须被盖上');
-    const t = Date.parse(row.updated_at.replace(' ', 'T') + 'Z');
-    assert.ok(Number.isFinite(t), `updated_at 应当是 SQLite 的 datetime 形状，实际 ${row.updated_at}`);
-    assert.ok(
-      t >= RUN_START - 120_000 && t <= Date.now() + 120_000,
-      `updated_at 应当落在本次运行窗口内（实际 ${row.updated_at}）`,
-    );
-    assert.equal(row.created_at, '2026-01-01 00:00:00', 'update 不许动 created_at');
-    assert.equal(row.created_by, 1, 'update 不许动 created_by');
-  } finally {
-    f.close();
-    cleanup();
-  }
-});
-
-test('announcements：源码里那句「会话已过期」是死代码（getSession 先一步把会话删了）', async () => {
-  const { newM, cleanup } = await loadBoth(TARGETS.announce);
-  const f = await seeded();
-  try {
-    // 过期会话：getSession 发现过期 → 顺手 DELETE → 返回 null
-    // 于是走的是 `!sess` 那条 403，而不是 401 会话已过期
-    const r = await runOne(newM, f, { url: AN({ action: 'announcement-create' }), headers: C('expired'), body: BODY });
-    assert.equal(r.http, 403);
-    assert.equal(r.payload.error, '需要管理员权限', '拿到的是 403，不是 401 会话已过期');
-    assert.equal(
-      (await f.DB.prepare('SELECT COUNT(*) n FROM sessions WHERE token = ?').bind('expired').first()).n,
-      0,
-      '过期会话已被 getSession 删除',
-    );
-  } finally {
-    f.close();
-  }
-});
-
-test('announcements：两处行为上**测不到**的分支，用源码文本兜住（变异测试实测抓不到）', async () => {
-  // 为什么这两条测不到 —— 变异测试里改掉它们，全部 13 条用例照样全绿：
-  //
-  //   1. content 的 2000 字上限：stripHtml 内部已经 .slice(0, 2000)，所以
-  //      content.length 永远到不了 2001 —— `> 2000` 这半个条件是**死代码**。
-  //      把上限改成 99999 没有任何可观测差异。只能靠比对源码文本兜住。
-  //   2. `会话已过期` 那句：getSession 见到过期会话已经先删后返 null，走不到。
-  //      同理不可观测。
-  //
-  // 这不是「测试没写好」，是分支本身不可达。等哪天 stripHtml 改了，这里自然失效。
-  const read = (p) => execSync(`cat "${p}"`, { encoding: 'utf8', maxBuffer: 1 << 28 });
-  const src = read(TARGETS.announce);
-  for (const line of [
-    "if (content.length < 2 || content.length > 2000) return err(400, '内容 2-2000 字');",
-    "if (new Date(sess.expires_at) <= new Date()) return err(401, '会话已过期');",
-  ]) {
-    assert.ok(src.includes(line), `这一行不见了，等价重写不该动它：${line}`);
-    // 同时确认基线里也是同一行（防止有人「顺手修」了死代码却被当成等价重写）
-    assert.ok(show(TARGETS.announce).includes(line), `基线与现版不一致：${line}`);
-  }
-  // 对照: stripHtml 真的截到 2000，所以 1 成立
-  assert.ok(
-    read('functions/_shared/validators.js').includes('.slice(0, 2000)'),
-    'stripHtml 不再截到 2000 的话，上面第 1 条就从死代码变成活代码了，测试要跟着改',
-  );
-});
-
-test('三个文件的 export 名单与基线逐字一致（别的文件在 import，改了就断链）', async () => {
+test('两个文件的 export 名单与基线逐字一致（别的文件在 import，改了就断链）', async () => {
   const names = (src) =>
     [...src.matchAll(/export\s+(?:async\s+)?(?:const|let|function)\s+([A-Za-z_$][\w$]*)/g)]
       .map((m) => m[1])
@@ -1154,88 +882,36 @@ test('三个文件的 export 名单与基线逐字一致（别的文件在 impor
   }
 });
 
-test('announcements.js 确实是孤儿：init.js 走正规实现，两条路的可观测行为已经漂移', async () => {
-  // 这一条只比状态码与响应体与 notification_log 行数：中间件会写审计行
-  // （request_id 是随机 UUID），比全库快照必然假失败。
-  // 它的作用是把「可达路径」和「漂移程度」都变成可执行的证据，而不是靠读代码断言。
-  const { newM, cleanup } = await loadBoth(TARGETS.announce);
-  try {
-    // 玩家 1 订阅了公告：正规实现发公告时会顺手写一条站内通知
-    const withSub = async (path, body, cookie, image_url) => {
-      const f = await seeded();
-      try {
-        await f.DB.prepare(
-          "INSERT INTO subscriptions(player_id,type,target_id,channel,enabled,created_at) VALUES(1,'announcement',NULL,'site',1,'2026-01-01 00:00:00')"
-        ).run();
-        const request = new Request('https://local.test' + path, {
-          method: 'POST',
-          headers: { Cookie: 'lc_session=' + cookie, 'Content-Type': 'application/json' },
-          body: body === undefined ? undefined : JSON.stringify(body),
-        });
-        const r = await dispatch(request, { DB: f.DB });
-        return {
-          http: r.status,
-          body: await r.json(),
-          notif: (await f.DB.prepare('SELECT COUNT(*) n FROM notification_log').first()).n,
-          ann: (await f.DB.prepare('SELECT COUNT(*) n FROM announcements').first()).n,
-        };
-      } finally {
-        f.close();
-      }
-    };
-
-    const orphan = await withSub('/api/actions/announcements?action=announcement-create', BODY, 'super');
-    const zhenggui = await withSub('/api/init?action=announcement-create', BODY, 'super');
-
-    // 漂移 1：状态码与返回体形状
-    assert.equal(orphan.http, 200, '孤儿实现创建公告回 200');
-    assert.equal(orphan.body.ok, true);
-    assert.equal(orphan.body.id !== undefined, true, '孤儿实现返回 {id, ok:true}');
-    assert.equal(zhenggui.http, 201, '正规实现创建公告回 201（漂移：同一个业务两个状态码）');
-    assert.equal(zhenggui.body.created, true, '正规实现返回 {id, created:true}');
-    assert.equal(orphan.body.created, undefined, '孤儿实现没有 created 字段');
-
-    // 漂移 2：notification_log 扇出
-    assert.equal(orphan.notif, 0, '孤儿实现不发站内通知（漂移：有订阅的市民收不到）');
-    assert.equal(zhenggui.notif, 1, '正规实现会给订阅者写一条站内通知');
-
-    // 漂移 3：图片白名单。resources.js:117-128 只放行
-    // data:image/(png|jpeg|webp|gif);base64, —— svg 被明确挡掉；孤儿实现只认前缀，放行。
-    const svgOrphan = await withSub(
-      '/api/actions/announcements?action=announcement-create',
-      { ...BODY, image_url: 'data:image/svg+xml;base64,PHN2Zy8+' },
-      'super',
-    );
-    const svgZhenggui = await withSub(
-      '/api/init?action=announcement-create',
-      { ...BODY, image_url: 'data:image/svg+xml;base64,PHN2Zy8+' },
-      'super',
-    );
-    assert.equal(svgOrphan.http, 200, '孤儿实现放行 SVG（缺陷 2 的可执行证据）');
-    assert.equal(svgZhenggui.http, 400, '正规实现挡掉 SVG（白名单只含 png/jpeg/webp/gif）');
-    assert.equal(svgZhenggui.body.error, '图片必须是 http(s) URL、本站资源或 PNG/JPEG/WebP/GIF 图片');
-
-    // 另两个文件走真路由的鉴权档位也顺手钉一下
-    const f = await seeded();
-    try {
-      const hit = async (path, cookie, body) => {
-        const request = new Request('https://local.test' + path, {
-          method: 'POST',
-          headers: { Cookie: 'lc_session=' + cookie, 'Content-Type': 'application/json' },
-          body: body === undefined ? undefined : JSON.stringify(body),
-        });
-        const r = await dispatch(request, { DB: f.DB });
-        return { http: r.status, body: await r.json() };
-      };
-      assert.equal((await hit('/api/actions/admin-passkey-debug?action=admin-passkey-debug', 'admin2')).http, 403);
-      assert.equal((await hit('/api/actions/admin-passkey-debug?action=admin-passkey-debug', 'super')).http, 200);
-      assert.equal((await hit('/api/actions/announcements?action=announcement-create', 'admin2', BODY)).http, 403);
-      assert.equal((await hit('/api/init?action=admin-player-list', 'super')).http, 200);
-      assert.equal((await hit('/api/init?action=admin-player-list', 'player')).http, 403);
-    } finally {
-      f.close();
-    }
-  } finally {
-    cleanup();
+/**
+ * 孤儿端点已删除，这里钉住「别把它塞回来」。
+ *
+ * functions/api/actions/announcements.js 曾是第二套公告写入实现：全仓库无人
+ * import，正规路由走 init.js:99-107 → _core/resources.js。它只能靠直接 POST
+ * 非文档 URL 命中，且校验比正规实现松（parseInt 太宽松、放行
+ * data:image/svg+xml、原始 SQL 错误外泄）。留着等于让一套更弱的校验继续
+ * 在生产可路由。
+ *
+ * 顺带守住「这个目录不该有第三个文件」——再加任何新路由都必须先说明它和
+ * init.js 里正规路径的关系，否则大概率又是一个没人 import 的孤儿。
+ */
+test('announcements 孤儿端点已删除；actions/ 目录的接线情况与孤儿清单保持明确', () => {
+  assert.equal(
+    existsSync('functions/api/actions/announcements.js'),
+    false,
+    'actions/announcements.js 已被判定为无人 import 的孤儿端点并删除，别再加回来'
+  );
+  // init.js 真正 import 的是这五个；admin-passkey-debug.js 不在其中（见文件头注释：
+  // 它是从 init.js LEGACY 段拆出来但**忘了接回新分发表**的漏项，不是设计上的死代码，
+  // 所以这次留着、单独决策）。
+  const wired = ['signin.js', 'account.js', 'passkey.js', 'admin-player.js', 'admin-dm.js']
+    .map((f) => `functions/api/actions/${f}`);
+  const initSrc = execSync(`cat "functions/api/init.js"`, { encoding: 'utf8', maxBuffer: 1 << 28 });
+  for (const p of wired) {
+    assert.ok(initSrc.includes(p.slice(p.lastIndexOf('actions/') + 8)), `init.js 应当 import ${p}`);
   }
+  // 目录里除了这五个 + 待决策的 admin-passkey-debug，不该再多出无人 import 的文件
+  const actions = readdirSync('functions/api/actions').filter((f) => f.endsWith('.js')).sort();
+  assert.deepEqual(actions, [
+    'account.js', 'admin-dm.js', 'admin-passkey-debug.js', 'admin-player.js', 'passkey.js', 'signin.js',
+  ]);
 });
