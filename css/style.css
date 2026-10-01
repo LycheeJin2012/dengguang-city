@@ -908,7 +908,14 @@ input,select,textarea{min-width:0;max-width:100%}
 .stat span{font-size:.85rem;color:var(--muted)}
 button.stat{cursor:pointer;text-align:left}
 .split{display:grid;grid-template-columns:240px minmax(0,1fr);gap:18px;align-items:start}
-.table-wrap{max-width:100%;overflow:visible}
+/* v88.8 修：这里原本写的是 `overflow:visible`（简写）。简写会把基础规则里的
+   `overflow:auto` 整个盖掉，而 `max-height:min(72vh,720px)` 仍然留着 ——
+   于是盒子高度被卡住、内容却是可见溢出，直接画到后面的 #footer 上：
+   窄窗口下打开后台工单列表，最后几行会「穿过页脚」压到页脚文字上。
+   v75 之前的写法是 `overflow-x:hidden; overflow-x:clip`：只约束横向，
+   竖向滚动照旧，表头 thead 的 position:sticky 也才有 sticky 的容器。
+   这里恢复那个意图 —— 横向 clip，竖向交回基础规则的 auto。 */
+.table-wrap{min-width:0;max-width:100%;overflow-x:clip}
 .responsive-table{width:100%;table-layout:fixed}
 .responsive-table th,.responsive-table td{white-space:normal;overflow-wrap:anywhere;min-width:0}
 .cell-label{display:none}
@@ -930,6 +937,11 @@ button.stat{cursor:pointer;text-align:left}
 @media(max-width:1100px){
 .stats{grid-template-columns:repeat(3,minmax(0,1fr))}
 .admin-content .split{grid-template-columns:minmax(0,1fr)}
+/* 表格在这个宽度下已经卡片化（每行是 grid 而不是横向的一行），内层滚动条
+   反而难用，所以解除高度上限并放行溢出。
+   ⚠️ 这两条必须成对出现：只写 overflow:visible 而留着 max-height，就是
+   「盒子卡高 + 内容可见溢出」= 画穿页脚（v88.8 之前踩的坑）。 */
+.table-wrap{max-height:none;overflow:visible}
 .responsive-table,.responsive-table tbody{display:block;width:100%}
 .responsive-table thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
 .responsive-table tbody tr{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));padding:10px;border-bottom:2px solid var(--line-soft)}
