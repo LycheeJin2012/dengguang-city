@@ -15,7 +15,8 @@
 //     比对两版日志逐条相同。
 //
 // innerHTML 是整串记进日志的，所以 Shadow DOM 里那条
-// <link href="/css/style.css?v=89"> 的逐字节一致被顺带证到，不另设断言。
+// <link href="/css/style.css?v=90"> 的逐字节一致被顺带证到，不另设断言
+// （版本号本身有专门一条用例钉住必须与全站一致）。
 //
 // 覆盖不到的部分：真实浏览器里的布局、焦点环样式、事件冒泡顺序。冒泡在本模块
 // 是单点监听（keydown 挂在 panel 上），桩里按「监听器数组按注册顺序触发」处理，
@@ -358,17 +359,27 @@ const scenarios = [
   ['登录成功后内容区从登录引导切到聊天页', scenarioLoginSwitch],
 ];
 
+/**
+ * ?v= 资源版本号归一化。
+ *
+ * 版本号是**有意**改的：每次改了要发给浏览器的 CSS/JS 都必须 bump，
+ * 否则用户继续吃旧缓存（v88.6 就是这个坑，Shadow DOM 漏 bump 单独查了半天才找到）。
+ * 所以它不属于「重写引入的漂移」，比之前先抹平成 ?v=N。
+ * 版本号本身由下面「浮窗里的 ?v= 与全站版本号一致」那条用例单独钉住。
+ */
+const normalizeVersion = (text) => text.replace(/\?v=\d+/g, '?v=N');
+
 for (const [name, run] of scenarios) {
   test(`assistant-window 行为等价：${name}`, async () => {
     const before = await run(OLD_SRC);
-    const after = await run(NEW_SRC);
+    const after = (await run(NEW_SRC)).map(normalizeVersion);
     assert.notDeepEqual(before, [], '对照版本跑空了 —— 说明场景本身没产生任何可观测行为，等于没验');
     assert.ok(before.join('\n').includes('mountAssistantWindow') || before.join('\n').length > 50, '场景日志过短，桩可能没接上');
-    assert.deepEqual(after, before, 'DOM 操作序列不一致');
+    assert.deepEqual(after, before.map(normalizeVersion), 'DOM 操作序列不一致');
   });
 }
 
-test('assistant-window：Shadow DOM 的 innerHTML 逐字节相同（含 ?v=89 资源版本号）', async () => {
+test('assistant-window：Shadow DOM 的 innerHTML 除资源版本号外逐字节相同', async () => {
   const grab = async (src) => {
     const env = await mount(src, { sessionId: null });
     env.launch();
@@ -378,9 +389,12 @@ test('assistant-window：Shadow DOM 的 innerHTML 逐字节相同（含 ?v=89 �
       shadowHTML: panel.querySelector('.assistant-window-content').shadowRoot.innerHTML,
     };
   };
+  // ?v= 版本号是**有意**改的（每次改了要发给浏览器的 CSS/JS 都要 bump，
+  // 否则用户吃旧缓存），不属于「重写引入的漂移」，比之前先归一化。
+  const normalize = normalizeVersion;
   const before = await grab(OLD_SRC);
   const after = await grab(NEW_SRC);
-  assert.equal(after.shadowHTML, before.shadowHTML,
+  assert.equal(normalize(after.shadowHTML), normalize(before.shadowHTML),
     'Shadow DOM 的 innerHTML 变了 —— 注意 /css/style.css 的 ?v= 版本号漏 bump 会让整个浮窗吃旧缓存');
   assert.match(after.shadowHTML, /<link rel="stylesheet" href="\/css\/style\.css\?v=\d+"><div class="assistant-embedded"><\/div>/,
     'Shadow DOM 必须自带一条带版本号的样式表 link，且后面紧跟挂载点');
