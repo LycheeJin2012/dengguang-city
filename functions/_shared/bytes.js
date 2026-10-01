@@ -47,13 +47,27 @@ export function b64urlToBytes(s) {
  * Uint8Array → base64url（无 padding）。
  *
  * buf 兼容两种入参：ArrayBuffer 本身，和带 byteOffset 的 TypedArray 视图。
- * 后者必须用 buf.buffer 再带上视图自身的偏移去切，否则拿的是整个底层
- * ArrayBuffer 的头几字节 —— 传切片进来时会读错数据。
+ *
+ * v88.8 修：视图分支原来写的是 `new Uint8Array(buf.buffer || buf)` ——
+ * 也就是**丢掉 byteOffset 和 length**，把整个底层 ArrayBuffer 编进去。
+ * 上面那段注释当时就写着「必须用 buf.buffer 再带上视图自身的偏移去切」，
+ * 但代码没照做。它一直侥幸没炸，只是因为现有调用方传的全是
+ * `Uint8Array.prototype.slice()` 的结果 —— slice 会复制出新 buffer，偏移量恒为 0。
+ * 而 cborDecode 返回的 `new Uint8Array(data.buffer, offset, len)` 是**视图**，
+ * 一旦有人直接传进来，编出来的就是整个底层 buffer：在通行密钥那条链路上，
+ * 那等于把 32 字节的公钥坐标换成了一整块 attestationObject，格式还完全合法、
+ * 从外表看不出来。宁可多拷一次字节，也不能让这个函数在某个调用方上悄悄返回错的东西。
  */
 export function bytesToB64url(buf) {
-  const bytes = buf instanceof ArrayBuffer
-    ? new Uint8Array(buf)
-    : new Uint8Array(buf.buffer || buf);
+  let bytes;
+  if (buf instanceof ArrayBuffer) {
+    bytes = new Uint8Array(buf);
+  } else if (ArrayBuffer.isView(buf)) {
+    // 视图：只取自己那一段。buffer + byteOffset + byteLength 三个都要。
+    bytes = new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+  } else {
+    bytes = new Uint8Array(buf);
+  }
   let bin = '';
   for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
   return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');

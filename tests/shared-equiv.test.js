@@ -238,13 +238,18 @@ function cborEncode(value) {
 /**
  * 造一个 77 字节的 ES256 COSE_Key。
  * 布局按 COSE_Key / RFC 8152 的 P-256 固定写法，x 在 [10,42)、y 在 [45,77)。
+ *
+ * v88.8 修：x 的标签原来写成 0x22。CBOR 负整数编码是 0x20=-1、0x21=-2、
+ * 0x22=-3 —— 0x22 是 -3 不是 -2。于是 x 和 y 用了同一个标签，y 把 x 覆盖掉，
+ * 解出来的 map 里压根没有 -2 这个键。原来的固定偏移实现从不看标签，
+ * 所以这个错误一直隐形，直到 coseToJwk 改成真解析才暴露出来。
  */
 function coseKeyFromJwk(jwk) {
   const x = b64uToBytes(jwk.x);
   const y = b64uToBytes(jwk.y);
   const out = new Uint8Array(77);
-  // a5 | kty=1 | EC2=2 | alg=3 | -7 | crv=P-256 | -2 (x) | bstr(32) ...
-  out.set([0xa5, 0x01, 0x02, 0x03, 0x26, 0x20, 0x01, 0x22, 0x58, 0x20], 0);
+  // a5 | kty=1 | EC2=2 | alg=3 | -7 | crv=-1(0x20) | P-256=1 | x=-2(0x21) | bstr(32) ...
+  out.set([0xa5, 0x01, 0x02, 0x03, 0x26, 0x20, 0x01, 0x21, 0x58, 0x20], 0);
   out.set(x, 10);
   out.set([0x22, 0x58, 0x20], 42);
   out.set(y, 45);

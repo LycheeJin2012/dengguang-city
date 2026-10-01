@@ -60,34 +60,74 @@ function cborDecode(data) {
 }
 
 // COSE EC2 公钥 (raw bytes) -> JWK
-// v17.10.3 简化: 不依赖 cborDecode, 直接 slice 固定偏移拿 x/y 坐标
-// WebAuthn COSE_Key EC2 布局 (固定 77 字节):
-//   offset 0:    a5 (CBOR map of 5 items)
-//   offset 1-9:  kty(1)+val(2)+alg(3)+val(26 20)+crv(-1=20)+val(1)+x(-2=21)+header(58 20)
-//   offset 10-41: x 坐标 (32 字节, 大端)
-//   offset 42-44: y header (22 58 20)
-//   offset 45-76: y 坐标 (32 字节, 大端)
+//
+// v88.8 修：原来这里是 slice 固定偏移（x = b[10:42]、y = b[45:77]），
+// 注释写着「v17.10.3 简化: 不依赖 cborDecode」。那个简化有三个站不住的假定：
+//
+//   1. 长度固定 77 字节 —— COSE_Key 可以带 kid(2) / key_ops(4) 等可选字段，
+//      各家认证器带的东西不一样，于是「首字节不是 0xa5」就把**合法**密钥拒了。
+//   2. 字段顺序固定 —— CBOR map 无序，y 排在 x 前面完全合法。实测这一条
+//      最狠：旧实现不报错，而是把 alg/crv 的头字节当成了 x 坐标，
+//      拼出一个格式合法、能存进库的 JWK —— 这个通行密钥从此永远登不进去。
+//   3. kty/alg/crv 一定是 EC2/ES256/P-256 —— 原实现根本不读这三个值，
+//      kty=OKP 的密钥照样按 EC2 收下。
+//
+// 同一个文件里本来就有 cborDecode（断言路径一直在用），所以这里直接复用，
+// 不引新依赖、不自己再写一个 CBOR 解析器。
+//
+// 坐标长度改为严格 32 字节：原来的 pad32 会把 31 字节左补成 32、把 33 字节
+// 原样放过，两种都会产出错误的公钥。P-256 坐标必须正好 32 字节，对不上就拒。
+const COSE_P256_COORD_BYTES = 32;
+
 function coseToJwk(coseBytes) {
-  if (!coseBytes || coseBytes.length < 77) {
-    throw new Error('COSE: 太短或空, len=' + (coseBytes ? coseBytes.length : 0));
+  if (!coseBytes || !coseBytes.length) {
+    throw new Error('COSE: 空字节');
   }
-  const b = coseBytes instanceof Uint8Array ? coseBytes : new Uint8Array(coseBytes);
-  if (b[0] !== 0xa5) {
-    throw new Error('COSE: 首字节不是 map(0xa5), 实际 0x' + b[0].toString(16));
+  const raw = coseBytes instanceof Uint8Array ? coseBytes : new Uint8Array(coseBytes);
+
+  let map;
+  try {
+    map = cborDecode(raw);
+  } catch (e) {
+    // 解码失败一律 fail closed。宁可拒绝登录，也不能拿半个 map 去拼公钥。
+    throw new Error('COSE: CBOR 解析失败, ' + (e.message || e));
   }
-  const x = b.slice(10, 42);
-  const y = b.slice(45, 77);
-  const pad32 = (b) => {
-    if (b.length === 32) return b;
-    if (b.length < 32) {
-      const out = new Uint8Array(32);
-      out.set(b, 32 - b.length);
-      return out;
+  if (!map || typeof map !== 'object' || Array.isArray(map)) {
+    throw new Error('COSE: 不是 CBOR map');
+  }
+
+  // 标签取值必须真的对上，不能假定。错一个就是另一套算法/曲线，
+  // 按 P-256 解出来的公钥是彻底错误的公钥。
+  if (map['1'] !== 2) throw new Error('COSE: kty 不是 EC2(2), 实际 ' + map['1']);
+  if (map['3'] !== -7) throw new Error('COSE: alg 不是 ES256(-7), 实际 ' + map['3']);
+  if (map['-1'] !== 1) throw new Error('COSE: crv 不是 P-256(1), 实际 ' + map['-1']);
+
+  // 判字节串**不能**用 instanceof Uint8Array：
+  // shared-equiv 那个守门测试是在 node:vm 沙箱里加载本模块的，沙箱里的
+  // Uint8Array 与本 realm 的不是同一个原型对象，instanceof 恒为 false ——
+  // 结果就是所有通行密钥注册都被误拒。鸭子类型跨 realm 才安全。
+  // BYTES_PER_ELEMENT === 1 顺带排除了 DataView（它没有这个属性）。
+  const isBytes = (v) => v != null && ArrayBuffer.isView(v) && v.BYTES_PER_ELEMENT === 1;
+
+  const coord = (label, value) => {
+    if (!isBytes(value)) throw new Error('COSE: 坐标 ' + label + ' 不是字节串');
+    if (value.length !== COSE_P256_COORD_BYTES) {
+      throw new Error('COSE: 坐标 ' + label + ' 应为 ' + COSE_P256_COORD_BYTES + ' 字节, 实际 ' + value.length);
     }
-    return b;
+    // 复制一份再编码：cborDecode 给的是**视图**（指向整个 COSE_Key 的
+    // 底层 buffer），万一编码那一步只看 .buffer 而不看 offset/length，
+    // 编出来的就会是整块密钥而不是这 32 字节。少依赖一个隐含约定。
+    return new Uint8Array(value);
   };
-  return { kty: 'EC', crv: 'P-256', alg: 'ES256', ext: false,
-           x: bytesToB64url(pad32(x)), y: bytesToB64url(pad32(y)) };
+
+  return {
+    kty: 'EC',
+    crv: 'P-256',
+    alg: 'ES256',
+    ext: false,
+    x: bytesToB64url(coord('x', map['-2'])),
+    y: bytesToB64url(coord('y', map['-3'])),
+  };
 }
 
 // 解析 authenticatorData
