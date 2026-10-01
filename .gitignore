@@ -17,3 +17,12 @@ node_modules/
 **/.equiv-*.mjs
 **/*.equiv-old.js
 **/*.oldcheck.js
+
+# 同样要挡的是「agent 随手起的临时目录」：.tmp-rwcheck/ 这种。
+# 它已经被误提交过两次（be7725e、88ac3d7），里面装着 14 个旧压缩版的
+# 生产源码（*.old.js），等于把 functions/ 的历史快照一起塞进部署包。
+**/.tmp-*/
+**/*.old.js
+**/*.mb
+**/*.bak
+
