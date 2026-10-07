@@ -157,7 +157,18 @@ export async function onRequest(context) {
       console.error('[login-history] security history unavailable');
     }
 
-    await writeAudit({ base, request, response, event, actor, tracked, url });
+    // 审计是**响应产出之后**才落的旁路写入，不是这次请求的主流程。
+    //
+    // 为什么必须兜住：路由已经返回 200、用户的数据已经存进去了，这时审计那一条
+    // INSERT 再抛错，会被 endpoint 翻成 500 发回前端 —— 用户看到的是「保存失败」，
+    // 于是再点一次，可能连着提交两遍，而且他完全无法判断第一次到底存没存进去。
+    // 「改了但报 500」比「改了没记审计」糟糕得多。
+    //
+    // 审计留不下记录是可观测性问题，不是数据正确性问题：这里打 error 级日志，
+    // 由人去查；真要收紧应该做队列重投，而不是拿主流程的成败去换。
+    await writeAudit({ base, request, response, event, actor, tracked, url }).catch((error) => {
+      console.error('[audit] 无法落库，本次请求的审计记录缺失：', error);
+    });
     return finalize(response, requestId);
   });
 }
