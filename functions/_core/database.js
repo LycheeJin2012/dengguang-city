@@ -140,6 +140,37 @@ const columnsOf = async (db, table) =>
 const markVersion = (db, version) =>
   db.prepare('INSERT OR IGNORE INTO lc_schema_versions(version) VALUES(?)').bind(version).run();
 
+/**
+ * 补 _schema.js 声明过、但老库从来没建出来的列。
+ *
+ * hotels / hotel_rooms 这几张表是很早的版本建的。CREATE TABLE IF NOT EXISTS
+ * 对**已经存在**的表是空操作 —— 它只在建表那一刻照抄当时的文本。所以后来往
+ * _schema.js 的建表语句里补写的列，老库上是缺席的，而仓库里从来没有配套的
+ * ALTER TABLE ... ADD COLUMN 迁移去补。
+ *
+ * hotel_rooms 就是这么坏掉的：_schema.js 声明了 updated_at，生产库上没有，
+ * 于是店主自助台保存房型时那条写死 updated_at=datetime('now') 的 UPDATE
+ * 会报 no such column，整次保存变成 500 —— 而且跟你提交了哪个字段无关，
+ * 改名字、改房价、加个勾，全都是同一个 500。
+ *
+ * 为什么不能靠 ADDITIONS：老库早就记过版本号，ensureDatabase 在版本检查那里
+ * 直接返回，ADDITIONS 只在 bootstrapFromScratch（全新库）里才跑得到。
+ * 所以这一段必须排在版本短路**之前**。
+ *
+ * 幂等：列在就什么都不做；表还没建（全新库）整段跳过。
+ */
+async function repairLegacyColumns(db) {
+  const present = await columnsOf(db, 'hotel_rooms');
+  if (present.size && !present.has('updated_at')) {
+    try {
+      await db.prepare('ALTER TABLE hotel_rooms ADD COLUMN updated_at TEXT').run();
+    } catch (e) {
+      // 并发冷启动时，另一个 isolate 可能刚刚把这一列补上了
+      if (!/duplicate column name/i.test(e.message)) throw e;
+    }
+  }
+}
+
 /** 已经升到 v64 的库：只补 v67 的增量，不重放几百条历史语句 */
 async function applyV67Only(db) {
   await runTolerant(db, UPDATE_67);
@@ -260,6 +291,9 @@ export function ensureDatabase(db) {
         'CREATE TABLE IF NOT EXISTS lc_schema_versions(version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP)'
       )
       .run();
+
+    // 必须在下面这个版本短路之前：老库早就记过版本号了。
+    await repairLegacyColumns(db);
 
     if (await db.prepare('SELECT version FROM lc_schema_versions WHERE version=?').bind(VERSION).first()) {
       return;

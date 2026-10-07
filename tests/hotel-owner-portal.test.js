@@ -209,3 +209,42 @@ test('审计写失败时，请求原本的结果必须原样返回（404 不能�
   assert.equal(r.http, 404, '审计挂了就报 500，等于把「记录不存在」说成「服务炸了」：' + r.text);
   assert.equal(r.json.error, '记录不存在');
 });
+
+// ── 9. 老库缺 hotel_rooms.updated_at ──────────────────────────────────────
+//
+// 这是线上「房型与房价 → 改一改 → 服务处理失败」的真正根因。
+//
+// hotel_rooms 是 v25 建的表。CREATE TABLE IF NOT EXISTS 对**已经存在**的表
+// 是空操作，而仓库里从来没有过 ALTER TABLE hotel_rooms ADD COLUMN updated_at ——
+// _schema.js 声明了这一列，生产库上却根本没建出来。
+// （对得上：GET /api/hotel-owner 回来的房型对象有 created_at、没有 updated_at，
+//   而同一次响应里的酒店对象是带 updated_at 的。）
+//
+// 于是那条写死 updated_at=datetime('now') 的 UPDATE 报 no such column，
+// 整次保存 500 —— 跟提交了哪个字段完全无关。
+//
+// 这里照着生产的老表复现。用 {...DB} 造一个新对象传给 ensureDatabase：
+// 它按 db 实例做 pending 缓存，新对象 = 缓存不命中 = 等价于「新 isolate 冷启动」。
+// 版本号那条短路（老库早就记过 67）会先返回，所以补列必须排在它前面才会被跑到。
+
+const hasColumn = async (table, name) =>
+  (await DB.prepare(`PRAGMA table_info(${table})`).all()).results.some((c) => c.name === name);
+
+test('老库缺 hotel_rooms.updated_at：冷启动补上这一列后，房型保存必须 200', async () => {
+  await DB.prepare('ALTER TABLE hotel_rooms DROP COLUMN updated_at').run();
+  assert.equal(await hasColumn('hotel_rooms', 'updated_at'), false, '前置条件：这一列现在应该不存在');
+
+  await ensureDatabase({ ...DB });
+
+  assert.equal(await hasColumn('hotel_rooms', 'updated_at'), true, '冷启动必须把缺掉的列补上');
+
+  const r = await call('PATCH', '/api/hotel-owner?entity=rooms&id=1', { ...UI_EDIT, price_per_night: 88 });
+  assert.equal(r.http, 200, '补列之后房型保存必须成功，不能是 500：' + r.text);
+  const row = await room(1);
+  assert.equal(row.price_per_night, 88, '房价要真的写进库');
+  assert.ok(row.updated_at, 'updated_at 要被刷新');
+
+  // 再冷启动一次：列已经在了，不能因为「重复加列」把整个请求带崩
+  await ensureDatabase({ ...DB });
+  assert.equal(await hasColumn('hotel_rooms', 'updated_at'), true, '重复冷启动要幂等');
+});
