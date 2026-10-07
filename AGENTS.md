@@ -8,6 +8,7 @@
 - 当前前端位于 `js/app`，不要恢复已经删除的 `js/home`、`js/page`、`js/admin` 等旧双实例脚本。
 - 后端统一工具在 `functions/_core`；保留原 API URL，路由采用 Pages Functions 文件结构。
 - `functions/api/_middleware.js` 调用 `ensureDatabase`；增量迁移必须保留数据、可重入、失败可重试。
+- 建表语句里的列不等于生产库真有这一列：`CREATE TABLE IF NOT EXISTS` 对已存在的表是空操作，往 `_schema.js` 补列必须同时补 `ALTER TABLE` 迁移。更关键的是，老库记过版本号后 `ensureDatabase` 会在版本检查处直接 return，`ADDITIONS` 里的迁移**永远跑不到** —— 这类补列只能放在版本短路**之前**的幂等检查里（见 `repairLegacyColumns`）。排查「本地 30+ 种 payload 都复现不出、线上必 500」时，先 `GET` 一个把该表 `SELECT *` 出去的生产接口，对比返回对象里哪些键**缺失**，缺的键往往就是漂移掉的列。
 - 权限检查必须发生在数据访问/写入之前；密码和账号角色修改应先验证全部字段，再原子写入。
 - 私有接口 no-store，不能缓存登录态或跨账号复用数据。查询参数不能直接用于 SQL 表名、字段名。
 - 业务主表和工单、试车扣费、签到奖励用 D1 batch；不要改回分步写入。
