@@ -8,7 +8,7 @@
     "hotel-owner.html": "34f8838f26e33e7466fc99f4f6fffceb1a7533046af33ec96d7ce35cc1ef5808",
     "hotel.html": "4d8e7d93d062445913196a6b68d12f0324cb1fee1cad126d3427161bd55fc673",
     "index.html": "9e2bb99a70c89e8da94940b3011b9ab22238396a4609a43308bd7cea77bbcbf1",
-    "js/app/admin-navigation.js": "81f9408e9befb791b30f550919b5336d51dfe7be66272ce91f9cddad539e332e",
+    "js/app/admin-navigation.js": "8429f50ecdd6fcfea9fe9770a48b699b9e7e83ea98180640804481bd96e0c4e4",
     "js/app/admin.js": "3b6226e82a01c1e4c50c140cdc6d03364e0d089f3db4c0ef2c683436c2fe3f32",
     "js/app/attachments.js": "c01f18e53ea0999fd88cdce0862dac4fa8b5ebf0ca503a998af37843ab983013",
     "js/app/audit-ui.js": "bc65c803d16d5e78848dd9dafc05912edac17402e62e9799c62e8c261544030e",
@@ -29,6 +29,6 @@
     "profile.html": "de465f81816871c5b1c01d8c3371c601e3f36a375325f838520f23793d3ca237",
     "tests/dev-server.mjs": "752175ba70027287385a49e225271dd1666b0282d13aefcd78308502be32fb58"
   },
-  "relocked_at": "2026-10-01",
+  "relocked_at": "2026-10-08",
   "relock_note": "哈希随纯重构（拆函数 / 加注释 / 换排版）重新计算，不含文案改动。文案本身由 tests/copy-preservation.test.js 单独锁定，那一层扛得住重构。"
 }

@@ -31,11 +31,12 @@ const superOnly = new Set([
   'audit',
   'knowledge',
   'replyfeedback',
+  'aihealth',
 ]);
 
 export const groups = [
   { id: 'tickets', label: '🎫 工单中心', children: ['tickets'] },
-  { id: 'dispatch', label: '📋 派单', children: ['dispatch'] },
+  { id: 'dispatch', label: '📋 派单', children: ['dispatch', 'aihealth'] },
   { id: 'support', label: '🎧 人工客服', children: ['support', 'replyfeedback'] },
   { id: 'audit', label: '📒 操作留痕', children: ['audit'] },
   { id: 'accounts', label: '👥 市民与账号', children: ['players', 'admins', 'password'] },

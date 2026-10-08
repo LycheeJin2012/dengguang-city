@@ -51,6 +51,7 @@ import { render as renderTimes } from './tabs/times.js';
 import { render as renderQuestions } from './tabs/questions.js';
 import { render as renderPassword } from './tabs/password.js';
 import { render as renderOwners } from './tabs/owners.js';
+import { render as renderAiHealth } from './tabs/aihealth.js';
 
 /**
  * tab key → 渲染函数。
@@ -67,6 +68,7 @@ const tabHandlers = {
   questions: renderQuestions,
   password: renderPassword,
   owners: renderOwners,
+  aihealth: renderAiHealth,
 };
 
 /** 分发到报名类通用 tab 的 key。 */

@@ -51,6 +51,7 @@ export const names = {
   owners: ['🔑 酒店经营账户', '🔑 Hotel owner accounts'],
   audit: ['📒 操作留痕', '📒 Operation audit'],
   dispatch: ['📋 派单', '📋 Dispatch'],
+  aihealth: ['🩺 模型连通性', '🩺 Model health'],
   questions: ['📚 模拟题库', '📚 Question bank'],
   tickets: ['🎫 工单中心', '🎫 Tickets'],
   players: ['👥 玩家管理', '👥 Citizens'],
