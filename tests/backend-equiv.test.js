@@ -48,18 +48,59 @@ const exportNames = (src) =>
     .filter((v, i, a) => a.indexOf(v) === i)
     .sort();
 
+/**
+ * 有意新增的 export 登记表。每一项都必须写清为什么。
+ *
+ * 「纯重构不许动 export」这条铁律没变，但纯重构之外确实存在有意的结构变更，
+ * 那种变更必须**显式登记**，不能靠悄悄改测试让守卫变绿。
+ *
+ * 登记本身也要被检查，否则这张表会退化成免检通行证：
+ *   - 少 export：永远失败。别的文件在 import，删了就是断链，没有例外。
+ *   - 多 export：必须与登记**逐字一致**。多一个、少一个都失败 ——
+ *     如果只检查「登记的都在」，把登记写宽就能顺手夹带别的改动。
+ *   - 登记项必须真的还在文件里：过期登记会一直躺在表里，
+ *     掩盖将来「这个文件被整个还原了」这种真实漂移。
+ */
+const ALLOWED_ADDITIONS = {
+  'functions/_core/model-json.js': {
+    stripModelNoise:
+      '2026-10-07 拿真实 MiniMax key 实测：MiniMax-M3 把 <think> 思考写进 content，' +
+      '原实现只剥 ```json 围栏，JSON.parse 直接抛 Unexpected token '<'，' +
+      '落进 catch 变成「AI 暂不可用或返回了无效题目」—— 接了个能用的模型，功能却静默全废。' +
+      '抽成共用函数供 model-json / triage / ai / ai-health 四处复用。',
+  },
+};
+
 test(`后端重写没改任何 export 名单（对照 ${BASELINE}，检查 ${CHANGED.length} 个改动文件）`, () => {
-  const problems = [];
+  const lostProblems = [];
+  const addedProblems = [];
   for (const path of CHANGED) {
     const before = exportNames(show(path));
     const after = exportNames(read(path));
     const lost = before.filter((n) => !after.includes(n));
-    const added = after.filter((n) => !before.includes(n));
-    if (lost.length || added.length) {
-      problems.push(`${path}: 少了 [${lost.join(' ')}]，多了 [${added.join(' ')}]`);
+    if (lost.length) lostProblems.push(`${path}: 少了 [${lost.join(' ')}]`);
+
+    const allowed = Object.keys(ALLOWED_ADDITIONS[path] || {}).sort();
+    const added = after.filter((n) => !before.includes(n)).sort();
+    if (added.join(' ') !== allowed.join(' '))
+      addedProblems.push(`${path}: 实得多 [${added.join(' ')}]，登记只允许 [${allowed.join(' ')}]`);
+  }
+  assert.deepEqual(lostProblems, [], lostProblems.join('\n'));
+  assert.deepEqual(addedProblems, [], addedProblems.join('\n'));
+
+  // 登记项必须还活着 —— 过期登记等于给未来的漂移发长期通行证
+  const stale = [];
+  for (const [path, names] of Object.entries(ALLOWED_ADDITIONS)) {
+    if (!existsSync(path)) {
+      stale.push(`${path}: 登记的文件不存在了，删掉这条登记`);
+      continue;
+    }
+    const current = exportNames(read(path));
+    for (const n of Object.keys(names)) {
+      if (!current.includes(n)) stale.push(`${path}: 登记的 ${n} 已经不在文件里，删掉这条登记`);
     }
   }
-  assert.deepEqual(problems, [], problems.join('\n'));
+  assert.deepEqual(stale, [], stale.join('\n'));
 });
 
 /** 建一份全新的真库，塞进重写测试需要的最小数据 */

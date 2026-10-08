@@ -1,4 +1,5 @@
 import { endpoint, identity, reply, fail } from '../../_core/request.js';
+import { stripModelNoise } from '../../_core/model-json.js';
 
 /**
  * 模型服务健康检查（仅超管）。
@@ -65,7 +66,10 @@ export const onRequestPost = (c) =>
         body: JSON.stringify({
           model,
           temperature: 0,
-          max_tokens: 16,
+          // 必须留出推理空间。实测 MiniMax-M3.1-Flash-Preview 出一道最简单的灯谜
+          // 花了 211 个 completion token，其中 182 个是 reasoning —— 给 16 的话预算
+          // 全被思考吃掉，一个字正文都吐不出来，还会随机挂到超时，让超管误判为未接通。
+          max_tokens: 1024,
           messages: [{ role: 'user', content: '只回复两个字：可用' }],
         }),
       });
@@ -97,7 +101,8 @@ export const onRequestPost = (c) =>
       try {
         const data = await response.json();
         const text = data?.choices?.[0]?.message?.content;
-        sample = typeof text === 'string' ? text.slice(0, 60) : '';
+        // 回声是给超管看的，剥掉推理模型的思考块，只留它真正回答的那句
+        sample = typeof text === 'string' ? stripModelNoise(text).slice(0, 60) : '';
       } catch {
         sample = '';
       }

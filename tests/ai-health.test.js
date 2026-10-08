@@ -150,8 +150,37 @@ test('上游成功：ok=true 且带回模型回声', () =>
       const sent = JSON.parse(seen.init.body);
       assert.ok('max_tokens' in sent, '探测请求必须带 max_tokens');
       assert.ok('temperature' in sent, '探测请求必须带 temperature');
+      // 但 max_tokens 不能给太小。实测 MiniMax-M3.1-Flash-Preview：
+      // 出一道最简单的灯谜花了 211 个 completion token，其中 182 个是 reasoning。
+      // 给 16 的话预算全被思考吃掉，一个字正文都吐不出来 ——
+      // 实测同一请求先 1.1s 返回、再 30s 超时，面板会随机误报「连接超时」，
+      // 让超管以为没接通，而线上其实好好的。
+      assert.ok(
+        sent.max_tokens >= 512,
+        `探测的 max_tokens 必须留出推理空间，实测 ${sent.max_tokens} 太小`
+      );
       assert.match(seen.url, /\/chat\/completions$/);
       assert.equal(seen.init.headers.Authorization, 'Bearer ' + KEY);
+    },
+    { OPENAI_API_KEY: KEY }
+  ));
+
+test('探测回声要剥掉推理模型的 <think> 块，只显示它真正回答的那句', () =>
+  fixture(
+    async ({ call }) => {
+      globalThis.fetch = async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '<think>We need answer to 可用. Likely 可用.</think>\n\n可用' } }],
+          }),
+          { status: 200 }
+        );
+      const r = await call('POST');
+      assert.equal(r.http, 200, r.text);
+      assert.equal(r.json.ok, true);
+      // 面板是给超管判断用的，显示一段模型自言自语只会让人以为接错了模型
+      assert.equal(r.json.sample, '可用');
+      assert.doesNotMatch(r.json.sample, /<think>/, '探测回声漏出了思考块');
     },
     { OPENAI_API_KEY: KEY }
   ));

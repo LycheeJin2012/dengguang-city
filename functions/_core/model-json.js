@@ -1,6 +1,31 @@
 import { fail } from './request.js';
 
 /**
+ * 剥掉模型回复外层的噪声，只把真正的载荷留下。
+ *
+ * 两种噪声都真实存在，不是防御性想象：
+ *
+ *  1. ```json … ```  围栏 —— 一直都有
+ *  2. <think>…</think>   推理模型把思考写进 content
+ *
+ * 第 2 种是实测撞出来的：2026-10-07 拿真实 MiniMax key 打 api.minimax.cn，
+ * MiniMax-M3 出的 content 是 "<think>The user wants to...\n</think>\n{...}"，
+ * 直接 JSON.parse 会抛 Unexpected token '<'，然后落进 catch 变成
+ * 「AI 暂不可用」——接了个能用的模型，功能却静默地全废了。
+ *
+ * 循环剥围栏：模型偶尔会套多层 ```json ```json … ``` ```。
+ */
+export function stripModelNoise(text) {
+  let out = String(text).replace(/<think>[\s\S]*?<\/think>/gi, '');
+  let prev;
+  do {
+    prev = out;
+    out = out.replace(/^\s*```(?:json)?\s*\n?/i, '').replace(/\s*```\s*$/, '');
+  } while (out !== prev);
+  return out.trim();
+}
+
+/**
  * 调一次 Chat Completions，把回复解析成 JSON 对象。
  *
  * 刻意把「网络失败 / 非 2xx / 输出超长 / JSON 非法」全压成同一个 502：
@@ -39,8 +64,8 @@ export async function modelJson(env, system, input) {
     // 长度上限必须在 JSON.parse 之前判断，否则会拿一个超长字符串去解析
     if (typeof text !== 'string' || text.length > 20000) throw new Error('bad model output');
 
-    // 模型经常把 JSON 包在 ```json 围栏里，剥掉围栏再解析
-    return JSON.parse(text.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, ''));
+    // 剥掉 <think> 思考块和 ```json 围栏再解析
+    return JSON.parse(stripModelNoise(text));
   } catch {
     fail(502, 'AI 暂不可用或返回了无效题目，未保存草稿，请重试');
   }

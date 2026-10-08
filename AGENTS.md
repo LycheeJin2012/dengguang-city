@@ -57,3 +57,5 @@
 - v68：消息中心通知/私信必须在同一文档内切换；保留聊天草稿与面板，隐藏面板不得自动标记私信已读。用户查看 8884 本地预览时，交付须同步该预览并保留测试数据库。
 
 - v75：前端共用组件位于 js/ui；页面适配器在 js/app。修改样式应编辑 css/source（foundation/components/workspaces/business/motion），通过 scripts/build.mjs 编译 style.css / style.min.css，不再追加 layout.css 或直接改生成文件。保留原文字/接口/按压行为；后端不在UI重构范围。
+
+- 模型接入：换服务商或模型前，先用真实 key 直接打一次上游接口把「区域域名 + 模型全名 + 实际返回形状」量出来，不要照文档猜。已知两个坑：① MiniMax 国内 key（`sk-cp-`）只能打 `api.minimax.cn`，打 `api.minimax.io` 一律 401 `invalid api key`；模型必须写全名，`MiniMax-M3.1-Flash-Preview` 存在而 `MiniMax-M3.1` 不存在（400 unknown model）。② 推理模型会把思考写进 `content`（实测 MiniMax-M3 的 content 是 `<think>…</think>\n{…}`，而 M3.1-Flash-Preview 走独立 `reasoning_content` 字段），直接 `JSON.parse` 会抛 `Unexpected token '<'` 再落进 catch 变成静默 502 —— 所有解析模型回复的地方都必须先过 `stripModelNoise`（`functions/_core/model-json.js`）。探测用的 `max_tokens` 不能给太小：M3.1-Flash-Preview 出最简灯谜就花了 211 个 completion token（182 个是 reasoning），给 16 会随机挂到超时、让超管误判为未接通。

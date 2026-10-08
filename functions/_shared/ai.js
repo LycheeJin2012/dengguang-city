@@ -1,5 +1,6 @@
 // Automatic messages use reviewed templates. Generative output is a staff-only draft.
 import { fail } from '../_core/request.js';
+import { stripModelNoise } from '../_core/model-json.js';
 import { hashPassword } from './auth.js';
 
 /**
@@ -121,7 +122,10 @@ export async function aiDraft(env, { message = '', instructions = '', existing =
     if (!response.ok) throw new Error('provider unavailable');
 
     const data = await response.json();
-    const draft = data?.choices?.[0]?.message?.content;
+    const raw = data?.choices?.[0]?.message?.content;
+    // 推理模型会把思考写进 content；那是模型的自言自语，不该出现在给管理员看的草稿里。
+    // 在长度校验之前剥，否则一段很长的思考会把本来合格的草稿误判成超长。
+    const draft = typeof raw === 'string' ? stripModelNoise(raw) : raw;
 
     // 空、超长、非字符串一律判无效 —— 半截草稿比没有草稿更危险
     if (typeof draft !== 'string' || !draft.trim() || draft.length > 2000) {

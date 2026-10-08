@@ -1,5 +1,6 @@
 import { ticketReference } from './ticket-policy.js';
 import { dispatchText, classification } from './dispatch.js';
+import { stripModelNoise } from './model-json.js';
 
 /** 优先级排序，数字越大越急。用于「不降级」判断 */
 const ranks = { low: 0, normal: 1, high: 2, urgent: 3 };
@@ -50,7 +51,9 @@ async function aiTriage(c, title, body) {
     if (!r.ok) return null;
 
     const data = await r.json();
-    const v = JSON.parse(data.choices?.[0]?.message?.content || 'null');
+    // 推理模型会把思考写进 content（实测 MiniMax-M3 就是这样），不剥掉必定解析失败
+    const raw = data.choices?.[0]?.message?.content;
+    const v = typeof raw === 'string' ? JSON.parse(stripModelNoise(raw)) : null;
     if (
       v &&
       Object.hasOwn(ranks, v.priority) &&
