@@ -41,7 +41,7 @@ export function mountAssistantWindow() {
 
   const shadow = panel.querySelector('.assistant-window-content').attachShadow({ mode: 'open' });
   shadow.innerHTML = [
-    '<link rel="stylesheet" href="/css/style.css?v=91">',
+    '<link rel="stylesheet" href="/css/style.css?v=92">',
     '<div class="assistant-embedded"></div>',
   ].join('');
 

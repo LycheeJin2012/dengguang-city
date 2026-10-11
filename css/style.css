@@ -1291,6 +1291,18 @@ main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{paddi
 .chat-assistance .reply-feedback{border:0;margin:0;padding:0}
 #support-actions{display:contents}
 #support-status>#support-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+/* 按钮组被 placeSupportActions() 从客服面板搬进评价槽之后，上面那条
+   `#support-status>#support-actions` 不再匹配（父级已经不是 #support-status），
+   只剩 `#support-actions{display:contents}` 生效 —— 按钮被摊平成评价槽里
+   「有用 / 没有解决」的直接兄弟。
+
+   灯灯浮窗只有 420px 宽，扣掉内外边距约剩 384px，而五个按钮合计约 392px，
+   于是稳定地排成「4 + 1」：转人工/刷新回复/提交工单里最后一个孤零零掉到
+   第二行，看着像排版坏了。
+
+   这里给它 flex-basis:100%，让它独占一行：上面一行评价这条回复，
+   下面一行客服操作。两个 id 的特异性高于上面那条，不依赖书写顺序。 */
+#latest-reply-feedback #support-actions{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
 #support-status p{font-size:.85rem;margin:8px 0;color:var(--ink-soft)}
 .reply-context{font-size:.8rem;color:var(--ink-soft);margin-bottom:8px}
 
