@@ -1317,7 +1317,7 @@ main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{paddi
    独立 DOM + 复用同一个私信控制器。窗口窄、矮，空间极紧，
    这里的规则优先级最高，压在上面的通用规则之上。 */
 #assistant-launcher{position:fixed;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));z-index:30;background:var(--green);color:var(--paper);min-height:48px;box-shadow:4px 4px var(--line)}
-#assistant-window{position:fixed;right:16px;bottom:80px;width:min(420px,calc(100vw - 24px));height:min(680px,calc(100dvh - 104px));display:grid;grid-template-rows:auto minmax(0,1fr);border:3px solid var(--line);box-shadow:6px 6px #0004;background:var(--paper);z-index:29;overflow:hidden}
+#assistant-window{position:fixed;right:16px;bottom:80px;width:min(420px,calc(100vw - 24px));height:min(760px,calc(100dvh - 104px));display:grid;grid-template-rows:auto minmax(0,1fr);border:3px solid var(--line);box-shadow:6px 6px #0004;background:var(--paper);z-index:29;overflow:hidden}
 .assistant-window-head{display:flex;align-items:center;gap:12px;padding:10px 12px;border-bottom:2px solid var(--line);background:var(--ground)}
 .assistant-window-head strong{flex:1}.assistant-window-head button{padding:6px;min-width:40px;min-height:40px}
 .assistant-window-content{min-height:0;height:100%;overflow:auto}
@@ -1327,7 +1327,7 @@ main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{paddi
 .assistant-embedded .chat-assistance{padding:8px}.assistant-embedded .chat-assistance button{font-size:.8rem;padding:7px;min-height:40px}
 .assistant-embedded #assistant-reminder{font-size:.8rem}.assistant-embedded .assistant-shortcuts{gap:6px}.assistant-embedded .assistant-shortcuts button,.assistant-embedded .assistant-shortcuts .button{font-size:.8rem;padding:7px}
 .assistant-embedded #send-form textarea{min-height:76px}
-@media(max-width:700px){#assistant-window{right:12px;bottom:76px;height:min(640px,calc(100dvh - 96px))}}
+@media(max-width:700px){#assistant-window{right:12px;bottom:76px;height:min(720px,calc(100dvh - 96px))}}
 @media(max-height:500px){#assistant-window{bottom:64px;height:calc(100dvh - 76px)}}
 /* Keep the composer visible in the compact window; full history remains in Messages. */
 .assistant-embedded{height:100%}
@@ -1335,6 +1335,14 @@ main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{paddi
 .assistant-embedded #thread{margin:0;height:100%;min-height:0;display:grid;grid-template-rows:minmax(80px,1fr) auto auto auto;gap:6px;overflow:auto;padding:10px}
 .assistant-embedded #thread>.row-head,.assistant-embedded .assistant-shortcuts,.assistant-embedded .reply-context,.assistant-embedded .bubble .reply-feedback{display:none}
 .assistant-embedded .messages{height:auto;min-height:80px;padding:8px}
+/* #chat-refresh-state 是 composerMarkup() 尾部那个空的 live region，
+   全站**没有给过它任何样式** —— UA 默认 p{margin:1em 0} 于是白吃掉 16px
+   下边距，外加它自己那一行 6px 间隙，共 22px。实测里它就是 grid 第 5 行，
+   高度 0 却占了整整 16px 的轨道。
+
+   680px 浮窗实测：消息区只剩 152px、内容 252px，有 106px 的历史看不见，
+   气泡被拦腰截断看着像坏了。把这 16px 收回给消息区是纯赚。 */
+.assistant-embedded #chat-refresh-state{margin:0}
 .assistant-embedded .bubble{padding:8px 10px;box-shadow:3px 3px 0 var(--line)}
 .assistant-embedded .chat-assistance{margin:0;padding:8px;box-shadow:none}
 .assistant-embedded .chat-assistance .actions{margin-top:6px;gap:5px}

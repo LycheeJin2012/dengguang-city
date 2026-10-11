@@ -162,3 +162,64 @@ test('判据有牙：flex-basis 必须真的被检查（写成 flex-basis:99% �
   assert.equal(passes('flex-basis:99%'), false, '99% 不占满整行，判据必须不通过');
   assert.equal(passes('flex-basis:auto'), false, 'auto 同样不行');
 });
+
+// ── 竖向空间预算 ──────────────────────────────────────────────────────
+//
+// 2026-10-11 用户实测：浮窗里消息气泡被拦腰截断，几乎看不到聊天记录。
+// 本地探针（node http + iframe 造真视口，量 getBoundingClientRect）实测根因：
+//
+//   #thread 高 612，grid 五行 = 152 / 197 / 52 / 151 / 16
+//                        ↑messages          ↑chat-refresh-state
+//
+// 第 5 行那个 **16px 是纯浪费**：#chat-refresh-state 是 composerMarkup() 尾部
+// 那个空的 live region，全站没给过它任何样式，UA 默认 p{margin:1em 0} 白吃掉下边距。
+//
+// 修完两处后（.assistant-embedded #chat-refresh-state{margin:0} +
+// 浮窗上限 680→760），同一探针复测：
+//
+//   浮窗   #thread  messages  内容  看不见
+//   640px  572      128      252   130px
+//   680px  612      168      252    90px
+//   742px  674      230      252    28px   ← 846pt 窗口上的实际取值
+//   760px  692      248      252    10px
+//
+// 742px 是 min(760px, 100dvh-104px) 在常见窗口上的落点，也是这次修复的验收线。
+
+for (const file of [SOURCE, BUILT]) {
+  test(`${file}：空的 #chat-refresh-state 必须清掉 UA margin（白占 16px 轨道）`, () => {
+    const bodies = ruleBodies(read(file), '.assistant-embedded #chat-refresh-state');
+    assert.ok(bodies.length > 0, '找不到 .assistant-embedded #chat-refresh-state 规则');
+    assert.match(
+      bodies.join(';'),
+      /margin\s*:\s*0/,
+      '#chat-refresh-state 是空元素，UA 的 p{margin:1em 0} 会白占 16px grid 轨道'
+    );
+  });
+
+  test(`${file}：浮窗高度上限不得低于 700px（低于它消息区只剩 128px）`, () => {
+    const bodies = ruleBodies(read(file), '#assistant-window');
+    const heights = bodies
+      .map((b) => /height\s*:\s*min\((\d+)px/.exec(b))
+      .filter(Boolean)
+      .map((m) => Number(m[1]));
+    assert.ok(heights.length > 0, '找不到 #assistant-window 的 min() 高度');
+    for (const h of heights) {
+      assert.ok(
+        h >= 700,
+        `浮窗上限 ${h}px 太矮：探针实测 640px 时消息区只剩 128px，气泡必然被截断`
+      );
+    }
+  });
+
+  test(`${file}：grid 行模板仍须让输入框常驻（消息区占 1fr，其余 auto）`, () => {
+    const bodies = ruleBodies(read(file), '.assistant-embedded #thread');
+    const tpl = bodies.find((b) => /grid-template-rows/.test(b));
+    assert.ok(tpl, '找不到 .assistant-embedded #thread 的 grid-template-rows');
+    assert.match(
+      tpl,
+      /minmax\(\s*\d+px\s*,\s*1fr\s*\)\s+auto/,
+      '第一行必须是「消息区 1fr、其余 auto」—— 1fr 给消息区，auto 让输入框常驻。' +
+        '顺序反了就会变成输入框被压扁、消息区把整页撑开'
+    );
+  });
+}
