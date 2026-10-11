@@ -1302,7 +1302,18 @@ main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{paddi
 
    这里给它 flex-basis:100%，让它独占一行：上面一行评价这条回复，
    下面一行客服操作。两个 id 的特异性高于上面那条，不依赖书写顺序。 */
-#latest-reply-feedback #support-actions{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+#latest-reply-feedback #support-actions{flex-basis:100%;display:flex;flex-wrap:wrap;gap:8px;margin-top:0}
+/* 反馈区在浮窗里是「消息区之外的一切」，每一条 margin 都在跟聊天记录抢高度。
+   探针实测 chat-assistance 从 197px 收到 169px：按钮行 40 + 状态文字 23
+   + 标题 18 已经占掉 81px，剩下的全是重复的 margin 和 gap。
+
+   收敛的两处（都不动内容、不碰 40px 的触摸目标高度）：
+   · #support-actions 的 margin-top:10px —— 它是 flex 子项，父级已有 gap:5px，
+     这 10px 是上一版从 #support-status 那条规则抄过来时带进来的重复
+   · #support-status p 的上下 margin —— 单行状态文字不值得 16px 的呼吸位
+
+   注意下面这两条必须放在**浮窗紧凑块**（.assistant-embedded .chat-assistance{padding:8px}）
+   之后，同特异性下靠后的才生效。写早了会被它整个盖掉，而且不报错、看不出问题。 */
 #support-status p{font-size:.85rem;margin:8px 0;color:var(--ink-soft)}
 .reply-context{font-size:.8rem;color:var(--ink-soft);margin-bottom:8px}
 
@@ -1344,8 +1355,9 @@ main{padding:24px 12px 40px}.city-welcome{margin-bottom:24px}.welcome-copy{paddi
    气泡被拦腰截断看着像坏了。把这 16px 收回给消息区是纯赚。 */
 .assistant-embedded #chat-refresh-state{margin:0}
 .assistant-embedded .bubble{padding:8px 10px;box-shadow:3px 3px 0 var(--line)}
-.assistant-embedded .chat-assistance{margin:0;padding:8px;box-shadow:none}
-.assistant-embedded .chat-assistance .actions{margin-top:6px;gap:5px}
+.assistant-embedded .chat-assistance{margin:0;padding:6px 8px;box-shadow:none}
+.assistant-embedded .chat-assistance .actions{margin-top:6px;gap:5px;margin-bottom:0}
+.assistant-embedded #support-status p{margin:6px 0 0}
 .assistant-embedded #assistant-reminder{margin:0;padding:6px 8px;font-size:.75rem}
 .assistant-embedded #send-form{margin:0;padding-top:8px}
 .assistant-embedded #send-form .field{gap:4px;font-size:.8rem}

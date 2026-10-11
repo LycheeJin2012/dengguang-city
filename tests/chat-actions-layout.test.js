@@ -153,6 +153,52 @@ test('判据有牙：换成单 id 的选择器必须查不到（否则上面几�
   );
 });
 
+for (const file of [SOURCE, BUILT]) {
+  test(`${file}：反馈区必须压在 170px 以内（探针实测 197→165）`, () => {
+    const bodies = ruleBodies(read(file), '.assistant-embedded .chat-assistance');
+    assert.ok(bodies.length > 0, '找不到浮窗紧凑块里的 .chat-assistance 规则');
+
+    // 要**逐条**查，不能 join 之后只取第一个匹配：
+    // `.assistant-embedded .chat-assistance` 在文件里出现两次（通用浮窗块一条、
+    // 紧凑块一条），join 后正则只吃到第一条，于��紧凑块那条被改成 12px 也照样通过。
+    // 这正是变异 C 抓不到的原因 —— 测试因为错误的原因绿了。
+    const pads = bodies
+      .map((b) => /padding\s*:\s*(\d+)px/.exec(b))
+      .filter(Boolean)
+      .map((m) => Number(m[1]));
+    assert.ok(pads.length > 0, '读不出 .chat-assistance 的 padding');
+    for (const p of pads) {
+      assert.ok(
+        p <= 8,
+        `浮窗里 .chat-assistance 的 padding 是 ${p}px，探针实测 8px 时整块就已经 197px 了`
+      );
+    }
+  });
+
+  test(`${file}：按钮行不再叠一层重复的上边距（flex 父级已有 gap）`, () => {
+    const bodies = ruleBodies(read(file), '#latest-reply-feedback #support-actions');
+    assert.ok(bodies.length > 0);
+    // 上一版把 #support-status>#support-actions 的 margin-top:10px 抄了过来，
+    // 而它作为 flex 子项，父级 .actions 已经有 gap:5px —— 那 10px 是纯重复。
+    assert.doesNotMatch(
+      bodies.join(';'),
+      /margin-top\s*:\s*[1-9]/,
+      '#support-actions 是 .actions 的 flex 子项，父级 gap 已负责行距，' +
+        '再叠 margin-top 只会把聊天记录的高度抢走'
+    );
+  });
+
+  test(`${file}：浮窗里的客服状态文字不得再吃 16px 的上下 margin`, () => {
+    const bodies = ruleBodies(read(file), '.assistant-embedded #support-status p');
+    assert.ok(bodies.length > 0, '找不到 .assistant-embedded #support-status p 规则');
+    assert.match(
+      bodies.join(';'),
+      /margin\s*:\s*\d+px\s+0\s+0/,
+      '单行状态文字不该有 1em 上下 margin —— 实测光这一条就白占 16px'
+    );
+  });
+}
+
 test('判据有牙：flex-basis 必须真的被检查（写成 flex-basis:99% 也得红）', () => {
   const css = read(SOURCE);
   const bodies = ruleBodies(css, '#latest-reply-feedback #support-actions');
