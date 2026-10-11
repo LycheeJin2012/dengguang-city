@@ -72,7 +72,7 @@ test('资源版本号不是历史上那个卡住没动的 84', () => {
 
 test('资源版本号能对上当前进度', () => {
   // 本地 v88.8。低于这个数就说明改完 UI 忘了 bump。
-  const MIN = 90;
+  const MIN = 91;
   const all = [...new Set(HTML.flatMap((f) => versionsIn(readFileSync(f, 'utf8'))))].map(Number);
   for (const v of all) {
     assert.ok(v >= MIN, `资源版本号 v${v} 低于当前的 v${MIN}，改完 UI 忘了 bump`);

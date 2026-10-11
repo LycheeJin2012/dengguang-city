@@ -38,8 +38,11 @@ export function updateReplyFeedback(box, { messages, isAssistant, ratedId }) {
   // 正在操作反馈控件（比如展开「没用」的理由下拉）就别换人
   if (isTypingHere(box, target)) return ratedId;
 
-  // 控件先挪出客服面板，客服面板随后要重画，不搬会被一起冲掉
-  const controls = $('#support-status', box);
+  // 控件先挪出客服面板，客服面板随后要重画，不搬会被一起冲掉。
+  // 注意搬的是 #support-actions（按钮组），不是 #support-status（客服面板本身）——
+  // 写成后者就等于把元素 append 进它自己，DOM 会抛
+  // "The operation would yield an incorrect node tree."，整个聊天区直接不可用。
+  const controls = $('#support-actions', box);
   if (controls) $('#support-status', box).append(controls);
 
   target.innerHTML =
